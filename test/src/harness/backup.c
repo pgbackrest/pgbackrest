@@ -34,6 +34,7 @@ Local variables
 static struct HrnBackupLocal
 {
     MemContext *memContext;                                         // Script mem context
+    bool backupFileComparatorShim;                                  // Shim backupFileComparatorShim?
 
     // Script that defines how shim functions operate
     HrnBackupScript script[1024];
@@ -352,4 +353,41 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         }
     }
     MEM_CONTEXT_TEMP_END();
+}
+
+/**********************************************************************************************************************************/
+static int
+backupFileComparator(const void *const item1, const void *const item2)
+{
+    if (hrnBackupLocal.backupFileComparatorShim)
+    {
+        const BackupFile *const file1 = item1;
+        const BackupFile *const file2 = item2;
+
+        // Order global/pg_control at the end of the bundle. This is required for reproducibility since the contents of pg_control
+        // vary by architecture so may compress differently and change bundle offsets. pg_control must not be block incremental
+        // here: relocating a block incremental file out of prior map offset order would break the requirement that reads of the
+        // same prior map file be added to the multi-read in ascending offset order, and leaving it in place would let its
+        // architecture-dependent size shift bundle offsets again. pg_control is 8KiB so this only happens when the size map file
+        // size floor is set below 8KiB, in which case error rather than let offsets silently vary by architecture.
+        if (strEqZ(file1->pgFile, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))
+        {
+            CHECK(AssertError, file1->blockIncrSize == 0, "pg_control cannot be block incremental with the comparator shim");
+            return 1;
+        }
+        else if (strEqZ(file2->pgFile, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))
+        {
+            CHECK(AssertError, file2->blockIncrSize == 0, "pg_control cannot be block incremental with the comparator shim");
+            return -1;
+        }
+    }
+
+    // Otherwise use the original comparator
+    return backupFileComparator_SHIMMED(item1, item2);
+}
+
+void
+hrnBackupFileComparatorShim(void)
+{
+    hrnBackupLocal.backupFileComparatorShim = true;
 }

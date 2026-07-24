@@ -1717,7 +1717,10 @@ backupProcessFilePrimary(RegExp *const standbyExp, const String *const name)
         BOOL, strEqZ(name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) || !regExpMatch(standbyExp, name));
 }
 
-// Comparator to order ManifestFile objects by size, date, and name
+// Comparator to order files in a backup processing queue. Unbundled files (too large to bundle) sort first, largest first, so the
+// longest copies start early and processes are less likely to stall at the end of the backup. Bundled files follow, ordered to
+// mirror the layout of the prior backups they reference so files keep the same relative order from one backup to the next. That
+// lets block incremental map reads (and reads of whole files in prior bundles) run in sequence rather than seeking back and forth.
 static const Manifest *backupProcessQueueComparatorManifest = NULL;
 static bool backupProcessQueueComparatorBundle;
 static uint64_t backupProcessQueueComparatorBundleLimit;
@@ -1737,27 +1740,66 @@ backupProcessQueueComparator(const void *const item1, const void *const item2)
     const ManifestFile file1 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item1);
     const ManifestFile file2 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item2);
 
-    // If the size differs then that's enough to determine order
-    if (!backupProcessQueueComparatorBundle || file1.size > backupProcessQueueComparatorBundleLimit ||
-        file2.size > backupProcessQueueComparatorBundleLimit)
+    // A file is bundled when bundling is enabled and it is within the bundle limit; larger files are stored unbundled
+    const bool file1Bundle = backupProcessQueueComparatorBundle && file1.size <= backupProcessQueueComparatorBundleLimit;
+    const bool file2Bundle = backupProcessQueueComparatorBundle && file2.size <= backupProcessQueueComparatorBundleLimit;
+
+    // Order unbundled files (each copied as its own job) before bundled files
+    if (file1Bundle != file2Bundle)
+        FUNCTION_TEST_RETURN(INT, file1Bundle ? 1 : -1);
+
+    // Order unbundled files by size descending so larger files are processed first. This helps prevent stalls at the end of the
+    // backup where one process is still copying a large file after the others are idle. This only matters when process-max > 1.
+    if (!file1Bundle)
     {
         if (file1.size < file2.size)
             FUNCTION_TEST_RETURN(INT, 1);
         else if (file1.size > file2.size)
             FUNCTION_TEST_RETURN(INT, -1);
+
+        // If size is equal then use name to generate a deterministic ordering (names are unique)
+        FUNCTION_TEST_RETURN(INT, strCmp(file1.name, file2.name));
     }
 
-    // If bundling order by time desc so that older files are bundled with older files and newer with newer
-    if (backupProcessQueueComparatorBundle)
+    // The rest are bundled files. Order first by reference (the prior backup the file is based on) so files based on the same prior
+    // backup are grouped and processed in the order those backups were created. New files have no reference and sort last.
+    if (file1.reference == NULL)
     {
-        if (file1.timestamp > file2.timestamp)
+        if (file2.reference != NULL)
             FUNCTION_TEST_RETURN(INT, 1);
-        else if (file1.timestamp < file2.timestamp)
+    }
+    else if (file2.reference == NULL)
+        FUNCTION_TEST_RETURN(INT, -1);
+    else
+    {
+        const int backupLabelCmp = strCmp(file1.reference, file2.reference);
+
+        if (backupLabelCmp != 0)
+            FUNCTION_TEST_RETURN(INT, backupLabelCmp);
+
+        // Then by bundle id so files that shared a bundle in the prior backup stay grouped. Bundle id and offset only apply to
+        // files based on the same prior backup so they are ordered here rather than for new files, which have no prior location.
+        if (file1.bundleId < file2.bundleId)
             FUNCTION_TEST_RETURN(INT, -1);
+        else if (file1.bundleId > file2.bundleId)
+            FUNCTION_TEST_RETURN(INT, 1);
+
+        // Then by offset within that bundle so prior maps are read in the order they are stored
+        if (file1.bundleOffset < file2.bundleOffset)
+            FUNCTION_TEST_RETURN(INT, -1);
+        else if (file1.bundleOffset > file2.bundleOffset)
+            FUNCTION_TEST_RETURN(INT, 1);
     }
 
-    // If size/time is the same then use name to generate a deterministic ordering (names must be unique)
-    FUNCTION_TEST_RETURN(INT, strCmp(file2.name, file1.name));
+    // Order new files eligible for bundling by time ascending so files of a similar age are bundled together. A full backup has no
+    // references so all its bundled files use this ordering.
+    if (file1.timestamp < file2.timestamp)
+        FUNCTION_TEST_RETURN(INT, -1);
+    else if (file1.timestamp > file2.timestamp)
+        FUNCTION_TEST_RETURN(INT, 1);
+
+    // If everything above is equal then use name to generate a deterministic ordering (names must be unique)
+    FUNCTION_TEST_RETURN(INT, strCmp(file1.name, file2.name));
 }
 
 // Helper to generate the backup queues
