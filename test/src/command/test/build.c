@@ -332,13 +332,52 @@ testBldUnit(TestBuild *const this)
             if (module->type == testDefTypeIntegration && !shim->integration)
                 continue;
 
-            const String *const shimFile = strNewFmt("%s.c", strZ(cmdBldPathModule(shim->name)));
+            // Build the list of modules to shim. The shim module .c is always shimmed and written since the harness includes it. A
+            // function may instead be defined in an included .c.inc module, in which case that module is shimmed as well.
+            StringList *const shimModuleList = strLstNew();
+            strLstAdd(shimModuleList, shim->name);
 
-            String *const shimC = strCatBuf(
-                strNew(),
-                storageGetP(storageNewReadP(testBldStorageRepo(this), strNewFmt("%s/%s", strZ(pathRepo), strZ(shimFile)))));
+            for (unsigned int funcIdx = 0; funcIdx < lstSize(shim->functionList); funcIdx++)
+            {
+                const TestDefShimFunction *const function = lstGet(shim->functionList, funcIdx);
 
-            testBldWrite(storageUnit, storageUnitList, strZ(shimFile), BUFSTR(testBldShim(shimC, shim->functionList)));
+                if (function->inc != NULL)
+                    strLstAddIfMissing(shimModuleList, strNewFmt("%s/%s", strZ(strPath(shim->name)), strZ(function->inc)));
+            }
+
+            for (unsigned int shimModuleIdx = 0; shimModuleIdx < strLstSize(shimModuleList); shimModuleIdx++)
+            {
+                const String *const shimModule = strLstGet(shimModuleList, shimModuleIdx);
+
+                // The first module is the shim module .c; the rest are included .c.inc modules
+                const bool included = shimModuleIdx != 0;
+
+                // Get the functions to shim in this module
+                StringList *const functionList = strLstNew();
+
+                for (unsigned int funcIdx = 0; funcIdx < lstSize(shim->functionList); funcIdx++)
+                {
+                    const TestDefShimFunction *const function = lstGet(shim->functionList, funcIdx);
+                    const String *const functionModule =
+                        function->inc == NULL ? shim->name : strNewFmt("%s/%s", strZ(strPath(shim->name)), strZ(function->inc));
+
+                    if (strEq(functionModule, shimModule))
+                        strLstAdd(functionList, function->name);
+                }
+
+                // Read the source. An included module is a .c.inc, otherwise a .c.
+                const String *const readFile = strNewFmt("%s.c%s", strZ(cmdBldPathModule(shimModule)), included ? ".inc" : "");
+
+                String *const shimC = strCatBuf(
+                    strNew(),
+                    storageGetP(storageNewReadP(testBldStorageRepo(this), strNewFmt("%s/%s", strZ(pathRepo), strZ(readFile)))));
+
+                // Write the shimmed source. The shim module .c keeps its normal path. An included .c.inc uses the include path
+                // so it resolves to this copy (via the unit include dir, before the repo copy) when the shim module includes it.
+                const String *const writeFile = included ? strNewFmt("%s.c.inc", strZ(shimModule)) : readFile;
+
+                testBldWrite(storageUnit, storageUnitList, strZ(writeFile), BUFSTR(testBldShim(shimC, functionList)));
+            }
         }
 
         // Build harness modules

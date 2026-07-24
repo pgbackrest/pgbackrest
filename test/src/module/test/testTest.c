@@ -292,12 +292,15 @@ testRun(void)
             "            shim:\n"
             "              test/common/shim:\n"
             "                function:\n"
-            "                  - shimFunc\n"
-            "                  - shimFunc2\n"
+            "                  - shimFunc:\n"
+            "                      inc: shimInc\n"
+            "                  - shimFunc2:\n"
+            "                      inc: shimInc\n"
             "              test/common/shim2: ~\n"
             "        coverage:\n"
             "          - test/common/shim\n"
             "          - test/common/shim2\n"
+            "          - test/common/shimInc.inc: included\n"
             "        include:\n"
             "          - common/error/error\n"
             "          - test/common/include\n"
@@ -601,6 +604,13 @@ testRun(void)
 
         String *const shimC = strCatZ(
             strNew(),
+            "#include \"test/common/shimInc.c.inc\"\n");
+
+        HRN_STORAGE_PUT_Z(storageTest, "repo/test/src/common/shim.c", strZ(shimC));
+
+        // shimFunc/shimFunc2 are defined in an included module to test shimming functions that are not in the shim module itself
+        String *const shimIncC = strCatZ(
+            strNew(),
             "int\n"
             "shimFunc(void)\n"
             "{\n"
@@ -615,7 +625,8 @@ testRun(void)
             "    return 777 + param1 + param2;\n"
             "}\n");
 
-        HRN_STORAGE_PUT_Z(storageTest, "repo/test/src/common/shim.c", strZ(shimC));
+        HRN_STORAGE_PUT_Z(storageTest, "repo/test/src/common/shimInc.c.inc", strZ(shimIncC));
+
         HRN_STORAGE_PUT_Z(
             storageTest, "repo/test/src/common/shim2.c",
             "int noShimFunc3(void);"
@@ -624,9 +635,9 @@ testRun(void)
             "    return 888;\n"
             "}\n");
 
-        strReplace(shimC, STRDEF("int\nshimFunc(void)"), STRDEF("int shimFunc_SHIMMED(void); int\nshimFunc_SHIMMED(void)"));
+        strReplace(shimIncC, STRDEF("int\nshimFunc(void)"), STRDEF("int shimFunc_SHIMMED(void); int\nshimFunc_SHIMMED(void)"));
         strReplace(
-            shimC, STRDEF("static int\nshimFunc2("),
+            shimIncC, STRDEF("static int\nshimFunc2("),
             STRDEF("static int shimFunc2(int param1, int param2); static int\nshimFunc2_SHIMMED("));
 
         String *const harnessShimC = strCatZ(
@@ -704,6 +715,7 @@ testRun(void)
             "meson.build\n"
             "meson_options.txt\n"
             "src/common/stackTrace.c\n"
+            "test/common/shimInc.c.inc\n"
             "test/src/common/shim.c\n"
             "test/src/harness/error.c\n"
             "test/src/harness/shim.c\n"
@@ -795,6 +807,10 @@ testRun(void)
             else if (strEqZ(file, "test/src/common/shim.c"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), strZ(shimC));
+            }
+            else if (strEqZ(file, "test/common/shimInc.c.inc"))
+            {
+                TEST_STORAGE_GET(storageUnit, strZ(file), strZ(shimIncC));
             }
             else if (strEqZ(file, "test.c"))
             {
@@ -892,6 +908,7 @@ testRun(void)
             fileList,
             "meson.build\n"
             "meson_options.txt\n"
+            "test/common/shimInc.c.inc\n"
             "test/src/common/shim.c\n"
             "test/src/harness/error.c\n"
             "test/src/harness/shim.c\n"
@@ -983,6 +1000,10 @@ testRun(void)
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), strZ(shimC));
             }
+            else if (strEqZ(file, "test/common/shimInc.c.inc"))
+            {
+                TEST_STORAGE_GET(storageUnit, strZ(file), strZ(shimIncC));
+            }
             else if (strEqZ(file, "test.c"))
             {
                 String *const testCDup = strCat(strNew(), testC);
@@ -1066,6 +1087,7 @@ testRun(void)
             "meson.build\n"
             "meson_options.txt\n"
             "src/common/stackTrace.c\n"
+            "test/common/shimInc.c.inc\n"
             "test/src/common/shim.c\n"
             "test/src/harness/error.c\n"
             "test/src/harness/shim.c\n"
@@ -1156,6 +1178,10 @@ testRun(void)
             else if (strEqZ(file, "test/src/common/shim.c"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), strZ(shimC));
+            }
+            else if (strEqZ(file, "test/common/shimInc.c.inc"))
+            {
+                TEST_STORAGE_GET(storageUnit, strZ(file), strZ(shimIncC));
             }
             else if (strEqZ(file, "test.c"))
             {
