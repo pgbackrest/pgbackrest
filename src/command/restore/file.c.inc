@@ -1,32 +1,33 @@
 /***********************************************************************************************************************************
-Restore File
+Copy a file from the backup to the specified destination
 ***********************************************************************************************************************************/
-#include <build.h>
+typedef struct RestoreFile
+{
+    const String *name;                                             // File to restore
+    const Buffer *checksum;                                         // Expected checksum
+    uint64_t size;                                                  // Expected size
+    time_t timeModified;                                            // Original modification time
+    mode_t mode;                                                    // Original mode
+    bool zero;                                                      // Should the file be zeroed?
+    const String *user;                                             // Original user
+    const String *group;                                            // Original group
+    uint64_t offset;                                                // Offset into repo file where pg file is located
+    const Variant *limit;                                           // Limit for read in the repo file
+    uint64_t blockIncrMapSize;                                      // Block incremental map size (0 if not incremental)
+    size_t blockIncrSize;                                           // Block incremental size (when map size > 0)
+    size_t blockIncrChecksumSize;                                   // Checksum size (when map size > 0)
+    const String *manifestFile;                                     // Manifest file
+    const Buffer *blockChecksum;                                    // Checksums for block incremental restore, set in restoreFile()
+} RestoreFile;
 
-#include <fcntl.h>
-#include <unistd.h>
-#include <utime.h>
+typedef struct RestoreFileResult
+{
+    const String *manifestFile;                                     // Manifest file
+    RestoreResult result;                                           // Restore result (e.g. preserve, copy)
+    uint64_t blockIncrDeltaSize;                                    // Size restored by block incremental delta
+} RestoreFileResult;
 
-#include "command/backup/blockIncr.h"
-#include "command/backup/blockMap.h"
-#include "command/restore/blockChecksum.h"
-#include "command/restore/blockDelta.h"
-#include "command/restore/file.h"
-#include "common/crypto/cipherBlock.h"
-#include "common/crypto/hash.h"
-#include "common/debug.h"
-#include "common/io/fdWrite.h"
-#include "common/io/filter/group.h"
-#include "common/io/filter/size.h"
-#include "common/io/io.h"
-#include "common/io/limitRead.h"
-#include "common/log.h"
-#include "config/config.h"
-#include "info/manifest/manifest.h"
-#include "storage/helper.h"
-
-/**********************************************************************************************************************************/
-FN_EXTERN List *
+static List *
 restoreFile(
     const String *const repoFile, const unsigned int repoIdx, const CompressType repoFileCompressType, const time_t copyTimeBegin,
     const bool delta, const bool deltaForce, const bool bundleRaw, const String *const cipherPass,

@@ -975,7 +975,7 @@ unit:
           - command/restore/blockDelta
           - command/restore/clean.inc: included
           - command/restore/config.inc: included
-          - command/restore/file
+          - command/restore/file.inc: included
           - command/restore/process.inc: included
           - command/restore/protocol
           - command/restore/remap.inc: included

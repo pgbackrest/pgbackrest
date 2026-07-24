@@ -3,14 +3,26 @@ Restore Protocol Handler
 ***********************************************************************************************************************************/
 #include <build.h>
 
-#include "command/restore/file.h"
+#include <unistd.h>
+#include <utime.h>
+
+#include "command/backup/blockMap.h"
+#include "command/backup/common.h"
+#include "command/restore/blockChecksum.h"
+#include "command/restore/blockDelta.h"
 #include "command/restore/protocol.h"
+#include "common/crypto/cipherBlock.h"
+#include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/io/filter/size.h"
 #include "common/io/io.h"
+#include "common/io/limitRead.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
 #include "storage/helper.h"
+
+#include "command/restore/file.c.inc"
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolServerResult *

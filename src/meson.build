@@ -159,7 +159,6 @@ src_pgbackrest = [
     'command/repo/rm.c',
     'command/restore/blockChecksum.c',
     'command/restore/blockDelta.c',
-    'command/restore/file.c',
     'command/restore/protocol.c',
     'command/restore/restore.c',
     'command/restore/timeline.c',
