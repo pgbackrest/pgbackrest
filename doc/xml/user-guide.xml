@@ -148,7 +148,7 @@
         <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
 
         <!-- S3 Settings -->
-        <variable key="s3-image">quay.io/ceph/ceph:v19</variable>   <!-- Ceph docker image -->
+        <variable key="s3-image">chrislusf/seaweedfs:4.40</variable> <!-- SeaweedFS docker image -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
@@ -807,7 +807,7 @@
             <execute if ="{[os-type-is-rhel]}" user="root" user-force="y">
                 <exe-cmd>aws configure set ca_bundle {[ca-cert-path]}/pgbackrest-ca.crt</exe-cmd>
             </execute>
-            <!-- Retry to allow time for the S3 server (Ceph) to start up and for the new bucket to become available -->
+            <!-- Retry to allow time for the S3 server (SeaweedFS) to start up and for the new bucket to become available -->
             <execute user="root" user-force="y" retry="30">
                 <exe-cmd>aws --endpoint-url https://{[s3-endpoint]} s3 mb s3://{[s3-bucket]}</exe-cmd>
             </execute>
@@ -909,7 +909,7 @@
         <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="{[azure-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key --skipApiVersionCheck" update-hosts="n"/>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/s3-server.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/s3-server.key:ro -v {[host-repo-path]}/doc/resource/ceph/bootstrap.sh:/bootstrap.sh:ro -e RGW_DNS_NAME={[s3-endpoint]} -e S3_ACCESS_KEY={[s3-key]} -e S3_SECRET_KEY={[s3-key-secret]}" param="bash /bootstrap.sh" update-hosts="n"/>
+        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="--entrypoint=/usr/bin/weed -v {[fake-cert-path]}/s3-server.crt:/root/s3-server.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/s3-server.key:ro -v {[host-repo-path]}/doc/resource/seaweedfs/s3.config.json:/config.json:ro" param="server -dir=/data -ip=0.0.0.0 -s3 -s3.port=8333 -s3.port.https=443 -s3.port.iceberg=0 -s3.cert.file=/root/s3-server.crt -s3.key.file=/root/s3-server.key -s3.domainName={[s3-endpoint]} -s3.config=/config.json" update-hosts="n"/>
 
         <!-- Create SFTP server first to allow it time to boot before being used -->
         <host-add id="{[host-sftp-id]}" name="{[host-sftp]}" user="{[host-sftp-user]}" image="{[host-sftp-image]}" os="{[os-type]}" mount="{[host-sftp-mount]}"/>
@@ -2579,7 +2579,6 @@
 
             <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-create</exe-cmd>
-                <exe-cmd-extra>--io-timeout=120</exe-cmd-extra>
                 <exe-highlight>completed successfully</exe-highlight>
             </execute>
         </execute-list>
@@ -2692,7 +2691,7 @@
 
             <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} --stanza={[postgres-cluster-demo]} --repo=3 info</exe-cmd>
-                <exe-highlight>missing stanza path</exe-highlight>
+                <exe-highlight>missing stanza data</exe-highlight>
             </execute>
         </execute-list>
 

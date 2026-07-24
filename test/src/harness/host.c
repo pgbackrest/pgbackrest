@@ -1306,17 +1306,24 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
 
                 case STORAGE_S3_TYPE:
                 {
+                    // Single-node SeaweedFS (master + volume + filer + S3) in one container. The default entrypoint drops to the
+                    // unprivileged seaweed user, which cannot bind :443, so override it to run weed directly as root. TLS is served
+                    // on :443 from the mounted fake cert, host-style bucket addressing is enabled via -s3.domainName, and the demo
+                    // credentials are provided by the mounted identity config.
                     String *const option = strNewFmt(
-                        "-v '%s/s3-server.crt:/root/s3-server.crt:ro' -v '%s/s3-server.key:/root/s3-server.key:ro'"
-                        " -v '%s/doc/resource/ceph/bootstrap.sh:/bootstrap.sh:ro' -e RGW_DNS_NAME=" HRN_HOST_S3_ENDPOINT
-                        " -e S3_ACCESS_KEY=" HRN_HOST_S3_ACCESS_KEY " -e S3_SECRET_KEY=" HRN_HOST_S3_ACCESS_SECRET_KEY,
+                        "--entrypoint=/usr/bin/weed -v '%s/s3-server.crt:/root/s3-server.crt:ro'"
+                        " -v '%s/s3-server.key:/root/s3-server.key:ro'"
+                        " -v '%s/doc/resource/seaweedfs/s3.config.json:/config.json:ro'",
                         fakeCertPath, fakeCertPath, hrnPathRepo());
-                    String *const param = strNewZ("bash /bootstrap.sh");
+                    String *const param = strNewZ(
+                        "server -dir=/data -ip=0.0.0.0 -s3 -s3.port=8333 -s3.port.https=443 -s3.port.iceberg=0"
+                        " -s3.cert.file=/root/s3-server.crt -s3.key.file=/root/s3-server.key"
+                        " -s3.domainName=" HRN_HOST_S3_ENDPOINT " -s3.config=/config.json");
 
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
                         hrnHostNewP(
-                            HRN_HOST_S3, containerName, STRDEF("quay.io/ceph/ceph:v19"), .option = option, .param = param,
+                            HRN_HOST_S3, containerName, STRDEF("chrislusf/seaweedfs:4.40"), .option = option, .param = param,
                             .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
