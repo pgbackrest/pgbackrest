@@ -937,7 +937,8 @@ unit:
             shim:
               command/backup/backup:
                 function:
-                  - backupProcess
+                  - backupProcess:
+                      inc: process
           - name: blockIncr
             shim:
               command/restore/blockDelta: ~
@@ -947,8 +948,14 @@ unit:
           - command/backup/blockIncr
           - command/backup/blockMap
           - command/backup/common
+          - command/backup/complete.inc: included
+          - command/backup/db.inc: included
           - command/backup/file
+          - command/backup/incr.inc: included
+          - command/backup/label.inc: included
+          - command/backup/option.inc: included
           - command/backup/pageChecksum
+          - command/backup/process.inc: included
           - command/backup/protocol
           - command/restore/blockDelta
 
