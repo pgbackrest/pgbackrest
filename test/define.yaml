@@ -950,7 +950,7 @@ unit:
           - command/backup/common
           - command/backup/complete.inc: included
           - command/backup/db.inc: included
-          - command/backup/file
+          - command/backup/file.inc: included
           - command/backup/incr.inc: included
           - command/backup/label.inc: included
           - command/backup/option.inc: included

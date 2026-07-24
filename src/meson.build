@@ -138,7 +138,6 @@ src_pgbackrest = [
     'command/backup/common.c',
     'command/backup/pageChecksum.c',
     'command/backup/protocol.c',
-    'command/backup/file.c',
     'command/check/check.c',
     'command/check/common.c',
     'command/check/report.c',
