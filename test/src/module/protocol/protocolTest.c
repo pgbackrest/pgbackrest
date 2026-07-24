@@ -527,6 +527,90 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ProtocolClient, ProtocolCommand, and ProtocolServer"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("greeting not found or preceded by unexpected output");
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                // Noise that exceeds the skip bound without ever producing a greeting
+                ioWriteStrLine(
+                    HRN_FORK_CHILD_WRITE(),
+                    STRDEF("0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"));
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), strNewFmt("%*s", 65436, ""));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_CHILD_BEGIN()
+            {
+                // A single line too large to buffer
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), strNewFmt("%*s", 65537, ""));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_CHILD_BEGIN()
+            {
+                // Noise followed by eof, e.g. the remote command was not found
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("bash: pgbackrest: command not found"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_CHILD_BEGIN()
+            {
+                // Noise with non-printable characters followed by a valid greeting, e.g. a login banner that clears the terminal.
+                // The greeting is found but the connection cannot be used since more noise is likely during the protocol session.
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("\033[2Jlogin banner"));
+                ioWriteStrLine(
+                    HRN_FORK_CHILD_WRITE(),
+                    STRDEF("{\"name\":\"" PROJECT_NAME "\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\"}"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                // Set the buffer size so a single line can be too large to buffer
+                const size_t ioBufferSizeDefault = ioBufferSize();
+                ioBufferSizeSet(65536);
+
+                TEST_ERROR(
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    ProtocolError,
+                    "greeting not found (maximum unexpected output exceeded) after 65538 byte(s) of unexpected output beginning"
+                    " with '0123456789012345678901234567890123456789012345678901234567890123...'\n"
+                    "HINT: is the remote shell printing output for non-interactive sessions?");
+
+                TEST_ERROR(
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(1), HRN_FORK_PARENT_WRITE(1)),
+                    ProtocolError,
+                    "greeting not found (unable to find line in 65536 byte buffer)\n"
+                    "HINT: is the remote shell printing output for non-interactive sessions?");
+
+                TEST_ERROR(
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(2), HRN_FORK_PARENT_WRITE(2)),
+                    ProtocolError,
+                    "greeting not found (unexpected eof while reading line) after 36 byte(s) of unexpected output beginning with"
+                    " 'bash: pgbackrest: command not found'\n"
+                    "HINT: is the remote shell printing output for non-interactive sessions?");
+
+                TEST_ERROR(
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(3), HRN_FORK_PARENT_WRITE(3)),
+                    ProtocolError,
+                    "greeting found after 17 byte(s) of unexpected output beginning with '.[2Jlogin banner'\n"
+                    "HINT: is the remote shell printing output for non-interactive sessions?\n"
+                    "HINT: unexpected output may interrupt the protocol at any time so the connection cannot be used until the"
+                    " output is disabled.");
+
+                ioBufferSizeSet(ioBufferSizeDefault);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
@@ -534,7 +618,10 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("bogus greetings - child process");
 
+                // Noise that does not begin as a JSON object (e.g. a login banner) is skipped while searching for the greeting,
+                // but a line that begins as a JSON object is treated as the greeting and any error from it is a hard failure
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("bogus greeting"));
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{login banner}"));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":999}"));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
@@ -548,6 +635,10 @@ testRun(void)
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(
                     HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"bogus\"}"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+                ioWriteStrLine(
+                    HRN_FORK_CHILD_WRITE(),
+                    STRDEF("{\"name\":\"" PROJECT_NAME "\",\"service\":\"test\",\"version\":\"" PROJECT_VERSION "\",\"zzz\":1}"));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -607,9 +698,11 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("bogus greetings - client");
 
+                // The noise line before the bogus greeting is skipped, but a line that begins as a JSON object is treated as the
+                // greeting so the parse error is a hard failure rather than being skipped as noise
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
-                    JsonFormatError, "invalid type at: bogus greeting");
+                    JsonFormatError, "invalid type at: login banner}");
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
                     ProtocolError, "greeting key 'name' must be string type");
@@ -634,6 +727,11 @@ testRun(void)
                     ProtocolError,
                     "expected value '" PROJECT_VERSION "' for greeting key 'version' but got 'bogus'\n"
                     "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
+
+                // A greeting with a trailing key is a hard failure (e.g. a protocol change) rather than being skipped as noise
+                TEST_ERROR(
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    JsonFormatError, "invalid type at: ,\"zzz\":1}");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("new client with successful handshake");
