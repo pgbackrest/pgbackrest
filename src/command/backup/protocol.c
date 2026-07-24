@@ -3,16 +3,25 @@ Backup Protocol Handler
 ***********************************************************************************************************************************/
 #include <build.h>
 
-#include "command/backup/file.h"
+#include "command/backup/blockIncr.h"
+#include "command/backup/pageChecksum.h"
 #include "command/backup/protocol.h"
+#include "common/compress/helper.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
+#include "common/io/filter/size.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/regExp.h"
 #include "common/type/json.h"
 #include "config/config.h"
 #include "storage/helper.h"
+
+#include "command/backup/file.c.inc"
 
 /***********************************************************************************************************************************
 Comparator to order the files processed together in a single backup job for efficient copying.

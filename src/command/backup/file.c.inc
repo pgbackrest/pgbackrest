@@ -1,28 +1,4 @@
 /***********************************************************************************************************************************
-Backup File
-***********************************************************************************************************************************/
-#include <build.h>
-
-#include <string.h>
-
-#include "command/backup/blockIncr.h"
-#include "command/backup/file.h"
-#include "command/backup/pageChecksum.h"
-#include "common/crypto/cipherBlock.h"
-#include "common/crypto/hash.h"
-#include "common/debug.h"
-#include "common/io/bufferRead.h"
-#include "common/io/bufferWrite.h"
-#include "common/io/filter/group.h"
-#include "common/io/filter/size.h"
-#include "common/io/io.h"
-#include "common/log.h"
-#include "common/regExp.h"
-#include "common/type/convert.h"
-#include "common/type/json.h"
-#include "storage/helper.h"
-
-/***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 static unsigned int
@@ -36,8 +12,48 @@ segmentNumber(const String *const pgFile)
     FUNCTION_TEST_RETURN(UINT, regExpMatchOne(STRDEF("\\.[0-9]+$"), pgFile) ? cvtZToUInt(strrchr(strZ(pgFile), '.') + 1) : 0);
 }
 
-/**********************************************************************************************************************************/
-FN_EXTERN List *
+/***********************************************************************************************************************************
+Copy a file from the PostgreSQL data directory to the repository
+***********************************************************************************************************************************/
+typedef struct BackupFile
+{
+    const String *pgFile;                                           // Pg file to backup
+    bool pgFileDelta;                                               // Checksum pg file before copying
+    bool pgFileIgnoreMissing;                                       // Ignore missing pg file
+    uint64_t pgFileSize;                                            // Expected pg file size
+    uint64_t pgFileSizeOriginal;                                    // Original size (from manifest build)
+    bool pgFileCopyExactSize;                                       // Copy only pg expected size
+    const Buffer *pgFileChecksum;                                   // Expected pg file checksum
+    bool pgFileChecksumPage;                                        // Validate page checksums?
+    bool pgFilePageHeaderCheck;                                     // Validate page headers?
+    size_t blockIncrSize;                                           // Perform block incremental on this file?
+    size_t blockIncrChecksumSize;                                   // Block checksum size
+    uint64_t blockIncrSuperSize;                                    // Size of the super block
+    const String *blockIncrMapPriorFile;                            // File containing prior block incremental map (NULL if none)
+    uint64_t blockIncrMapPriorOffset;                               // Offset of prior block incremental map
+    uint64_t blockIncrMapPriorSize;                                 // Size of prior block incremental map
+    const String *manifestFile;                                     // Repo file
+    const Buffer *repoFileChecksum;                                 // Expected repo file checksum
+    uint64_t repoFileSize;                                          // Expected repo file size
+    bool manifestFileResume;                                        // Checksum repo file before copying
+    bool manifestFileHasReference;                                  // Reference to prior backup, if any
+} BackupFile;
+
+typedef struct BackupFileResult
+{
+    const String *manifestFile;                                     // Manifest file
+    BackupCopyResult backupCopyResult;
+    bool repoInvalid;                                               // File was recopied because repo file was invalid
+    uint64_t copySize;
+    const Buffer *copyChecksum;                                     // Checksum of pg file
+    const Buffer *repoChecksum;                                     // Checksum of repo file (including compression, etc.)
+    uint64_t bundleOffset;                                          // Offset in bundle if any
+    uint64_t repoSize;
+    uint64_t blockIncrMapSize;                                      // Size of block incremental map (0 if no map)
+    Pack *pageChecksumResult;
+} BackupFileResult;
+
+static List *
 backupFile(
     const String *const repoFile, const uint64_t bundleId, const bool bundleRaw, const unsigned int blockIncrReference,
     const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherType cipherType,

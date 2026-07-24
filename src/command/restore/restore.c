@@ -6,7 +6,6 @@ Restore Command
 #include <unistd.h>
 
 #include "command/lock.h"
-#include "command/restore/file.h"
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
 #include "command/restore/timeline.h"
