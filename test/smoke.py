@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-####################################################################################################################################
-# pgBackRest Smoke Test
-#
-# A minimal, dependency-free (Python standard library only) sanity check that a built pgbackrest binary actually works. It finds
-# every PostgreSQL installation on the system and drives pgbackrest through a full backup/restore cycle against each version found:
-#
-#   initdb -> configure -> stanza-create -> check -> full backup -> load data -> incr backup -> wipe -> restore -> verify
-#
-# The test uses a local POSIX (filesystem) repository and a private unix socket so it never collides with a running PostgreSQL or an
-# existing pgbackrest installation. It is a build-sanity check for packagers, not a functional test suite.
-#
-# Exit status: 0 = every supported version found was tested and passed, 1 = a version failed or nothing could be tested. Testing
-# nothing is a failure rather than a skip, since a test that silently does nothing is not a successful test.
+"""pgBackRest Smoke Test.
+
+A minimal, dependency-free (Python standard library only) sanity check that a built pgbackrest binary actually works. It finds every
+PostgreSQL installation on the system and drives pgbackrest through a full backup/restore cycle against each version found:
+
+  initdb -> configure -> stanza-create -> check -> full backup -> load data -> incr backup -> wipe -> restore -> verify
+
+The test uses a local POSIX (filesystem) repository and a private unix socket so it never collides with a running PostgreSQL or an
+existing pgbackrest installation. It is a build-sanity check for packagers, not a functional test suite.
+
+Exit status: 0 = every supported version found was tested and passed, 1 = a version failed or nothing could be tested. Testing
+nothing is a failure rather than a skip, since a test that silently does nothing is not a successful test."""
+
 ####################################################################################################################################
 import argparse
 import glob
@@ -35,27 +35,31 @@ PG_PORT = 5432
 COMMAND_TIMEOUT = 300
 
 
+####################################################################################################################################
 class SmokeError(Exception):
     """A smoke test step failed."""
 
 
 ####################################################################################################################################
-# Command runner that optionally drops privileges (when the script runs as root)
-####################################################################################################################################
 class Runner:
+    """Command runner that optionally drops privileges (when the script runs as root)."""
+
     def __init__(self, verbose, uid=None, gid=None, user=None):
         self.verbose = verbose
         self.uid = uid  # target uid when dropping privileges, else None
         self.gid = gid
         self.user = user  # OS user commands run as (also the PostgreSQL superuser)
 
-    # Return a preexec function that drops to the target user, or None when running as the current user
+    ################################################################################################################################
     def _preexec(self):
+        """Return a preexec function that drops to the target user, or None when running as the current user."""
+
         if self.uid is None:
             return None
 
         uid, gid, user = self.uid, self.gid, self.user
 
+        ############################################################################################################################
         def demote():
             os.setgid(gid)
             os.initgroups(user, gid)
@@ -63,8 +67,10 @@ class Runner:
 
         return demote
 
-    # Build a clean environment for child processes
+    ################################################################################################################################
     def _env(self, home, bin_path):
+        """Build a clean environment for child processes."""
+
         env = {
             "HOME": home,
             "PATH": bin_path + os.pathsep + os.environ.get("PATH", "/usr/bin:/bin"),
@@ -74,8 +80,13 @@ class Runner:
 
         return env
 
-    # Run a command, capturing combined output. Raise SmokeError on failure or timeout.
+    ################################################################################################################################
     def run(self, cmd, home, bin_path, input_text=None):
+        """Run a command, capturing combined output.
+
+        Raise SmokeError on failure or timeout.
+        """
+
         if self.verbose:
             sys.stderr.write("+ " + " ".join(cmd) + "\n")
             sys.stderr.flush()
@@ -104,15 +115,19 @@ class Runner:
 
         return result.stdout
 
-    # Create a directory and hand ownership to the target user when dropping privileges
+    ################################################################################################################################
     def make_dir(self, path, mode=0o700):
+        """Create a directory and hand ownership to the target user when dropping privileges."""
+
         os.makedirs(path, mode=mode, exist_ok=True)
 
         if self.uid is not None:
             os.chown(path, self.uid, self.gid)
 
-    # Recursively chown a tree to the target user (used after creating the work dir skeleton as root)
+    ################################################################################################################################
     def chown_tree(self, path):
+        """Recursively chown a tree to the target user (used after creating the work dir skeleton as root)."""
+
         if self.uid is None:
             return
 
@@ -124,11 +139,12 @@ class Runner:
 
 
 ####################################################################################################################################
-# Discover PostgreSQL installations
-####################################################################################################################################
-# Candidate bin directories. This is a superset of the list in test/src/harness/host.c since the smoke test also runs where the
-# integration tests cannot, i.e. MacOS and FreeBSD.
 def pg_bin_candidates(extra_dirs):
+    """Candidate bin directories to search for a PostgreSQL installation.
+
+    This is a superset of the list in test/src/harness/host.c since the smoke test also runs where the integration tests
+    cannot, i.e. MacOS and FreeBSD."""
+
     candidates = []
     candidates += sorted(glob.glob("/usr/lib/postgresql/*/bin"))  # Debian
     candidates += sorted(glob.glob("/usr/pgsql-*/bin"))  # RHEL (PGDG)
@@ -142,8 +158,10 @@ def pg_bin_candidates(extra_dirs):
     return candidates
 
 
-# Read the major version from a bin directory, or None if it is not a usable PostgreSQL install
+####################################################################################################################################
 def pg_version(bin_dir):
+    """Read the major version from a bin directory, or None if it is not a usable PostgreSQL install."""
+
     for tool in ("initdb", "pg_ctl", "psql"):
         if not os.path.isfile(os.path.join(bin_dir, tool)) or not os.access(os.path.join(bin_dir, tool), os.X_OK):
             return None
@@ -175,9 +193,13 @@ def pg_version(bin_dir):
     return major * 100 + int(match.group(2))
 
 
-# Read the full version string from a bin directory, e.g. "pg_ctl (PostgreSQL) 19beta2". This is only called for an install
-# returned by find_postgres(), where pg_version() has already run pg_ctl successfully.
+####################################################################################################################################
 def pg_version_full(bin_dir):
+    """Read the full version string from a bin directory, e.g. "pg_ctl (PostgreSQL) 19beta2".
+
+    This is only called for an install returned by find_postgres(), where pg_version() has already run pg_ctl successfully.
+    """
+
     output = subprocess.check_output(
         [os.path.join(bin_dir, "pg_ctl"), "--version"], universal_newlines=True, stderr=subprocess.STDOUT
     )
@@ -185,9 +207,13 @@ def pg_version_full(bin_dir):
     return output.strip()
 
 
-# Return a sorted list of (version, bin_dir) and a sorted list of versions skipped because pgBackRest does not support them. The
-# installs are deduplicated by the real path of initdb so a symlinked install is not run twice.
+####################################################################################################################################
 def find_postgres(extra_dirs, only_versions, supported):
+    """Return a sorted list of (version, bin_dir) and a sorted list of versions skipped because pgBackRest does not support them.
+
+    The installs are deduplicated by the real path of initdb so a symlinked install is not run twice.
+    """
+
     found = {}
     skipped = set()
 
@@ -216,8 +242,10 @@ def find_postgres(extra_dirs, only_versions, supported):
     return sorted(found.values()), sorted(skipped)
 
 
-# Parse a version string (e.g. "9.6" or "16") into the encoded form used internally
+####################################################################################################################################
 def version_parse(version):
+    """Parse a version string (e.g. "9.6" or "16") into the encoded form used internally."""
+
     if "." in version:
         major, minor = version.split(".", 1)
 
@@ -226,10 +254,15 @@ def version_parse(version):
     return int(version) * 100
 
 
-# Read the PostgreSQL versions supported by pgBackRest from the generated version header. The header is generated from
-# src/build/postgres/postgres.yaml and, unlike that file, is shipped in the distribution, so this works from a source checkout or a
-# distribution tarball. Return None when the header cannot be found so that every version found is tested.
+####################################################################################################################################
 def supported_versions():
+    """Read the PostgreSQL versions supported by pgBackRest from the generated version header.
+
+    The header is generated from src/build/postgres/postgres.yaml and, unlike that file, is shipped in the distribution, so this
+    works from a source checkout or a distribution tarball. Return None when the header cannot be found so that every version found
+    is tested.
+    """
+
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "postgres", "version.auto.h")
 
     try:
@@ -243,8 +276,10 @@ def supported_versions():
     return result or None
 
 
-# Render a version number for display (e.g. 906 -> "9.6", 1600 -> "16")
+####################################################################################################################################
 def version_str(version):
+    """Render a version number for display (e.g. 906 -> "9.6", 1600 -> "16")."""
+
     major = version // 100
     minor = version % 100
 
@@ -255,9 +290,9 @@ def version_str(version):
 
 
 ####################################################################################################################################
-# Run the smoke test for a single PostgreSQL version
-####################################################################################################################################
 def smoke_one(pgbackrest, version, bin_dir, runner, keep):
+    """Run the smoke test for a single PostgreSQL version."""
+
     work = tempfile.mkdtemp(prefix="pgbackrest-smoke-", dir=temp_base())
     data = os.path.join(work, "data")
     repo = os.path.join(work, "repo")
@@ -405,8 +440,10 @@ def smoke_one(pgbackrest, version, bin_dir, runner, keep):
             sys.stderr.write("work directory kept: %s\n" % work)
 
 
-# Poll until the cluster has finished recovery and accepts connections
+####################################################################################################################################
 def wait_for_promote(psql):
+    """Poll until the cluster has finished recovery and accepts connections."""
+
     deadline = time.time() + 60
 
     while time.time() < deadline:
@@ -422,17 +459,21 @@ def wait_for_promote(psql):
 
 
 ####################################################################################################################################
-# Small file and path helpers
-####################################################################################################################################
-# Prefer /tmp for the work directory to keep unix socket paths short (macOS TMPDIR can exceed the socket path limit)
 def temp_base():
+    """Prefer /tmp for the work directory to keep unix socket paths short.
+
+    A macOS TMPDIR can exceed the unix socket path limit."""
+
     if os.path.isdir("/tmp") and os.access("/tmp", os.W_OK):
         return "/tmp"
 
     return tempfile.gettempdir()
 
 
+####################################################################################################################################
 def write_file(path, contents, runner):
+    """Write a file, giving it to the run user when the test dropped privileges."""
+
     with open(path, "w") as file:
         file.write(contents)
 
@@ -440,16 +481,20 @@ def write_file(path, contents, runner):
         os.chown(path, runner.uid, runner.gid)
 
 
-# No ownership change is needed here since the file being appended to was created by initdb as the run user
+####################################################################################################################################
 def append_file(path, contents):
+    """Append to a file.
+
+    No ownership change is needed since the file being appended to was created by initdb as the run user."""
+
     with open(path, "a") as file:
         file.write(contents)
 
 
 ####################################################################################################################################
-# Resolve the user to run as, dropping privileges when running as root
-####################################################################################################################################
 def resolve_runner(verbose, user_name):
+    """Resolve the user to run as, dropping privileges when running as root."""
+
     # Not root: run everything as the current user
     if os.geteuid() != 0:
         return Runner(verbose, user=pwd.getpwuid(os.geteuid()).pw_name)
@@ -464,10 +509,12 @@ def resolve_runner(verbose, user_name):
 
 
 ####################################################################################################################################
-# Read the machine architecture and endianness from an ELF binary. This confirms which architecture is actually being exercised,
-# which matters when the binary is built for a foreign architecture and run under emulation.
-####################################################################################################################################
 def binary_arch(path):
+    """Read the machine architecture and endianness from an ELF binary.
+
+    This confirms which architecture is actually being exercised, which matters when the binary is built for a foreign architecture
+    and run under emulation."""
+
     # ELF e_machine values for the architectures pgBackRest is built on
     machines = {0x03: "i386", 0x3E: "x86_64", 0x15: "ppc64", 0x16: "s390x", 0xB7: "aarch64", 0x28: "arm"}
 
@@ -488,9 +535,9 @@ def binary_arch(path):
 
 
 ####################################################################################################################################
-# Main
-####################################################################################################################################
 def main():
+    """Main."""
+
     parser = argparse.ArgumentParser(description="Run pgBackRest smoke tests against installed PostgreSQL versions.")
     parser.add_argument("--pgbackrest", required=True, help="path to the pgbackrest binary to test")
     parser.add_argument("--pg-bin-path", action="append", default=[], metavar="DIR", help="extra PostgreSQL bin directory")
