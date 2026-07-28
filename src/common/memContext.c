@@ -11,6 +11,18 @@ Memory Context Manager
 #include "common/memContext.h"
 
 /***********************************************************************************************************************************
+Valgrind memcheck client requests keep leak, use-after-free, and uninitialized-read detection accurate when large freed
+allocations are retained for reuse rather than returned to the allocator (see the free list below). Without Valgrind support they
+compile to nothing.
+***********************************************************************************************************************************/
+#ifdef WITH_VALGRIND
+#include <valgrind/memcheck.h>
+#else
+#define VALGRIND_MAKE_MEM_NOACCESS(addr, size)                      ((void)0)
+#define VALGRIND_MAKE_MEM_UNDEFINED(addr, size)                     ((void)0)
+#endif
+
+/***********************************************************************************************************************************
 Contains information about a memory allocation. This header is placed at the beginning of every memory allocation returned to the
 user by memNew(), etc. The advantage is that when an allocation is passed back by the user we know the location of the allocation
 header by doing some pointer arithmetic. This is much faster than searching through a list.
@@ -497,6 +509,185 @@ memFreeInternal(void *const buffer)
 }
 
 /***********************************************************************************************************************************
+Free list for recycling large allocations
+
+Commands that process many files, e.g. backup, churn large uniformly-sized allocations (buffers, etc.) through short-lived
+contexts. Returning these to the allocator lets it hand the pages back to the kernel, which then faults them back in for the next
+file. Minor page faults are cheap on some hosts but expensive on others, so this churn can dominate run time and vary from run to
+run with heap layout. Retaining a bounded number of large freed blocks here keeps the pages resident and makes reuse
+deterministic, independent of the C library and heap layout.
+
+Only allocations at least MEM_FREE_LIST_THRESHOLD are recycled since smaller allocations are handled well by the allocator's own
+arena and do not cause churn. The buckets are keyed by exact total size, which is a perfect fit for the uniformly-sized allocations
+that churn. Retained memory is limited by MEM_FREE_LIST_BYTE_MAX so the cost is bounded regardless of buffer size.
+***********************************************************************************************************************************/
+#define MEM_FREE_LIST_THRESHOLD                                     ((size_t)(64 * 1024))
+#define MEM_FREE_LIST_SIZE_MAX                                      8
+#define MEM_FREE_LIST_BLOCK_MAX                                     8
+#define MEM_FREE_LIST_BYTE_MAX                                      ((size_t)(64 * 1024 * 1024))
+#define MEM_FREE_LIST_REUSE_MAX                                     8
+
+typedef struct MemFreeBucket
+{
+    unsigned int size;                                              // Total block size (including header) held by this bucket
+    unsigned int blockListSize;                                     // Blocks currently retained
+    unsigned int reuse;                                             // Times reused, decremented on each eviction (see below)
+    void *block[MEM_FREE_LIST_BLOCK_MAX];                           // Retained block (header) pointers
+} MemFreeBucket;
+
+// The first bucket is reserved (bucketListSize starts at 1) so memFreeReuse() never assigns it so memContextFreeListReserve() can
+// claim it at any time. It stays unused (size 0) until claimed.
+static struct MemFreeList
+{
+    size_t size;                                                    // Total size currently retained
+    unsigned int bucketListSize;                                    // Distinct sizes currently tracked (bucket 0 always reserved)
+    MemFreeBucket bucket[MEM_FREE_LIST_SIZE_MAX];
+} memFreeList = {.bucketListSize = 1};
+
+/***********************************************************************************************************************************
+Allocate, reusing a retained block of the same total size when one is available
+***********************************************************************************************************************************/
+static void *
+memAllocReuse(const size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    // Reuse a retained block of the same size when large enough to be worth recycling
+    if (size >= MEM_FREE_LIST_THRESHOLD)
+    {
+        for (unsigned int bucketIdx = 0; bucketIdx < memFreeList.bucketListSize; bucketIdx++)
+        {
+            MemFreeBucket *const bucket = &memFreeList.bucket[bucketIdx];
+
+            if (bucket->size == size && bucket->blockListSize > 0)
+            {
+                void *const result = bucket->block[--bucket->blockListSize];
+                memFreeList.size -= size;
+
+                // Count the reuse up to a limit so a bucket that stops being reused cannot resist eviction indefinitely
+                if (bucket->reuse < MEM_FREE_LIST_REUSE_MAX)
+                    bucket->reuse++;
+
+                // Restore uninitialized-read and bounds detection for the recycled block (matches malloc semantics)
+                VALGRIND_MAKE_MEM_UNDEFINED(result, size);
+
+                FUNCTION_TEST_RETURN_P(VOID, result);
+            }
+        }
+    }
+
+    FUNCTION_TEST_RETURN_P(VOID, memAllocInternal(size));
+}
+
+/***********************************************************************************************************************************
+Free, retaining large blocks for reuse instead of returning them to the allocator
+***********************************************************************************************************************************/
+static void
+memFreeReuse(MemContextAlloc *const alloc)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, alloc);
+    FUNCTION_TEST_END();
+
+    ASSERT(alloc != NULL);
+
+    // Read the size before the block is poisoned for Valgrind
+    const size_t size = alloc->size;
+
+    // Retain the block for reuse when large enough and the retained memory limit will not be exceeded
+    if (size >= MEM_FREE_LIST_THRESHOLD && memFreeList.size + size <= MEM_FREE_LIST_BYTE_MAX)
+    {
+        // Find the bucket for this exact size
+        MemFreeBucket *bucket = NULL;
+
+        for (unsigned int bucketIdx = 0; bucketIdx < memFreeList.bucketListSize; bucketIdx++)
+        {
+            if (memFreeList.bucket[bucketIdx].size == size)
+            {
+                bucket = &memFreeList.bucket[bucketIdx];
+                break;
+            }
+        }
+
+        // Create a bucket for this size if there is none and there is room for one. The reuse starts at one so a new bucket is not
+        // evicted before it has had a chance to be reused, which would leave two sizes trading the same slot and never settling.
+        if (bucket == NULL && memFreeList.bucketListSize < MEM_FREE_LIST_SIZE_MAX)
+        {
+            bucket = &memFreeList.bucket[memFreeList.bucketListSize++];
+            *bucket = (MemFreeBucket){.size = (unsigned int)size, .reuse = 1};
+        }
+        // Otherwise evict the least reused bucket to claim its slot, ignoring the reserved bucket 0. The reuse of every remaining
+        // bucket is then decremented so a bucket that was reused a lot but is no longer being reused erodes over time and is
+        // eventually evicted. Specialized one-off sizes never get reused so they erode immediately and the buckets settle on the
+        // sizes that recur.
+        else if (bucket == NULL)
+        {
+            unsigned int evictIdx = 1;
+
+            for (unsigned int bucketIdx = 2; bucketIdx < MEM_FREE_LIST_SIZE_MAX; bucketIdx++)
+            {
+                if (memFreeList.bucket[bucketIdx].reuse < memFreeList.bucket[evictIdx].reuse)
+                    evictIdx = bucketIdx;
+            }
+
+            for (unsigned int bucketIdx = 1; bucketIdx < MEM_FREE_LIST_SIZE_MAX; bucketIdx++)
+            {
+                if (memFreeList.bucket[bucketIdx].reuse > 0)
+                    memFreeList.bucket[bucketIdx].reuse--;
+            }
+
+            bucket = &memFreeList.bucket[evictIdx];
+
+            // Return the evicted bucket's retained blocks to the allocator
+            while (bucket->blockListSize > 0)
+            {
+                memFreeInternal(bucket->block[--bucket->blockListSize]);
+                memFreeList.size -= bucket->size;
+            }
+
+            *bucket = (MemFreeBucket){.size = (unsigned int)size, .reuse = 1};
+        }
+
+        // Retain the block if there is room in the bucket
+        if (bucket->blockListSize < MEM_FREE_LIST_BLOCK_MAX)
+        {
+            bucket->block[bucket->blockListSize++] = alloc;
+            memFreeList.size += size;
+
+            // Poison so use-after-free is still detected while the block is retained
+            VALGRIND_MAKE_MEM_NOACCESS(alloc, size);
+
+            FUNCTION_TEST_RETURN_VOID();
+        }
+    }
+
+    // Otherwise return the block to the allocator
+    memFreeInternal(alloc);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+memContextFreeListReserve(const size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    // Reserve the first bucket for allocations of this size (plus the allocation header) so the size that churns most, e.g.
+    // buffer size, always has a bucket and is checked first. The first bucket is permanently reserved and never assigned by
+    // memFreeReuse(), so this can be called at any time, but the bucket must only be reserved once.
+    ASSERT(memFreeList.bucket[0].size == 0);
+
+    memFreeList.bucket[0].size = (unsigned int)(sizeof(MemContextAlloc) + size);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Find space for a new mem context
 ***********************************************************************************************************************************/
 static unsigned int
@@ -733,7 +924,7 @@ memContextAllocNew(const size_t size)
     FUNCTION_TEST_END();
 
     // Allocate memory
-    MemContextAlloc *const result = memAllocInternal(sizeof(MemContextAlloc) + size);
+    MemContextAlloc *const result = memAllocReuse(sizeof(MemContextAlloc) + size);
 
     // Find space for the new allocation
     MemContext *const contextCurrent = memContextStack[memContextCurrentStackIdx].memContext;
@@ -913,8 +1104,8 @@ memFree(void *const buffer)
         contextAlloc->list[alloc->allocIdx] = NULL;
     }
 
-    // Free the allocation
-    memFreeInternal(alloc);
+    // Free the allocation, retaining it for reuse if large enough
+    memFreeReuse(alloc);
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1338,7 +1529,7 @@ memContextFreeRecurse(MemContext *const this)
             MemContextAllocOne *const contextAlloc = memContextAllocOne(this);
 
             if (contextAlloc->alloc != NULL)
-                memFreeInternal(contextAlloc->alloc);
+                memFreeReuse(contextAlloc->alloc);
         }
         else
         {
@@ -1348,7 +1539,7 @@ memContextFreeRecurse(MemContext *const this)
 
             for (unsigned int allocIdx = 0; allocIdx < contextAlloc->listSize; allocIdx++)
                 if (contextAlloc->list[allocIdx] != NULL)
-                    memFreeInternal(contextAlloc->list[allocIdx]);
+                    memFreeReuse(contextAlloc->list[allocIdx]);
 
             memFreeInternal(contextAlloc->list);
         }
