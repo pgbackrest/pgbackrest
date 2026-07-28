@@ -23,11 +23,12 @@
 #         because it is used to implement the error handling, so it must do error testing in a more primitive way.
 #     * harness - Adds a harness module that contains functions to aid in testing. For example, the "log" harness includes the
 #         harness/log module to aid in expect log testing.
-#       * shim - list of modules that are shimmed in the harness. This allows the harness to access static elements of the module to
-#         provide additional services for unit testing. A shim can have a 'function' list. In this case the listed functions in the
-#         C module will be appended with _SHIMMED and an implementation with the same function signature must be provided in the
-#         harness. Generally speaking this function will default to calling the original function, but after some initialization the
-#         shim may implement other logic that is useful for unit testing.
+#       * shim - list of modules that are shimmed in the harness, included in the order listed. This allows the harness to access
+#         static elements of the module to provide additional services for unit testing. An entry is either a bare module name or a
+#         map with a name and a 'function' list. In the latter case the listed functions in the C module will be appended with
+#         _SHIMMED and an implementation with the same function signature must be provided in the harness. Generally speaking this
+#         function will default to calling the original function, but after some initialization the shim may implement other logic
+#         that is useful for unit testing.
 #     * depend - Source modules that this test depends on that have not already been included in prior tests via coverage. Ideally
 #         this option would never be used because it is essentially documenting cross-dependencies in the code.
 #     * total - total runs in the test
@@ -52,7 +53,7 @@ unit:
         harness:
           name: error
           shim:
-            common/error/error: ~
+            - common/error/error
 
         coverage:
           - common/error/error
@@ -68,7 +69,7 @@ unit:
         harness:
           name: stackTrace
           shim:
-            common/stackTrace:
+            - name: common/stackTrace
               function:
                 - stackTraceBackCallback
 
@@ -116,7 +117,7 @@ unit:
         harness:
           name: time
           shim:
-            common/time:
+            - name: common/time
               function:
                 - timeMSec
 
@@ -177,7 +178,7 @@ unit:
         harness:
           name: errorRetry
           shim:
-            common/error/retry:
+            - name: common/error/retry
               function:
                 - errRetryMessage
 
@@ -221,7 +222,7 @@ unit:
         harness:
           name: log
           shim:
-            common/log: ~
+            - common/log
 
         coverage:
           - common/log
@@ -295,10 +296,10 @@ unit:
           - pack
           - name: fd
             shim:
-              common/io/fd:
+              - name: common/io/fd
                 function:
                   - fdReady
-              common/io/fdWrite:
+              - name: common/io/fdWrite
                 function:
                   - ioFdWriteInternal
 
@@ -366,7 +367,7 @@ unit:
         harness:
           name: storage
           shim:
-            storage/posix/storage: ~
+            - storage/posix/storage
 
         coverage:
           - common/crypto/cipherBlock
@@ -383,7 +384,7 @@ unit:
           - server
           - name: socket
             shim:
-              common/io/socket/client:
+              - name: common/io/socket/client
                 function:
                   - sckClientOpen
                   - sckClientOpenWait
@@ -443,15 +444,15 @@ unit:
         harness:
           - name: config
             shim:
-              config/load: ~
+              - config/load
           - name: lock
             shim:
-              common/lock:
+              - name: common/lock
                 function:
                   - lockInit
           - name: storageHelper
             shim:
-              storage/helper:
+              - name: storage/helper
                 function:
                   - storageRepoGet
 
@@ -490,7 +491,7 @@ unit:
         harness:
           name: protocol
           shim:
-            protocol/helper:
+            - name: protocol/helper
               function:
                 - protocolLocalExec
                 - protocolRemoteExec
@@ -776,7 +777,7 @@ unit:
         harness:
           name: manifest
           shim:
-            info/manifest/manifest: ~
+            - info/manifest/manifest
 
         coverage:
           - info/manifest/manifest
@@ -935,13 +936,13 @@ unit:
           - name: backup
             integration: false
             shim:
-              command/backup/backup:
+              - name: command/backup/backup
                 function:
                   - backupProcess:
                       inc: process
           - name: blockIncr
             shim:
-              command/restore/blockDelta: ~
+              - command/restore/blockDelta
 
         coverage:
           - command/backup/backup

@@ -13,6 +13,94 @@ Parse Define Yaml
 #include "command/test/define.h"
 
 /***********************************************************************************************************************************
+Parse a single shim entry (either a bare module name or a map with name/function)
+***********************************************************************************************************************************/
+static void
+testDefParseShim(Yaml *const yaml, StringList *const harnessIncludeList, List *const shimList)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(YAML, yaml);
+        FUNCTION_LOG_PARAM(STRING_LIST, harnessIncludeList);
+        FUNCTION_LOG_PARAM(LIST, shimList);
+    FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    // A bare scalar is a module that is shimmed but has no shimmed functions
+    if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
+    {
+        strLstAdd(harnessIncludeList, yamlScalarNext(yaml).value);
+    }
+    // Else a map with the module name and the functions to shim
+    else
+    {
+        TestDefShim testDefShim = {0};
+        List *const functionList = lstNewP(sizeof(TestDefShimFunction));
+
+        YAML_MAP_BEGIN(yaml)
+        {
+            const String *const key = yamlScalarNext(yaml).value;
+
+            if (strEqZ(key, "name"))
+            {
+                testDefShim.name = yamlScalarNext(yaml).value;
+                strLstAdd(harnessIncludeList, testDefShim.name);
+            }
+            else
+            {
+                CHECK_FMT(AssertError, strEqZ(key, "function"), "invalid key '%s'", strZ(key));
+
+                YAML_SEQ_BEGIN(yaml)
+                {
+                    TestDefShimFunction function = {0};
+
+                    // A bare scalar is a function defined in the shim module
+                    if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
+                    {
+                        function.name = yamlScalarNext(yaml).value;
+                    }
+                    // Else a map, e.g. "- func: {inc: mod}", where the function is defined in the included module
+                    else
+                    {
+                        YAML_MAP_BEGIN(yaml)
+                        {
+                            function.name = yamlScalarNext(yaml).value;
+
+                            YAML_MAP_BEGIN(yaml)
+                            {
+                                yamlScalarNextCheckZ(yaml, "inc");
+                                function.inc = yamlScalarNext(yaml).value;
+                            }
+                            YAML_MAP_END();
+                        }
+                        YAML_MAP_END();
+                    }
+
+                    // Copy the strings into the list context since they are referenced after parsing
+                    MEM_CONTEXT_OBJ_BEGIN(functionList)
+                    {
+                        function.name = strDup(function.name);
+                        function.inc = strDup(function.inc);
+                    }
+                    MEM_CONTEXT_OBJ_END();
+
+                    lstAdd(functionList, &function);
+                }
+                YAML_SEQ_END();
+            }
+        }
+        YAML_MAP_END();
+
+        CHECK(AssertError, testDefShim.name != NULL, "shim name is required");
+
+        testDefShim.functionList = functionList;
+        lstAdd(shimList, &testDefShim);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Parse a single harness entry (either a bare name or a map with name/integration/shim)
 ***********************************************************************************************************************************/
 static void
@@ -28,6 +116,7 @@ testDefParseHarness(Yaml *const yaml, List *const globalHarnessList, List *const
 
     TestDefHarness testDefHarness = {.integration = true};
     StringList *harnessIncludeList = strLstNew();
+    List *const shimList = lstNewP(sizeof(TestDefShim));
 
     if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
     {
@@ -51,79 +140,25 @@ testDefParseHarness(Yaml *const yaml, List *const globalHarnessList, List *const
             {
                 CHECK_FMT(AssertError, strEqZ(type, "shim"), "invalid key '%s'", strZ(type));
 
-                YAML_MAP_BEGIN(yaml)
+                // Shim modules are included in the harness in the order listed
+                YAML_SEQ_BEGIN(yaml)
                 {
-                    const String *const shim = yamlScalarNext(yaml).value;
-                    strLstAdd(harnessIncludeList, shim);
-
-                    if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
-                    {
-                        yamlScalarNext(yaml);
-                    }
-                    else
-                    {
-                        TestDefShim testDefShim =
-                        {
-                            .name = shim,
-                            .integration = testDefHarness.integration,
-                            .functionList = lstNewP(sizeof(TestDefShimFunction)),
-                        };
-
-                        YAML_MAP_BEGIN(yaml)
-                        {
-                            yamlScalarNextCheckZ(yaml, "function");
-
-                            List *const functionList = lstNewP(sizeof(TestDefShimFunction));
-
-                            YAML_SEQ_BEGIN(yaml)
-                            {
-                                TestDefShimFunction function = {0};
-
-                                // A bare scalar is a function defined in the shim module
-                                if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
-                                {
-                                    function.name = yamlScalarNext(yaml).value;
-                                }
-                                // Else a map, e.g. "- func: {inc: mod}", where the function is defined in the included module
-                                else
-                                {
-                                    YAML_MAP_BEGIN(yaml)
-                                    {
-                                        function.name = yamlScalarNext(yaml).value;
-
-                                        YAML_MAP_BEGIN(yaml)
-                                        {
-                                            yamlScalarNextCheckZ(yaml, "inc");
-                                            function.inc = yamlScalarNext(yaml).value;
-                                        }
-                                        YAML_MAP_END();
-                                    }
-                                    YAML_MAP_END();
-                                }
-
-                                // Copy the strings into the list context since they are referenced after parsing
-                                MEM_CONTEXT_OBJ_BEGIN(functionList)
-                                {
-                                    function.name = strDup(function.name);
-                                    function.inc = strDup(function.inc);
-                                }
-                                MEM_CONTEXT_OBJ_END();
-
-                                lstAdd(functionList, &function);
-                            }
-                            YAML_SEQ_END();
-
-                            testDefShim.functionList = functionList;
-                        }
-                        YAML_MAP_END();
-
-                        lstAdd(globalShimList, &testDefShim);
-                    }
+                    testDefParseShim(yaml, harnessIncludeList, shimList);
                 }
-                YAML_MAP_END();
+                YAML_SEQ_END();
             }
         }
         YAML_MAP_END();
+    }
+
+    // Apply the harness integration flag to its shims. This is done after the harness has been parsed so the flag applies no matter
+    // what order the keys appear in.
+    for (unsigned int shimIdx = 0; shimIdx < lstSize(shimList); shimIdx++)
+    {
+        TestDefShim *const testDefShim = lstGet(shimList, shimIdx);
+
+        testDefShim->integration = testDefHarness.integration;
+        lstAdd(globalShimList, testDefShim);
     }
 
     testDefHarness.includeList = harnessIncludeList;
