@@ -1,0 +1,318 @@
+"""Parse Define Yaml.
+
+Keys are looked up by name so only the sequences carry order, which is what YAML guarantees.
+
+Definitions accumulate as the file is read: a test inherits the coverage, harnesses, shims, and features declared by every test
+before it, which is why the module list is built in a single pass over unit, integration, and then performance."""
+
+####################################################################################################################################
+import os
+
+import yaml
+
+from common.error import TestError, check
+
+# Test types, in the order they are declared in define.yaml and accumulated
+TEST_TYPE_UNIT = "unit"
+TEST_TYPE_INTEGRATION = "integration"
+TEST_TYPE_PERFORMANCE = "performance"
+
+TEST_TYPE_LIST = (TEST_TYPE_UNIT, TEST_TYPE_INTEGRATION, TEST_TYPE_PERFORMANCE)
+
+# Language a test module is written in. A C test is generated and compiled into a binary while a python test is run directly.
+TEST_LANG_C = "c"
+TEST_LANG_PYTHON = "python"
+
+TEST_LANG_LIST = (TEST_LANG_C, TEST_LANG_PYTHON)
+
+
+####################################################################################################################################
+class TestDefCoverage:
+    """A code module covered by a test module."""
+
+    def __init__(self, name, coverable, included):
+        self.name = name
+        self.coverable = coverable  # Does this code module include coverable code?
+        self.included = included  # Is this module included in another module?
+
+
+####################################################################################################################################
+class TestDefShimFunction:
+    """A function that the harness shims."""
+
+    def __init__(self, name, inc):
+        self.name = name
+        self.inc = inc  # Included module the function is defined in, or None when it is in the shim module
+
+
+####################################################################################################################################
+class TestDefShim:
+    """A code module that the harness shims."""
+
+    def __init__(self, name, integration, function_list):
+        self.name = name
+        self.integration = integration  # Include in integration tests?
+        self.function_list = function_list
+
+
+####################################################################################################################################
+class TestDefHarness:
+    """A harness module."""
+
+    def __init__(self, name, integration, include_list):
+        self.name = name
+        self.integration = integration  # Include in integration tests?
+        self.include_list = include_list  # Modules included directly in the harness, in the order they are included
+
+
+####################################################################################################################################
+class TestDefModule:
+    """A test module."""
+
+    def __init__(self, name, type):
+        self.name = name
+        self.type = type
+        self.lang = TEST_LANG_C  # Language the test module is written in
+        self.vm_list = []  # Vms the test runs on, empty for all of them
+        self.total = 0  # Total sub-tests
+        self.pg_required = False  # Is PostgreSQL required?
+        self.bin_required = False  # Is the pgbackrest binary required?
+        self.container_required = False  # Is a container required?
+        self.flag = None  # Compilation flags
+        self.feature = None  # Feature this module introduces
+        self.feature_list = []  # Features available to this module
+        self.coverage_list = []  # Code modules covered by this test module
+        self.depend_list = []  # Code modules this test module depends on
+        self.include_list = []  # Additional code modules to include in the test module
+        self.harness_list = []  # Harnesses used by this test
+        self.shim_list = []  # Shims used by this test
+
+    ################################################################################################################################
+    def coverage_find(self, name):
+        """Find a coverage entry by code module name, or None when the module is not covered."""
+
+        for coverage in self.coverage_list:
+            if coverage.name == name:
+                return coverage
+
+        return None
+
+    ################################################################################################################################
+    def shim_find(self, name):
+        """Find a shim by code module name, or None when the module is not shimmed."""
+
+        for shim in self.shim_list:
+            if shim.name == name:
+                return shim
+
+        return None
+
+
+####################################################################################################################################
+def _parse_shim(shim, harness_include_list, shim_list):
+    """Parse a single shim entry, either a bare module name or a map with a name and a function list."""
+
+    # A bare scalar is a module that is shimmed but has no shimmed functions
+    if isinstance(shim, str):
+        harness_include_list.append(shim)
+
+        return
+
+    function_list = []
+
+    for key, value in shim.items():
+        if key == "name":
+            continue
+
+        check(key == "function", "invalid key '%s'" % key)
+
+        for function in value:
+            # A bare scalar is a function defined in the shim module, else a map naming the included module it is defined in
+            if isinstance(function, str):
+                function_list.append(TestDefShimFunction(function, None))
+            else:
+                for name, detail in function.items():
+                    function_list.append(TestDefShimFunction(name, detail["inc"]))
+
+    check("name" in shim, "shim name is required")
+
+    harness_include_list.append(shim["name"])
+    shim_list.append(TestDefShim(shim["name"], True, function_list))
+
+
+####################################################################################################################################
+def _parse_harness(harness, global_harness_list, global_shim_list):
+    """Parse a single harness entry, either a bare name or a map with a name, integration flag, and shims."""
+
+    if isinstance(harness, str):
+        global_harness_list.append(TestDefHarness(harness, True, []))
+
+        return
+
+    include_list = []
+    shim_list = []
+
+    for key, value in harness.items():
+        if key in ("name", "integration"):
+            continue
+
+        check(key == "shim", "invalid key '%s'" % key)
+
+        # Shim modules are included in the harness in the order listed
+        for shim in value:
+            _parse_shim(shim, include_list, shim_list)
+
+    integration = harness.get("integration", True)
+
+    # Apply the harness integration flag to its shims now that the whole harness has been parsed
+    for shim in shim_list:
+        shim.integration = integration
+        global_shim_list.append(shim)
+
+    global_harness_list.append(TestDefHarness(harness["name"], integration, include_list))
+
+
+####################################################################################################################################
+def _parse_coverage(coverage_list_raw):
+    """Parse the coverage list, which holds either a bare code module name or a map tagging it noCode or included."""
+
+    result = []
+
+    for coverage in coverage_list_raw:
+        if isinstance(coverage, str):
+            entry = TestDefCoverage(coverage, True, False)
+        else:
+            for name, type in coverage.items():
+                check(type in ("included", "noCode"), "invalid coverage type %s" % type)
+
+                entry = TestDefCoverage(name, type == "included", True)
+
+        result.append(entry)
+
+    return result
+
+
+####################################################################################################################################
+# Parse a single test module
+# Keys a module may define. Language and vm are set here when they apply to every test in the module.
+_GROUP_KEY_LIST = ("db", "lang", "name", "test", "vm")
+
+# Keys a test may define. Coverage is applied before depend so the depend list is built in a fixed order no matter how the keys are
+# written, since a mapping does not carry order.
+_MODULE_KEY_LIST = (
+    "binReq",
+    "containerReq",
+    "coverage",
+    "define",
+    "depend",
+    "feature",
+    "harness",
+    "include",
+    "lang",
+    "name",
+    "total",
+    "vm",
+)
+
+
+####################################################################################################################################
+def _parse_module(test, module, type, state):
+    """Parse a single test module."""
+
+    module_name = module["name"]
+
+    for key in test:
+        check(key in _MODULE_KEY_LIST, "unexpected keyword '%s' in test '%s/%s'" % (key, module_name, test.get("name")))
+
+    result = TestDefModule("%s/%s" % (module_name, test["name"]), type)
+
+    # Language and vm may be set for the whole module and overridden by a test
+    result.lang = test.get("lang", module.get("lang", TEST_LANG_C))
+
+    check(result.lang in TEST_LANG_LIST, "invalid lang '%s' in test '%s'" % (result.lang, result.name))
+
+    result.vm_list = list(test.get("vm", module.get("vm", [])))
+
+    # Integration tests declare at the module level whether they run against multiple PostgreSQL versions
+    result.pg_required = module.get("db", False) if type == TEST_TYPE_INTEGRATION else False
+    result.total = test.get("total", 0)
+    result.bin_required = test.get("binReq", False)
+    result.container_required = test.get("containerReq", False)
+    result.flag = test.get("define")
+    result.feature = test.get("feature")
+    result.include_list = list(test.get("include", []))
+
+    # Each language accumulates its own dependencies. A test may use what it declares plus everything covered by the tests before
+    # it, which is what makes the module order in this file a documented hierarchy rather than a formality.
+    depend_state = state["depend"][result.lang]
+
+    if "coverage" in test:
+        result.coverage_list = _parse_coverage(test["coverage"])
+
+        for coverage in result.coverage_list:
+            if coverage.coverable and not coverage.included and coverage.name not in depend_state:
+                depend_state.append(coverage.name)
+
+    for depend in test.get("depend", []):
+        if depend not in depend_state:
+            depend_state.append(depend)
+
+    if "harness" in test:
+        harness = test["harness"]
+
+        # Harness may be a single entry (bare name or map) or a sequence of entries
+        for entry in harness if isinstance(harness, list) else [harness]:
+            _parse_harness(entry, state["harness"], state["shim"])
+
+    # The depend list is the accumulated list minus anything this module already covers or includes
+    result.depend_list = [
+        depend for depend in depend_state if result.coverage_find(depend) is None and depend not in result.include_list
+    ]
+
+    # Harnesses and shims accumulate across tests, so this test gets everything declared so far
+    result.harness_list = [TestDefHarness(h.name, h.integration, list(h.include_list)) for h in state["harness"]]
+    result.shim_list = [TestDefShim(s.name, s.integration, list(s.function_list)) for s in state["shim"]]
+    result.feature_list = list(state["feature"])
+
+    if result.feature is not None:
+        result.feature = result.feature.upper()
+        state["feature"].append(result.feature)
+
+    return result
+
+
+####################################################################################################################################
+def test_def_parse(path_repo):
+    """Parse define.yaml into the list of test modules."""
+
+    path_define = os.path.join(path_repo, "test/define.yaml")
+
+    with open(path_define, "r") as file:
+        define = yaml.safe_load(file)
+
+    result = []
+
+    # Lists that accumulate across every test in the file, in declaration order. Dependencies accumulate per language since a C
+    # test cannot compile a python module and a python test cannot import a C one.
+    state = {"depend": {lang: [] for lang in TEST_LANG_LIST}, "feature": [], "harness": [], "shim": []}
+
+    for type in TEST_TYPE_LIST:
+        for module in define[type]:
+            for key in module:
+                check(key in _GROUP_KEY_LIST, "unexpected keyword '%s' in module '%s'" % (key, module.get("name")))
+
+            for test in module["test"]:
+                result.append(_parse_module(test, module, type, state))
+
+    return result
+
+
+####################################################################################################################################
+def test_def_find(module_list, name):
+    """Find a test module by name."""
+
+    for module in module_list:
+        if module.name == name:
+            return module
+
+    raise TestError("'%s' is not a valid test" % name)

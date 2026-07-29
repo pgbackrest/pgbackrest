@@ -43,9 +43,9 @@ jobs:
         with:
           path: pgbackrest
 
-      # Check that the smoke test, the only Python file, is formatted. On failure the exact command to fix it is printed so it can
-      # be copied and run locally. This runs before the C format check because that check runs ci.pl, which removes passwordless
-      # sudo, and installing black needs it.
+      # Check that the Python is formatted. On failure the exact command to fix it is printed so it can be copied and run locally.
+      # This runs before the C format check because that check runs ci.pl, which removes passwordless sudo, and installing black
+      # needs it.
       - name: Check Python Format
         run: |
           sudo apt-get update
@@ -53,11 +53,11 @@ jobs:
 
           cd ${GITHUB_WORKSPACE?}/pgbackrest
 
-          if ! black --check --diff --line-length=132 test/smoke.py; then
+          if ! black --check --diff --line-length=132 test/smoke.py test/test.py test/lib test/src/module/test; then
               echo
-              echo "ERROR: test/smoke.py is not formatted correctly. Run this from the pgbackrest path to fix it:"
+              echo "ERROR: Python is not formatted correctly. Run this from the pgbackrest path to fix it:"
               echo
-              echo "    black --line-length=132 test/smoke.py"
+              echo "    black --line-length=132 test/smoke.py test/test.py test/lib test/src/module/test"
               echo
               exit 1
           fi

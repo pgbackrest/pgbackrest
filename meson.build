@@ -287,10 +287,9 @@ subdir('src')
 # out all subdirs, which excludes the smoke test from them.
 subdir('test')
 
-# The doc and test tools generate code and are not built from a distribution tarball
+# The doc tool generates code and is not built from a distribution tarball
 if not dist
     subdir('doc/src')
-    subdir('test/src')
 
     # Bake the generated files and the dist marker into the tarball so it builds without the code generation tooling
     meson.add_dist_script('src/build/dist.sh')

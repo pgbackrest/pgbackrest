@@ -489,9 +489,33 @@ sub containerBuild
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
                 "        libssh2-devel zstd libzstd-devel systemd-devel";
 
-            if ($strOS eq VM_RH9 || $strOS eq VM_RH10)
+            if ($strOS ne VM_RH8)
             {
                 $strScript .= " valgrind";
+            }
+
+            # Coverage for the python tests. rh10 and later package a version new enough while rh9 packages one that predates the
+            # per line branch detail the report needs, so there it comes from pip below.
+            if ($strOS eq VM_RH9)
+            {
+                $strScript .= " python3-pip";
+            }
+            elsif ($strOS ne VM_RH8)
+            {
+                $strScript .= " python3-coverage";
+            }
+
+            # The test harness needs a python3 that PyYAML is packaged for. On RH8 that is not the platform python, which meson
+            # installs and which claims the python3 alternative at a priority nothing else can outrank, so point it explicitly.
+            if ($strOS eq VM_RH8)
+            {
+                $strScript .=
+                    " python3.12 python3.12-pyyaml && \\\n" .
+                    "    alternatives --set python3 /usr/bin/python3.12";
+            }
+            else
+            {
+                $strScript .= " python3-pyyaml";
             }
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
@@ -504,11 +528,17 @@ sub containerBuild
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
-                "        libssh2-1-dev libcurl4-openssl-dev libsystemd-dev";
+                "        libssh2-1-dev libcurl4-openssl-dev libsystemd-dev python3-yaml";
 
-            if ($strOS eq VM_U22 || $strOS eq VM_U24)
+            if ($strOS ne VM_D12)
             {
                 $strScript .= " valgrind";
+            }
+
+            # Coverage for the python tests, which are run on u24 and later
+            if ($strOS ne VM_D12 && $strOS ne VM_U22)
+            {
+                $strScript .= " python3-coverage";
             }
 
             $strScript .= ' zstd libzstd-dev';
@@ -520,7 +550,16 @@ sub containerBuild
                 "    apk add --no-cache sudo openssh git rsync tzdata openssh ca-certificates openrc bash && \\\n" .
                 "    rc-update add sshd && \\\n" .
                 "    apk add --no-cache meson build-base libpq-dev openssl-dev libxml2-dev pkgconfig lz4-dev bzip2-dev\\\n" .
-                "        openssh-keygen zlib-dev yaml-dev libssh2-dev perl perl-yaml-libyaml valgrind lz4 zstd zstd-dev";
+                "        openssh-keygen zlib-dev yaml-dev libssh2-dev perl perl-yaml-libyaml valgrind lz4 zstd zstd-dev py3-yaml";
+        }
+
+        # Coverage for python tests where the packaged version predates the per line branch detail the report needs, so it comes
+        # from pip rather than from the distribution
+        if ($strOS eq VM_RH9)
+        {
+            $strScript .= sectionHeader() .
+                "# Install python coverage\n" .
+                "    pip3 install --no-cache-dir 'coverage>=6.5'";
         }
 
         #---------------------------------------------------------------------------------------------------------------------------

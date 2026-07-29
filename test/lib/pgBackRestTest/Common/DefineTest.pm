@@ -47,6 +47,12 @@ use constant TESTDEF_COVERAGE                                       => 'coverage
     push @EXPORT, qw(TESTDEF_COVERAGE);
 use constant TESTDEF_C                                              => 'c';
     push @EXPORT, qw(TESTDEF_C);
+use constant TESTDEF_LANG                                           => 'lang';
+    push @EXPORT, qw(TESTDEF_LANG);
+use constant TESTDEF_LANG_PYTHON                                    => 'python';
+    push @EXPORT, qw(TESTDEF_LANG_PYTHON);
+use constant TESTDEF_PYTHON                                         => 'python';
+    push @EXPORT, qw(TESTDEF_PYTHON);
 use constant TESTDEF_INCLUDE                                        => 'include';
     push @EXPORT, qw(TESTDEF_INCLUDE);
 use constant TESTDEF_INDIVIDUAL                                     => 'individual';
@@ -135,8 +141,13 @@ sub testDefLoad
                     }
                 }
 
-                # Set module type variables
+                # Set module type variables. A python test runs natively like a C test, i.e. it does not require a container, but it
+                # is not built so it is flagged separately. Language may be set for the whole module and overridden by a test.
+                my $strLang = coalesce($hModuleTest->{&TESTDEF_LANG}, $hModule->{&TESTDEF_LANG});
+
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_TYPE} = $strModuleType;
+                $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_PYTHON} =
+                    defined($strLang) && $strLang eq TESTDEF_LANG_PYTHON ? true : false;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_C} =
                     $strModuleType ne TESTDEF_INTEGRATION && $strTest !~ /perl$/ ? true : false;
                 $hTestDefHash->{$strModule}{$strTest}{&TESTDEF_INTEGRATION} = $strModuleType eq TESTDEF_INTEGRATION ? true : false;

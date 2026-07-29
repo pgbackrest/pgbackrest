@@ -44,6 +44,8 @@ use constant TEST_RUN                                               => 'run';
     push @EXPORT, qw(TEST_RUN);
 use constant TEST_VM                                                => 'os';
     push @EXPORT, qw(TEST_VM);
+use constant TEST_PYTHON                                            => 'python';
+    push @EXPORT, qw(TEST_PYTHON);
 
 ####################################################################################################################################
 # testListGet
@@ -171,6 +173,7 @@ sub testListGet
                                         &TEST_INTEGRATION => $hTest->{&TESTDEF_INTEGRATION},
                                         &TEST_MODULE => $strModule,
                                         &TEST_NAME => $strModuleTest,
+                                        &TEST_PYTHON => $hTest->{&TESTDEF_PYTHON},
                                         &TEST_RUN =>
                                             $iTestRunIdx == -1 ? (@{$iyModuleTestRun} == 0 ? undef : $iyModuleTestRun) :
                                                 [$iTestRunIdx],

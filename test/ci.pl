@@ -133,7 +133,8 @@ eval
     processBegin('install common packages');
     processExec('sudo apt-get -qq update', {bSuppressStdErr => true, bSuppressError => true});
     processExec(
-        'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y meson libxml-checker-perl libyaml-perl', {bSuppressStdErr => true});
+        'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y meson libxml-checker-perl libyaml-perl python3-yaml',
+        {bSuppressStdErr => true});
     processEnd();
 
     if (!$bNoTempFs)

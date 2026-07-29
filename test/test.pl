@@ -454,9 +454,9 @@ eval
 
     # Set the ccache path
     #-------------------------------------------------------------------------------------------------------------------------------
-    # A single cache is shared by the host and all containers so a file compiled in one is a hit in the others, e.g.
-    # test-pgbackrest is built both on the host and in the build container. ccache is safe for concurrent access so there is no
-    # need to keep a separate cache per vm or vm index. Keep the cache in the test path so it is removed by --clean.
+    # A single cache is shared by the host and all containers so a file compiled in one is a hit in the others, e.g. a module
+    # compiled for one unit test is a hit for every other unit test that includes it. ccache is safe for concurrent access so there
+    # is no need to keep a separate cache per vm or vm index. Keep the cache in the test path so it is removed by --clean.
     my $strCCachePath = "${strTestPath}/ccache";
 
     if (!$oStorageTest->pathExists($strCCachePath))
@@ -502,8 +502,7 @@ eval
         ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code config ${strBackRestBase}/src") .
         ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code error ${strBackRestBase}/src") .
         ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code postgres-version ${strBackRestBase}/src") .
-        " && \\\n${strBuildPath}/src/build-code postgres ${strBackRestBase}/src ${strRepoCachePath}" .
-        " && \\\nninja -C ${strBuildPath} test/src/test-pgbackrest 2>&1";
+        " && \\\n${strBuildPath}/src/build-code postgres ${strBackRestBase}/src ${strRepoCachePath}";
 
     if (!-e $strBuildNinja)
     {
@@ -575,6 +574,7 @@ eval
                 $strFile eq 'test/ci.pl' ||
                 $strFile eq 'test/smoke.py' ||
                 $strFile eq 'test/test.pl' ||
+                $strFile eq 'test/test.py' ||
                 $strFile eq 'src/build/dist.sh' ||
                 $hManifest->{$strFile}{type} eq 'd')
             {
@@ -609,7 +609,7 @@ eval
         # Determine if the C binary needs to be built
         foreach my $hTest (@{$oyTestRun})
         {
-            # Unit build required for unit tests
+            # The build path is mounted into the test container so it must exist for unit tests even when nothing is built there
             if ($hTest->{&TEST_C})
             {
                 $bUnitRequired = true;
@@ -649,24 +649,25 @@ eval
 
                     &log(INFO, (!-e $strBuildNinja ? 'clean ' : '') . "build for ${strBuildVM} (${strBuildPath})");
 
-                    # Setup build if it does not exist
-                    my $strBuildCommand =
-                        "ninja -C ${strBuildPath}" . ($bBinRequired ? ' src/pgbackrest' : '') .
-                        ($bUnitRequired ? ' test/src/test-pgbackrest' : '') .  ' 2>&1';
+                    # Setup build if it does not exist. Unit tests are built from the repo copy by the test harness so there is
+                    # nothing to build here for them, but the build path is still mounted into their container so it must exist.
+                    my $strBuildCommand = $bBinRequired ? "ninja -C ${strBuildPath} src/pgbackrest 2>&1" : undef;
 
                     if (!-e $strBuildNinja)
                     {
                         $strBuildCommand =
                             "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath}" .
-                                " ${strBackRestBase} && \\\n" .
-                            $strBuildCommand;
+                                " ${strBackRestBase}" . (defined($strBuildCommand) ? " && \\\n" . $strBuildCommand : '');
                     }
 
                     # Build code
-                    executeTest(
-                        ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " test-build bash -c '" : '') .
-                            $strBuildCommand . ($strBuildVM ne VM_NONE ? "'" : ''),
-                        {bShowOutputAsync => $bLogDetail});
+                    if (defined($strBuildCommand))
+                    {
+                        executeTest(
+                            ($strBuildVM ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " test-build bash -c '" : '') .
+                                $strBuildCommand . ($strBuildVM ne VM_NONE ? "'" : ''),
+                            {bShowOutputAsync => $bLogDetail});
+                    }
                 }
             }
         }
@@ -807,8 +808,9 @@ eval
         }
 
         my $oExec = new pgBackRestTest::Common::ExecuteTest(
-            "${strBuildPath}/test/src/test-pgbackrest --log-level=warn --vm=${strVm} --repo-path=${strBackRestBase}" .
-            " --test-path=${strTestPath}" . ($bCoverageSummary ? ' --coverage-summary' : '') . " test${strModuleList}",
+            "python3 ${strBackRestBase}/test/test.py coverage --log-level=warn --vm=${strVm}" .
+            " --repo-path=${strBackRestBase} --test-path=${strTestPath}" .
+            ($bCoverageSummary ? ' --coverage-summary' : '') . $strModuleList,
             {bShowOutputAsync => true, bSuppressError => true});
         $oExec->begin();
         my $iResult = $oExec->end();

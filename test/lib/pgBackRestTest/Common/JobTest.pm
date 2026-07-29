@@ -235,6 +235,11 @@ sub run
         # Is coverage being tested?
         my $bCoverage = vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit};
 
+        # Name of the raw coverage file for this test. A python test name may contain a path separator so flatten it, since the
+        # coverage command reads the raw files from a single directory.
+        my $strCoverageName = $self->{oTest}->{&TEST_MODULE} . '-' . $self->{oTest}->{&TEST_NAME};
+        $strCoverageName =~ s/\//-/g;
+
         # Create run parameters
         my $strCommandRunParam = '';
 
@@ -253,8 +258,8 @@ sub run
 
             my $strCommand =
                 ($strVm ne VM_NONE ? "docker exec -i -u ${\TEST_USER} ${strImage} bash -l -c '\\\n" : '') .
-                $self->{strTestPath} . "/build/${strVm}/test/src/test-pgbackrest" .
-                    ' --repo-path=' . $self->{strTestPath} . '/repo' . ' --test-path=' . $self->{strTestPath} .
+                'python3 ' . $self->{strRepoPath} . '/test/test.py unit' .
+                    ' --repo-path=' . $self->{strRepoPath} . ' --test-path=' . $self->{strTestPath} .
                     " --log-level=$self->{strLogLevel}" . ' --vm=' . $self->{oTest}->{&TEST_VM} .
                     (defined($self->{strVmArch}) ? ' --vm-arch=' . $self->{strVmArch} : '') .
                     ' --vm-id=' . $self->{iVmIdx} . ($self->{bProfile} ? ' --profile' : '') . $strCommandRunParam .
@@ -262,21 +267,29 @@ sub run
                     ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
                     ($self->{iScale} ? " --scale=$self->{iScale}" : '') .
                     (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
-                    ($self->{bBackTraceUnit} ? '' : ' --no-back-trace') . ($bCoverage ? '' : ' --no-coverage') . ' test ' .
-                    $self->{oTest}->{&TEST_MODULE} . '/' . $self->{oTest}->{&TEST_NAME} . " && \\\n" .
-                # Copy stderr to both stderr and stdout so it is displayed and detected as an error. Piping to tee would mask the
-                # test exit status (the pipe returns tee's status) so save the status to a file and exit with it explicitly.
-                # Otherwise a test failure (e.g. a valgrind error) would be hidden and reported as missing coverage instead.
-                "exec 3>&1 && \\\n" .
-                '{ ' .
-                # Test with valgrind when requested
-                ($bValgrind ?
-                    'valgrind -q --gen-suppressions=all' .
-                    ($self->{oStorageTest}->exists($strValgrindSuppress) ? " --suppressions=${strValgrindSuppress}" : '') .
-                    " --exit-on-first-error=yes --leak-check=full --leak-resolution=high --error-exitcode=25" . ' ' : '') .
-                    "$self->{strUnitPath}/build/test-unit 2>&1 1>&3; echo \$? > $self->{strUnitPath}/result; } | " .
-                    "tee /dev/stderr && \\\n" .
-                "exit \$(cat $self->{strUnitPath}/result)" .
+                    ($self->{bBackTraceUnit} ? '' : ' --no-back-trace') . ($bCoverage ? '' : ' --no-coverage') .
+                    # A python test writes its own coverage since there is no gcov step for it below
+                    ($self->{oTest}->{&TEST_PYTHON} && $bCoverage ?
+                        ' --coverage-file=' . $self->{strBackRestBase} . '/test/result/coverage/raw/' .
+                        $strCoverageName . '.json' : '') . ' ' .
+                    $self->{oTest}->{&TEST_MODULE} . '/' . $self->{oTest}->{&TEST_NAME} .
+                # A python test is run by the harness above so there is no binary to run here
+                ($self->{oTest}->{&TEST_PYTHON} ? '' :
+                    " && \\\n" .
+                    # Copy stderr to both stderr and stdout so it is displayed and detected as an error. Piping to tee would mask
+                    # the test exit status (the pipe returns tee's status) so save the status to a file and exit with it
+                    # explicitly. Otherwise a test failure (e.g. a valgrind error) would be hidden and reported as missing
+                    # coverage instead.
+                    "exec 3>&1 && \\\n" .
+                    '{ ' .
+                    # Test with valgrind when requested
+                    ($bValgrind ?
+                        'valgrind -q --gen-suppressions=all' .
+                        ($self->{oStorageTest}->exists($strValgrindSuppress) ? " --suppressions=${strValgrindSuppress}" : '') .
+                        " --exit-on-first-error=yes --leak-check=full --leak-resolution=high --error-exitcode=25" . ' ' : '') .
+                        "$self->{strUnitPath}/build/test-unit 2>&1 1>&3; echo \$? > $self->{strUnitPath}/result; } | " .
+                        "tee /dev/stderr && \\\n" .
+                    "exit \$(cat $self->{strUnitPath}/result)") .
                 ($strVm ne VM_NONE ? "'" : '');
 
             my $oExec = new pgBackRestTest::Common::ExecuteTest(
@@ -333,7 +346,7 @@ sub end
         }
 
         # If C code generate profile info
-        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && $self->{bProfile})
+        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && !$self->{oTest}->{&TEST_PYTHON} && $self->{bProfile})
         {
             executeTest(
                 ($self->{oTest}->{&TEST_VM} ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
@@ -346,16 +359,20 @@ sub end
                 "$self->{strUnitPath}/gprof.txt", "$self->{strBackRestBase}/test/result/profile/gprof.txt");
         }
 
-        # If C code generate coverage info
-        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
+        # If C code generate coverage info. A python test wrote its own coverage while it ran.
+        if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && !$self->{oTest}->{&TEST_PYTHON} &&
+            vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
         {
+            my $strCoverageName = $self->{oTest}->{&TEST_MODULE} . '-' . $self->{oTest}->{&TEST_NAME};
+            $strCoverageName =~ s/\//-/g;
+
             executeTest(
                 ($self->{oTest}->{&TEST_VM} ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
                     "gcov --json-format --stdout --branch-probabilities " .
                     (-e "$self->{strUnitPath}/build/test-unit.p" ?
                         "$self->{strUnitPath}/build/test-unit.p" : "$self->{strUnitPath}/build/test-unit\@exe") .
                         '/test.c.gcda > ' . $self->{strBackRestBase} . '/test/result/coverage/raw/' .
-                        $self->{oTest}->{&TEST_MODULE} . '-' . $self->{oTest}->{&TEST_NAME} . '.json');
+                        $strCoverageName . '.json');
         }
 
         # Record elapsed time

@@ -725,27 +725,6 @@ unit:
           - build/postgres/render
 
   # ********************************************************************************************************************************
-  - name: test
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: test
-        total: 3
-
-        coverage:
-          - test/command/test/build
-          - test/command/test/define
-          - test/command/test/lint
-          - test/command/test/test
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: coverage
-        total: 1
-
-        coverage:
-          - test/command/test/coverage
-
-  # ********************************************************************************************************************************
   - name: info
 
     test:
@@ -1062,6 +1041,125 @@ unit:
           - doc/command/build/pre
           - doc/command/build/reference
           - doc/command/build/varStore
+
+  # ********************************************************************************************************************************
+  # Tests for the test harness itself. These are python so they are run directly rather than built, which means no total is needed
+  # since there are no runs to select. The harness is the same everywhere so there is nothing to gain from running these on every vm.
+  #
+  # This group is last so that nothing it declares can affect the modules compiled into any other test.
+  # ********************************************************************************************************************************
+  - name: test
+    lang: python
+    vm: [none, u24, rh9]
+
+    test:
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/error
+
+        coverage:
+          - test/common/error
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/exec
+
+        coverage:
+          - test/common/exec
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/log
+
+        coverage:
+          - test/common/log
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/storage
+
+        coverage:
+          - test/common/storage
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/string
+
+        coverage:
+          - test/common/string_id
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/render
+
+        coverage:
+          - test/common/render
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: config/cli
+
+        coverage:
+          - test/config/cli
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: config/config
+
+        coverage:
+          - test/config/config
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/test/define
+
+        coverage:
+          - test/command/test/define
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/lint/lint
+
+        coverage:
+          - test/command/lint/ascii
+          - test/command/lint/string_id
+          - test/command/lint/lint
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/test/python
+
+        coverage:
+          - test/command/test/python
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/coverage/report
+
+        coverage:
+          - test/command/coverage/report
+
+        # The report renders the coverage model, which is defined with the command that builds it
+        depend:
+          - test/command/coverage/coverage
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/coverage/filter_py
+
+        coverage:
+          - test/command/coverage/filter_py
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/coverage/filter_c
+
+        coverage:
+          - test/command/coverage/filter_c
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/coverage/coverage
+
+        coverage:
+          - test/command/coverage/coverage
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/test/build
+
+        coverage:
+          - test/command/test/build
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/test/unit
+
+        coverage:
+          - test/command/test/unit
 
 # **********************************************************************************************************************************
 # Integration tests

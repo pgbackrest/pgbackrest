@@ -95,6 +95,7 @@
                     autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config
                     libxml-checker-perl libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool
                     zstd libzstd-dev bzip2 libbz2-dev libyaml-dev ccache meson
+                    python3-yaml python3-coverage
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>

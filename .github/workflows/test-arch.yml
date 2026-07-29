@@ -59,7 +59,7 @@ jobs:
       - name: Install
         run: |
           sudo apt-get update
-          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
+          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl python3-yaml rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
           docker run --privileged --rm tonistiigi/binfmt --install all
 
       - name: Login to GHCR
