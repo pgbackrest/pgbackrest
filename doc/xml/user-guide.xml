@@ -36,7 +36,7 @@
         <variable key="os-type-is-rhel">'{[os-type]}' eq '{[os-rhel]}'</variable>
 
         <!-- Defines the container image that will be used to build the host -->
-        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:22.04</variable>
+        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:24.04</variable>
         <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:9</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
@@ -322,7 +322,13 @@
         RUN rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
             apt-get install -y --no-install-recommends sudo ssh curl vim gnupg lsb-release iputils-ping ca-certificates \
-                    tzdata locales libssh2-1-dev awscli git libyaml-dev libxml-checker-perl 2>&amp;1
+                    tzdata locales libssh2-1-dev unzip git libyaml-dev libxml-checker-perl 2>&amp;1
+
+        # Install the AWS CLI from the vendor installer since it is no longer packaged for Debian/Ubuntu
+        RUN curl -sL "https://awscli.amazonaws.com/awscli-exe-linux-`uname -m`.zip" -o /tmp/awscliv2.zip &amp;&amp; \
+            unzip -q /tmp/awscliv2.zip -d /tmp &amp;&amp; \
+            /tmp/aws/install &amp;&amp; \
+            rm -rf /tmp/awscliv2.zip /tmp/aws
 
         {[sudo-disable-core-dump]}
 
@@ -804,7 +810,8 @@
             <execute user="root" user-force="y">
                 <exe-cmd>aws configure set region {[s3-region]}</exe-cmd>
             </execute>
-            <execute if ="{[os-type-is-rhel]}" user="root" user-force="y">
+            <!-- The CA bundle must be set explicitly because the AWS CLI ships its own rather than using the system store -->
+            <execute user="root" user-force="y">
                 <exe-cmd>aws configure set ca_bundle {[ca-cert-path]}/pgbackrest-ca.crt</exe-cmd>
             </execute>
             <!-- Retry to allow time for the S3 server (SeaweedFS) to start up and for the new bucket to become available -->

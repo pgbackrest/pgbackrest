@@ -228,7 +228,7 @@ eval
 
             # Generate coverage summary
             &log(INFO, "Generate Coverage Summary");
-            executeTest("${strTestExe} --vm=u22 --no-valgrind --clean --coverage-summary", {bShowOutputAsync => true});
+            executeTest("${strTestExe} --vm=u24 --no-valgrind --clean --coverage-summary", {bShowOutputAsync => true});
         }
 
         # Remove permanent cache file
@@ -246,7 +246,7 @@ eval
         }
 
         # Generate deployment docs for Debian
-        if (!defined($strVm) || $strVm eq VM_U22)
+        if (!defined($strVm) || $strVm eq VM_U24)
         {
             &log(INFO, "Generate Debian/Ubuntu documentation");
 

@@ -29,11 +29,14 @@ jobs:
           # All integration tests
           - param: test --vm=u22 --param=module=integration
 
+          # All integration tests
+          - param: test --vm=u24 --param=module=integration
+
           # All unit tests with coverage, backtrace and alternate timezone
-          - param: test --vm=u22 --param=c-only --param=no-valgrind --param=tz=America/New_York
+          - param: test --vm=u24 --param=c-only --param=no-valgrind --param=tz=America/New_York
 
           # All unit tests with valgrind (disable coverage and backtrace for performance)
-          - param: test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
+          - param: test --vm=u24 --param=c-only --param=no-coverage --param=no-back-trace
 
           # All unit tests on the newest gcc available
           - param: test --vm=f44 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance

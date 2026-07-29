@@ -500,13 +500,13 @@ sub containerBuild
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
                 "    apt-get install -y --no-install-recommends openssh-server sudo gcc make git \\\n" .
-                "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev python3-distutils \\\n" .
+                "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
                 "        libssh2-1-dev libcurl4-openssl-dev libsystemd-dev";
 
-            if ($strOS eq VM_U22)
+            if ($strOS eq VM_U22 || $strOS eq VM_U24)
             {
                 $strScript .= " valgrind";
             }
@@ -605,7 +605,7 @@ sub containerBuild
                     $strScript .=
                         "    apt-get install -y --no-install-recommends postgresql-common && \\\n" .
                         "    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y" .
-                            ($strOS eq VM_U22 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64) ? ' -c 19' : '') .
+                            ($strOS eq VM_U24 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64) ? ' -c 19' : '') .
                             " && \\\n";
                 }
 
@@ -660,10 +660,6 @@ sub containerBuild
                     }
                     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
                     {
-                        # Disable PostgreSQL 18 on architectures that do not support it yet
-                        next if ($strDbVersion eq '18' &&
-                            !($strOS eq VM_U22 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64)));
-
                         $strScript .= " postgresql-${strDbVersion}";
                     }
                     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
@@ -737,7 +733,7 @@ sub containerBuild
                 "    echo '***********************************************' >> /etc/issue.net && \\\n" .
                 "    echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
 
-            if ($strOS eq VM_U22 || $strOS eq VM_A321)
+            if ($strOS eq VM_U22 || $strOS eq VM_U24 || $strOS eq VM_A321)
             {
                 $strScript .= sectionHeader() .
                     "    echo '# Add PubkeyAcceptedAlgorithms (required for SFTP)'              >> /etc/ssh/sshd_config && \\\n" .

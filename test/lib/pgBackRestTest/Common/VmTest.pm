@@ -92,9 +92,12 @@ use constant VM_F44                                                 => 'f44';
     push @EXPORT, qw(VM_F44);
 use constant VM_U22                                                 => 'u22';
     push @EXPORT, qw(VM_U22);
+use constant VM_U24                                                 => 'u24';
+    push @EXPORT, qw(VM_U24);
 
 # List of default test VMs
-use constant VM_LIST                                                => (VM_D12, VM_RH8, VM_RH9, VM_RH10, VM_U22, VM_A321, VM_A324);
+use constant VM_LIST                                                =>
+    (VM_D12, VM_RH8, VM_RH9, VM_RH10, VM_U22, VM_U24, VM_A321, VM_A324);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -280,6 +283,31 @@ my $oyVm =
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_96,
+            PG_VERSION_11,
+        ],
+    },
+
+    # Ubuntu 24.04
+    &VM_U24 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
+        &VM_IMAGE => 'ubuntu:24.04',
+        &VMDEF_COVERAGE_C => true,
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+
+        &VM_DB =>
+        [
+            PG_VERSION_96,
+            PG_VERSION_10,
+            PG_VERSION_11,
+            PG_VERSION_12,
+            PG_VERSION_13,
+            PG_VERSION_14,
             PG_VERSION_15,
             PG_VERSION_16,
             PG_VERSION_17,
@@ -289,8 +317,6 @@ my $oyVm =
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_96,
-            PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_19,
