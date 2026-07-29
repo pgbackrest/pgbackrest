@@ -264,26 +264,34 @@ storageWriteChunkBufferResize(const Buffer *const input, Buffer *const chunk, co
     ASSERT(chunk != NULL);
     ASSERT(chunkSizeMax > 0);
 
-    // Resize chunk buffer if it is less than max chunk size
-    size_t chunkSize = bufSize(chunk);
+    // Size required for the chunk buffer to hold all the input
+    const size_t chunkSizeRequired = bufUsed(chunk) + bufUsed(input);
 
-    if (chunkSize < chunkSizeMax)
+    // Resize chunk buffer if it cannot hold all the input and is less than max chunk size
+    if (chunkSizeRequired > bufSize(chunk) && bufSize(chunk) < chunkSizeMax)
     {
-        // If the input buffer is full there is very likely more data so increase size of the chunk buffer aggressively
-        if (bufFull(input))
+        size_t chunkSize;
+
+        // If the input buffer is full or the chunk buffer is not empty there is very likely more data so increase size of the chunk
+        // buffer aggressively
+        if (bufFull(input) || !bufEmpty(chunk))
         {
             // If this is the first write set chunk size equal to double the input buffer size
-            if (chunkSize == 0)
+            if (bufSize(chunk) == 0)
             {
                 chunkSize = bufSize(input) * 2;
             }
             // Else double chunk size so as not to resize the chunk buffer too many times since prior data must be copied
             else
-                chunkSize *= 2;
+                chunkSize = bufSize(chunk) * 2;
+
+            // Chunk size must be large enough to hold all the input
+            if (chunkSize < chunkSizeRequired)
+                chunkSize = chunkSizeRequired;
         }
         // Else no more writes are expected so allocate only what is needed
         else
-            chunkSize += bufUsed(input) - bufRemains(chunk);
+            chunkSize = chunkSizeRequired;
 
         // Chunk size cannot be larger than max chunk size
         if (chunkSize > chunkSizeMax)

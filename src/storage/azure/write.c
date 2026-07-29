@@ -145,14 +145,14 @@ storageWriteAzure(THIS_VOID, const Buffer *const buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    // Resize chunk buffer
-    storageWriteChunkBufferResize(buffer, this->blockBuffer, this->blockSize);
-
     // Continue until the write buffer has been exhausted
     size_t bytesTotal = 0;
 
     do
     {
+        // Resize block buffer. This must be done in the loop because block size grows as blocks are written.
+        storageWriteChunkBufferResize(buffer, this->blockBuffer, this->blockSize);
+
         // Copy as many bytes as possible into the block buffer
         const size_t bytesNext =
             bufRemains(this->blockBuffer) > bufUsed(buffer) - bytesTotal ?

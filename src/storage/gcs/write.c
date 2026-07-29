@@ -211,14 +211,14 @@ storageWriteGcs(THIS_VOID, const Buffer *const buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    // Resize chunk buffer
-    storageWriteChunkBufferResize(buffer, this->chunkBuffer, this->chunkSize);
-
     // Continue until the write buffer has been exhausted
     size_t bytesTotal = 0;
 
     do
     {
+        // Resize chunk buffer. This must be done in the loop because chunk size grows as chunks are written.
+        storageWriteChunkBufferResize(buffer, this->chunkBuffer, this->chunkSize);
+
         // Copy as many bytes as possible into the chunk buffer
         const size_t bytesNext =
             bufRemains(this->chunkBuffer) > bufUsed(buffer) - bytesTotal ?
