@@ -1,6 +1,10 @@
 """Test Execute Process."""
 
 ####################################################################################################################################
+import io
+import time
+from contextlib import redirect_stdout
+
 from harness.test import *
 
 from common.error import *
@@ -46,3 +50,60 @@ def test_exec_expect():
         exec_one("true", 3)
 
     assert_equal(str(error.exception), "true terminated unexpectedly [0]")
+
+
+####################################################################################################################################
+def test_exec_status():
+    """A command that is expected to fail reports its status rather than raising."""
+
+    assert_equal(exec_status("true"), 0)
+    assert_equal(exec_status("exit 9"), 9)
+
+
+####################################################################################################################################
+def test_exec_async():
+    """A command runs in the background and what it wrote to each stream is kept apart."""
+
+    process = Exec("echo out; echo err 1>&2")
+    process.begin()
+
+    assert_equal(process.end(), 0)
+    assert_equal(process.output, "out\n")
+
+    # Anything on stderr means the command failed whatever its status, so it is reported separately
+    assert_equal(process.error, "err\n")
+
+
+####################################################################################################################################
+def test_exec_async_poll():
+    """A command that is still running reports no status, which is how the driver keeps every vm busy."""
+
+    process = Exec("sleep 0.2; echo done")
+    process.begin()
+
+    poll = 0
+
+    while process.end(wait=False) is None:
+        poll += 1
+        time.sleep(0.01)
+
+    # The command was polled at least once while it was still running
+    assert_true(poll > 0)
+    assert_equal(process.output, "done\n")
+
+
+####################################################################################################################################
+def test_exec_async_show():
+    """Output is written as it arrives, a line at a time, so a long command shows progress."""
+
+    # The first write has no line ending so there is nothing to show until the rest of the line arrives
+    process = Exec("printf partial; sleep 0.2; echo ' line'; echo next", show_output=True)
+    output = io.StringIO()
+
+    with redirect_stdout(output):
+        process.begin()
+
+        assert_equal(process.end(), 0)
+
+    assert_equal(output.getvalue(), "    partial line\n    next\n")
+    assert_equal(process.output, "partial line\nnext\n")

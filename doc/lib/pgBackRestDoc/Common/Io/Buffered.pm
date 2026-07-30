@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # Buffered Handle IO
 ####################################################################################################################################
-package pgBackRestTest::Common::Io::Buffered;
-use parent 'pgBackRestTest::Common::Io::Filter';
+package pgBackRestDoc::Common::Io::Buffered;
+use parent 'pgBackRestDoc::Common::Io::Filter';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -17,9 +17,9 @@ use Time::HiRes qw(gettimeofday);
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 
-use pgBackRestTest::Common::Io::Base;
-use pgBackRestTest::Common::Io::Handle;
-use pgBackRestTest::Common::Wait;
+use pgBackRestDoc::Common::Io::Base;
+use pgBackRestDoc::Common::Io::Handle;
+use pgBackRestDoc::Common::Wait;
 
 ####################################################################################################################################
 # Package name constant
@@ -230,18 +230,6 @@ sub readLine
     $self->{lBufferPos} = $iLineFeedPos + 1;
 
     return $strLine;
-}
-
-####################################################################################################################################
-# writeLine - write a string and \n terminate it
-####################################################################################################################################
-sub writeLine
-{
-    my $self = shift;
-    my $strBuffer = shift;
-
-    $strBuffer .= "\n";
-    return $self->parent()->write(\$strBuffer);
 }
 
 ####################################################################################################################################

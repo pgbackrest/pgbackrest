@@ -38,11 +38,11 @@ push @EXPORT, qw(PROJECT_VERSION);
 ####################################################################################################################################
 # Load project info from src/version.h
 ####################################################################################################################################
-require pgBackRestTest::Common::Storage;
-require pgBackRestTest::Common::StoragePosix;
+require pgBackRestDoc::Common::Storage;
+require pgBackRestDoc::Common::StoragePosix;
 
-my $strProjectInfo = ${new pgBackRestTest::Common::Storage(
-    dirname(dirname(abs_path($0))), new pgBackRestTest::Common::StoragePosix())->get('src/version.h')};
+my $strProjectInfo = ${new pgBackRestDoc::Common::Storage(
+    dirname(dirname(abs_path($0))), new pgBackRestDoc::Common::StoragePosix())->get('src/version.h')};
 
 foreach my $strLine (split("\n", $strProjectInfo))
 {

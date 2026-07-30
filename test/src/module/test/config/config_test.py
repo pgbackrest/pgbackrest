@@ -86,8 +86,25 @@ def test_config_load():
 
 
 ####################################################################################################################################
+def test_config_load_test():
+    """A run with no command runs the tests, on the repository it is part of rather than on the copy they are built from."""
+
+    with tempfile.TemporaryDirectory() as path:
+        _version_write(path)
+
+        config = _cfg_load(["--test-path=%s/test" % path], path)
+
+        assert_is_none(config.command)
+        assert_equal(config.repo_path, path)
+        assert_equal(config.log_level, INFO)
+
+        # Quiet is a shorthand for turning the log off, which is how the documentation build runs the tests
+        assert_equal(_cfg_load(["--test-path=%s/test" % path, "--quiet"], path).log_level, OFF)
+
+
+####################################################################################################################################
 def test_config_load_lint():
-    """The lint command has neither a test path nor a test log level, so neither is applied."""
+    """The lint command is told where the repository is, since it runs from the copy the tests are built from."""
 
     with tempfile.TemporaryDirectory() as path:
         _version_write(path)
@@ -95,9 +112,8 @@ def test_config_load_lint():
         config = _cfg_load(["lint", "--repo-path=%s" % path], path)
 
         assert_equal(config.command, "lint")
+        assert_equal(config.repo_path, path)
         assert_equal(config.log_level, INFO)
-        assert_false(hasattr(config, "test_path"))
-        assert_false(hasattr(config, "log_level_test"))
 
 
 ####################################################################################################################################

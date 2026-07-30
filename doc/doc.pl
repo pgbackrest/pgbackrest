@@ -22,11 +22,10 @@ use Storable;
 use lib dirname(abs_path($0)) . '/lib';
 use lib dirname(dirname(abs_path($0))) . '/lib';
 use lib dirname(dirname(abs_path($0))) . '/build/lib';
-use lib dirname(dirname(abs_path($0))) . '/test/lib';
 
-use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Common::Storage;
-use pgBackRestTest::Common::StoragePosix;
+use pgBackRestDoc::Common::Execute;
+use pgBackRestDoc::Common::Storage;
+use pgBackRestDoc::Common::StoragePosix;
 
 use pgBackRestDoc::Common::Doc;
 use pgBackRestDoc::Common::DocContainer;
@@ -190,8 +189,8 @@ eval
     # Get the base path
     my $strBasePath = abs_path(dirname($0));
 
-    my $oStorageDoc = new pgBackRestTest::Common::Storage(
-        $strBasePath, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
+    my $oStorageDoc = new pgBackRestDoc::Common::Storage(
+        $strBasePath, new pgBackRestDoc::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     if (!defined($strDocPath))
     {

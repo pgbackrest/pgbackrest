@@ -11,9 +11,10 @@ import os
 
 from command.test.define import TEST_TYPE_INTEGRATION, TEST_TYPE_PERFORMANCE, TEST_TYPE_UNIT
 from common.error import check
-from common.log import log_level_enum
+from common.log import *
 from common.render import bld_enum
 from common.storage import file_read, file_remove, file_write_differs, path_list, path_list_recurse
+from common.user import group_id, group_name, user_id, user_name
 
 # Comment block used to divide the generated meson.build, matching the width used in the rest of the project
 MESON_COMMENT_BLOCK = "#" * 132
@@ -435,10 +436,10 @@ class TestBuild:
             "{[C_TEST_CONTAINER]}": "true" if self.vm != "none" else "false",
             # User/group info
             "{[C_TEST_GROUP]}": group_name(),
-            "{[C_TEST_GROUP_ID]}": "%u" % os.getgid(),
+            "{[C_TEST_GROUP_ID]}": "%u" % group_id(),
             "{[C_TEST_USER]}": user_name(),
             "{[C_TEST_USER_LEN]}": "%u" % len(user_name()),
-            "{[C_TEST_USER_ID]}": "%u" % os.getuid(),
+            "{[C_TEST_USER_ID]}": "%u" % user_id(),
             # VM for integration testing
             "{[C_TEST_VM]}": self.vm_int,
             # PostgreSQL version for integration testing
@@ -478,37 +479,3 @@ class TestBuild:
                 continue
 
             file_remove(os.path.join(self.path_unit, name), error_on_missing=True)
-
-
-####################################################################################################################################
-# User and group the test runs as. Looked up once since the values are used several times and never change.
-_user_name = None
-_group_name = None
-
-
-####################################################################################################################################
-def user_name():
-    """User the test runs as, looked up once since it is used several times and never changes."""
-
-    global _user_name
-
-    if _user_name is None:
-        import pwd
-
-        _user_name = pwd.getpwuid(os.getuid()).pw_name
-
-    return _user_name
-
-
-####################################################################################################################################
-def group_name():
-    """Group the test runs as, looked up once since it is used several times and never changes."""
-
-    global _group_name
-
-    if _group_name is None:
-        import grp
-
-        _group_name = grp.getgrgid(os.getgid()).gr_name
-
-    return _group_name

@@ -28,7 +28,7 @@ jobs:
         run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
 
       - name: Run Test
-        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace --param=build-max=2
+        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.py test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
 
   # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
   # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
@@ -59,7 +59,7 @@ jobs:
       - name: Install
         run: |
           sudo apt-get update
-          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl python3-yaml rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
+          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y sudo python3-yaml rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
           docker run --privileged --rm tonistiigi/binfmt --install all
 
       - name: Login to GHCR
@@ -67,7 +67,7 @@ jobs:
         run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
 
       - name: Build VM
-        run: ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm-build --vm=u22 --vm-arch=${{matrix.arch}}
+        run: ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm-build --vm=u22 --vm-arch=${{matrix.arch}}
 
       # Compiling under emulation is slow enough that a warm ccache saves a lot of time
       - name: Restore ccache
@@ -79,16 +79,16 @@ jobs:
 
       - name: Run Test
         run: |
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=common --test=type-pack --test=crypto --test=compress
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup --test=restore --test=archive-get --test=archive-push --test=verify
+          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --module=common --test=type-pack --test=crypto --test=compress
+          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --module=postgres --test=interface
+          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --module=command --test=backup --test=restore --test=archive-get --test=archive-push --test=verify
 
       # Run the smoke test against the arch build: a real PostgreSQL driven through a full backup/restore/verify cycle, which
       # exercises checksums end-to-end on big-endian. It reuses the pgbackrest binary already built for the arch above and the
-      # single PostgreSQL version baked into the arch base image. A fresh container is started (test.pl removes its own) with the
+      # single PostgreSQL version baked into the arch base image. A fresh container is started (test.py removes its own) with the
       # SSH entrypoint overridden and run as root so smoke.py can drop to the postgres user, as the misc smoke job does.
       #
-      # The binary is copied to /tmp first: test.pl creates the test tree mode 0770 owned by the build user, so the unprivileged
+      # The binary is copied to /tmp first: test.py creates the test tree mode 0770 owned by the build user, so the unprivileged
       # postgres user that smoke.py drops to cannot traverse it to execute the binary. /tmp is world-accessible -- it is where
       # smoke.py puts its own work dirs -- so the copy there is reachable.
       - name: Run Smoke Test

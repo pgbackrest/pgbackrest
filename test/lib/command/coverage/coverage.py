@@ -9,7 +9,7 @@ import os
 
 from command.test.define import TEST_LANG_C, TEST_LANG_PYTHON, test_def_find, test_def_parse
 from common.error import check
-from common.log import WARN, log
+from common.log import *
 from common.storage import file_read, file_write, path_list
 
 

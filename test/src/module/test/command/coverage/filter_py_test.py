@@ -5,7 +5,7 @@ from harness.test import *
 
 from command.coverage.coverage import Coverage, CoverageFile, CoverageLine
 from command.coverage.filter_py import *
-from command.test.define import TEST_LANG_C, TEST_LANG_PYTHON
+from command.test.define import TEST_LANG_PYTHON
 
 # Coverage as coverage.py reports it, i.e. the lines that ran, the lines that did not, and the arcs between them
 RAW = {

@@ -16,7 +16,7 @@ use File::Copy;
 use POSIX qw(strftime);
 use Storable qw(dclone);
 
-use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestDoc::Common::Execute;
 
 use pgBackRestDoc::Common::DocManifest;
 use pgBackRestDoc::Common::Exception;

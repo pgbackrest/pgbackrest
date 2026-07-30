@@ -9,7 +9,7 @@ import os
 from command.lint.ascii import lint_ascii
 from command.lint.string_id import lint_str_id
 from common.error import TestError
-from common.log import WARN, log
+from common.log import *
 from common.storage import path_list_recurse
 
 # Files that are exempt from the content checks. A binary file is an unscannable place to hide content, so each entry must be a

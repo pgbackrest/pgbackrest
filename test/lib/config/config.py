@@ -6,9 +6,12 @@ import os
 import re
 
 from common.error import TestError
-from common.log import log_init, log_level_parse
+from common.log import *
 from common.storage import file_read
 from config.cli import cli_parse
+
+# Name of the project executable, which is also the name of the repository and of the container registry namespace
+PROJECT_EXE = "pgbackrest"
 
 
 ####################################################################################################################################
@@ -31,22 +34,19 @@ def cfg_load(arg_list, path_harness):
 
     config = cli_parse(arg_list, project_version(path_harness))
 
-    # Make relative paths absolute so the harness does not depend on the working directory
-    config.repo_path = os.path.abspath(config.repo_path)
+    # A test run works on the repository it is part of. A command is told where the repository is, since it runs from the copy the
+    # tests are built from. Relative paths are made absolute so nothing depends on the working directory.
+    config.repo_path = os.path.abspath(config.repo_path) if hasattr(config, "repo_path") else path_harness
+    config.test_path = os.path.abspath(config.test_path)
 
     # The repository is only ever read from so it must already exist. Checking here keeps a mistyped path from looking like success
     # rather than an error, e.g. the linter would find no files to check and report that everything passed.
     if not os.path.isdir(config.repo_path):
         raise TestError("repo path '%s' does not exist" % config.repo_path)
 
-    if hasattr(config, "test_path"):
-        config.test_path = os.path.abspath(config.test_path)
-
     # Convert log levels to ids now that they are known to be valid
-    config.log_level = log_level_parse(config.log_level)
-
-    if hasattr(config, "log_level_test"):
-        config.log_level_test = log_level_parse(config.log_level_test)
+    config.log_level = OFF if config.quiet else log_level_parse(config.log_level)
+    config.log_level_test = log_level_parse(config.log_level_test)
 
     log_init(config.log_level, config.log_timestamp)
 

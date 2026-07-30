@@ -17,7 +17,7 @@ use Exporter qw(import);
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
 
-use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestDoc::Common::Execute;
 
 ####################################################################################################################################
 # new
@@ -137,7 +137,7 @@ sub execute
 
     $strCommand =~ s/'/'\\''/g;
 
-    my $oExec = new pgBackRestTest::Common::ExecuteTest(
+    my $oExec = new pgBackRestDoc::Common::Execute(
         "docker exec -u ${strUser} $self->{strContainer}" .
         ($bBashWrap ? " bash" . ($bLoadEnv ? ' -l' : '') . " -c '${strCommand}'" : " ${strCommand}"), $oParam);
 

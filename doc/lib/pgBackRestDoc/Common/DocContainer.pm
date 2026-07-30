@@ -15,7 +15,7 @@ use Digest::SHA qw(sha1_hex);
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestDoc::Common::Execute;
 
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::ProjectInfo;
@@ -55,7 +55,7 @@ sub dockerBuildCached
     {
         &log(INFO, "Checking cache ${strPullTag} ...");
 
-        my $oPull = new pgBackRestTest::Common::ExecuteTest(
+        my $oPull = new pgBackRestDoc::Common::Execute(
             "docker pull ${strPullTag}", {bSuppressStdErr => true, bSuppressError => true});
         $oPull->begin();
 
@@ -81,7 +81,7 @@ sub dockerBuildCached
         my $strPushTag = defined($strForkCacheTag) ? $strForkCacheTag : $strCacheTag;
         executeTest("docker tag ${strImage} ${strPushTag}", {bSuppressError => true});
 
-        my $oPush = new pgBackRestTest::Common::ExecuteTest(
+        my $oPush = new pgBackRestDoc::Common::Execute(
             "docker push ${strPushTag}", {bSuppressStdErr => true, bSuppressError => true});
         $oPush->begin();
 

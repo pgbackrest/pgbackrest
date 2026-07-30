@@ -1,7 +1,7 @@
 ####################################################################################################################################
-# ExecuteTest.pm - Module to execute external commands
+# Execute.pm - Module to execute external commands
 ####################################################################################################################################
-package pgBackRestTest::Common::ExecuteTest;
+package pgBackRestDoc::Common::Execute;
 
 ####################################################################################################################################
 # Perl includes
@@ -19,9 +19,9 @@ use Symbol 'gensym';
 
 use pgBackRestDoc::Common::Log;
 
-use pgBackRestTest::Common::Io::Handle;
-use pgBackRestTest::Common::Io::Buffered;
-use pgBackRestTest::Common::Wait;
+use pgBackRestDoc::Common::Io::Handle;
+use pgBackRestDoc::Common::Io::Buffered;
+use pgBackRestDoc::Common::Wait;
 
 ####################################################################################################################################
 # new
@@ -57,11 +57,9 @@ sub new
     $self->{bSuppressError} = defined($self->{bSuppressError}) ? $self->{bSuppressError} : false;
     $self->{bSuppressStdErr} = defined($self->{bSuppressStdErr}) ? $self->{bSuppressStdErr} : false;
     $self->{bOutLogOnError} = defined($self->{bOutLogOnError}) ? $self->{bOutLogOnError} : true;
-    $self->{bShowOutput} = defined($self->{bShowOutput}) ? $self->{bShowOutput} : false;
     $self->{bShowOutputAsync} = defined($self->{bShowOutputAsync}) ? $self->{bShowOutputAsync} : false;
     $self->{iExpectedExitStatus} = defined($self->{iExpectedExitStatus}) ? $self->{iExpectedExitStatus} : 0;
     $self->{iRetrySeconds} = defined($self->{iRetrySeconds}) ? $self->{iRetrySeconds} : undef;
-    $self->{bLogOutput} = defined($self->{bLogOutput}) ? $self->{bLogOutput} : true;
 
     # Return from function and log return values if any
     return logDebugReturn
@@ -84,16 +82,6 @@ sub begin
     $self->{strErrorLog} = '';
     $self->{strOutLog} = '';
 
-    if (defined($self->{oTestLog}))
-    {
-        if (defined($self->{strComment}))
-        {
-            $self->{strFullLog} = $self->{oTestLog}->regExpAll($self->{strComment}) . "\n";
-        }
-
-        $self->{strFullLog} .= '> ' . $self->{oTestLog}->regExpAll($self->{strCommand}) . "\n" . ('-' x '132') . "\n";
-    }
-
     &log(DETAIL, "executing command: $self->{strCommand}");
 
     # Execute the command
@@ -102,11 +90,11 @@ sub begin
     $self->{pId} = open3(undef, $self->{hOut}, $self->{hError}, $self->{strCommand});
 
     # Create buffered read object
-    $self->{oIo} = new pgBackRestTest::Common::Io::Buffered(new pgBackRestTest::Common::Io::Handle('exec test', $self->{hOut}), 0, 65536);
+    $self->{oIo} = new pgBackRestDoc::Common::Io::Buffered(new pgBackRestDoc::Common::Io::Handle('exec test', $self->{hOut}), 0, 65536);
 
     # Create buffered error object
-    $self->{oIoError} = new pgBackRestTest::Common::Io::Buffered(
-        new pgBackRestTest::Common::Io::Handle('exec test', $self->{hError}), 0, 65536);
+    $self->{oIoError} = new pgBackRestDoc::Common::Io::Buffered(
+        new pgBackRestDoc::Common::Io::Handle('exec test', $self->{hError}), 0, 65536);
 
     # Record start time and set process timeout
     $self->{iProcessTimeout} = 300;
@@ -251,11 +239,6 @@ sub endRetry
         confess &log(ERROR, "STDOUT:\n$self->{strOutLog}\n\noutput found on STDERR:\n$self->{strErrorLog}");
     }
 
-    if ($self->{bShowOutput})
-    {
-        print "output:\n$self->{strOutLog}\n";
-    }
-
     # Return from function and log return values if any
     return logDebugReturn
     (
@@ -331,7 +314,7 @@ sub executeTest
     my $strCommand = shift;
     my $oParam = shift;
 
-    my $oExec = new pgBackRestTest::Common::ExecuteTest($strCommand, $oParam);
+    my $oExec = new pgBackRestDoc::Common::Execute($strCommand, $oParam);
     $oExec->begin();
     $oExec->end();
 

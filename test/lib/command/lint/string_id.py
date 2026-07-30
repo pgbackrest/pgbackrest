@@ -7,7 +7,7 @@ can be used in a switch, which means a hand-edited string and value can drift ap
 import re
 
 from common.error import TestError
-from common.log import WARN, log
+from common.log import *
 from common.render import bld_str_id_seq
 
 # Macro invocations to check, e.g. STRID5("test", 0x2a7250) or STRID6S("test", 1, 0x1e2a7250)

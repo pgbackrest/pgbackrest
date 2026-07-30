@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """pgBackRest Test Harness.
 
-Builds and runs the unit tests and reports coverage. Driven by test.pl, which selects the tests to run, manages the containers, and
-calls this harness for each test.
+Builds and runs the tests and reports coverage. A run with no command selects the tests, manages the containers, and calls this
+harness again with the unit command for each test, which is why a run works on the repository it is part of while every command is
+told where the repository copy is.
 
 Exit status: 0 = success, 1 = the coverage command found modules missing coverage, greater = error. All output, including errors,
-goes to stdout since the Perl test framework fails a test when anything is written to stderr."""
+goes to stdout since a test that writes anything to stderr has failed."""
 
 ####################################################################################################################################
 import os
@@ -14,8 +15,8 @@ import sys
 import time
 import traceback
 
-# Send everything written to stderr to stdout instead. The Perl test framework reports only what a test writes to stdout, so an
-# error raised before the handler in main() is installed, e.g. while importing below, would otherwise be lost entirely.
+# Send everything written to stderr to stdout instead. Anything a test writes to stderr is a failure, so an error raised before
+# the handler in main() is installed, e.g. while importing below, would otherwise look like one.
 sys.stderr = sys.stdout
 
 # Do not cache bytecode. The harness runs from a copy of the repository that the linter then scans, so a __pycache__ written during
@@ -30,10 +31,12 @@ from common.error import EXIT_ERROR, TestError  # noqa: E402
 # PyYAML is the only thing these imports need outside the standard library, so a failure here is almost always a missing package.
 # Coverage is also required but only by the test runner, which is a separate process and reports a missing one itself.
 try:
+    from command.code.format import cmd_code_format  # noqa: E402
     from command.coverage.coverage import cmd_coverage  # noqa: E402
     from command.lint.lint import cmd_lint  # noqa: E402
+    from command.test.test import cmd_test  # noqa: E402
     from command.test.unit import cmd_unit  # noqa: E402
-    from common.log import ERROR, INFO, log  # noqa: E402
+    from common.log import *  # noqa: E402
     from config.config import cfg_load, project_version  # noqa: E402
 except ImportError as error:
     print("unable to load the test harness: %s" % error)
@@ -47,10 +50,16 @@ except ImportError as error:
 def command_run(config):
     """Run the requested command."""
 
+    # Running the tests is what a developer does, so it is what happens when no command is given
+    if config.command is None:
+        return cmd_test(config)
+
     if config.command == "unit":
         cmd_unit(config)
     elif config.command == "coverage":
         return cmd_coverage(config)
+    elif config.command == "code-format":
+        cmd_code_format(config)
     else:
         cmd_lint(config.repo_path)
 
@@ -75,13 +84,16 @@ def main():
 
         return EXIT_ERROR
 
-    log(INFO, "%s command begin %s: %s" % (config.command, project_version(path_harness), " ".join(sys.argv[1:])))
+    # A run with no command runs the tests, which is what it is called in the log
+    command = "test" if config.command is None else config.command
+
+    log(INFO, "%s command begin %s: %s" % (command, project_version(path_harness), " ".join(sys.argv[1:])))
 
     try:
         result = command_run(config)
     except TestError as error:
         log(ERROR, error)
-        log(INFO, "%s command end: aborted with exception" % config.command)
+        log(INFO, "%s command end: aborted with exception" % command)
 
         return error.status
     except Exception:
@@ -90,7 +102,11 @@ def main():
 
         return EXIT_ERROR
 
-    log(INFO, "%s command end: completed successfully (%ums)" % (config.command, int((time.time() - time_begin) * 1000)))
+    # How long the command took is only reported when timestamps are, since the documentation runs the tests to generate output
+    # that must be the same every time
+    elapsed = " (%ums)" % int((time.time() - time_begin) * 1000) if config.log_timestamp else ""
+
+    log(INFO, "%s command end: completed successfully%s" % (command, elapsed))
 
     return result
 

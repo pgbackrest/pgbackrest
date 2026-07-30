@@ -7,10 +7,10 @@
     <section id="uncrustify">
         <title>Formatting with <proper>uncrustify</proper></title>
 
-        <p><backrest/> uses <proper>uncrustify</proper> to check/update the code formatting. If the <id>code-format</id> test fails in CI then reformat the code:</p>
+        <p><backrest/> uses <proper>uncrustify</proper> for <proper>C</proper> and <proper>black</proper> for <proper>Python</proper> to check/update the code formatting. If the <id>code-format</id> test fails in CI then reformat the code:</p>
 
         <code-block>
-            pgbackrest/test/test.pl --code-format
+            pgbackrest/test/test.py code-format
         </code-block>
 
         <p>Also review the standards in the following sections below. Some standards require further explanation and others are not enforced by <proper>uncrustify</proper>.</p>

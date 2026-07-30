@@ -130,26 +130,55 @@ def test_cli_coverage():
 
 
 ####################################################################################################################################
+def test_cli_test():
+    """A command line with no command runs the tests, which is what a developer types."""
+
+    config = cli_parse(["--vm=u24", "--module=common", "--module=postgres", "--test=error", "--vm-max=2"], VERSION)
+
+    assert_is_none(config.command)
+    assert_equal(config.vm, "u24")
+    assert_equal(config.module, ["common", "postgres"])
+    assert_equal(config.test, ["error"])
+    assert_equal(config.vm_max, 2)
+
+    # Defaults for what a plain run does
+    assert_equal(config.test_path, "test")
+    assert_equal(config.run, [])
+    assert_equal(config.pg_version, "minimal")
+    assert_equal(config.retry, 0)
+    assert_equal(config.scale, 1)
+    assert_is_none(config.tz)
+    assert_true(config.cleanup)
+    assert_true(config.coverage)
+    assert_true(config.valgrind)
+    assert_true(config.back_trace)
+    assert_true(config.performance)
+    assert_false(config.dry_run)
+    assert_false(config.quiet)
+
+    # A run works on the repository it is part of so it is never told where that is
+    assert_false(hasattr(config, "repo_path"))
+
+
+####################################################################################################################################
 def test_cli_lint():
-    """The lint command reads the repository only, so it has none of the test path options."""
+    """The lint command reads the repository only."""
 
     config = cli_parse(["lint", "--repo-path=/repo"], VERSION)
 
     assert_equal(config.command, "lint")
     assert_equal(config.repo_path, "/repo")
-    assert_false(hasattr(config, "test_path"))
-    assert_false(hasattr(config, "vm"))
 
 
 ####################################################################################################################################
 def test_cli_error():
     """A command line that does not parse reports and exits."""
 
-    # A command is required since there is no default one
-    status, output = _cli_parse_exit([])
+    # An option that is not defined is rejected rather than passed on to a test
+    status, output = _cli_parse_exit(["--bogus"])
 
     assert_equal(status, 2)
-    assert_in("the following arguments are required: command", output)
+    assert_in("unrecognized arguments: --bogus", output)
 
     # A level outside the log levels is rejected here rather than later when it is converted
     status, output = _cli_parse_exit(["unit", "common/error", "--log-level=bogus"])

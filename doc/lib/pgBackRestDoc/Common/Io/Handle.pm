@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # Basic Handle IO
 ####################################################################################################################################
-package pgBackRestTest::Common::Io::Handle;
-use parent 'pgBackRestTest::Common::Io::Base';
+package pgBackRestDoc::Common::Io::Handle;
+use parent 'pgBackRestDoc::Common::Io::Base';
 
 use strict;
 use warnings FATAL => qw(all);

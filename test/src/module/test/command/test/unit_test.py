@@ -229,29 +229,21 @@ def test_unit_build():
     with tempfile.TemporaryDirectory() as path:
         path_repo = _repo_create(path)
 
-        command_list, output, error = _cmd_unit(Config(path_repo, path, "common/error"), ["x86_64\n"])
+        command_list, output, error = _cmd_unit(Config(path_repo, path, "common/error"))
 
         assert_is_none(error)
 
-        # The architecture comes from the machine, then meson is set up since there is nothing built yet, then ninja builds it
-        assert_equal(command_list[0], "uname -m")
-        assert_in("meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug -Db_coverage=true", command_list[1])
-        assert_in("ninja -C '%s/unit-0/none/build'" % path, command_list[2])
+        # Meson is set up since there is nothing built yet, then ninja builds it
+        assert_in("meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug -Db_coverage=true", command_list[0])
+        assert_in("ninja -C '%s/unit-0/none/build'" % path, command_list[1])
 
-        # The architecture is passed to the build
-        assert_equal(_cmd_unit.build.call_args[0][2], "x86_64")
+        # The architecture comes from the machine when it was not given
+        assert_equal(_cmd_unit.build.call_args[0][2], host_arch())
 
-        # A machine that reports an architecture under another name is normalized to the name the project uses
-        for report, expect in (("i686\n", "i386"), ("arm64\n", "aarch64"), ("aarch64\n", "aarch64")):
-            _cmd_unit(Config(path_repo, path, "common/error"), [report])
-
-            assert_equal(_cmd_unit.build.call_args[0][2], expect, report)
-
-        # An architecture that was given is used as it is, so the machine is not asked
-        command_list, output, error = _cmd_unit(Config(path_repo, path, "common/error", vm_arch="ppc64le"))
+        # An architecture that was given is used as it is
+        _cmd_unit(Config(path_repo, path, "common/error", vm_arch="ppc64le"))
 
         assert_equal(_cmd_unit.build.call_args[0][2], "ppc64le")
-        assert_not_in("uname -m", command_list)
 
 
 ####################################################################################################################################

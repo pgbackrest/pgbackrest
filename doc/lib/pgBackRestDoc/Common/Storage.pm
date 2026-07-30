@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # Implements storage functionality using drivers.
 ####################################################################################################################################
-package pgBackRestTest::Common::Storage;
-use parent 'pgBackRestTest::Common::StorageBase';
+package pgBackRestDoc::Common::Storage;
+use parent 'pgBackRestDoc::Common::StorageBase';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,7 +15,7 @@ use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
 
-use pgBackRestTest::Common::StorageBase;
+use pgBackRestDoc::Common::StorageBase;
 
 ####################################################################################################################################
 # new
@@ -67,85 +67,6 @@ sub new
     (
         $strOperation,
         {name => 'self', value => $self}
-    );
-}
-
-####################################################################################################################################
-# Copy a file. If special encryption settings are required, then the file objects from openRead/openWrite must be passed instead of
-# file names.
-####################################################################################################################################
-sub copy
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $xSourceFile,
-        $xDestinationFile,
-        $bSourceOpen,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->copy', \@_,
-            {name => 'xSourceFile', required => false},
-            {name => 'xDestinationFile'},
-            {name => 'bSourceOpen', optional => true, default => false},
-        );
-
-    # Is source/destination an IO object or a file expression?
-    my $oSourceFileIo = defined($xSourceFile) ? (ref($xSourceFile) ? $xSourceFile : $self->openRead($xSourceFile)) : undef;
-
-    # Does the source file exist?
-    my $bResult = false;
-
-    # Copy if the source file exists
-    if (defined($oSourceFileIo))
-    {
-        my $oDestinationFileIo = ref($xDestinationFile) ? $xDestinationFile : $self->openWrite($xDestinationFile);
-
-        # Use C copy if source and destination are C objects
-        if (defined($oSourceFileIo->{oStorageCRead}) && defined($oDestinationFileIo->{oStorageCWrite}))
-        {
-            $bResult = $self->{oStorageC}->copy(
-                $oSourceFileIo->{oStorageCRead}, $oDestinationFileIo->{oStorageCWrite}) ? true : false;
-        }
-        else
-        {
-            # Open the source file if it is a C object
-            $bResult = defined($oSourceFileIo->{oStorageCRead}) ? ($bSourceOpen || $oSourceFileIo->open()) : true;
-
-            if ($bResult)
-            {
-                # Open the destination file if it is a C object
-                if (defined($oDestinationFileIo->{oStorageCWrite}))
-                {
-                    $oDestinationFileIo->open();
-                }
-
-                # Copy the data
-                do
-                {
-                    # Read data
-                    my $tBuffer = '';
-
-                    $oSourceFileIo->read(\$tBuffer, $self->{lBufferMax});
-                    $oDestinationFileIo->write(\$tBuffer);
-                }
-                while (!$oSourceFileIo->eof());
-
-                # Close files
-                $oSourceFileIo->close();
-                $oDestinationFileIo->close();
-            }
-        }
-    }
-
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bResult', value => $bResult, trace => true},
     );
 }
 
@@ -236,38 +157,6 @@ sub get
 }
 
 ####################################################################################################################################
-# info - get information for path/file
-####################################################################################################################################
-sub info
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathFileExp,
-        $bIgnoreMissing,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '::fileStat', \@_,
-            {name => 'strPathFileExp'},
-            {name => 'bIgnoreMissing', optional => true, default => false},
-        );
-
-    # Stat the path/file
-    my $oInfo = $self->driver()->info($self->pathGet($strPathFileExp), {bIgnoreMissing => $bIgnoreMissing});
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'oInfo', value => $oInfo, trace => true}
-    );
-}
-
-####################################################################################################################################
 # list - list all files/paths in path
 ####################################################################################################################################
 sub list
@@ -318,37 +207,6 @@ sub list
     (
         $strOperation,
         {name => 'stryFileList', value => $rstryFileList}
-    );
-}
-
-####################################################################################################################################
-# manifest - build path/file/link manifest starting with base path and including all subpaths
-####################################################################################################################################
-sub manifest
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathExp,
-        $strFilter,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->manifest', \@_,
-            {name => 'strPathExp'},
-            {name => 'strFilter', optional => true, trace => true},
-        );
-
-    my $hManifest = $self->driver()->manifest($self->pathGet($strPathExp), {strFilter => $strFilter});
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'hManifest', value => $hManifest, trace => true}
     );
 }
 
@@ -431,8 +289,6 @@ sub openWrite
         $strOperation,
         $xFileExp,
         $strMode,
-        $strUser,
-        $strGroup,
         $lTimestamp,
         $bAtomic,
         $bPathCreate,
@@ -442,8 +298,6 @@ sub openWrite
             __PACKAGE__ . '->openWrite', \@_,
             {name => 'xFileExp'},
             {name => 'strMode', optional => true, default => $self->{strDefaultFileMode}},
-            {name => 'strUser', optional => true},
-            {name => 'strGroup', optional => true},
             {name => 'lTimestamp', optional => true},
             {name => 'bAtomic', optional => true, default => false},
             {name => 'bPathCreate', optional => true, default => false},
@@ -451,47 +305,13 @@ sub openWrite
 
     # Open the file
     my $oFileIo = $self->driver()->openWrite($self->pathGet($xFileExp),
-        {strMode => $strMode, strUser => $strUser, strGroup => $strGroup, lTimestamp => $lTimestamp, bPathCreate => $bPathCreate,
-            bAtomic => $bAtomic});
+        {strMode => $strMode, lTimestamp => $lTimestamp, bPathCreate => $bPathCreate, bAtomic => $bAtomic});
 
     # Return from function and log return values if any
     return logDebugReturn
     (
         $strOperation,
         {name => 'oFileIo', value => $oFileIo, trace => true},
-    );
-}
-
-####################################################################################################################################
-# owner - change ownership of path/file
-####################################################################################################################################
-sub owner
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathFileExp,
-        $strUser,
-        $strGroup
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->owner', \@_,
-            {name => 'strPathFileExp'},
-            {name => 'strUser', required => false},
-            {name => 'strGroup', required => false}
-        );
-
-    # Set ownership
-    $self->driver()->owner($self->pathGet($strPathFileExp), {strUser => $strUser, strGroup => $strGroup});
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation
     );
 }
 
@@ -528,36 +348,6 @@ sub pathCreate
     return logDebugReturn
     (
         $strOperation
-    );
-}
-
-####################################################################################################################################
-# pathExists - check if path exists
-####################################################################################################################################
-sub pathExists
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathExp,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->pathExists', \@_,
-            {name => 'strPathExp'},
-        );
-
-    # Check exists
-    my $bExists = $self->driver()->pathExists($self->pathGet($strPathExp));
-
-    # Return from function and log return values if any
-    return logDebugReturn
-    (
-        $strOperation,
-        {name => 'bExists', value => $bExists}
     );
 }
 
@@ -632,31 +422,6 @@ sub pathGet
         $strOperation,
         {name => 'strPath', value => $strPath, trace => true}
     );
-}
-
-####################################################################################################################################
-# Sync path so newly added file entries are not lost
-####################################################################################################################################
-sub pathSync
-{
-    my $self = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my
-    (
-        $strOperation,
-        $strPathExp,
-    ) =
-        logDebugParam
-        (
-            __PACKAGE__ . '->pathSync', \@_,
-            {name => 'strPathExp'},
-        );
-
-    $self->driver()->pathSync($self->pathGet($strPathExp));
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
 }
 
 ####################################################################################################################################
@@ -761,6 +526,5 @@ sub remove
 ####################################################################################################################################
 sub pathBase {shift->{strPathBase}}
 sub driver {shift->{oDriver}}
-sub type {shift->{oDriver}->type()}
 
 1;

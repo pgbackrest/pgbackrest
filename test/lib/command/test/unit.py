@@ -16,21 +16,9 @@ from command.test.build import TestBuild
 from command.test.define import TEST_LANG_PYTHON, TEST_TYPE_PERFORMANCE, test_def_find, test_def_parse
 from common.error import TestError, check
 from common.exec import exec_one
-from common.log import DETAIL, WARN, log
+from common.log import *
 from common.storage import file_remove, path_create, path_list
-
-
-####################################################################################################################################
-def _arch_fix(arch):
-    """Normalize the architecture reported by uname to the names the project uses."""
-
-    if arch == "i686":
-        return "i386"
-
-    if arch == "arm64":
-        return "aarch64"
-
-    return arch
+from common.vm import *
 
 
 ####################################################################################################################################
@@ -116,10 +104,7 @@ def cmd_unit(config):
         return
 
     # Get test architecture
-    architecture = config.vm_arch
-
-    if architecture is None:
-        architecture = _arch_fix(exec_one("uname -m").strip())
+    architecture = config.vm_arch if config.vm_arch is not None else host_arch()
 
     test_build = TestBuild(config, module, architecture)
     path_unit = test_build.path_unit

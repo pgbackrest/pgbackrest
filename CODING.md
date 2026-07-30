@@ -2,9 +2,9 @@
 
 ## Formatting with uncrustify
 
-pgBackRest uses uncrustify to check/update the code formatting. If the `code-format` test fails in CI then reformat the code:
+pgBackRest uses uncrustify for C and black for Python to check/update the code formatting. If the `code-format` test fails in CI then reformat the code:
 ```
-pgbackrest/test/test.pl --code-format
+pgbackrest/test/test.py code-format
 ```
 
 Also review the standards in the following sections below. Some standards require further explanation and others are not enforced by uncrustify.

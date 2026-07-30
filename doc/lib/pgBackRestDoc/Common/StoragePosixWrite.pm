@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # Posix File Write
 ####################################################################################################################################
-package pgBackRestTest::Common::StoragePosixWrite;
-use parent 'pgBackRestTest::Common::Io::Handle';
+package pgBackRestDoc::Common::StoragePosixWrite;
+use parent 'pgBackRestDoc::Common::Io::Handle';
 
 use strict;
 use warnings FATAL => qw(all);
@@ -15,8 +15,8 @@ use File::Basename qw(dirname);
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 
-use pgBackRestTest::Common::Io::Handle;
-use pgBackRestTest::Common::StorageBase;
+use pgBackRestDoc::Common::Io::Handle;
+use pgBackRestDoc::Common::StorageBase;
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -32,8 +32,6 @@ sub new
         $oDriver,
         $strName,
         $strMode,
-        $strUser,
-        $strGroup,
         $lTimestamp,
         $bPathCreate,
         $bAtomic,
@@ -45,8 +43,6 @@ sub new
             {name => 'oDriver', trace => true},
             {name => 'strName', trace => true},
             {name => 'strMode', optional => true, trace => true},
-            {name => 'strUser', optional => true, trace => true},
-            {name => 'strGroup', optional => true, trace => true},
             {name => 'lTimestamp', optional => true, trace => true},
             {name => 'bPathCreate', optional => true, default => false, trace => true},
             {name => 'bAtomic', optional => true, default => false, trace => true},
@@ -61,8 +57,6 @@ sub new
     $self->{oDriver} = $oDriver;
     $self->{strName} = $strName;
     $self->{strMode} = $strMode;
-    $self->{strUser} = $strUser;
-    $self->{strGroup} = $strGroup;
     $self->{lTimestamp} = $lTimestamp;
     $self->{bPathCreate} = $bPathCreate;
     $self->{bAtomic} = $bAtomic;
@@ -113,9 +107,6 @@ sub open
 
     # Set file mode to binary
     binmode($self->{fhFile});
-
-    # Set the owner
-    $self->{oDriver}->owner($strFile, {strUser => $self->{strUser}, strGroup => $self->{strGroup}});
 
     # Set handle
     $self->handleWriteSet($self->{fhFile});

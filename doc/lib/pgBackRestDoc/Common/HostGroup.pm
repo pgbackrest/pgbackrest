@@ -17,7 +17,7 @@ use Exporter qw(import);
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
 
-use pgBackRestTest::Common::ExecuteTest;
+use pgBackRestDoc::Common::Execute;
 
 ####################################################################################################################################
 # Global host group variable

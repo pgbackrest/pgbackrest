@@ -1,8 +1,8 @@
 ####################################################################################################################################
 # Posix File Read
 ####################################################################################################################################
-package pgBackRestTest::Common::StoragePosixRead;
-use parent 'pgBackRestTest::Common::Io::Handle';
+package pgBackRestDoc::Common::StoragePosixRead;
+use parent 'pgBackRestDoc::Common::Io::Handle';
 
 use strict;
 use warnings FATAL => qw(all);

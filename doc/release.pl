@@ -22,12 +22,10 @@ use Storable;
 use lib dirname($0) . '/lib';
 use lib dirname(dirname($0)) . '/build/lib';
 use lib dirname(dirname($0)) . '/lib';
-use lib dirname(dirname($0)) . '/test/lib';
 
-use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Common::Storage;
-use pgBackRestTest::Common::StoragePosix;
-use pgBackRestTest::Common::VmTest;
+use pgBackRestDoc::Common::Execute;
+use pgBackRestDoc::Common::Storage;
+use pgBackRestDoc::Common::StoragePosix;
 
 use pgBackRestDoc::Common::Doc;
 use pgBackRestDoc::Common::DocManifest;
@@ -129,10 +127,10 @@ eval
     my $strDocPath = dirname(abs_path($0));
     my $strDocHtml = "${strDocPath}/output/html";
     my $strDocExe = "${strDocPath}/doc.pl";
-    my $strTestExe = dirname($strDocPath) . "/test/test.pl";
+    my $strTestExe = dirname($strDocPath) . "/test/test.py";
 
-    my $oStorageDoc = new pgBackRestTest::Common::Storage(
-        $strDocPath, new pgBackRestTest::Common::StoragePosix({bFileSync => false, bPathSync => false}));
+    my $oStorageDoc = new pgBackRestDoc::Common::Storage(
+        $strDocPath, new pgBackRestDoc::Common::StoragePosix({bFileSync => false, bPathSync => false}));
 
     # Determine if this is a dev release
     my $bDev = PROJECT_VERSION =~ /dev$/;
@@ -238,7 +236,7 @@ eval
         executeTest('docker rm -f $(docker ps -a -q)', {bSuppressError => true});
 
         # Generate deployment docs for RHEL
-        if (!defined($strVm) || $strVm eq VM_RH9)
+        if (!defined($strVm) || $strVm eq 'rh9')
         {
             &log(INFO, "Generate RHEL documentation");
 
@@ -246,7 +244,7 @@ eval
         }
 
         # Generate deployment docs for Debian
-        if (!defined($strVm) || $strVm eq VM_U24)
+        if (!defined($strVm) || $strVm eq 'u24')
         {
             &log(INFO, "Generate Debian/Ubuntu documentation");
 
