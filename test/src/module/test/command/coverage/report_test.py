@@ -225,7 +225,7 @@ def test_report_summary_render():
         ("src/config/parse.c", (4, 4, 2, 2, 20, 20)),
         # The harness and the documentation tool are covered but are not what the summary reports on
         ("test/src/common/harness.c", (9, 9, 9, 9, 9, 9)),
-        ("doc/src/build.c", (9, 9, 9, 9, 9, 9)),
+        ("test/src/build.c", (9, 9, 9, 9, 9, 9)),
     ):
         file = CoverageFile(name)
         (

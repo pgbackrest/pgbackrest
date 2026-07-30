@@ -34,7 +34,7 @@ SCRIPT_BASE_U24 = """ && \\
     apt-get update && \\
     apt-get install -y --no-install-recommends openssh-server sudo gcc make git \\
         ca-certificates libssl-dev tzdata zlib1g-dev libxml2-dev pkg-config \\
-        libbz2-dev bzip2 libyaml-dev liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\
+        libbz2-dev bzip2 liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\
         libssh2-1-dev libcurl4-openssl-dev libsystemd-dev python3-yaml valgrind python3-coverage zstd libzstd-dev && \\
 
 # Regenerate SSH keys
@@ -326,33 +326,33 @@ def test_container_revision():
 
     assert_is_none(revision_check(REVISION))
 
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         revision_check(["1"])
 
     assert_equal(str(error.exception), "the 'all' revision is required in test/container.yaml")
 
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         revision_check({VM_U24: "1"})
 
     assert_equal(str(error.exception), "the 'all' revision is required in test/container.yaml")
 
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         revision_check({VM_ALL: "1", VM_U24: None})
 
     assert_equal(str(error.exception), "revision '%s' in test/container.yaml must be set to a value" % VM_U24)
 
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         revision_check({VM_ALL: "1", "bogus": "1"})
 
     assert_equal(str(error.exception), "revision 'bogus' in test/container.yaml has invalid vm 'bogus'")
 
     # There is no container for none so a revision for it could never be used
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         revision_check({VM_ALL: "1", "none": "1"})
 
     assert_equal(str(error.exception), "revision 'none' in test/container.yaml has invalid vm 'none'")
 
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         revision_check({VM_ALL: "1", "%s-bogus" % VM_U24: "1"})
 
     assert_equal(str(error.exception), "revision '%s-bogus' in test/container.yaml has invalid architecture 'bogus'" % VM_U24)

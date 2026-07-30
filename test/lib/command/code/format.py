@@ -9,7 +9,7 @@ Only version controlled files are formatted, which is what git reports here, so 
 ####################################################################################################################################
 import os
 
-from common.error import TestError
+from common.error import ToolError
 from common.exec import exec_one
 from common.log import *
 
@@ -19,9 +19,11 @@ _LINE_LENGTH = 132
 # Files that are allowed to be executable. Everything else that is version controlled must not be, since a stray execute bit is
 # usually the result of an editor or a file system that does not preserve modes.
 _FILE_EXECUTABLE_LIST = (
+    "build/build.py",
     "doc/doc.pl",
+    "doc/doc.py",
     "doc/release.pl",
-    "src/build/dist.sh",
+    "build/dist.sh",
     "test/ci.py",
     "test/smoke.py",
     "test/test.py",
@@ -81,7 +83,7 @@ def _permission_check(path_repo, file_list):
         mode = os.stat(os.path.join(path_repo, file)).st_mode & 0o777
 
         if mode & 0o111 and file not in _FILE_EXECUTABLE_LIST:
-            raise TestError("expected mode '%04o' for '%s' but found '%04o'" % (mode & 0o666, file, mode))
+            raise ToolError("expected mode '%04o' for '%s' but found '%04o'" % (mode & 0o666, file, mode))
 
 
 ####################################################################################################################################
@@ -96,11 +98,11 @@ def cmd_code_format(config):
     try:
         _format_c(path_repo, file_list, config.check)
         _format_python(path_repo, file_list, config.check)
-    except TestError as error:
+    except ToolError as error:
         if not config.check:
             raise
 
         # The check is what CI runs, so it says how to fix what it found rather than only what it found
-        raise TestError("%s\nHINT: run 'test.py code-format' to format the code" % error)
+        raise ToolError("%s\nHINT: run 'test.py code-format' to format the code" % error)
 
     _permission_check(path_repo, file_list)

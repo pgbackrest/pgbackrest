@@ -53,7 +53,7 @@ def test_config_version_error():
         # The define must be at the start of a line so a mention of it in a comment is not read as the version
         _version_write(path, '// #define PROJECT_VERSION "9.9"\n#define PROJECT_NAME "pgbackrest"\n')
 
-        with assert_raises(TestError) as error:
+        with assert_raises(ToolError) as error:
             project_version(path)
 
         assert_equal(str(error.exception), "unable to find PROJECT_VERSION in src/version.h")
@@ -125,7 +125,7 @@ def test_config_load_error():
 
         path_missing = os.path.join(path, "missing")
 
-        with assert_raises(TestError) as error:
+        with assert_raises(ToolError) as error:
             _cfg_load(["lint", "--repo-path=%s" % path_missing], path)
 
         assert_equal(str(error.exception), "repo path '%s' does not exist" % path_missing)

@@ -75,7 +75,7 @@
         <source key="user-guide" file="output/xml/user-guide.xml"/>
         <source key="command" file="output/xml/command.xml"/>
         <source key="configuration" file="output/xml/configuration.xml"/>
-        <source key="help" type="custom" file="../src/build/help/help.xml"/>
+        <source key="reference" type="custom"/>
         <source key="release" type="custom"/>
         <source key="news"/>
         <source key="faq"/>

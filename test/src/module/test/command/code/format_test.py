@@ -75,7 +75,7 @@ def _cmd_code_format(config, fail=None):
             return "\n".join(FILE_LIST) + "\n"
 
         if fail is not None and command.startswith(fail):
-            raise TestError("%s terminated unexpectedly [1]" % fail)
+            raise ToolError("%s terminated unexpectedly [1]" % fail)
 
         return ""
 
@@ -87,7 +87,7 @@ def _cmd_code_format(config, fail=None):
             with redirect_stdout(output):
                 try:
                     cmd_code_format(config)
-                except TestError as exception:
+                except ToolError as exception:
                     error = str(exception)
     finally:
         log_init(INFO, True)

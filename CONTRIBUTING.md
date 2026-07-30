@@ -32,8 +32,7 @@ pgbackrest-dev => Install development tools
 ```
 sudo apt-get install rsync git build-essential valgrind libssl-dev zlib1g-dev \
        libxml2-dev libpq-dev pkg-config libxml-checker-perl liblz4-dev liblz4-tool \
-       zstd libzstd-dev bzip2 libbz2-dev libyaml-dev ccache meson python3-yaml \
-       python3-coverage
+       zstd libzstd-dev bzip2 libbz2-dev ccache meson python3-yaml python3-coverage
 ```
 
 Some unit tests and all the integration tests require Docker. Running in containers allows us to simulate multiple hosts, test on different distributions and versions of PostgreSQL, and use sudo without affecting the host system.
@@ -235,12 +234,12 @@ pgbackrest/test/test.py --dry-run
     P00   INFO: test command begin 2.60.0dev: --dry-run --no-log-timestamp
     P00   INFO: test begin on aarch64 - log level info
     P00   INFO: clean autogenerate code
---> P00   INFO: 104 tests selected
+--> P00   INFO: 117 tests selected
                 
-    P00   INFO: P1-T001/104 - vm=none, module=common, test=error
-           [filtered 101 lines of output]
-    P00   INFO: P1-T103/104 - vm=none, module=performance, test=type
-    P00   INFO: P1-T104/104 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T001/117 - vm=none, module=common, test=error
+           [filtered 114 lines of output]
+    P00   INFO: P1-T116/117 - vm=none, module=performance, test=type
+    P00   INFO: P1-T117/117 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
     P00   INFO: test command end: completed successfully
 ```
@@ -564,8 +563,8 @@ Options can be added to a command or multiple commands. Options can be configura
 
 To add an option, two files need be to be modified:
 
-- `src/build/config/config.yaml`
-- `src/build/help/help.xml`
+- `build/config.yaml`
+- `doc/xml/reference.xml`
 
 These files are discussed in the following sections along with how to verify the `help` command output.
 
@@ -573,7 +572,7 @@ These files are discussed in the following sections along with how to verify the
 
 There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of secrets, all configuration file options can be passed on the command line. To configure an option for the configuration file, the `section:` key must be present.
 
-The `option:` section is broken into sub-sections by a simple comment divider (e.g. `# Repository options`) under which the options are organized alphabetically by option name. To better explain this section, two hypothetical examples will be discussed. For more details, see [config.yaml](https://github.com/pgbackrest/pgbackrest/blob/main/src/build/config/config.yaml).
+The `option:` section is broken into sub-sections by a simple comment divider (e.g. `# Repository options`) under which the options are organized alphabetically by option name. To better explain this section, two hypothetical examples will be discussed. For more details, see [config.yaml](https://github.com/pgbackrest/pgbackrest/blob/main/build/config.yaml).
 
 #### EXAMPLE 1 hypothetical command line only option
 ```

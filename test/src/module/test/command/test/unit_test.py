@@ -148,7 +148,7 @@ def _cmd_unit(config, exec_result=None):
             try:
                 with redirect_stdout(output):
                     cmd_unit(config)
-            except TestError as exception:
+            except ToolError as exception:
                 error = str(exception)
 
             _cmd_unit.build = build
@@ -321,7 +321,7 @@ def test_unit_build_retry():
 
         # The first ninja fails and the retry succeeds
         command_list, output, error = _cmd_unit(
-            Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", TestError("ninja said no"), "", ""]
+            Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", ToolError("ninja said no"), "", ""]
         )
 
         assert_is_none(error)
@@ -334,7 +334,7 @@ def test_unit_build_retry():
         # A second failure is the end of it, with the error from the build rather than from the retry
         command_list, output, error = _cmd_unit(
             Config(path_repo, path, "common/error", vm_arch="x86_64"),
-            ["", TestError("ninja said no"), "", TestError("ninja said no again")],
+            ["", ToolError("ninja said no"), "", ToolError("ninja said no again")],
         )
 
         assert_equal(error, "build failed for unit common/error: ninja said no again")
@@ -351,7 +351,7 @@ def test_unit_build_retry_clean():
         assert_false(os.path.exists(path_unit))
 
         command_list, output, error = _cmd_unit(
-            Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", TestError("ninja said no"), "", ""]
+            Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", ToolError("ninja said no"), "", ""]
         )
 
         assert_is_none(error)
@@ -368,7 +368,7 @@ def test_unit_build_retry_mode():
         # The path cannot be removed until the mode is reset, which is the second thing tried
         with patch("command.test.unit.shutil.rmtree", side_effect=[OSError("permission denied"), None]):
             command_list, output, error = _cmd_unit(
-                Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", TestError("ninja said no"), "", ""]
+                Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", ToolError("ninja said no"), "", ""]
             )
 
         assert_is_none(error)

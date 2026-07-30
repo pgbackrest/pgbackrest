@@ -48,7 +48,7 @@ def test_vm_get():
     # There is no container for none, since it runs on the host
     assert_is_none(vm_get(VM_NONE).image)
 
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         vm_get("bogus")
 
     assert_equal(str(error.exception), "no definition for vm 'bogus'")
@@ -61,7 +61,7 @@ def test_vm_check():
     assert_is_none(vm_check(_vm_map()))
 
     # C coverage must be collected somewhere, else a change could stop being checked without anything reporting it
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         vm_check(_vm_map(coverage_c=False))
 
     assert_equal(str(error.exception), "C coverage is not configured to run on a default vm")
@@ -70,7 +70,7 @@ def test_vm_check():
     vm_map = _vm_map()
     vm_map[VM_LIST[1]] = Vm(VM_OS_BASE_DEBIAN, [PG_VERSION_LIST[0]])
 
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         vm_check(vm_map)
 
     assert_equal(
@@ -78,7 +78,7 @@ def test_vm_check():
     )
 
     # A version tested on no vm is an error, which is what catches a version that was added but never wired up
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         vm_check(_vm_map(db_test_list=list(PG_VERSION_LIST[1:])))
 
     assert_equal(str(error.exception), "PostgreSQL %s is not configured to run on a default vm" % PG_VERSION_LIST[0])

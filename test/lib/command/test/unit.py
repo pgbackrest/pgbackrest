@@ -13,8 +13,16 @@ import sys
 
 from command.lint.lint import cmd_lint
 from command.test.build import TestBuild
-from command.test.define import TEST_LANG_PYTHON, TEST_TYPE_PERFORMANCE, test_def_find, test_def_parse
-from common.error import TestError, check
+from command.test.define import (
+    TEST_LANG_PYTHON,
+    TEST_LIB_LIST,
+    TEST_TYPE_PERFORMANCE,
+    test_def_find,
+    test_def_parse,
+    test_lib_path,
+    test_lib_split,
+)
+from common.error import ToolError, check
 from common.exec import exec_one
 from common.log import *
 from common.storage import file_remove, path_create, path_list
@@ -41,9 +49,7 @@ def _path_recreate(path):
 def _python_module(name):
     """Convert a code module name to the module it is imported as, e.g. test/common/string_id becomes common.string_id."""
 
-    check(name.startswith("test/"), "python module '%s' must be under test/" % name)
-
-    return name[len("test/") :].replace("/", ".")
+    return test_lib_split(name)[1].replace("/", ".")
 
 
 ####################################################################################################################################
@@ -59,19 +65,22 @@ def _test_python(config, module):
     path_test = os.path.join(config.repo_path, "test/src/module", module.name + "_test.py")
 
     if not os.path.isfile(path_test):
-        raise TestError("unable to find test module '%s'" % path_test)
+        raise ToolError("unable to find test module '%s'" % path_test)
 
     # What the test may import: the code modules it covers, plus what it declared, plus what earlier tests covered
     allow_list = [_python_module(coverage.name) for coverage in module.coverage_list if coverage.coverable]
     allow_list += [_python_module(name) for name in list(module.depend_list) + list(module.include_list)]
 
+    # Libraries the test may import from, which is the one the test module lives in and the ones below it in the hierarchy. A test
+    # of the build library cannot reach the test library this way, the same as the build tool itself cannot.
+    path_lib_list = [os.path.join(config.repo_path, test_lib_path(lib)) for lib in TEST_LIB_LIST[test_lib_split(module.name)[0]]]
+
     # A single test can be run while debugging with --test-name, e.g.
     # test.py unit test/common/string --test-name=test_string_id_render
-    path_lib = os.path.join(config.repo_path, "test/lib")
     command = "%s '%s/command/test/python.py' --lib='%s' --test='%s' --allow='%s' --name='%s'" % (
         sys.executable,
-        path_lib,
-        path_lib,
+        os.path.join(config.repo_path, test_lib_path("test")),
+        ",".join(path_lib_list),
         path_test,
         ",".join(allow_list),
         config.test_name or "",
@@ -115,7 +124,7 @@ def cmd_unit(config):
 
     if module.flag is not None or config.profile or module.type == TEST_TYPE_PERFORMANCE:
         if module.flag is not None and module.flag != "-DNDEBUG":
-            raise TestError("unexpected define '%s'" % module.flag)
+            raise ToolError("unexpected define '%s'" % module.flag)
 
         meson_setup += "release"
     else:
@@ -153,10 +162,10 @@ def cmd_unit(config):
             exec_one("ninja -C '%s'" % path_unit_build)
 
             break
-        except TestError as error:
+        except ToolError as error:
             # If this is the first build failure then clean the build path and retry
             if build_retry:
-                raise TestError("build failed for unit %s: %s" % (config.module, error))
+                raise ToolError("build failed for unit %s: %s" % (config.module, error))
 
             build_retry = True
 

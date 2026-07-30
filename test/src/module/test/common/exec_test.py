@@ -28,13 +28,13 @@ def test_exec_output():
 def test_exec_error():
     """An unexpected exit status is an error that carries the output."""
 
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         exec_one("echo bad && false")
 
     assert_equal(str(error.exception), "echo bad && false terminated unexpectedly [1]: bad")
 
     # A command that wrote nothing reports only the status
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         exec_one("exit 7")
 
     assert_equal(str(error.exception), "exit 7 terminated unexpectedly [7]")
@@ -46,7 +46,7 @@ def test_exec_expect():
 
     assert_equal(exec_one("exit 3", 3), "")
 
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         exec_one("true", 3)
 
     assert_equal(str(error.exception), "true terminated unexpectedly [0]")

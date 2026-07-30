@@ -193,9 +193,9 @@ def _script_package(name, vm):
 
         result += (
             "    yum -y update && \\\n"
-            + "    yum -y install openssh-server openssh-clients sudo git ca-certificates gcc make ccache meson \\\n"
-            + "        openssl openssl-devel libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 \\\n"
-            + "        libssh2-devel zstd libzstd-devel systemd-devel"
+            + "    yum -y install openssh-server openssh-clients sudo git ca-certificates gcc make ccache meson openssl\\\n"
+            + "        openssl-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 libssh2-devel zstd libzstd-devel\\\n"
+            + "        systemd-devel"
         )
 
         if name != VM_RH8:
@@ -220,7 +220,7 @@ def _script_package(name, vm):
             + "    apt-get update && \\\n"
             + "    apt-get install -y --no-install-recommends openssh-server sudo gcc make git \\\n"
             + "        ca-certificates libssl-dev tzdata zlib1g-dev libxml2-dev pkg-config \\\n"
-            + "        libbz2-dev bzip2 libyaml-dev liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n"
+            + "        libbz2-dev bzip2 liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n"
             + "        libssh2-1-dev libcurl4-openssl-dev libsystemd-dev python3-yaml"
         )
 
@@ -238,7 +238,7 @@ def _script_package(name, vm):
             + "    apk add --no-cache sudo openssh git rsync tzdata openssh ca-certificates openrc bash && \\\n"
             + "    rc-update add sshd && \\\n"
             + "    apk add --no-cache meson build-base libpq-dev openssl-dev libxml2-dev pkgconfig lz4-dev bzip2-dev\\\n"
-            + "        openssh-keygen zlib-dev yaml-dev libssh2-dev valgrind lz4 zstd zstd-dev py3-yaml"
+            + "        openssh-keygen zlib-dev libssh2-dev valgrind lz4 zstd zstd-dev py3-yaml"
         )
 
     # Coverage for python tests where the packaged version predates the per line branch detail the report needs, so it comes from

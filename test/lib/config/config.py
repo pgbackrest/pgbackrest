@@ -5,7 +5,7 @@ Parses the command line, resolves paths, and initializes logging."""
 import os
 import re
 
-from common.error import TestError
+from common.error import ToolError
 from common.log import *
 from common.storage import file_read
 from config.cli import cli_parse
@@ -23,7 +23,7 @@ def project_version(path_repo):
     match = re.search(r'^#define PROJECT_VERSION\s+"([^"]+)"', file_read(os.path.join(path_repo, "src/version.h")), re.M)
 
     if match is None:
-        raise TestError("unable to find PROJECT_VERSION in src/version.h")
+        raise ToolError("unable to find PROJECT_VERSION in src/version.h")
 
     return match.group(1)
 
@@ -42,7 +42,7 @@ def cfg_load(arg_list, path_harness):
     # The repository is only ever read from so it must already exist. Checking here keeps a mistyped path from looking like success
     # rather than an error, e.g. the linter would find no files to check and report that everything passed.
     if not os.path.isdir(config.repo_path):
-        raise TestError("repo path '%s' does not exist" % config.repo_path)
+        raise ToolError("repo path '%s' does not exist" % config.repo_path)
 
     # Convert log levels to ids now that they are known to be valid
     config.log_level = OFF if config.quiet else log_level_parse(config.log_level)

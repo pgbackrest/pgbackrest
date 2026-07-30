@@ -255,7 +255,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strFirstUpper(), strFirstLower(), strUpper(), strLower()"))
+    if (testBegin("strFirstUpper(), strFirstLower(), hrnStrUpper(), strLower()"))
     {
         TEST_RESULT_STR_Z(strFirstUpper(strNewZ("")), "", "empty first upper");
         TEST_RESULT_STR_Z(strFirstUpper(strNewZ("aaa")), "Aaa", "first upper");
@@ -270,31 +270,31 @@ testRun(void)
         TEST_RESULT_STR_Z(strLower(strNewZ("C")), "c", "char lower");
         TEST_RESULT_STR_Z(strLower(strNew()), "", "empty lower");
 
-        TEST_RESULT_STR_Z(strUpper(strNewZ("K123aBc")), "K123ABC", "all upper");
-        TEST_RESULT_STR_Z(strUpper(strNewZ("K123ABC")), "K123ABC", "already upper");
-        TEST_RESULT_STR_Z(strUpper(strNewZ("c")), "C", "char upper");
-        TEST_RESULT_STR_Z(strUpper(strNew()), "", "empty upper");
+        TEST_RESULT_STR_Z(hrnStrUpper(strNewZ("K123aBc")), "K123ABC", "all upper");
+        TEST_RESULT_STR_Z(hrnStrUpper(strNewZ("K123ABC")), "K123ABC", "already upper");
+        TEST_RESULT_STR_Z(hrnStrUpper(strNewZ("c")), "C", "char upper");
+        TEST_RESULT_STR_Z(hrnStrUpper(strNew()), "", "empty upper");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strReplace() and strReplaceChr()"))
+    if (testBegin("hrnStrReplace() and strReplaceChr()"))
     {
-        TEST_RESULT_UINT(strReplace(strNewZ(""), STRDEF("A"), STRDEF("B")), 0, "replace none");
+        TEST_RESULT_UINT(hrnStrReplace(strNewZ(""), STRDEF("A"), STRDEF("B")), 0, "replace none");
 
         String *replaceAll = strCatZ(strNew(), "ABC");
-        TEST_RESULT_UINT(strReplace(replaceAll, STRDEF("ABC"), STRDEF("DEF")), 1, "replace all count");
+        TEST_RESULT_UINT(hrnStrReplace(replaceAll, STRDEF("ABC"), STRDEF("DEF")), 1, "replace all count");
         TEST_RESULT_STR_Z(replaceAll, "DEF", "replace all result");
 
         String *replaceMultiple = strCatZ(strNew(), "ABCXABC");
-        TEST_RESULT_UINT(strReplace(replaceMultiple, STRDEF("ABC"), STRDEF("DEF")), 2, "replace multiple count");
+        TEST_RESULT_UINT(hrnStrReplace(replaceMultiple, STRDEF("ABC"), STRDEF("DEF")), 2, "replace multiple count");
         TEST_RESULT_STR_Z(replaceMultiple, "DEFXDEF", "replace multiple result");
 
         String *replaceLarger = strCatZ(strNew(), "XABCX");
-        TEST_RESULT_UINT(strReplace(replaceLarger, STRDEF("ABC"), STRDEF("DEFGHI")), 1, "replace larger count");
+        TEST_RESULT_UINT(hrnStrReplace(replaceLarger, STRDEF("ABC"), STRDEF("DEFGHI")), 1, "replace larger count");
         TEST_RESULT_STR_Z(replaceLarger, "XDEFGHIX", "replace larger result");
 
         String *replaceCommon = strCatZ(strNew(), "XABCXABCX");
-        TEST_RESULT_UINT(strReplace(replaceCommon, STRDEF("ABC"), STRDEF("ABCD")), 2, "replace common substring count");
+        TEST_RESULT_UINT(hrnStrReplace(replaceCommon, STRDEF("ABC"), STRDEF("ABCD")), 2, "replace common substring count");
         TEST_RESULT_STR_Z(replaceCommon, "XABCDXABCDX", "replace common substring result");
 
         TEST_RESULT_STR_Z(strReplaceChr(strNewZ("ABCD"), 'B', 'R'), "ARCD", "replace chr");

@@ -223,7 +223,7 @@ def _cmd_test(config, exec_result=None, job_fail=None, job_start=True, job_poll=
                     with redirect_stdout(output):
                         try:
                             status = cmd_test(config)
-                        except TestError as error:
+                        except ToolError as error:
                             status = str(error)
 
                     _cmd_test.container_build = container_build
@@ -268,29 +268,20 @@ def test_test_generate():
 
         assert_equal(status, 0)
 
-        # There is nothing built yet so the build is set up first, and the generator is run for everything it generates
-        assert_in(
-            "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug %s/build/none %s" % (path_test, path_repo),
-            command_list[-1],
-        )
-        assert_in("ninja -C %s/build/none src/build-code" % path_test, command_list[-1])
+        # The generator is run for everything it generates, and needs nothing built first since it is python
+        for generate in ("config", "error", "postgres-version"):
+            assert_in("%s/build/build.py %s" % (path_repo, generate), command_list[-1])
 
-        for generate in ("config", "error", "postgres-version", "postgres"):
-            assert_in("/src/build-code %s %s/src" % (generate, path_repo), command_list[-1])
+        # The PostgreSQL interfaces are generated into the repository copy, since they are built rather than committed
+        assert_in("%s/build/build.py postgres --build-path=%s/repo" % (path_repo, path_test), command_list[-1])
 
-        assert_in("clean autogenerate code", output)
+        assert_in("autogenerate code", output)
 
         # A dry run only generates what building the test list depends on, since nothing will be built from the rest
-        file_write(os.path.join(path_test, "build/none/build.ninja"), "")
-
         status, command_list, started, output = _cmd_test(Config(path_repo, path_test, gen_only=True, dry_run=True))
 
-        assert_not_in("build-code config", command_list[-1])
-        assert_in("build-code postgres ", command_list[-1])
-
-        # The build is only set up when it is not there already
-        assert_not_in("meson setup", command_list[-1])
-        assert_not_in("clean autogenerate code", output)
+        assert_not_in("build.py config", command_list[-1])
+        assert_in("build.py postgres ", command_list[-1])
 
 
 ####################################################################################################################################
@@ -317,6 +308,18 @@ def test_test_clean():
         assert_equal(status, 0)
         assert_in("find %s/test/result -mindepth 1 -print0 | xargs -0 rm -rf" % path_repo, command_list)
         assert_in("autogenerate code", output)
+
+        # A path that cannot be emptied says what to do about it, since a test that did not clean up after itself can leave files
+        # behind that only root can remove
+        file_write(os.path.join(path_test, "leftover"), "")
+
+        status, command_list, started, output = _cmd_test(
+            Config(path_repo, path_test, clean_only=True),
+            exec_result=[ToolError("rm: cannot remove '%s/test-0': Operation not permitted" % path_test)],
+        )
+
+        assert_in("Operation not permitted", status)
+        assert_in("HINT: a test may have left files owned by root, so try 'sudo rm -rf %s/*'" % path_test, status)
 
 
 ####################################################################################################################################

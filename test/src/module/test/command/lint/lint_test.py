@@ -55,7 +55,7 @@ def _lint(file_map, symlink=False):
         def run():
             try:
                 cmd_lint(path)
-            except TestError as error:
+            except ToolError as error:
                 return str(error)
 
             return None
@@ -227,3 +227,28 @@ def test_lint_error():
     assert_equal(error, "2 linter error(s) in 'src/x.c' (see warnings above)")
     assert_in("U+2019", output)
     assert_in("should be", output)
+
+
+####################################################################################################################################
+def test_lint_lib_shadow():
+    """A module may appear in only one library, since a duplicate would hide the shadowed one from every tool."""
+
+    # The same module in two libraries, which python would resolve to whichever library came first on the path
+    error, output = _lint({"build/lib/common/log.py": b"", "test/lib/common/log.py": b""})
+
+    assert_equal(error, "module 'common/log.py' is in the build and test libraries")
+
+    # A library is the second component of the path, so a lib further down is not one
+    error, output = _lint({"test/src/lib/common/log.py": b"", "test/lib/common/log.py": b""})
+
+    assert_is_none(error)
+
+    # A module in one library and a different module in another
+    error, output = _lint({"build/lib/common/log.py": b"", "test/lib/common/vm.py": b""})
+
+    assert_is_none(error)
+
+    # Something under a library that is not a module at all
+    error, output = _lint({"build/lib/common/log.py": b"", "test/lib/uncrustify.cfg": b""})
+
+    assert_is_none(error)

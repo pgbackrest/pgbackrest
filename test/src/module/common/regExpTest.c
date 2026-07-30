@@ -44,15 +44,15 @@ testRun(void)
 
         const String *string = STRDEF("abcdef");
         TEST_RESULT_BOOL(regExpMatch(regExp, string), true, "match regexp");
-        TEST_RESULT_PTR(regExpMatchPtr(regExp, string), strZ(string), "check ptr");
-        TEST_RESULT_STR_Z(regExpMatchStr(regExp, string), "abc", "check str");
+        TEST_RESULT_PTR(hrnRegExpMatchPtr(regExp, string), strZ(string), "check ptr");
+        TEST_RESULT_STR_Z(hrnRegExpMatchStr(regExp, string), "abc", "check str");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no regexp match");
 
         TEST_RESULT_BOOL(regExpMatch(regExp, STRDEF("bcdef")), false, "no match regexp");
-        TEST_RESULT_PTR(regExpMatchPtr(regExp, STRDEF("bcdef")), NULL, "check ptr");
-        TEST_RESULT_STR(regExpMatchStr(regExp, STRDEF("bcdef")), NULL, "check str");
+        TEST_RESULT_PTR(hrnRegExpMatchPtr(regExp, STRDEF("bcdef")), NULL, "check ptr");
+        TEST_RESULT_STR(hrnRegExpMatchStr(regExp, STRDEF("bcdef")), NULL, "check str");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free regexp");

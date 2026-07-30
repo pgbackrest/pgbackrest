@@ -159,7 +159,7 @@ unit:
         feature: string
 
         coverage:
-          - build/common/string
+          - test/harness/string
           - common/type/string: included
           - common/type/stringZ
           - common/type/stringId
@@ -212,7 +212,7 @@ unit:
         total: 3
 
         coverage:
-          - build/common/regExp
+          - test/harness/regExp
           - common/regExp: included
 
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -255,8 +255,7 @@ unit:
         total: 2
 
         coverage:
-          - build/common/json
-          - common/type/json: included
+          - common/type/json
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-key-value
@@ -270,8 +269,7 @@ unit:
         total: 1
 
         coverage:
-          - build/common/xml
-          - common/type/xml: included
+          - common/type/xml
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stat
@@ -429,7 +427,7 @@ unit:
         total: 2
 
         coverage:
-          - build/common/exec
+          - test/harness/exec
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: ini
@@ -506,7 +504,7 @@ unit:
           - protocol/server
 
         include:
-          - build/common/exec
+          - test/harness/exec
 
   # ********************************************************************************************************************************
   - name: config
@@ -682,47 +680,120 @@ unit:
 
   # ********************************************************************************************************************************
   - name: build
+    lang: python
+    vm: [none, u24, rh9]
 
+    # The build library, which every tool is built on. These are python so they are run directly rather than built, which means no
+    # total is needed since there are no runs to select. They are declared before the doc and test libraries so that those inherit
+    # them, which is the same direction the import hierarchy runs in.
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common
-        total: 2
+      - name: common/error
+
+        coverage:
+          - build/common/error
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/log
+
+        coverage:
+          - build/common/log
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/storage
+
+        coverage:
+          - build/common/storage
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/string
+
+        coverage:
+          - build/common/string_id
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/render
 
         coverage:
           - build/common/render
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/yaml
+
+        coverage:
           - build/common/yaml
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: config
-        total: 1
+      - name: common/pack
+
+        coverage:
+          - build/common/pack
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: common/xml
+
+        coverage:
+          - build/common/xml
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: config/common
+
+        coverage:
+          - build/config/common
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: config/parse
 
         coverage:
           - build/config/parse
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: config/render
+
+        coverage:
           - build/config/render
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: error
-        total: 1
+      - name: error/parse
 
         coverage:
           - build/error/parse
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: error/render
+
+        coverage:
           - build/error/render
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: help
-        total: 2
-
-        coverage:
-          - build/help/parse
-          - build/help/render
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: postgres
-        total: 1
+      - name: postgres/parse
 
         coverage:
           - build/postgres/parse
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: postgres/render
+
+        coverage:
           - build/postgres/render
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: help/parse
+
+        coverage:
+          - build/help/parse
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: help/render
+
+        coverage:
+          - build/help/render
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/main
+
+        coverage:
+          - build/command/main
 
   # ********************************************************************************************************************************
   - name: info
@@ -895,9 +966,6 @@ unit:
           - command/help/help
           - command/help/help.auto: noCode
 
-        include:
-          - build/help/render
-
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: info
         total: 3
@@ -1028,19 +1096,47 @@ unit:
 
   # ********************************************************************************************************************************
   - name: doc
+    lang: python
+    vm: [none, u24, rh9]
 
     test:
+      # The doc library, which sits on top of the build library. These are python so they are run directly rather than built, which
+      # means no total is needed since there are no runs to select.
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: build
-        total: 2
+      - name: command/build/var_store
+
+        coverage:
+          - doc/command/build/var_store
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/build/eval
+
+        coverage:
+          - doc/command/build/eval
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/build/pre
+
+        coverage:
+          - doc/command/build/pre
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/build/reference
+
+        coverage:
+          - doc/command/build/reference
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/build/man
+
+        coverage:
+          - doc/command/build/man
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: command/build/build
 
         coverage:
           - doc/command/build/build
-          - doc/command/build/eval
-          - doc/command/build/man
-          - doc/command/build/pre
-          - doc/command/build/reference
-          - doc/command/build/varStore
 
   # ********************************************************************************************************************************
   # Tests for the test harness itself. These are python so they are run directly rather than built, which means no total is needed
@@ -1054,40 +1150,10 @@ unit:
 
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common/error
-
-        coverage:
-          - test/common/error
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: common/exec
 
         coverage:
           - test/common/exec
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common/log
-
-        coverage:
-          - test/common/log
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common/storage
-
-        coverage:
-          - test/common/storage
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common/string
-
-        coverage:
-          - test/common/string_id
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common/render
-
-        coverage:
-          - test/common/render
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: common/user

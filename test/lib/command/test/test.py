@@ -15,7 +15,7 @@ from command.test.container import container_build, container_remove, container_
 from command.test.define import test_def_parse
 from command.test.job import TestJob
 from command.test.list import test_list_get
-from common.error import TestError, check
+from common.error import ToolError, check
 from common.exec import Exec, exec_one
 from common.log import *
 from common.storage import file_read, file_write, file_write_differs, path_create
@@ -90,29 +90,22 @@ def _repo_copy(config):
 
 ####################################################################################################################################
 def _code_generate(config, path_repo_copy):
-    """Generate the code that is built from the definitions in the source.
+    """Generate the code that is built from the declarations in the source.
 
-    This runs on the host rather than in a container since the generator is built for the host either way."""
+    This runs on the host rather than in a container, since the generator is python and needs nothing built first."""
 
     path_repo = config.repo_path
-    path_build = os.path.join(config.test_path, "build", VM_NONE)
-    build_clean = not os.path.exists(os.path.join(path_build, "build.ninja"))
+    command = ""
 
-    log(INFO, ("clean " if build_clean else "") + "autogenerate code")
-
-    command = "ninja -C %s src/build-code 2>&1" % path_build
+    log(INFO, "autogenerate code")
 
     # A dry run does the minimum required, i.e. only what building the test list depends on
     if not config.dry_run:
         for generate in ("config", "error", "postgres-version"):
-            command += " && \\\n%s/src/build-code %s %s/src" % (path_build, generate, path_repo)
+            command += "%s/build/build.py %s && \\\n" % (path_repo, generate)
 
-    command += " && \\\n%s/src/build-code postgres %s/src %s" % (path_build, path_repo, path_repo_copy)
-
-    if build_clean:
-        command = (
-            "meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug %s %s && \\\n" % (path_build, path_repo) + command
-        )
+    # The PostgreSQL interfaces are generated into the repository copy, since they are built rather than committed
+    command += "%s/build/build.py postgres --build-path=%s" % (path_repo, path_repo_copy)
 
     exec_one(command)
 
@@ -233,7 +226,7 @@ def _coverage(config, test_list):
 
     # The coverage command reports incomplete coverage with a status of one, which is not an error here since the tests all passed
     if status > 1:
-        raise TestError("coverage command failed", status)
+        raise ToolError("coverage command failed", status)
 
     if status == 0:
         log(INFO, "tested modules have full coverage")
@@ -293,7 +286,12 @@ def cmd_test(config):
 
         for path in (config.test_path, os.path.join(path_repo, "test/result")):
             if os.path.exists(path):
-                exec_one("find %s -mindepth 1 -print0 | xargs -0 rm -rf" % path)
+                try:
+                    exec_one("find %s -mindepth 1 -print0 | xargs -0 rm -rf" % path)
+                except ToolError as error:
+                    # A test that did not get to clean up after itself can leave files owned by root behind, which is the only thing
+                    # here that cannot be removed as the user the tests run as
+                    raise ToolError("%s\nHINT: a test may have left files owned by root, so try 'sudo rm -rf %s/*'" % (error, path))
 
         if config.clean_only:
             return 0
@@ -398,7 +396,7 @@ def cmd_test(config):
             return 0
 
     if not test_list:
-        raise TestError("no tests were selected")
+        raise ToolError("no tests were selected")
 
     log(INFO, "%u test%s selected\n" % (len(test_list), "" if len(test_list) == 1 else "s"))
 

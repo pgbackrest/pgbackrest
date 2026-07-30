@@ -5,10 +5,11 @@ claim to."""
 
 ####################################################################################################################################
 import os
+import re
 
 from command.lint.ascii import lint_ascii
 from command.lint.string_id import lint_str_id
-from common.error import TestError
+from common.error import ToolError
 from common.log import *
 from common.storage import path_list_recurse
 
@@ -19,6 +20,9 @@ _FILE_SKIP_LIST = (
     "test/data/filecopy.table.bin",  # Binary test fixture
     "doc/resource/git-history.cache",  # Generated from git history, contains non-ASCII author names
 )
+
+# A python module in a tool library, e.g. build/lib/common/render.py
+_LIB_MODULE_EXP = re.compile(r"^([^/]+)/lib/(.+\.py)$")
 
 
 ####################################################################################################################################
@@ -37,7 +41,21 @@ def _lint_str_id_apply(name):
 def cmd_lint(path_repo):
     """Lint every file in the repository."""
 
+    lib_module = {}
+
     for name in path_list_recurse(path_repo):
+        # A module may appear in only one library. Python resolves a module name to the first library on the path that has it and
+        # ignores the rest, so a duplicate would hide the shadowed module from every tool with no indication that it had.
+        match = _LIB_MODULE_EXP.match(name)
+
+        if match is not None:
+            lib, module = match.groups()
+
+            if module in lib_module:
+                raise ToolError("module '%s' is in the %s and %s libraries" % (module, lib_module[module], lib))
+
+            lib_module[module] = lib
+
         # Skip files that are exempt from the content checks
         if name in _FILE_SKIP_LIST:
             continue
@@ -62,4 +80,4 @@ def cmd_lint(path_repo):
                 error_total += lint_str_id(data.decode("utf-8", errors="replace"))
 
         if error_total > 0:
-            raise TestError("%u linter error(s) in '%s' (see warnings above)" % (error_total, name))
+            raise ToolError("%u linter error(s) in '%s' (see warnings above)" % (error_total, name))

@@ -33,7 +33,7 @@ jobs:
         run: |
           sudo apt-get update
           DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y meson gcc pkg-config \
-            libssl-dev libxml2-dev libpq-dev libyaml-dev liblz4-dev libzstd-dev libbz2-dev zlib1g-dev libxml-checker-perl
+            libssl-dev libxml2-dev libpq-dev liblz4-dev libzstd-dev libbz2-dev zlib1g-dev libxml-checker-perl
 
       - name: Build Tarball
         run: |
@@ -45,11 +45,10 @@ jobs:
           # tarball but not used by the build or the smoke test.
           pgbackrest/doc/release.pl --dist --no-exe
 
-          # Configure the build and build the code generator, which meson dist runs to produce the shipped generated files
+          # Configure the build, which meson dist runs the code generator from to produce the shipped generated files
           meson setup build pgbackrest
-          ninja -C build src/build-code
 
-          # Build the tarball. meson dist runs src/build/dist.sh to bake in the generated files, documentation, and dist marker.
+          # Build the tarball. meson dist runs build/dist.sh to bake in the generated files, documentation, and dist marker.
           # --no-tests skips building and testing the extracted tarball here since that is exactly what the build jobs below do,
           # each on its own distribution.
           meson dist -C build --formats gztar --no-tests

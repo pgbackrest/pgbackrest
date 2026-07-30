@@ -23,27 +23,19 @@ sys.stderr = sys.stdout
 # import would be reported as an unexpected binary file. This must be set before the harness modules are imported below.
 sys.dont_write_bytecode = True
 
-# The library lives beside this script. Insert it first so the harness modules are found before anything else on the path.
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+# Each tool keeps its library beside itself and may use the libraries below it in the hierarchy, which for the harness is all of
+# them. Insert them first, lowest last, so the harness modules are found before anything else on the path.
+for lib in ("build", "doc", "test"):
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), lib, "lib"))
 
-from common.error import EXIT_ERROR, TestError  # noqa: E402
-
-# PyYAML is the only thing these imports need outside the standard library, so a failure here is almost always a missing package.
-# Coverage is also required but only by the test runner, which is a separate process and reports a missing one itself.
-try:
-    from command.code.format import cmd_code_format  # noqa: E402
-    from command.coverage.coverage import cmd_coverage  # noqa: E402
-    from command.lint.lint import cmd_lint  # noqa: E402
-    from command.test.test import cmd_test  # noqa: E402
-    from command.test.unit import cmd_unit  # noqa: E402
-    from common.log import *  # noqa: E402
-    from config.config import cfg_load, project_version  # noqa: E402
-except ImportError as error:
-    print("unable to load the test harness: %s" % error)
-    print("HINT: PyYAML is required -- install python3-yaml (Debian), python3-pyyaml (RHEL), or py3-yaml (Alpine)")
-    print("HINT: rh8 needs python3.12 and python3.12-pyyaml, since the harness does not run on the platform python")
-
-    sys.exit(EXIT_ERROR)
+from command.code.format import cmd_code_format  # noqa: E402
+from command.coverage.coverage import cmd_coverage  # noqa: E402
+from command.lint.lint import cmd_lint  # noqa: E402
+from command.test.test import cmd_test  # noqa: E402
+from command.test.unit import cmd_unit  # noqa: E402
+from common.error import EXIT_ERROR, ToolError  # noqa: E402
+from common.log import *  # noqa: E402
+from config.config import cfg_load, project_version  # noqa: E402
 
 
 ####################################################################################################################################
@@ -79,7 +71,7 @@ def main():
     # Load the configuration. Logging is not initialized until this succeeds so print any error directly.
     try:
         config = cfg_load(sys.argv[1:], path_harness)
-    except TestError as error:
+    except ToolError as error:
         print(error)
 
         return EXIT_ERROR
@@ -91,7 +83,7 @@ def main():
 
     try:
         result = command_run(config)
-    except TestError as error:
+    except ToolError as error:
         log(ERROR, error)
         log(INFO, "%s command end: aborted with exception" % command)
 

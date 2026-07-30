@@ -217,18 +217,9 @@ eval
         $rhVariableOverride->{$strKey} = $rhKeyVariableOverride->{$strKey};
     }
 
-    # Build C code
-    my $strBuildPath = "${strBasePath}/output/build";
+    # Build the reference documents, the user guide, and the manual page
     my $strRepoPath = dirname($strBasePath);
-    my $strBuildNinja = "${strBuildPath}/build.ninja";
     my $strBuildVar = "";
-
-    &log(INFO, "build C helper");
-
-    if (!-e $strBuildNinja)
-    {
-        executeTest("meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath} ${strRepoPath}");
-    }
 
     foreach my $strVar (sort(keys(%{$rhVariableOverride})))
     {
@@ -237,9 +228,8 @@ eval
 
     $strBuildVar .= " --var=debug=" . ($bDebug ? 'y' : 'n');
 
-    executeTest("ninja -C ${strBuildPath} doc/src/doc-pgbackrest");
     executeTest(
-        "${strBuildPath}/doc/src/doc-pgbackrest --repo-path=${strRepoPath}${strBuildVar}" .
+        "${strBasePath}/doc.py --repo-path=${strRepoPath}${strBuildVar}" .
             ($strLogLevel ne 'info' ? " --log-level=${strLogLevel}" : ''),
         {bShowOutputAsync => true});
 

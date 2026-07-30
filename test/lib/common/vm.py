@@ -9,7 +9,7 @@ vm and at least one default vm must collect C coverage. Without the check a new 
 ####################################################################################################################################
 import platform
 
-from common.error import TestError, check
+from common.error import ToolError, check
 
 # Os base a vm is built on, which determines its package manager and where PostgreSQL is installed
 VM_OS_BASE_ALPINE = "alpine"
@@ -113,7 +113,7 @@ def vm_get(vm):
     """The definition for a vm, which also validates that the vm exists."""
 
     if not vm_valid(vm):
-        raise TestError("no definition for vm '%s'" % vm)
+        raise ToolError("no definition for vm '%s'" % vm)
 
     return _VM[vm]
 

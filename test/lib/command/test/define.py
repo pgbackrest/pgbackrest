@@ -10,7 +10,7 @@ import os
 
 import yaml
 
-from common.error import TestError, check
+from common.error import ToolError, check
 
 # Test types, in the order they are declared in define.yaml and accumulated
 TEST_TYPE_UNIT = "unit"
@@ -24,6 +24,36 @@ TEST_LANG_C = "c"
 TEST_LANG_PYTHON = "python"
 
 TEST_LANG_LIST = (TEST_LANG_C, TEST_LANG_PYTHON)
+
+# Libraries a python module may import from, keyed by the library it lives in, which is the first component of its module name. A
+# tool sees its own library and the ones below it in the hierarchy, listed in search order, which is what include_directories does
+# for the C.
+TEST_LIB_LIST = {
+    "build": ("build",),
+    "doc": ("doc", "build"),
+    "test": ("test", "doc", "build"),
+}
+
+
+####################################################################################################################################
+def test_lib_split(name):
+    """Split a python module name into the library it lives in and the module within it.
+
+    For example "build/common/render" becomes ("build", "common/render"), where the module is imported as common.render from the
+    build library."""
+
+    lib, _, module = name.partition("/")
+
+    check(lib in TEST_LIB_LIST, "python module '%s' must be in one of these libraries: %s" % (name, ", ".join(TEST_LIB_LIST)))
+
+    return lib, module
+
+
+####################################################################################################################################
+def test_lib_path(lib):
+    """Path of a library relative to the repository, e.g. "build" becomes "build/lib"."""
+
+    return "%s/lib" % lib
 
 
 ####################################################################################################################################
@@ -315,4 +345,4 @@ def test_def_find(module_list, name):
         if module.name == name:
             return module
 
-    raise TestError("'%s' is not a valid test" % name)
+    raise ToolError("'%s' is not a valid test" % name)

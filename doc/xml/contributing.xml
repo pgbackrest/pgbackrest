@@ -93,8 +93,7 @@
                 <exe-cmd>
                     apt-get install rsync git build-essential valgrind libssl-dev zlib1g-dev
                     libxml2-dev libpq-dev pkg-config libxml-checker-perl liblz4-dev liblz4-tool
-                    zstd libzstd-dev bzip2 libbz2-dev libyaml-dev ccache meson python3-yaml
-                    python3-coverage
+                    zstd libzstd-dev bzip2 libbz2-dev ccache meson python3-yaml python3-coverage
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -642,8 +641,8 @@ run 8/1 ------------- L2285 no current backups
 
         <p>To add an option, two files need be to be modified:</p>
         <list>
-            <list-item><file>src/build/config/config.yaml</file></list-item>
-            <list-item><file>src/build/help/help.xml</file></list-item>
+            <list-item><file>build/config.yaml</file></list-item>
+            <list-item><file>doc/xml/reference.xml</file></list-item>
         </list>
 
         <p>These files are discussed in the following sections along with how to verify the <code>help</code> command output.</p>
@@ -654,7 +653,7 @@ run 8/1 ------------- L2285 no current backups
 
             <p>There are detailed comment blocks above each section that explain the rules for defining commands and options. Regarding options, there are two types: 1) command line only, and 2) configuration file. With the exception of secrets, all configuration file options can be passed on the command line. To configure an option for the configuration file, the <id>section:</id> key must be present.</p>
 
-            <p>The <id>option:</id> section is broken into sub-sections by a simple comment divider (e.g. <code># Repository options</code>) under which the options are organized alphabetically by option name. To better explain this section, two hypothetical examples will be discussed. For more details, see <link url="{[github-url-src]}/build/config/config.yaml">config.yaml</link>.</p>
+            <p>The <id>option:</id> section is broken into sub-sections by a simple comment divider (e.g. <code># Repository options</code>) under which the options are organized alphabetically by option name. To better explain this section, two hypothetical examples will be discussed. For more details, see <link url="{[github-url-main]}/build/config.yaml">config.yaml</link>.</p>
 
             <!-- =============================================================================================================== -->
             <section id="option-ex1">
@@ -723,8 +722,8 @@ run 8/1 ------------- L2285 no current backups
         </section>
 
         <!-- =================================================================================================================== -->
-        <section id="help-file">
-            <title>help.xml</title>
+        <section id="reference-file">
+            <title>reference.xml</title>
 
             <p>All options must be documented or the system will error during the build. To add an option, find the command section identified by <code>command id="COMMAND"</code> section where <id>COMMAND</id> is the name of the command (e.g. <cmd>expire</cmd>) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the <code>operation-general title="General Options"</code> section.</p>
 

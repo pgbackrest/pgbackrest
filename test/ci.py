@@ -24,10 +24,12 @@ sys.stderr = sys.stdout
 # import would be reported as an unexpected binary file. This must be set before the harness modules are imported below.
 sys.dont_write_bytecode = True
 
-# The library lives beside this script. Insert it first so the harness modules are found before anything else on the path.
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+# Each tool keeps its library beside itself and may use the libraries below it in the hierarchy, which for the harness is all of
+# them. Insert them first, lowest last, so the harness modules are found before anything else on the path.
+for lib in ("build", "doc", "test"):
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), lib, "lib"))
 
-from common.error import EXIT_ERROR, TestError  # noqa: E402
+from common.error import EXIT_ERROR, ToolError  # noqa: E402
 from common.exec import exec_one  # noqa: E402
 from common.log import *  # noqa: E402
 from common.user import user_name  # noqa: E402
@@ -109,7 +111,7 @@ def test_run(config):
     vm_arch = "" if config.vm_arch is None else " --vm-arch=%s" % config.vm_arch
 
     # Packages the tests need that the test images already have
-    package = "gcc ccache git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config libssh2-1-dev valgrind"
+    package = "gcc ccache git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev pkg-config libssh2-1-dev valgrind"
 
     # Extra packages required when testing without containers
     if config.vm == VM_NONE:
@@ -188,7 +190,7 @@ def main():
 
     try:
         return command_run(cfg_load(sys.argv[1:], path_repo))
-    except TestError as error:
+    except ToolError as error:
         log(ERROR, error)
 
         return error.status

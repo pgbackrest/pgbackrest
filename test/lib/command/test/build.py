@@ -27,9 +27,6 @@ def path_module(module_name):
     if module_name.startswith("test/"):
         return "test/src" + module_name[len("test") :]
 
-    if module_name.startswith("doc/"):
-        return "doc/src" + module_name[len("doc") :]
-
     return "src/" + module_name
 
 
@@ -350,7 +347,6 @@ class TestBuild:
             + "        include_directories(\n"
             + "            '.',\n"
             + "            '%s/src',\n" % path_repo_rel
-            + "            '%s/doc/src',\n" % path_repo_rel
             + "            '%s/test/src',\n" % path_repo_rel
             + "        ),\n"
             + "    dependencies: [\n"
@@ -366,7 +362,6 @@ class TestBuild:
             + "        lib_pq,\n"
             + "        lib_ssh2,\n"
             + "        lib_xml,\n"
-            + "        lib_yaml,\n"
             + "        lib_z,\n"
             + "        lib_zstd,\n"
             + "    ],\n"

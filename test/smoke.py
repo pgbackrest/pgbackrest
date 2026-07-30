@@ -258,9 +258,8 @@ def version_parse(version):
 def supported_versions():
     """Read the PostgreSQL versions supported by pgBackRest from the generated version header.
 
-    The header is generated from src/build/postgres/postgres.yaml and, unlike that file, is shipped in the distribution, so this
-    works from a source checkout or a distribution tarball. Return None when the header cannot be found so that every version found
-    is tested.
+    The header is generated from build/postgres.yaml and, unlike that file, is shipped in the distribution, so this works from a
+    source checkout or a distribution tarball. Return None when the header cannot be found so that every version found is tested.
     """
 
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src", "postgres", "version.auto.h")

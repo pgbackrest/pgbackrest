@@ -322,7 +322,7 @@
         RUN rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
             apt-get install -y --no-install-recommends sudo ssh curl vim gnupg lsb-release iputils-ping ca-certificates \
-                    tzdata locales libssh2-1-dev unzip git libyaml-dev libxml-checker-perl 2>&amp;1
+                    tzdata locales libssh2-1-dev unzip git python3-yaml 2>&amp;1
 
         # Install the AWS CLI from the vendor installer since it is no longer packaged for Debian/Ubuntu
         RUN curl -sL "https://awscli.amazonaws.com/awscli-exe-linux-`uname -m`.zip" -o /tmp/awscliv2.zip &amp;&amp; \
@@ -391,7 +391,7 @@
         RUN dnf install -y azure-cli
 
         # Install dev packages
-        RUN yum install -y libyaml-devel 2>&amp;1
+        RUN dnf install -y python3-pyyaml
 
         # Install CA certificate
         RUN update-ca-trust extract
@@ -1085,7 +1085,6 @@
             <execute show="n">
                 <exe-cmd>
                     meson setup {[build-meson-path]} {[build-br-path-tmp]} &amp;&amp;
-                    ninja -C {[build-meson-path]} src/build-code &amp;&amp;
                     mkdir -p {[build-br-path-tmp]}/doc/output/html &amp;&amp;
                     mkdir -p {[build-br-path-tmp]}/doc/output/man &amp;&amp;
                     touch {[build-br-path-tmp]}/doc/DIST.md &amp;&amp;
@@ -1095,15 +1094,15 @@
                 </exe-cmd>
             </execute>
 
-            <!-- Remove libyaml now that we are done with it so future dependencies will cause a failure -->
+            <!-- Remove PyYAML now that we are done with it so future dependencies will cause a failure -->
             <execute if="{[os-type-is-debian]}" user="root" show="n">
                 <exe-cmd>
-                    apt-get remove -y libyaml-dev 2>&amp;1
+                    apt-get remove -y python3-yaml 2>&amp;1
                 </exe-cmd>
             </execute>
             <execute if="{[os-type-is-rhel]}" user="root" show="n">
                 <exe-cmd>
-                    yum remove -y libyaml-devel 2>&amp;1
+                    yum remove -y python3-pyyaml 2>&amp;1
                 </exe-cmd>
             </execute>
         </execute-list>

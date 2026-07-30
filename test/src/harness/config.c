@@ -7,11 +7,11 @@ Harness for Loading Test Configurations
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "build/common/string.h"
 #include "common/io/io.h"
 #include "config/config.intern.h"
 #include "config/load.h"
 #include "config/parse.h"
+#include "harness/string.h"
 #include "storage/helper.h"
 #include "version.h"
 
@@ -223,7 +223,8 @@ FN_INLINE_ALWAYS const char *
 hrnCfgEnvName(const ConfigOption optionId, const unsigned optionKey)
 {
     return strZ(
-        strReplaceChr(strUpper(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1))), '-', '_'));
+        strReplaceChr(
+            hrnStrUpper(strNewFmt(HRN_PGBACKREST_ENV "%s", cfgParseOptionKeyIdxName(optionId, optionKey - 1))), '-', '_'));
 }
 
 void

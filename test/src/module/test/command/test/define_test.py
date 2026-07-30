@@ -302,7 +302,7 @@ def test_define_error():
     """A definition the parser does not accept is an error that says what was wrong."""
 
     # A key that belongs to a test, written at the module level where it would be silently ignored
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         _def_parse(DEFINE_MODULE_ERROR)
 
     assert_equal(str(error.exception), "unexpected keyword 'total' in module 'common'")
@@ -319,13 +319,13 @@ def test_define_error():
         ),
         (["harness:", "  - name: config", "    shim:", "      - function:", "          - execOne"], "shim name is required"),
     ):
-        with assert_raises(TestError) as error:
+        with assert_raises(ToolError) as error:
             _def_parse_error(line_list)
 
         assert_equal(str(error.exception), message, line_list)
 
     # A test that is not in the file
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         test_def_find(_def_parse(DEFINE), "bogus/test")
 
     assert_equal(str(error.exception), "'bogus/test' is not a valid test")

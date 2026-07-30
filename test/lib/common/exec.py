@@ -3,7 +3,7 @@
 Exec runs a command in the background so several can run at once, which is how the test driver keeps every vm busy. It keeps stdout
 and stderr apart because a test that writes anything to stderr has failed whatever its exit status, e.g. a valgrind error.
 
-exec_one() runs a command and waits for it, with stderr folded into the output as execOneExpectP() in src/build/common/exec.c does.
+exec_one() runs a command and waits for it, with stderr folded into the output as execOneExpectP() in test/src/harness/exec.c does.
 The combined output is returned on success and carried in the error on failure, since a failed meson or ninja run says what went
 wrong there rather than in its exit status."""
 
@@ -13,7 +13,7 @@ import select
 import subprocess
 import sys
 
-from common.error import TestError
+from common.error import ToolError
 
 
 ####################################################################################################################################
@@ -108,7 +108,7 @@ class Exec:
 def exec_one(command, result_expect=0, show_output=False):
     """Run a command through the shell and return its combined output.
 
-    Raise TestError when the exit status is not the expected one."""
+    Raise ToolError when the exit status is not the expected one."""
 
     process = Exec(command, show_output=show_output, merge_error=True)
     process.begin()
@@ -117,7 +117,7 @@ def exec_one(command, result_expect=0, show_output=False):
     if status != result_expect:
         output = process.output.strip()
 
-        raise TestError("%s terminated unexpectedly [%d]%s%s" % (command, status, ": " if output else "", output))
+        raise ToolError("%s terminated unexpectedly [%d]%s%s" % (command, status, ": " if output else "", output))
 
     return process.output
 

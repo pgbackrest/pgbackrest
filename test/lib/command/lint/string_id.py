@@ -6,7 +6,7 @@ can be used in a switch, which means a hand-edited string and value can drift ap
 ####################################################################################################################################
 import re
 
-from common.error import TestError
+from common.error import ToolError
 from common.log import *
 from common.render import bld_str_id_seq
 
@@ -58,7 +58,7 @@ def lint_str_id(source):
                 expected = bld_str_id_seq(param[1:-1])
             else:
                 expected = bld_str_id_seq(param[1:-1], int(param_list[1]))
-        except TestError as error:
+        except ToolError as error:
             log(WARN, "'%s' is not valid: %s" % (text, error))
             result += 1
 

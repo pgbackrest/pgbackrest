@@ -18,6 +18,7 @@ from command.test.define import TEST_LANG_C, TEST_LANG_PYTHON, TEST_TYPE_INTEGRA
 from command.test.define import TestDefModule
 from command.test.job import *
 from command.test.list import TestRun
+from common.error import ToolError
 from common.log import *
 from common.storage import file_write
 from common.user import user_name
@@ -117,16 +118,20 @@ def _job(config, run=None, vm_idx=0, vm_max=1, test_idx=0, test_max=1, show_outp
 
 
 ####################################################################################################################################
-def _capture(job, action, status=0, output="", error="", poll=0):
+def _capture(job, action, status=0, output="", error="", poll=0, fail=None):
     """Run something on a job with the commands it would run captured rather than run.
 
-    Returns what the action returned, the commands, and what was written to the log."""
+    Returns what the action returned, the commands, and what was written to the log. Naming a command in fail makes it report that it
+    could not be run."""
 
     command_list = []
     log_output = io.StringIO()
 
     def exec_fake(command, result_expect=0, show_output=False):
         command_list.append(command)
+
+        if fail is not None and command.startswith(fail):
+            raise ToolError("%s terminated unexpectedly [1]" % fail)
 
         return ""
 
@@ -372,6 +377,33 @@ def test_job_end():
         (done, fail), command_list, output = _capture(job, lambda job: job.end())
 
         assert_in("[PATH]/unit-0/none/build/test-unit.p/test.c.gcda".replace("[PATH]", path), command_list[0])
+
+
+####################################################################################################################################
+def test_job_end_cleanup():
+    """The test path is removed even when writing the coverage fails, since this is the last chance to remove it.
+
+    A test leaves files behind that only the user it ran as can remove, so a path left here is a path every later run fails to clean.
+    """
+
+    with tempfile.TemporaryDirectory() as path:
+        config = Config(path)
+        job = _job(config)
+
+        _capture(job, lambda job: job.begin())
+
+        def end(job):
+            try:
+                job.end()
+            except ToolError as exception:
+                return str(exception)
+
+            return None
+
+        error, command_list, output = _capture(job, end, fail="gcov")
+
+        assert_equal(error, "gcov terminated unexpectedly [1]")
+        assert_equal(command_list[-1], _expect("chmod -R 700 [PATH]/test-0/* 2>&1;rm -rf [PATH]/test-0", config))
 
 
 ####################################################################################################################################

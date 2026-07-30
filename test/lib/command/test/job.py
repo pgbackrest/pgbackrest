@@ -278,12 +278,18 @@ class TestJob:
             print("")
 
         # Write the profile and coverage a C test left behind. A python test wrote its own coverage while it ran.
-        if status == 0 and self.run.module.lang == TEST_LANG_C and not self.run.integration:
-            if config.profile:
-                self._profile()
+        #
+        # The cleanup below runs whatever happens here, since a test leaves files behind that only the user it ran as can remove and
+        # this is the last chance to remove them. Left behind, they make every later run fail on a test path that cannot be cleaned.
+        try:
+            if status == 0 and self.run.module.lang == TEST_LANG_C and not self.run.integration:
+                if config.profile:
+                    self._profile()
 
-            if self.coverage:
-                self._coverage()
+                if self.coverage:
+                    self._coverage()
+        finally:
+            self._cleanup()
 
         elapsed = math.ceil((time.time() - self.time_begin) * 100) / 100
 
@@ -307,12 +313,18 @@ class TestJob:
                 + (":\n\n%s\n" % self.exec.output.strip() if config.vm_out and not self.show_output else ""),
             )
 
-        if config.cleanup:
-            # An integration test starts its own containers and names them after the job, so those are removed here too. Anything
-            # still running in one would keep writing to the test path while it is being removed.
-            if self.run.vm != VM_NONE:
-                container_remove("^%s($|-)" % self.container)
-
-            exec_one("chmod -R 700 %s/* 2>&1;rm -rf %s" % (self.path_host, self.path_host))
-
         return True, fail
+
+    ################################################################################################################################
+    def _cleanup(self):
+        """Remove the containers the test ran in and the path it ran in."""
+
+        if not self.config.cleanup:
+            return
+
+        # An integration test starts its own containers and names them after the job, so those are removed here too. Anything still
+        # running in one would keep writing to the test path while it is being removed.
+        if self.run.vm != VM_NONE:
+            container_remove("^%s($|-)" % self.container)
+
+        exec_one("chmod -R 700 %s/* 2>&1;rm -rf %s" % (self.path_host, self.path_host))
