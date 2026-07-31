@@ -242,6 +242,9 @@ def test_container_script_vm():
     assert_true("yum -y install postgresql-server" in script)
     assert_true("ENV PATH=" not in script)
 
+    # Every RHEL vm tunes dnf to fail over from a slow mirror
+    assert_true("echo fastestmirror=True; } >> /etc/dnf/dnf.conf" in script)
+
     # RHEL 9 packages a coverage too old to report the branch detail the report needs, so it comes from pip
     script = script_base(VM_RH9, VM_ARCH_X86_64)
 

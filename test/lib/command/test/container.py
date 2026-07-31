@@ -176,7 +176,20 @@ def _entry_point_setup(os_base):
 def _script_package(name, vm):
     """Install the packages the tests need."""
 
-    result = _SECTION + "# Install packages\n"
+    result = ""
+
+    # Tune dnf to fail over from a slow mirror. By default a mirror is only abandoned when it delivers less than 1000 bytes per
+    # second for 30 seconds, so a mirror that has not failed but is crawling is retried rather than dropped. Raise the rate floor
+    # well above that, shorten the timeout, sort mirrors by latency, and fetch in parallel.
+    if vm.os_base == VM_OS_BASE_RHEL:
+        result += (
+            _SECTION
+            + "# Tune dnf to fail over from a slow mirror\n"
+            + "    { echo minrate=50k; echo timeout=20; echo retries=5; echo max_parallel_downloads=10; \\\n"
+            + "      echo fastestmirror=True; } >> /etc/dnf/dnf.conf"
+        )
+
+    result += _SECTION + "# Install packages\n"
 
     if vm.os_base == VM_OS_BASE_RHEL:
         if name == VM_RH8:
