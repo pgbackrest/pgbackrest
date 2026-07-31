@@ -224,6 +224,9 @@ def _coverage(config, test_list):
 
     if status == 0:
         log(INFO, "tested modules have full coverage")
+    # Show where the report is so it can be pasted into a browser to see what is missing
+    else:
+        log(INFO, "coverage report written to file://%s" % os.path.join(config.repo_path, "test/result/coverage/coverage.html"))
 
     return status == 1
 

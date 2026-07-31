@@ -485,6 +485,7 @@ def test_test_coverage():
         status, command_list, started, output = _cmd_test(Config(path_repo, path_test, module=["common"]), coverage_status=1)
 
         assert_equal(status, 1)
+        assert_in("coverage report written to file://%s/test/result/coverage/coverage.html" % path_repo, output)
         assert_in("SUCCESSFULLY WITH MODULE(S) MISSING COVERAGE", output)
 
         # The summary is generated for the documentation, where incomplete coverage is not a failure
