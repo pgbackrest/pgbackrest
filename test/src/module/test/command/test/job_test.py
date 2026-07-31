@@ -311,7 +311,7 @@ def test_job_container():
 
 ####################################################################################################################################
 def test_job_dry_run():
-    """A dry run lists the test rather than running it, unless the output was asked for."""
+    """A dry run lists the test rather than running it."""
 
     with tempfile.TemporaryDirectory() as path:
         job = _job(Config(path, dry_run=True))
@@ -324,13 +324,14 @@ def test_job_dry_run():
         # Nothing is created since nothing will run
         assert_false(os.path.exists(os.path.join(path, "test-0")))
 
-        # Asking for the output of a dry run runs the test after all, which is a way to see more about what it would do
-        job = _job(Config(path, dry_run=True, vm_out=True))
+        # Asking for the output of a test that will not run has nothing to show, so the list is written just the same
+        job = _job(Config(path, dry_run=True, vm_out=True), run=_run(vm="u24"))
 
         started, command_list, output = _capture(job, lambda job: job.begin())
 
-        assert_true(started)
-        assert_equal(output, "P00 DETAIL: P1-T1/1 - vm=none, module=common/error\n")
+        assert_false(started)
+        assert_equal(command_list, [])
+        assert_equal(output, "P00   INFO: P1-T1/1 - vm=u24, module=common/error\n")
 
 
 ####################################################################################################################################

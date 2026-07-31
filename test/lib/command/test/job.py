@@ -198,15 +198,13 @@ class TestJob:
             + ("" if self.try_idx == 1 else " (retry %u)" % (self.try_idx - 1))
         )
 
-        # A dry run lists the tests it would run, so the list goes to the log rather than the detail the tests write
-        dry_run = config.dry_run and not config.vm_out
-
         # A blank line separates the test from the output that follows it, which is only shown when it was asked for
-        separator = "\n" if (not config.dry_run and config.vm_out) or self.show_output else ""
+        separator = "\n" if config.vm_out and not config.dry_run else ""
 
-        log(INFO if dry_run or self.show_output else DETAIL, self.description + separator)
+        log(INFO if config.dry_run or self.show_output else DETAIL, self.description + separator)
 
-        if dry_run:
+        # A dry run lists the tests it would run, so the list goes to the log and nothing is started here
+        if config.dry_run:
             return False
 
         path_create(self.path_host, mode=0o770)

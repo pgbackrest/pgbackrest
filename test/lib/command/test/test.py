@@ -281,7 +281,7 @@ def cmd_test(config):
     # Clean up data left by the prior run
     coverage_c = vm_get(config.vm).coverage_c
 
-    if not config.dry_run or config.vm_out:
+    if not config.dry_run:
         log(INFO, "cleanup old data" + (" and containers" if config.vm != VM_NONE else ""))
 
         if config.vm != VM_NONE:
@@ -316,10 +316,11 @@ def cmd_test(config):
     # Set for builds that run on the host. Containers are passed the path explicitly since docker does not pass the environment.
     os.environ["CCACHE_DIR"] = path_ccache
 
-    # Start the build container when the tests run in one
+    # Start the build container when the tests run in one. A dry run builds nothing and runs nothing, so it starts no container
+    # either, which also leaves none behind for the next run to trip over since a dry run does not clean up.
     image = "%s:%s-test-%s" % (container_repo(), config.vm, config.vm_arch if config.vm_arch is not None else host_arch())
 
-    if config.vm != VM_NONE:
+    if config.vm != VM_NONE and not config.dry_run:
         # The cache does not need to be mounted since it is in the test path, which is mounted below
         exec_one(
             "docker run%s -itd -h test-build --name=test-build -v %s:%s -v %s:%s -e CCACHE_DIR=%s %s"

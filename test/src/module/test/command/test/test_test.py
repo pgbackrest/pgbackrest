@@ -430,12 +430,18 @@ def test_test_run():
         assert_equal(status, 1)
         assert_in("TESTS COMPLETED WITH 1 FAILURE(S)", output)
 
-        # A dry run lists the tests rather than running them
-        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, dry_run=True), job_start=False)
+        # A dry run lists the tests rather than running them, even when the output of the tests was asked for
+        status, command_list, started, output = _cmd_test(
+            Config(path_repo, path_test, vm="u24", module=["common"], dry_run=True, vm_out=True), job_start=False
+        )
 
         assert_equal(status, 0)
         assert_equal(started, [])
         assert_in("DRY RUN COMPLETED SUCCESSFULLY", output)
+
+        # Nothing is cleaned up and no build container is started, so a dry run leaves nothing behind for the next one to trip over
+        assert_not_in("cleanup old data", output)
+        assert_not_in("docker", " ".join(command_list))
 
 
 ####################################################################################################################################
