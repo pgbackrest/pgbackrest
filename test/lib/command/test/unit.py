@@ -17,6 +17,7 @@ from command.test.define import (
     TEST_LANG_PYTHON,
     TEST_LIB_LIST,
     TEST_TYPE_PERFORMANCE,
+    test_def_file,
     test_def_find,
     test_def_parse,
     test_lib_path,
@@ -62,7 +63,7 @@ def _test_python(config, module):
     It runs in a separate interpreter so the modules it declared are the only library modules it can import. Running it here would
     not work since the harness has already imported most of the library and an import found in sys.modules never reaches a hook."""
 
-    path_test = os.path.join(config.repo_path, "test/src/module", module.name + "_test.py")
+    path_test = os.path.join(config.repo_path, test_def_file(module))
 
     if not os.path.isfile(path_test):
         raise ToolError("unable to find test module '%s'" % path_test)

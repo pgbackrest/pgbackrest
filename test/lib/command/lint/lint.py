@@ -1,7 +1,7 @@
 """Code Linter.
 
-Scans every file in the repository for content that could hide code from review and checks that StringId macros encode what they
-claim to."""
+Scans every file in the repository for content that could hide code from review, checks that StringId macros encode what they claim
+to, and checks that every test module is declared in define.yaml."""
 
 ####################################################################################################################################
 import os
@@ -9,6 +9,7 @@ import re
 
 from command.lint.ascii import lint_ascii
 from command.lint.string_id import lint_str_id
+from command.test.define import TEST_MODULE_PATH, test_def_file, test_def_parse
 from common.error import ToolError
 from common.log import *
 from common.storage import path_list_recurse
@@ -43,7 +44,15 @@ def cmd_lint(path_repo):
 
     lib_module = {}
 
+    # File each test module declared in define.yaml lives in. A test module that is not declared is never built or run, and nothing
+    # else reports it since the file is simply never read.
+    test_module = {test_def_file(module) for module in test_def_parse(path_repo)}
+
     for name in path_list_recurse(path_repo):
+        # Everything where the test modules live is a test module, so it must be declared in define.yaml
+        if name.startswith(TEST_MODULE_PATH) and name not in test_module:
+            raise ToolError("test module '%s' is not defined in test/define.yaml" % name)
+
         # A module may appear in only one library. Python resolves a module name to the first library on the path that has it and
         # ignores the rest, so a duplicate would hide the shadowed module from every tool with no indication that it had.
         match = _LIB_MODULE_EXP.match(name)

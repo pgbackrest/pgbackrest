@@ -9,10 +9,9 @@ Anything left in the unit path that this test did not generate is removed, since
 ####################################################################################################################################
 import os
 
-from command.test.define import TEST_TYPE_INTEGRATION, TEST_TYPE_PERFORMANCE, TEST_TYPE_UNIT
+from command.test.define import TEST_TYPE_INTEGRATION, TEST_TYPE_PERFORMANCE, TEST_TYPE_UNIT, test_def_file
 from common.error import check
 from common.log import *
-from common.render import bld_enum
 from common.storage import file_read, file_remove, file_write_differs, path_list, path_list_recurse
 from common.user import group_id, group_name, user_id, user_name
 
@@ -442,7 +441,7 @@ class TestBuild:
             # Test id
             "{[C_TEST_IDX]}": "%u" % self.vm_id,
             # Include test file
-            "{[C_TEST_INCLUDE]}": '#include "%s/test/src/module/%sTest.c"' % (path_repo_rel, bld_enum(None, module.name)),
+            "{[C_TEST_INCLUDE]}": '#include "%s/%s"' % (path_repo_rel, test_def_file(module)),
             # Test list
             "{[C_TEST_LIST]}": "\n    ".join(
                 "hrnAdd(%3u, %8s);" % (idx + 1, "true" if self.test in (None, idx + 1) else "false") for idx in range(module.total)

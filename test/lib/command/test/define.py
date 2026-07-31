@@ -11,6 +11,11 @@ import os
 import yaml
 
 from common.error import ToolError, check
+from common.render import bld_enum
+
+# Path the test modules live in, relative to the repository. Everything in it is a test module, which is what lets the linter
+# report a module that was never declared here.
+TEST_MODULE_PATH = "test/src/module/"
 
 # Test types, in the order they are declared in define.yaml and accumulated
 TEST_TYPE_UNIT = "unit"
@@ -360,6 +365,19 @@ def test_def_parse(path_repo):
             name_list.append(name)
 
     return result
+
+
+####################################################################################################################################
+def test_def_file(module):
+    """File a test module lives in, relative to the repository.
+
+    A C module is named in camel case, e.g. common/stack-trace is test/src/module/common/stackTraceTest.c, while a python module is
+    named exactly as it is declared, e.g. test/common/vm is test/src/module/test/common/vm_test.py."""
+
+    if module.lang == TEST_LANG_PYTHON:
+        return "%s%s_test.py" % (TEST_MODULE_PATH, module.name)
+
+    return "%s%sTest.c" % (TEST_MODULE_PATH, bld_enum(None, module.name))
 
 
 ####################################################################################################################################

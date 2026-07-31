@@ -1,7 +1,8 @@
 """Test Code Linter.
 
-The linter is made of the scan for content that could hide code and the check that StringId macros encode what they claim to, so
-both are tested here along with the command that walks the repository and applies them."""
+The linter is made of the scan for content that could hide code, the check that StringId macros encode what they claim to, and the
+check that every test module is declared, so all of them are tested here along with the command that walks the repository and
+applies them."""
 
 ####################################################################################################################################
 import io
@@ -16,6 +17,25 @@ from command.lint.lint import *
 from command.lint.string_id import *
 from common.error import *
 from common.log import *
+
+# A test definition with no test modules at all, which is what a repository has to have before the linter can scan it
+_DEFINE_NONE = b"unit: []\nintegration: []\nperformance: []\ntool: []\n"
+
+# A test definition with a module in each language, since the file a module lives in is named differently for each
+_DEFINE_MODULE = b"""
+unit:
+  - name: common/stack-trace
+    total: 1
+
+integration: []
+performance: []
+
+tool:
+  - name: test/common/vm
+
+    coverage:
+      - test/common/vm
+"""
 
 
 ####################################################################################################################################
@@ -40,6 +60,9 @@ def _capture(function):
 ####################################################################################################################################
 def _lint(file_map, symlink=False):
     """Lint a repository built from the files given, returning what was reported and the error raised, if any."""
+
+    # Every repository has a test definition, so supply one with no modules unless the test is providing its own
+    file_map = {"test/define.yaml": _DEFINE_NONE, **file_map}
 
     with tempfile.TemporaryDirectory() as path:
         for name, content in file_map.items():
@@ -250,5 +273,32 @@ def test_lint_lib_shadow():
 
     # Something under a library that is not a module at all
     error, output = _lint({"build/lib/common/log.py": b"", "test/lib/uncrustify.cfg": b""})
+
+    assert_is_none(error)
+
+
+####################################################################################################################################
+def test_lint_test_module():
+    """A test module must be declared in define.yaml, since one that is not declared is never run."""
+
+    # A C module is named in camel case and a python module exactly as it is declared, so both are found where they live
+    file_map = {
+        "test/define.yaml": _DEFINE_MODULE,
+        "test/src/module/common/stackTraceTest.c": b"",
+        "test/src/module/test/common/vm_test.py": b"",
+    }
+
+    error, output = _lint(file_map)
+
+    assert_is_none(error)
+    assert_equal(output, "")
+
+    # A test module that was added but never declared, which is the case that has no other way to be reported
+    error, output = _lint({**file_map, "test/src/module/common/type/cTest.c": b""})
+
+    assert_equal(error, "test module 'test/src/module/common/type/cTest.c' is not defined in test/define.yaml")
+
+    # A file that is not where the test modules live is not a test module
+    error, output = _lint({**file_map, "test/src/harness/config.c": b""})
 
     assert_is_none(error)

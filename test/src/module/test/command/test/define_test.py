@@ -183,6 +183,19 @@ def test_define_module():
 
 
 ####################################################################################################################################
+def test_define_file():
+    """The file a module lives in is named for the module, in the way its language names it."""
+
+    module_list = _def_parse(DEFINE)
+
+    # A C module is named in camel case, which is how the C source is named
+    assert_equal(test_def_file(test_def_find(module_list, "common/stack-trace")), "test/src/module/common/stackTraceTest.c")
+
+    # A python module is named exactly as it is declared, since that is how it is imported
+    assert_equal(test_def_file(test_def_find(module_list, "test/common/log")), "test/src/module/test/common/log_test.py")
+
+
+####################################################################################################################################
 def test_define_option():
     """An option is inherited from the path it was declared for, innermost first, and a module may override it."""
 
