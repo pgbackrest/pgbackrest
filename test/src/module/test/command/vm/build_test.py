@@ -21,9 +21,13 @@ from common.log import *
 from common.storage import file_read, file_write
 from common.user import group_id, group_name, user_id, user_name
 from common.vm import *
+from common.yaml import yaml_load
 
-# Revisions as test/container.yaml declares them
-REVISION = {"all": "1", VM_U24: "2", "%s-%s" % (VM_U24, VM_ARCH_X86_64): "3"}
+# Revisions the declaration written here holds, as they are read
+REVISION = {"all": "1", "u24": "2", "u24-x86_64": "3"}
+
+# Revision section of test/container.yaml, which is all of it that the build reads
+REVISION_YAML = "revision:\n  all: '1'\n  u24: '2'\n  u24-x86_64: '3'\n"
 
 # The base script for a vm that installs from the PostgreSQL repo and collects coverage, i.e. one that exercises every option the
 # debian build has
@@ -142,10 +146,12 @@ def _collapse(script):
 
 
 ####################################################################################################################################
-def _repo_write(path):
-    """Write the part of the repository the vm build reads."""
+def _repo_write(path, container=REVISION_YAML):
+    """Write the part of the repository the vm build reads.
 
-    file_write(os.path.join(path, "test/container.yaml"), "all: '1'\n%s: '2'\n%s-%s: '3'\n" % (VM_U24, VM_U24, VM_ARCH_X86_64))
+    The vm definitions are read from the repository this test is part of, so only the revisions are written here."""
+
+    file_write(os.path.join(path, "test/container.yaml"), container)
     file_write(
         os.path.join(path, "test/certificate/pgbackrest-test-ca.crt"),
         "-----BEGIN CERTIFICATE-----\nQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVphYmNkZWZnaGlqa2xtbm9w\n-----END CERTIFICATE-----\n",
@@ -210,8 +216,8 @@ def test_container_script():
     with tempfile.TemporaryDirectory() as path:
         _repo_write(path)
 
-        assert_equal(script_base(VM_U24, VM_ARCH_X86_64), SCRIPT_BASE_U24)
-        assert_equal(_collapse(script_test(VM_U24, path)), _expect(SCRIPT_TEST_U24))
+        assert_equal(script_base("u24", VM_ARCH_X86_64), SCRIPT_BASE_U24)
+        assert_equal(_collapse(script_test("u24", path)), _expect(SCRIPT_TEST_U24))
 
         # The script is wrapped in a Dockerfile that runs it as a single layer
         assert_equal(
@@ -228,7 +234,7 @@ def test_container_script_vm():
     """Each vm installs what its os base and PostgreSQL repository need."""
 
     # RHEL 8 has no valgrind or coverage package and needs a python that PyYAML is packaged for
-    script = script_base(VM_RH8, VM_ARCH_X86_64)
+    script = script_base("rh8", VM_ARCH_X86_64)
 
     assert_true("--set-enabled powertools" in script)
     assert_true("valgrind" not in script)
@@ -242,49 +248,57 @@ def test_container_script_vm():
     # Every RHEL vm tunes dnf to fail over from a slow mirror
     assert_true("echo fastestmirror=True; } >> /etc/dnf/dnf.conf" in script)
 
-    # RHEL 9 packages a coverage too old to report the branch detail the report needs, so it comes from pip
-    script = script_base(VM_RH9, VM_ARCH_X86_64)
+    # RHEL 9 packages a coverage too old to report the branch detail the report needs, so it comes from pip. It still has dnf
+    # modularity, so the module that would shadow the PostgreSQL repo packages is disabled.
+    script = script_base("rh9", VM_ARCH_X86_64)
 
     assert_true("python3-pip" in script)
     assert_true("pip3 install --no-cache-dir 'coverage>=6.5'" in script)
     assert_true("RPM-GPG-KEY-PGDG" in script)
-    assert_true("reporpms/EL-9-%s/" % VM_ARCH_X86_64 in script)
+    assert_true("reporpms/EL-9-%s/pgdg-redhat-repo-latest" % VM_ARCH_X86_64 in script)
+    assert_true("dnf -qy module disable postgresql" in script)
     assert_true("ENV PATH=/usr/pgsql-18/bin:$PATH" in script)
 
     # RHEL 10 cannot check the PostgreSQL repo signature so it skips the key and disables the check
-    script = script_base(VM_RH10, VM_ARCH_X86_64)
+    script = script_base("rh10", VM_ARCH_X86_64)
 
     assert_true("python3-coverage" in script)
     assert_true("RPM-GPG-KEY-PGDG" not in script)
     assert_true("s/gpgcheck=1/gpgcheck=0/g" in script)
+    assert_true("dnf -qy module disable postgresql" not in script)
 
-    # Fedora installs from the Fedora build of the PostgreSQL repo
-    assert_true("reporpms/F-44-%s/" % VM_ARCH_X86_64 in script_base(VM_F44, VM_ARCH_X86_64))
+    # Fedora installs from the Fedora build of the PostgreSQL repo, which is named for the distribution rather than for RHEL
+    script = script_base("f44", VM_ARCH_X86_64)
+
+    assert_true("reporpms/F-44-%s/pgdg-fedora-repo-latest" % VM_ARCH_X86_64 in script)
+
+    # Fedora ships the packages that RHEL puts in EPEL and CRB
+    assert_true("epel-release" not in script)
 
     # Debian 12 installs PostgreSQL from the distribution and runs neither valgrind nor coverage
-    script = script_base(VM_D12, VM_ARCH_X86_64)
+    script = script_base("d12", VM_ARCH_X86_64)
 
     assert_true("valgrind" not in script)
     assert_true("python3-coverage" not in script)
     assert_true("apt.postgresql.org.sh" not in script)
 
     # Ubuntu 22.04 is the last release the python tests do not run on
-    assert_true("python3-coverage" not in script_base(VM_U22, VM_ARCH_X86_64))
+    assert_true("python3-coverage" not in script_base("u22", VM_ARCH_X86_64))
 
     # Alpine installs everything from one package manager and needs no PostgreSQL repo
-    script = script_base(VM_A321, VM_ARCH_X86_64)
+    script = script_base("a321", VM_ARCH_X86_64)
 
     assert_true("apk add --no-cache postgresql15 postgresql16 postgresql17" in script)
     assert_true("Install PostgreSQL packages" not in script)
 
     # An architecture the PostgreSQL repo does not build for installs one version for the smoke test
-    script = script_base(VM_U24, VM_ARCH_PPC64LE)
+    script = script_base("u24", VM_ARCH_PPC64LE)
 
     assert_true("apt.postgresql.org.sh -y &&" in script)
     assert_true("Install a single PostgreSQL version for the smoke test" in script)
 
     # There is nothing to install for alpine on that architecture, since it has no smoke test
-    assert_true("Install PostgreSQL" not in script_base(VM_A324, VM_ARCH_PPC64LE))
+    assert_true("Install PostgreSQL" not in script_base("a324", VM_ARCH_PPC64LE))
 
 
 ####################################################################################################################################
@@ -298,7 +312,7 @@ def test_container_script_test_vm():
         # architecture is the host architecture rather than the one being built for, so it is set here to get the same script
         # whichever machine the tests are run on.
         with patch("command.vm.build.host_arch", return_value=VM_ARCH_X86_64):
-            script = script_test(VM_RH9, path)
+            script = script_test("rh9", path)
 
         assert_true("/etc/pki/ca-trust/source/anchors/pgbackrest-test-ca.crt" in script)
         assert_true("update-ca-trust extract" in script)
@@ -310,55 +324,68 @@ def test_container_script_test_vm():
         assert_true("rm /etc/profile.d/lang.sh" not in script)
 
         with patch("command.vm.build.host_arch", return_value=VM_ARCH_AARCH64):
-            assert_true("rm /etc/profile.d/lang.sh" in script_test(VM_RH9, path))
+            assert_true("rm /etc/profile.d/lang.sh" in script_test("rh9", path))
 
         # Alpine creates the group differently, needs a password for the test user, and starts ssh without a service
-        script = script_test(VM_A321, path)
+        script = script_test("a321", path)
 
         assert_true("getent group %s >/dev/null || addgroup" % group_name() in script)
         assert_true("passwd -d '%s' %s" % (user_name(), user_name()) in script)
         assert_true("ENTRYPOINT /usr/sbin/sshd -D" in script)
 
         # Only the releases with an ssh that rejects the test key by default need the algorithms added back
-        assert_true("PubkeyAcceptedAlgorithms" not in script_test(VM_D12, path))
+        assert_true("PubkeyAcceptedAlgorithms" not in script_test("d12", path))
+
+
+####################################################################################################################################
+def _revision(section):
+    """The revisions in a declaration, written as they are in test/container.yaml."""
+
+    return revision_check(yaml_load(section, "test/container.yaml"))
 
 
 ####################################################################################################################################
 def test_container_revision():
     """A revision must be readable and name a vm that exists, else a rebuild would silently never happen."""
 
-    assert_is_none(revision_check(REVISION))
+    assert_equal(_revision("all: '1'\nu24: '2'\nu24-x86_64: '3'\n"), REVISION)
 
     with assert_raises(ToolError) as error:
-        revision_check(["1"])
+        _revision("- '1'\n")
+
+    assert_equal(str(error.exception), "the 'revision' section in test/container.yaml must be a map")
+
+    # A repeated key is kept by the loader, so a revision that was written twice is reported rather than silently taking the last
+    with assert_raises(ToolError) as error:
+        _revision("all: '1'\nall: '2'\n")
+
+    assert_equal(str(error.exception), "the 'revision' section in test/container.yaml has duplicate key 'all'")
+
+    with assert_raises(ToolError) as error:
+        _revision("u24: '1'\n")
 
     assert_equal(str(error.exception), "the 'all' revision is required in test/container.yaml")
 
     with assert_raises(ToolError) as error:
-        revision_check({VM_U24: "1"})
+        _revision("all: '1'\nu24:\n")
 
-    assert_equal(str(error.exception), "the 'all' revision is required in test/container.yaml")
-
-    with assert_raises(ToolError) as error:
-        revision_check({VM_ALL: "1", VM_U24: None})
-
-    assert_equal(str(error.exception), "revision '%s' in test/container.yaml must be set to a value" % VM_U24)
+    assert_equal(str(error.exception), "revision 'u24' in test/container.yaml must be set to a value")
 
     with assert_raises(ToolError) as error:
-        revision_check({VM_ALL: "1", "bogus": "1"})
+        _revision("all: '1'\nbogus: '1'\n")
 
     assert_equal(str(error.exception), "revision 'bogus' in test/container.yaml has invalid vm 'bogus'")
 
     # There is no container for none so a revision for it could never be used
     with assert_raises(ToolError) as error:
-        revision_check({VM_ALL: "1", "none": "1"})
+        _revision("all: '1'\nnone: '1'\n")
 
     assert_equal(str(error.exception), "revision 'none' in test/container.yaml has invalid vm 'none'")
 
     with assert_raises(ToolError) as error:
-        revision_check({VM_ALL: "1", "%s-bogus" % VM_U24: "1"})
+        _revision("all: '1'\nu24-bogus: '1'\n")
 
-    assert_equal(str(error.exception), "revision '%s-bogus' in test/container.yaml has invalid architecture 'bogus'" % VM_U24)
+    assert_equal(str(error.exception), "revision 'u24-bogus' in test/container.yaml has invalid architecture 'bogus'")
 
 
 ####################################################################################################################################
@@ -368,8 +395,8 @@ def test_vm_build():
     with tempfile.TemporaryDirectory() as path:
         _repo_write(path)
 
-        image_base = "%s:%s-base-%s" % (container_repo(), VM_U24, VM_ARCH_X86_64)
-        image_test = "%s:%s-test-%s" % (container_repo(), VM_U24, VM_ARCH_X86_64)
+        image_base = "%s:%s-base-%s" % (container_repo(), "u24", VM_ARCH_X86_64)
+        image_test = "%s:%s-test-%s" % (container_repo(), "u24", VM_ARCH_X86_64)
 
         # The base image is in the cache so only the test image is built. The revision for the vm and architecture is the most
         # specific one so it is the one in the cache tag.
@@ -377,7 +404,7 @@ def test_vm_build():
 
         with patch("command.vm.build.exec_one", docker.one):
             with patch("command.vm.build.exec_status", docker.status_get):
-                cmd_vm_build(_Config(path, VM_U24))
+                cmd_vm_build(_Config(path, "u24"))
 
         assert_equal(len(docker.match("^docker pull .*-base-.*-3-")), 1)
         assert_equal(docker.match("^docker tag"), ["docker tag %s-3-%s %s" % (image_base, _hash(docker), image_base)])
@@ -385,7 +412,7 @@ def test_vm_build():
         assert_true(docker.match("^docker build")[0].endswith("-t %s %s" % (image_test, os.path.join(path, "test"))))
 
         # The Dockerfile is written where the build can find it and is the script with the trailing separator removed
-        assert_true(file_read(os.path.join(path, "test/result/docker/%s-test-%s" % (VM_U24, VM_ARCH_X86_64))).endswith("bash\n"))
+        assert_true(file_read(os.path.join(path, "test/result/docker/%s-test-%s" % ("u24", VM_ARCH_X86_64))).endswith("bash\n"))
 
         # Nothing is in the cache so the base image is built and pushed. A fork pushes to its own cache since it cannot write to
         # the pgbackrest one.
@@ -394,7 +421,7 @@ def test_vm_build():
         with patch("command.vm.build.exec_one", docker.one):
             with patch("command.vm.build.exec_status", docker.status_get):
                 with patch.dict(os.environ, {"GITHUB_REPOSITORY_OWNER": "Someone"}):
-                    cmd_vm_build(_Config(path, VM_U24, log_level=DETAIL))
+                    cmd_vm_build(_Config(path, "u24", log_level=DETAIL))
 
         assert_equal(len(docker.match("^docker pull %s:" % container_repo())), 1)
         assert_equal(len(docker.match("^docker pull %s:" % container_repo("someone"))), 1)
@@ -406,7 +433,7 @@ def test_vm_build():
 
         with patch("command.vm.build.exec_one", docker.one):
             with patch("command.vm.build.exec_status", docker.status_get):
-                cmd_vm_build(_Config(path, VM_D12))
+                cmd_vm_build(_Config(path, "d12"))
 
         assert_equal(len(docker.match("^docker push %s:" % container_repo())), 1)
 
@@ -416,7 +443,7 @@ def test_vm_build():
 
         with patch("command.vm.build.exec_one", docker.one):
             with patch("command.vm.build.exec_status", docker.status_get):
-                cmd_vm_build(_Config(path, VM_U24, cache=False))
+                cmd_vm_build(_Config(path, "u24", cache=False))
 
         assert_equal(len(docker.match("^docker pull")), 0)
         assert_equal(len(docker.match("--no-cache")), 2)
@@ -440,6 +467,16 @@ def test_vm_build():
             cmd_vm_build(_Config(path, "bogus"))
 
         assert_equal(str(error.exception), "no definition for vm 'bogus'")
+
+    # The revisions come from the repository being built, so a declaration without them is reported rather than every image
+    # silently being keyed on nothing
+    with tempfile.TemporaryDirectory() as path:
+        _repo_write(path, container="vm:\n  u24:\n    os-base: debian\n")
+
+        with assert_raises(ToolError) as error:
+            cmd_vm_build(_Config(path, "u24"))
+
+        assert_equal(str(error.exception), "the 'revision' section is required in test/container.yaml")
 
 
 ####################################################################################################################################

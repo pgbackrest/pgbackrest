@@ -36,9 +36,13 @@ class BldPg:
 
 
 ####################################################################################################################################
-def _version_list(path):
-    """Parse the version list."""
+def bld_pg_version_list(path_repo):
+    """Parse the supported versions, oldest first.
 
+    Separate from the interface below because the versions are the whole of what the declaration says, so a tool that needs to know
+    which versions are supported does not also scan the vendored headers for an interface it has no use for."""
+
+    path = os.path.join(path_repo, "build/postgres.yaml")
     result = []
 
     for key, value in yaml_load(file_read(path), path):
@@ -139,6 +143,4 @@ def bld_pg_parse(path_repo):
     # Functions are defined as macros, which each interface expands for its own version
     function_list = _define_list(file_read(os.path.join(path_repo, "src/postgres/interface/version.intern.h")))
 
-    path_yaml = os.path.join(path_repo, "build/postgres.yaml")
-
-    return BldPg(_version_list(path_yaml), type_list, define_list, function_list)
+    return BldPg(bld_pg_version_list(path_repo), type_list, define_list, function_list)

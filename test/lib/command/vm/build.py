@@ -3,6 +3,9 @@
 Generates a Dockerfile for each vm and builds it. Every vm has a base image with the packages the tests need and a test image that
 adds the test user, ssh, and the certificate authority, so a change to the test setup does not rebuild the packages.
 
+What a vm installs and configures comes from its definition in test/container.yaml rather than from a test on its name here, so a
+vm that needs a package or a repository the others do not is a change to the declaration rather than to the script generated here.
+
 Base images are cached in a container registry keyed by a hash of the generated Dockerfile combined with the manual revision in
 test/container.yaml. The revision forces a rebuild when the Dockerfile is unchanged but the upstream packages have changed, e.g. a
 new PostgreSQL beta.
@@ -15,14 +18,13 @@ import hashlib
 import os
 import re
 
-import yaml
-
 from common.error import check
 from common.exec import exec_one, exec_status
 from common.log import *
 from common.storage import file_read, file_write, path_create
 from common.user import group_id, group_name, user_id, user_name
 from common.vm import *
+from common.yaml import yaml_load, yaml_map_dict
 
 # Separator between sections of the generated script. Every section is a continuation of a single RUN so the image has one layer.
 _SECTION = " && \\\n\n"
@@ -176,7 +178,7 @@ def _entry_point_setup(os_base):
 
 
 ####################################################################################################################################
-def _script_package(name, vm):
+def _script_package(vm):
     """Install the packages the tests need."""
 
     result = ""
@@ -195,17 +197,14 @@ def _script_package(name, vm):
     result += _SECTION + "# Install packages\n"
 
     if vm.os_base == VM_OS_BASE_RHEL:
-        if name == VM_RH8:
-            result += (
-                "    dnf install -y dnf-plugins-core && \\\n"
-                + "    dnf config-manager --set-enabled powertools && \\\n"
-                + "    dnf -y install epel-release && \\\n"
-                + "    crb enable && \\\n"
-            )
-        elif name in (VM_RH9, VM_RH10):
-            result += (
-                "    dnf install -y dnf-plugins-core && \\\n" + "    dnf -y install epel-release && \\\n" + "    crb enable && \\\n"
-            )
+        # Packages the tests need that rhel does not ship are in EPEL and CRB, which was called powertools before EL-9
+        if vm.epel:
+            result += "    dnf install -y dnf-plugins-core && \\\n"
+
+            if vm.powertools:
+                result += "    dnf config-manager --set-enabled powertools && \\\n"
+
+            result += "    dnf -y install epel-release && \\\n" + "    crb enable && \\\n"
 
         result += (
             "    yum -y update && \\\n"
@@ -214,22 +213,22 @@ def _script_package(name, vm):
             + "        systemd-devel"
         )
 
-        if name != VM_RH8:
+        if vm.valgrind:
             result += " valgrind"
 
-        # Coverage for the python tests. rh10 and later package a version new enough while rh9 packages one that predates the
-        # per line branch detail the report needs, so there it comes from pip below.
-        if name == VM_RH9:
+        # Coverage for the python tests, which comes from pip where the packaged version predates the per line branch detail the
+        # report needs. The pip install itself is below, since it needs the package installed here first.
+        if vm.coverage_python == "pip":
             result += " python3-pip"
-        elif name != VM_RH8:
+        elif vm.coverage_python is not None:
             result += " python3-coverage"
 
-        # The test harness needs a python3 that PyYAML is packaged for. On RH8 that is not the platform python, which meson
-        # installs and which claims the python3 alternative at a priority nothing else can outrank, so point it explicitly.
-        if name == VM_RH8:
-            result += " python3.12 python3.12-pyyaml && \\\n" + "    alternatives --set python3 /usr/bin/python3.12"
-        else:
+        # The test harness needs a python3 that PyYAML is packaged for. Where that is not the platform python, which meson installs
+        # and which claims the python3 alternative at a priority nothing else can outrank, point it explicitly.
+        if vm.python is None:
             result += " python3-pyyaml"
+        else:
+            result += " %s %s-pyyaml && \\\n" % (vm.python, vm.python) + "    alternatives --set python3 /usr/bin/%s" % vm.python
     elif vm.os_base == VM_OS_BASE_DEBIAN:
         result += (
             "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n"
@@ -240,11 +239,11 @@ def _script_package(name, vm):
             + "        libssh2-1-dev libcurl4-openssl-dev libsystemd-dev python3-yaml"
         )
 
-        if name != VM_D12:
+        if vm.valgrind:
             result += " valgrind"
 
         # Coverage for the python tests, which are run on u24 and later
-        if name not in (VM_D12, VM_U22):
+        if vm.coverage_python is not None:
             result += " python3-coverage"
 
         result += " zstd libzstd-dev"
@@ -257,16 +256,15 @@ def _script_package(name, vm):
             + "        openssh-keygen zlib-dev libssh2-dev valgrind lz4 zstd zstd-dev py3-yaml"
         )
 
-    # Coverage for python tests where the packaged version predates the per line branch detail the report needs, so it comes from
-    # pip rather than from the distribution
-    if name == VM_RH9:
+    # Coverage that comes from pip rather than from the distribution
+    if vm.coverage_python == "pip":
         result += _SECTION + "# Install python coverage\n" + "    pip3 install --no-cache-dir 'coverage>=6.5'"
 
     return result
 
 
 ####################################################################################################################################
-def _script_pg(name, vm, arch):
+def _script_pg(vm, arch):
     """Install PostgreSQL."""
 
     result = ""
@@ -275,50 +273,51 @@ def _script_pg(name, vm, arch):
         result += _SECTION + "# Install PostgreSQL packages\n"
 
     if vm.os_base == VM_OS_BASE_RHEL:
-        # RHEL 10's rpm-sequoia OpenPGP backend rejects the SHA-1 binding signature in the PGDG GPG key, and the crypto-policy
-        # SHA1 subpolicy that could re-enable it was removed in EL-10. So rh10 skips the key import and installs the repo/packages
-        # with gpg checks disabled (acceptable for a throwaway test container).
-        if name != VM_RH10 and vm.pg_repo:
-            result += "    rpm --import https://download.postgresql.org/pub/repos/yum/keys/RPM-GPG-KEY-PGDG && \\\n"
-
         if not vm.pg_repo:
             # Enable the native PostgreSQL application stream instead of adding the PGDG repo
             result += "    dnf -y module enable postgresql:%s && \\\n" % vm.db_list[-1]
-        elif name == VM_RH9:
-            result += (
-                "    rpm -ivh \\\n"
-                + "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-%s/" % arch
-                + "pgdg-redhat-repo-latest.noarch.rpm && \\\n"
-                + "    dnf -qy module disable postgresql && \\\n"
-                + "    yum -y install libcurl-devel && \\\n"
+        else:
+            # The repo package is named for the distribution the release belongs to, e.g. EL-9 is redhat and F-44 is fedora
+            distro = "fedora" if vm.pg_repo_release.startswith("F-") else "redhat"
+            package = "https://download.postgresql.org/pub/repos/yum/reporpms/%s-%s/pgdg-%s-repo-latest.noarch.rpm" % (
+                vm.pg_repo_release,
+                arch,
+                distro,
             )
-        elif name == VM_RH10:
-            # Install the repo without a gpg check and disable gpgcheck on the PGDG repos (see the SHA-1 note above). RHEL 10 also
-            # dropped dnf modularity, so there is no postgresql module to disable.
-            result += (
-                "    dnf -y install --nogpgcheck \\\n"
-                + "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-%s/" % arch
-                + "pgdg-redhat-repo-latest.noarch.rpm && \\\n"
-                + "    sed -i 's/gpgcheck=1/gpgcheck=0/g' /etc/yum.repos.d/pgdg-redhat-all.repo && \\\n"
-                + "    yum -y install libcurl-devel && \\\n"
-            )
-        # Every rhel vm that installs from the PostgreSQL repo is one of the three above, so there is nothing to fall through to
-        elif name == VM_F44:  # {uncoverable_branch}
-            result += (
-                "    rpm -ivh \\\n"
-                + "        https://download.postgresql.org/pub/repos/yum/reporpms/F-44-%s/" % arch
-                + "pgdg-fedora-repo-latest.noarch.rpm && \\\n"
-                + "    yum -y install libcurl-devel && \\\n"
-            )
+
+            # The rpm-sequoia OpenPGP backend rejects the SHA-1 binding signature in the PGDG GPG key, and the crypto-policy SHA1
+            # subpolicy that could re-enable it was removed in EL-10. A vm with that backend skips the key and installs the repo
+            # and its packages with gpg checks disabled, which is acceptable for a throwaway test container.
+            if vm.pg_repo_key:
+                result += (
+                    "    rpm --import https://download.postgresql.org/pub/repos/yum/keys/RPM-GPG-KEY-PGDG && \\\n"
+                    + "    rpm -ivh \\\n"
+                    + "        %s && \\\n" % package
+                )
+            else:
+                result += (
+                    "    dnf -y install --nogpgcheck \\\n"
+                    + "        %s && \\\n" % package
+                    + "    sed -i 's/gpgcheck=1/gpgcheck=0/g' /etc/yum.repos.d/pgdg-%s-all.repo && \\\n" % distro
+                )
+
+            # Where the distribution still has dnf modularity its postgresql module shadows the PGDG packages, so disable it
+            if vm.dnf_module:
+                result += "    dnf -qy module disable postgresql && \\\n"
+
+            result += "    yum -y install libcurl-devel && \\\n"
 
         result += "    yum -y install postgresql-devel"
     elif vm.os_base == VM_OS_BASE_DEBIAN:
-        # Install repo from apt.postgresql.org
+        # Install repo from apt.postgresql.org, adding the beta repo when an unreleased version is installed. The beta repo is not
+        # built for every architecture, so it is only added on the ones it is built for.
         if vm.pg_repo:
+            beta = vm.pg_beta is not None and arch in (VM_ARCH_AARCH64, VM_ARCH_X86_64)
+
             result += (
                 "    apt-get install -y --no-install-recommends postgresql-common && \\\n"
                 + "    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y"
-                + (" -c 19" if name == VM_U24 and arch in (VM_ARCH_AARCH64, VM_ARCH_X86_64) else "")
+                + (" -c %s" % vm.pg_beta if beta else "")
                 + " && \\\n"
             )
 
@@ -356,6 +355,7 @@ def _script_pg(name, vm, arch):
                 result += " postgresql-%s" % db_version
             else:
                 result += " postgresql%s" % db_version
+
     # On other architectures (e.g. ppc64le, s390x) install a single PostgreSQL version for the smoke test via the postgresql
     # metapackage (its default from the configured repo). The full version matrix is skipped to keep the emulated build fast; one
     # version is enough to check the build and exercise checksums end-to-end on big-endian.
@@ -381,7 +381,7 @@ def script_base(name, arch):
     """Generate the script for the base image, which holds everything installed from a package."""
 
     vm = vm_get(name)
-    result = _script_package(name, vm)
+    result = _script_package(vm)
 
     result += (
         _SECTION
@@ -394,7 +394,7 @@ def script_base(name, arch):
         result += _SECTION + "# Fix root tty\n" + "    sed -i 's/^mesg n/tty -s \\&\\& mesg n/g' /root/.profile"
         result += _SECTION + "# Suppress dpkg interactive output\n" + "    rm /etc/apt/apt.conf.d/70debconf"
 
-    result += _script_pg(name, vm, arch)
+    result += _script_pg(vm, arch)
 
     if vm.os_base == VM_OS_BASE_DEBIAN:
         result += (
@@ -431,7 +431,7 @@ def script_test(name, path_repo):
         + "    echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config"
     )
 
-    if name in (VM_U22, VM_U24, VM_A321):
+    if vm.ssh_rsa:
         result += (
             _SECTION
             + "    echo '# Add PubkeyAcceptedAlgorithms (required for SFTP)'              >> /etc/ssh/sshd_config && \\\n"
@@ -504,28 +504,35 @@ def _revision_get(revision, name, arch):
 
 ####################################################################################################################################
 def revision_check(revision):
-    """Check the revisions read from container.yaml.
+    """Check the revisions declared in container.yaml, returning them keyed as they were declared.
 
     A revision is keyed by "all", a vm, or a vm qualified with an architecture, e.g. "u22-x86_64". Without this an invalid key
     would silently fall back to a less specific revision and the expected rebuild would never happen."""
 
+    result = yaml_map_dict(revision, "the 'revision' section in %s" % VM_PATH_CONTAINER)
+
     # The "all" revision is required so it can never be accidentally unset, which would change every image hash at once. It can
     # only be bumped.
-    check(isinstance(revision, dict) and VM_ALL in revision, "the 'all' revision is required in test/container.yaml")
+    check(VM_ALL in result, "the 'all' revision is required in %s" % VM_PATH_CONTAINER)
 
-    for key in sorted(revision):
-        check(revision[key] is not None, "revision '%s' in test/container.yaml must be set to a value" % key)
+    for key in sorted(result):
+        check(result[key] != "", "revision '%s' in %s must be set to a value" % (key, VM_PATH_CONTAINER))
 
         if key == VM_ALL:
             continue
 
         key_vm, _, key_arch = key.partition("-")
 
-        check(vm_valid(key_vm) and key_vm != VM_NONE, "revision '%s' in test/container.yaml has invalid vm '%s'" % (key, key_vm))
+        check(
+            vm_valid(key_vm) and key_vm != VM_NONE,
+            "revision '%s' in %s has invalid vm '%s'" % (key, VM_PATH_CONTAINER, key_vm),
+        )
         check(
             key_arch == "" or key_arch in VM_ARCH_LIST,
-            "revision '%s' in test/container.yaml has invalid architecture '%s'" % (key, key_arch),
+            "revision '%s' in %s has invalid architecture '%s'" % (key, VM_PATH_CONTAINER, key_arch),
         )
+
+    return result
 
 
 ####################################################################################################################################
@@ -616,10 +623,14 @@ def cmd_vm_build(config):
 
     path_create(path_temp, mode=0o770)
 
-    with open(os.path.join(path_repo, "test/container.yaml"), "r") as file:
-        revision_map = yaml.safe_load(file)
+    # Revisions come from the repository being built rather than from the definitions, which are read from the repository this
+    # module is part of
+    path_container = os.path.join(path_repo, VM_PATH_CONTAINER)
+    container = yaml_map_dict(yaml_load(file_read(path_container), VM_PATH_CONTAINER), VM_PATH_CONTAINER)
 
-    revision_check(revision_map)
+    check("revision" in container, "the 'revision' section is required in %s" % VM_PATH_CONTAINER)
+
+    revision_map = revision_check(container["revision"])
 
     for name in VM_LIST if config.vm == VM_ALL else [config.vm]:
         # Base image

@@ -75,3 +75,22 @@ def yaml_map_empty(value, name):
     """Check that a mapping is empty, i.e. the key is a name in a list rather than something with a definition."""
 
     check(isinstance(value, YamlMap) and len(value) == 0, "%s must be an empty map" % name)
+
+
+####################################################################################################################################
+def yaml_map_dict(value, name):
+    """A mapping as a dict, for a declaration where a key is looked up by name and repeating one is a mistake.
+
+    The loader keeps a repeated key because some declarations mean it, so a declaration that does not has to say so here rather than
+    silently keeping the last value written."""
+
+    check(isinstance(value, YamlMap), "%s must be a map" % name)
+
+    result = {}
+
+    for key, entry in value:
+        check(key not in result, "%s has duplicate key '%s'" % (name, key))
+
+        result[key] = entry
+
+    return result

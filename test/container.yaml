@@ -1,4 +1,173 @@
 # **********************************************************************************************************************************
+# Vm Definitions
+#
+# The vms tests can run on, the PostgreSQL versions each one provides, and what the container build needs to know about them. A vm
+# name is what --vm accepts, e.g. u24 for Ubuntu 24.04. The definitions are declared here rather than in the code so that a vm and
+# the container revision that goes with it are read from the same file.
+#
+# The definitions are checked when they are read: every supported PostgreSQL version must be tested on exactly one default vm and at
+# least one default vm must collect C coverage. Without the check a new version could be added and silently never tested.
+#
+# - 'default' marks a vm that --vm=all selects
+# - 'image' is the image the container is built from, and a vm without one has no container, i.e. it runs on the host
+# - 'os-base' is the os the container is built on, which decides its package manager and where PostgreSQL is installed
+# - 'db' is the PostgreSQL versions installed and 'db-test' the ones integration tests run against, which defaults to all of them
+# - the rest is what the container build installs or configures, and each defaults to false or unset
+#
+# A vm with no container declares only 'default' and 'coverage-c'. Everything else says how a container is built, and the os the
+# tests run on is then whatever the host is rather than anything that can be declared here.
+# **********************************************************************************************************************************
+vm:
+  # No container, i.e. run directly on the host
+  none:
+    coverage-c: true
+
+  # Alpine 3.21
+  a321:
+    default: true
+    os-base: alpine
+    image: alpine:3.21
+    db:
+      - 15
+      - 16
+      - 17
+    db-test:
+      - 16
+    pg-repo: false
+    ssh-rsa: true
+
+  # Alpine 3.24
+  a324:
+    default: true
+    os-base: alpine
+    image: alpine:3.24
+    db:
+      - 16
+      - 17
+      - 18
+    db-test:
+      - 17
+    pg-repo: false
+
+  # Debian 12
+  d12:
+    default: true
+    os-base: debian
+    image: debian:12
+    db:
+      - 15
+    pg-repo: false
+    valgrind: false
+
+  # RHEL 8
+  rh8:
+    default: true
+    os-base: rhel
+    image: rockylinux/rockylinux:8
+    db:
+      - 10
+    pg-repo: false
+    valgrind: false
+    epel: true
+    powertools: true
+    python: python3.12
+
+  # RHEL 9
+  rh9:
+    default: true
+    os-base: rhel
+    image: rockylinux/rockylinux:9
+    db:
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+    db-test:
+      - 14
+    pg-repo-release: EL-9
+    dnf-module: true
+    coverage-python: pip
+    epel: true
+
+  # RHEL 10
+  rh10:
+    default: true
+    os-base: rhel
+    image: rockylinux/rockylinux:10
+    db:
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+    db-test:
+      - 18
+    pg-repo-release: EL-10
+    pg-repo-key: false
+    coverage-python: package
+    epel: true
+
+  # Fedora 44
+  f44:
+    os-base: rhel
+    image: fedora:44
+    db:
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+    db-test:
+      - 15
+    pg-repo-release: F-44
+    coverage-c: true
+    coverage-python: package
+
+  # Ubuntu 22.04
+  u22:
+    default: true
+    os-base: debian
+    image: ubuntu:22.04
+    db:
+      - 9.6
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+    db-test:
+      - 9.6
+      - 11
+    coverage-c: true
+    ssh-rsa: true
+
+  # Ubuntu 24.04
+  u24:
+    default: true
+    os-base: debian
+    image: ubuntu:24.04
+    db:
+      - 9.6
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+      - 19
+    db-test:
+      - 12
+      - 13
+      - 19
+    coverage-c: true
+    coverage-python: package
+    ssh-rsa: true
+
+# **********************************************************************************************************************************
 # Container Cache Revisions
 #
 # Base images are cached in the container registry (GHCR) keyed by a hash of the generated Dockerfile combined with the revision
@@ -26,4 +195,5 @@
 #   rh10: 20260710A          # rebuild rh10 on every architecture (independent of "all")
 #   rh10-x86_64: 20260710A   # rebuild rh10 on x86_64 only (independent of "all" and "rh10")
 # **********************************************************************************************************************************
-all: 20260710A
+revision:
+  all: 20260710A

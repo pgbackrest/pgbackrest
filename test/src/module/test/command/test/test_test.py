@@ -348,7 +348,7 @@ def test_test_build():
         assert_equal(started, ["common/error", "common/exec"])
 
         # An integration test runs the binary so it is built. The build is already set up so only the binary is built.
-        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, vm=VM_U24, module=["integration"]))
+        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, vm="u24", module=["integration"]))
 
         assert_in("ninja -C %s/build/u24 src/pgbackrest 2>&1" % path_test, " ".join(command_list))
 
@@ -379,7 +379,7 @@ def test_test_container():
         path_repo = _repo_create(path)
         path_test = os.path.join(path, "test")
 
-        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, vm=VM_U24, module=["common"]))
+        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, vm="u24", module=["common"]))
 
         assert_equal(_cmd_test.container_remove.call_args[0][0], "test-([0-9]+|build)")
         assert_in("cleanup old data and containers", output)
@@ -478,7 +478,7 @@ def test_test_coverage():
 
         assert_equal(_cmd_test.coverage.call_count, 0)
 
-        _cmd_test(Config(path_repo, path_test, vm=VM_D12, module=["common"]))
+        _cmd_test(Config(path_repo, path_test, vm="d12", module=["common"]))
 
         assert_equal(_cmd_test.coverage.call_count, 0)
 

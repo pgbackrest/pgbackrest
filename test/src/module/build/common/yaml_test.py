@@ -60,6 +60,23 @@ def test_yaml_bool():
 
 
 ####################################################################################################################################
+def test_yaml_map_dict():
+    """A mapping is a dict where a key is looked up by name, and a repeated key is reported rather than kept."""
+
+    assert_equal(yaml_map_dict(yaml_load("b: 1\na: 2\n", "test.yaml"), "key"), {"b": "1", "a": "2"})
+
+    with assert_raises(ToolError) as error:
+        yaml_map_dict(yaml_load("- 1\n", "test.yaml"), "key")
+
+    assert_equal(str(error.exception), "key must be a map")
+
+    with assert_raises(ToolError) as error:
+        yaml_map_dict(yaml_load("b: 1\na: 2\nb: 3\n", "test.yaml"), "key")
+
+    assert_equal(str(error.exception), "key has duplicate key 'b'")
+
+
+####################################################################################################################################
 def test_yaml_map_empty():
     """A key that is a name in a list has an empty map under it and nothing else."""
 

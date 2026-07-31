@@ -226,7 +226,7 @@ def test_job_command_option():
         assert_in(" --no-coverage ", job.exec.command)
 
         # Nor on a vm that cannot collect it
-        job = _job(Config(path), _run(vm=VM_D12))
+        job = _job(Config(path), _run(vm="d12"))
 
         _capture(job, lambda job: job.begin())
 
@@ -271,7 +271,7 @@ def test_job_container():
 
     with tempfile.TemporaryDirectory() as path:
         config = Config(path, vm_arch="x86_64")
-        job = _job(config, _run(vm=VM_U24), vm_idx=1, vm_max=2, test_idx=3, test_max=12)
+        job = _job(config, _run(vm="u24"), vm_idx=1, vm_max=2, test_idx=3, test_max=12)
 
         started, command_list, output = _capture(job, lambda job: job.begin())
 
@@ -296,7 +296,7 @@ def test_job_container():
         assert_equal(job.description, "P2-T04/12 - vm=u24, module=common/error")
 
         # An integration test starts its own containers and has nothing built for it, so neither is done here
-        job = _job(config, _run(name="integration/all", type=TEST_TYPE_INTEGRATION, vm=VM_U24, test_list=[1]))
+        job = _job(config, _run(name="integration/all", type=TEST_TYPE_INTEGRATION, vm="u24", test_list=[1]))
 
         started, command_list, output = _capture(job, lambda job: job.begin())
 
@@ -441,7 +441,7 @@ def test_job_end_fail():
 
     with tempfile.TemporaryDirectory() as path:
         config = Config(path)
-        job = _job(config, _run(vm=VM_U24))
+        job = _job(config, _run(vm="u24"))
 
         _capture(job, lambda job: job.begin())
         (done, fail), command_list, output = _capture(job, lambda job: job.end(), status=25, output="it broke\n")
@@ -475,7 +475,7 @@ def test_job_profile():
 
     with tempfile.TemporaryDirectory() as path:
         config = Config(path, profile=True)
-        job = _job(config, _run(vm=VM_U24))
+        job = _job(config, _run(vm="u24"))
 
         _capture(job, lambda job: job.begin())
 
