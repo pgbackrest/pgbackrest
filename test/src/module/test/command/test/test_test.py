@@ -50,33 +50,28 @@ MESON_BUILD = """project(
 # Test definitions with a test that provides coverage, one that does not, and an integration test that needs the binary
 DEFINE = """
 unit:
-  - name: common
+  - name: common/error
+    total: 1
 
-    test:
-      - name: error
-        total: 1
+    coverage:
+      - common/error
 
-        coverage:
-          - common/error
-
-      - name: exec
-        total: 1
+  - name: common/exec
+    total: 1
 
 integration:
   - name: integration
     db: true
 
-    test:
-      - name: all
-        total: 1
-        binReq: true
+  - name: integration/all
+    total: 1
+    binReq: true
 
 performance:
-  - name: performance
+  - name: performance/type
+    total: 1
 
-    test:
-      - name: type
-        total: 1
+tool: []
 """
 
 
@@ -95,7 +90,6 @@ class Config:
         self.vm_max = 1
         self.module = []
         self.test = []
-        self.run = []
         self.pg_version = "minimal"
         self.c_only = False
         self.container_only = False
@@ -333,9 +327,8 @@ def test_test_option_error():
         def error(**option):
             return _cmd_test(Config(path_repo, path_test, **option))[0]
 
-        assert_equal(error(run=[1, 2]), "only one --run can be provided")
-        assert_equal(error(test=["error"]), "only one --module can be provided when --test is specified")
-        assert_equal(error(module=["common"], run=[1]), "only one --test can be provided when --run is specified")
+        assert_equal(error(test=[1, 2]), "only one --test can be provided")
+        assert_equal(error(module=["common"], test=[1]), "--test requires a single --module naming a test module")
         assert_equal(error(vm_build=True), "select a vm to build, or all of them")
         assert_equal(error(vm=VM_ALL), "select a single vm to test on")
         assert_equal(error(vm="bogus"), "no definition for vm 'bogus'")
@@ -347,7 +340,10 @@ def test_test_option_error():
         )
 
         # A selection that matches nothing is an error rather than a run that does nothing
-        assert_equal(error(module=["bogus"]), "no tests were selected")
+        assert_equal(error(module=["bogus"]), "'bogus' does not match a test module")
+
+        # A selection that matches only tests the options filter out, e.g. an integration test with no container to run it in
+        assert_equal(error(module=["integration"]), "no tests were selected")
 
         # Only one test can be run when nothing is cleaned up, since they would overwrite each other
         assert_equal(error(cleanup=False), "--no-cleanup is not valid when more than one test will run")
@@ -443,7 +439,7 @@ def test_test_run():
 
         # A test that fails is started again until it runs out of retries, and then the run has failed
         status, command_list, started, output = _cmd_test(
-            Config(path_repo, path_test, module=["common"], test=["error"], retry=1), job_fail={"common/error": 1}
+            Config(path_repo, path_test, module=["common/error"], retry=1), job_fail={"common/error": 1}
         )
 
         assert_equal(status, 0)
@@ -452,7 +448,7 @@ def test_test_run():
         assert_in("TESTS COMPLETED SUCCESSFULLY, 1 RETRY(IES)", output)
 
         status, command_list, started, output = _cmd_test(
-            Config(path_repo, path_test, module=["common"], test=["error"]), job_fail={"common/error": 9}
+            Config(path_repo, path_test, module=["common/error"]), job_fail={"common/error": 9}
         )
 
         assert_equal(status, 1)
@@ -507,7 +503,7 @@ def test_test_coverage():
 
         assert_is_none(_Exec.command)
 
-        _cmd_test(Config(path_repo, path_test, module=["common"], test=["error"], run=[1]))
+        _cmd_test(Config(path_repo, path_test, module=["common/error"], test=[1]))
 
         assert_is_none(_Exec.command)
 

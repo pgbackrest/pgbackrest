@@ -79,9 +79,7 @@ jobs:
 
       - name: Run Test
         run: |
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --module=common --test=type-pack --test=crypto --test=compress
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --module=postgres --test=interface
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --module=command --test=backup --test=restore --test=archive-get --test=archive-push --test=verify
+          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --module=common/type/pack --module=common/crypto --module=common/compress --module=postgres/interface --module=command/backup --module=command/restore --module=command/archive-get --module=command/archive-push --module=command/verify
 
       # Run the smoke test against the arch build: a real PostgreSQL driven through a full backup/restore/verify cycle, which
       # exercises checksums end-to-end on big-endian. It reuses the pgbackrest binary already built for the arch above and the

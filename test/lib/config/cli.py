@@ -62,9 +62,8 @@ def _parser_test(result):
     These are on the main parser rather than on a command of their own so the tests can be run without naming a command."""
 
     # Test selection
-    result.add_argument("--module", action="append", default=[], metavar="MODULE", help="module to test")
-    result.add_argument("--test", action="append", default=[], metavar="TEST", help="test to run in a module")
-    result.add_argument("--run", action="append", type=int, default=[], metavar="RUN", help="run to execute in a test")
+    result.add_argument("--module", action="append", default=[], metavar="MODULE", help="module or path of modules to test")
+    result.add_argument("--test", action="append", type=int, default=[], metavar="TEST", help="test to run in a module")
     result.add_argument("--pg-version", default="minimal", metavar="VERSION", help="pg version integration tests run against")
     result.add_argument("--c-only", action="store_true", help="only run C tests")
     result.add_argument("--container-only", action="store_true", help="only run tests that require a container")
@@ -109,11 +108,11 @@ def _parser_unit(command, parent):
         "unit", parents=[parent], help="build the unit test for a test module", description="Build a unit test."
     )
 
-    result.add_argument("module", metavar="module/test", help="test module to build")
+    result.add_argument("module", metavar="module", help="test module to build")
     result.add_argument("--vm-id", type=int, default=0, metavar="ID", help="0-based id of the vm the test runs on")
     result.add_argument("--vm-arch", metavar="ARCH", help="vm architecture (defaults to the host architecture)")
     result.add_argument("--pg-version", default="invalid", metavar="VERSION", help="pg version for integration tests")
-    result.add_argument("--test", type=int, metavar="RUN", help="run only the specified test run")
+    result.add_argument("--test", type=int, metavar="TEST", help="run only the specified test")
     result.add_argument("--test-name", metavar="LIST", help="comma separated tests to run in a python test module")
     result.add_argument("--coverage-file", metavar="PATH", help="write coverage for a python test module to this path")
     result.add_argument("--scale", type=int, default=1, metavar="FACTOR", help="scale performance tests")
@@ -152,7 +151,7 @@ def cli_parse(arg_list, version):
         help="merge coverage and write the report",
         description="Merge the coverage produced by the unit tests and write the report.",
     )
-    coverage.add_argument("module", nargs="+", metavar="module/test", help="test modules that were run")
+    coverage.add_argument("module", nargs="+", metavar="module", help="test modules that were run")
     coverage.add_argument("--coverage-summary", action="store_true", help="write the coverage summary for the documentation")
 
     # Lint

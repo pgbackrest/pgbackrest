@@ -133,17 +133,16 @@ def test_cli_coverage():
 def test_cli_test():
     """A command line with no command runs the tests, which is what a developer types."""
 
-    config = cli_parse(["--vm=u24", "--module=common", "--module=postgres", "--test=error", "--vm-max=2"], VERSION)
+    config = cli_parse(["--vm=u24", "--module=common/error", "--module=postgres", "--vm-max=2"], VERSION)
 
     assert_is_none(config.command)
     assert_equal(config.vm, "u24")
-    assert_equal(config.module, ["common", "postgres"])
-    assert_equal(config.test, ["error"])
+    assert_equal(config.module, ["common/error", "postgres"])
     assert_equal(config.vm_max, 2)
 
     # Defaults for what a plain run does
     assert_equal(config.test_path, "test")
-    assert_equal(config.run, [])
+    assert_equal(config.test, [])
     assert_equal(config.pg_version, "minimal")
     assert_equal(config.retry, 0)
     assert_equal(config.scale, 1)
@@ -190,7 +189,7 @@ def test_cli_error():
     status, output = _cli_parse_exit(["unit"])
 
     assert_equal(status, 2)
-    assert_in("the following arguments are required: module/test", output)
+    assert_in("the following arguments are required: module", output)
 
     # The version is the project version rather than one of its own
     status, output = _cli_parse_exit(["--version"])

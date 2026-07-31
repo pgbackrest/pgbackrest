@@ -95,16 +95,16 @@ hrnInit(
 testAdd - add a new test
 ***********************************************************************************************************************************/
 void
-hrnAdd(int run, bool selected)
+hrnAdd(int test, bool selected)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM(INT, run);
+        FUNCTION_HARNESS_PARAM(INT, test);
         FUNCTION_HARNESS_PARAM(BOOL, selected);
     FUNCTION_HARNESS_END();
 
-    if (run != testTotal + 1)
+    if (test != testTotal + 1)
     {
-        fprintf(stderr, "ERROR: test run %d is not in order\n", run);
+        fprintf(stderr, "ERROR: test %d is not in order\n", test);
         fflush(stderr);
         exit(255);
     }
@@ -183,7 +183,7 @@ testBegin(const char *name)
         if (testRun != 1)
             printf("\n");
 
-        printf("run %d - %s\n", testRun, name);
+        printf("test %d - %s\n", testRun, name);
         fflush(stdout);
 
         testRunSub = 1;
@@ -356,14 +356,14 @@ hrnTzSet(const char *const tz)
 void
 hrnTestLogTitle(int lineNo)
 {
-    // Output run/test
+    // Output test/sub-test
     char buffer[32];
     int bufferSize = snprintf(buffer, sizeof(buffer), "%d/%d", testRun, testRunSub);
 
-    printf("\nrun %s ", buffer);
+    printf("\ntest %s ", buffer);
 
-    // Output dashes
-    for (int dashIdx = 0; dashIdx < (testTiming ? 16 : 8) - bufferSize; dashIdx++)
+    // Output dashes. One less than the prefix written by hrnTestLogPrefix so the line number lines up with what follows.
+    for (int dashIdx = 0; dashIdx < (testTiming ? 15 : 7) - bufferSize; dashIdx++)
         putchar('-');
 
     // Output line number

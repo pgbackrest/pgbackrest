@@ -1,25 +1,23 @@
 """Test List.
 
 Selects the tests to run from the definitions and the options. A test module produces one run per vm, and an integration module
-produces one run per sub-test and PostgreSQL version as well, since each of those needs its own container."""
+produces one run per test and PostgreSQL version as well, since each of those needs its own container."""
 
 ####################################################################################################################################
 from command.test.define import TEST_TYPE_INTEGRATION, TEST_TYPE_PERFORMANCE
+from common.error import check
 from common.vm import *
 
 
 ####################################################################################################################################
 class TestRun:
-    """A test module to run on one vm, for one PostgreSQL version and one sub-test where those apply."""
+    """A test module to run on one vm, for one PostgreSQL version and one test in the module where those apply."""
 
-    def __init__(self, module, vm, pg_version, run_list):
+    def __init__(self, module, vm, pg_version, test_list):
         self.module = module
         self.vm = vm
         self.pg_version = pg_version  # PostgreSQL version to test against, None when the test does not need one
-        self.run_list = run_list  # Sub-tests to run, None for all of them
-
-        # The module name is the group and the test in it, e.g. the common group and the error test in it
-        self.group, _, self.test = module.name.partition("/")
+        self.test_list = test_list  # Tests in the module to run, None for all of them
 
     ################################################################################################################################
     @property
@@ -51,17 +49,41 @@ class TestRun:
 
 
 ####################################################################################################################################
-def _selected(name_list, name):
-    """Was this module or test selected on the command line?
+def _selected(module_name, name):
+    """Was this test module selected by a name given on the command line?
 
-    An empty list selects everything, which is what running with no --module or --test does."""
+    A name is either a test module or the path of a group of them, e.g. common/type/string is the string test while common/type is
+    every test under it. Case is ignored, as it is in the module paths the names come from."""
 
-    return not name_list or name.lower() in [selected.lower() for selected in name_list]
+    module_name = module_name.lower()
+    name = name.lower()
+
+    return module_name == name or module_name.startswith(name + "/")
+
+
+####################################################################################################################################
+def _check(module_list, config):
+    """Check the selection against the definitions.
+
+    A name that matches nothing is a typo, which is worth reporting rather than running whatever else was selected as if nothing
+    were wrong."""
+
+    for name in config.module:
+        check(any(_selected(module.name, name) for module in module_list), "'%s' does not match a test module" % name)
+
+    # A test is numbered within a single module, so the path of a group of them has nothing to apply it to
+    check(
+        not config.test
+        or (len(config.module) == 1 and any(module.name.lower() == config.module[0].lower() for module in module_list)),
+        "--test requires a single --module naming a test module",
+    )
 
 
 ####################################################################################################################################
 def test_list_get(module_list, config):
     """Build the list of tests to run."""
+
+    _check(module_list, config)
 
     result = []
 
@@ -69,10 +91,8 @@ def test_list_get(module_list, config):
         vm = vm_get(vm_name)
 
         for module in module_list:
-            # The module name is the group and the test in it, e.g. the common group and the error test in it
-            group, _, test = module.name.partition("/")
-
-            if not _selected(config.module, group) or not _selected(config.test, test):
+            # An empty selection runs everything, which is what a run with no --module does
+            if config.module and not any(_selected(module.name, name) for name in config.module):
                 continue
 
             # Skip this test if it does not run on this vm
@@ -81,8 +101,8 @@ def test_list_get(module_list, config):
 
             integration = module.type == TEST_TYPE_INTEGRATION
 
-            # Skip this test if only C tests were requested. An integration test runs the pgbackrest binary rather than a unit
-            # test, so it is the only kind that is not C.
+            # Skip this test if only C tests were requested, which leaves out the integration tests since they run the pgbackrest
+            # binary rather than a unit test
             if config.c_only and integration:
                 continue
 
@@ -109,17 +129,17 @@ def test_list_get(module_list, config):
                 if pg_version is not None and config.pg_version not in ("all", "minimal", pg_version):
                     continue
 
-                # An integration test runs each sub-test in its own container, so each one is a separate run here. Every other
-                # test runs all of its sub-tests at once and passes on whatever --run selected.
+                # An integration module runs each of its tests in its own container, so each one is a separate run here. Every
+                # other module runs all of its tests at once and passes on whatever --test selected.
                 if not integration:
-                    result.append(TestRun(module, vm_name, pg_version, config.run if config.run else None))
+                    result.append(TestRun(module, vm_name, pg_version, config.test if config.test else None))
 
                     continue
 
-                for run in range(1, module.total + 1):
-                    if config.run and run not in config.run:
+                for test in range(1, module.total + 1):
+                    if config.test and test not in config.test:
                         continue
 
-                    result.append(TestRun(module, vm_name, pg_version, [run]))
+                    result.append(TestRun(module, vm_name, pg_version, [test]))
 
     return result

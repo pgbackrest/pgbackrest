@@ -207,9 +207,8 @@ pgbackrest/doc/doc.py --out=html
 Examples of test runs are provided in the following sections. There are several important options for running a test:
 
 - `--dry-run` - without any other options, this will list all the available tests
-- `--module` - identifies the module in which the test is located
-- `--test` - the actual test set to be run
-- `--run` - a number identifying the run within a test if testing a single run rather than the entire test
+- `--module` - the test module to run, or the path of a group of them, e.g. `common/type/string` is the string test and `common/type` is every test under it
+- `--test` - a number identifying the test within a module if running a single test rather than the entire module
 - `--vm-out` - displays the test output (helpful for monitoring the progress)
 - `--vm` - identifies the pre-built container when using Docker, otherwise the setting should be `none`. See [test.yml](https://github.com/pgbackrest/pgbackrest/blob/main/.github/workflows/test.yml) for a list of valid vm codes noted by `param: test`.
 
@@ -234,48 +233,48 @@ pgbackrest/test/test.py --dry-run
     P00   INFO: autogenerate code
 --> P00   INFO: 127 tests selected
                 
-    P00   INFO: P1-T001/127 - vm=none, module=common, test=error
+    P00   INFO: P1-T001/127 - vm=none, module=common/error/error
            [filtered 124 lines of output]
-    P00   INFO: P1-T126/127 - vm=none, module=performance, test=type
-    P00   INFO: P1-T127/127 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T126/127 - vm=none, module=test/command/test/build
+    P00   INFO: P1-T127/127 - vm=none, module=test/command/test/unit
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
     P00   INFO: test command end: completed successfully
 ```
 
 pgbackrest-dev => Run a test
 ```
-pgbackrest/test/test.py --vm-out --module=common --test=wait
+pgbackrest/test/test.py --vm-out --module=common/wait
 
 --- output ---
 
-    P00   INFO: test command begin 2.60.0dev: --vm-out --module=common --test=wait --no-log-timestamp
+    P00   INFO: test command begin 2.60.0dev: --vm-out --module=common/wait --no-log-timestamp
     P00   INFO: test begin on aarch64 - log level info
     P00   INFO: cleanup old data
     P00   INFO: autogenerate code
     P00   INFO: clean build for none (/home/vagrant/test/build/none)
     P00   INFO: 1 test selected
                 
-    P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
+    P00   INFO: P1-T1/1 - vm=none, module=common/wait
                 
         P00   INFO: unit command begin 2.60.0dev: unit --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --log-level=info --log-level-test=off --vm=none --vm-id=0 --no-log-timestamp --scale=1 common/wait
         P00   INFO: unit command end: completed successfully
-        run 1 - waitNew(), waitMore, and waitFree()
+        test 1 - waitNew(), waitMore, and waitFree()
                       L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
         
-        run 1/1 ----- L0021 0ms wait
+        test 1/1 ---- L0021 0ms wait
                       L0025     new wait
                       L0026         check wait time
                       L0027         check sleep time
                       L0028         check sleep prev time
                       L0029         no wait more
         
-        run 1/2 ----- L0032 100ms with retries after time expired
+        test 1/2 ---- L0032 100ms with retries after time expired
                       L0034     new wait
                       L0037         time expired, first retry
                       L0038         time expired, second retry
                       L0039         time expired, retries expired
         
-        run 1/3 ----- L0042 200ms wait
+        test 1/3 ---- L0042 200ms wait
                       L0046     new wait = 0.2 sec
                       L0047         check wait time
                       L0048         check sleep time
@@ -290,7 +289,7 @@ pgbackrest/test/test.py --vm-out --module=common --test=wait
                       L0065         upper range check
                       L0067         free wait
         
-        run 1/4 ----- L0070 1100ms wait
+        test 1/4 ---- L0070 1100ms wait
                       L0074     new wait = 1.1 sec
                       L0075         check wait time
                       L0076         check sleep time
@@ -300,7 +299,7 @@ pgbackrest/test/test.py --vm-out --module=common --test=wait
                       L0085         upper range check
                       L0087         free wait
         
-        run 1/5 ----- L0090 waitRemainder()
+        test 1/5 ---- L0090 waitRemainder()
                       L0092     new wait = 500ms
                       L0093     check initial wait remainder
                       L0094     check initial wait remainder
@@ -309,13 +308,13 @@ pgbackrest/test/test.py --vm-out --module=common --test=wait
         
         TESTS COMPLETED SUCCESSFULLY
     
-    P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
+    P00   INFO: P1-T1/1 - vm=none, module=common/wait
     P00   INFO: tested modules have full coverage
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
     P00   INFO: test command end: completed successfully
 ```
 
-An entire module can be run by using only the `--module` option.
+A group of modules can be run by giving `--module` the path they are under.
 
 pgbackrest-dev => Run a module
 ```
@@ -330,8 +329,8 @@ pgbackrest/test/test.py --module=postgres
     P00   INFO: build for none (/home/vagrant/test/build/none)
     P00   INFO: 2 tests selected
                 
-    P00   INFO: P1-T1/2 - vm=none, module=postgres, test=client
-    P00   INFO: P1-T2/2 - vm=none, module=postgres, test=interface
+    P00   INFO: P1-T1/2 - vm=none, module=postgres/client
+    P00   INFO: P1-T2/2 - vm=none, module=postgres/interface
     P00   INFO: tested modules have full coverage
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
     P00   INFO: test command end: completed successfully
@@ -357,20 +356,20 @@ pgbackrest/test/test.py --vm-build --vm=u24
 ```
 > **NOTE:** to build all the vms, use `--vm=all` above.
 
-pgbackrest-dev => Run a Specific Test Run
+pgbackrest-dev => Run a Specific Test
 ```
-pgbackrest/test/test.py --vm=u24 --module=postgres --test=interface --run=2
+pgbackrest/test/test.py --vm=u24 --module=postgres/interface --test=2
 
 --- output ---
 
-    P00   INFO: test command begin 2.60.0dev: --vm=u24 --module=postgres --test=interface --run=2 --no-log-timestamp
+    P00   INFO: test command begin 2.60.0dev: --vm=u24 --module=postgres/interface --test=2 --no-log-timestamp
     P00   INFO: test begin on aarch64 - log level info
     P00   INFO: cleanup old data and containers
     P00   INFO: autogenerate code
     P00   INFO: clean build for u24 (/home/vagrant/test/build/u24)
     P00   INFO: 1 test selected
                 
-    P00   INFO: P1-T1/1 - vm=u24, module=postgres, test=interface, run=2
+    P00   INFO: P1-T1/1 - vm=u24, module=postgres/interface, test=2
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
     P00   INFO: test command end: completed successfully
 ```
@@ -384,20 +383,16 @@ The goal of unit testing is to have 100 percent code coverage. Two files will us
 
 #### define.yaml
 
-Each module is separated by a line of asterisks (*) and each test within is separated by a line of dashes (-). In the example below, the module is `command` and the unit test is `check`. The number of calls to `testBegin()` in a unit test file will dictate the number following `total:`, in this case 4. Under `coverage:`, the list of files that will be tested.
+Each module is separated by a line of dashes (-) and each group of them by a line of asterisks (*). In the example below, the module is `command/check`. The number of calls to `testBegin()` in a unit test file will dictate the number following `total:`, in this case 4. Under `coverage:`, the list of files that will be tested.
 ```
-# ********************************************************************************************************************************
-  - name: command
+# --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/check
+    total: 4
+    containerReq: true
 
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: check
-        total: 4
-        containerReq: true
-
-        coverage:
-          - command/check/common
-          - command/check/check
+    coverage:
+      - command/check/common
+      - command/check/check
 ```
 
 #### somefileTest.c
@@ -519,9 +514,9 @@ TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check ind
 
 **Code Coverage**
 
-Unit tests are run for all files that are listed in `define.yaml` and a coverage report generated for each file listed under the tag `coverage:`. Note that some files are listed in multiple `coverage:` sections for a module; in this case, each test for the file being modified should be specified for the module in which the file exists (e.g. `--module=storage --test=posix --test=gcs`, etc.) or, alternatively, simply run the module without the `--test` option. It is recommended that a `--vm` be specified since running the same test for multiple vms is unnecessary for coverage. The following example would run the test set from the **define.yaml** section detailed above.
+Unit tests are run for all files that are listed in `define.yaml` and a coverage report generated for each file listed under the tag `coverage:`. Note that some files are listed in multiple `coverage:` sections; in this case, each module that covers the file being modified should be specified (e.g. `--module=storage/posix --module=storage/gcs`, etc.) or, alternatively, simply give `--module` the path they are all under. It is recommended that a `--vm` be specified since running the same test for multiple vms is unnecessary for coverage. The following example would run the test set from the **define.yaml** section detailed above.
 ```
-pgbackrest/test/test.py --vm-out --module=command --test=check --vm=u24
+pgbackrest/test/test.py --vm-out --module=command/check --vm=u24
 ```
 > **NOTE:** Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.
 
@@ -531,9 +526,9 @@ If 100 percent code coverage has not been achieved, an error message will be dis
 
 **Debugging with files**
 
-Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test run must be specified and the option `--no-cleanup` provided. Again, continuing with the check command, from **define.yaml** above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in `test/test-0` can be inspected.
+Sometimes it is useful to look at files that were generated during the test. The default for running any test is that, at the start/end of the test, the test harness will clean up all files and directories created. To override this behavior, a single test must be specified and the option `--no-cleanup` provided. Again, continuing with the check command, from **define.yaml** above, there are four tests. Below, test one will be run and nothing will be cleaned up so that the files and directories in `test/test-0` can be inspected.
 ```
-pgbackrest/test/test.py --vm-out --module=command --test=check --run=1 --no-cleanup
+pgbackrest/test/test.py --vm-out --module=command/check --test=1 --no-cleanup
 ```
 
 ### Understanding Test Output
@@ -645,7 +640,7 @@ To add an option, add the following to the `<option-list>` section; if it does n
 
 It is important to run the `help` command unit test after adding an option in case a change is required:
 ```
-pgbackrest/test/test.py --module=command --test=help --vm-out
+pgbackrest/test/test.py --module=command/help --vm-out
 ```
 
 To verify the `help` command output, build the pgBackRest executable:

@@ -256,9 +256,7 @@ def cmd_test(config):
         config.coverage = False
 
     # Check the options that the parser cannot
-    check(len(config.run) <= 1, "only one --run can be provided")
-    check(not config.test or len(config.module) == 1, "only one --module can be provided when --test is specified")
-    check(not config.run or len(config.test) == 1, "only one --test can be provided when --run is specified")
+    check(len(config.test) <= 1, "only one --test can be provided")
     check(not config.vm_build or config.vm != VM_NONE, "select a vm to build, or all of them")
 
     # Every vm can be built at once but a test runs on one vm, since it needs the binary and the build for the vm it runs on
@@ -406,10 +404,10 @@ def cmd_test(config):
 
     count_fail, count_retry = _run(config, test_list, image)
 
-    # Write the coverage report. There is nothing to report when a single run was selected since that cannot cover a module.
+    # Write the coverage report. There is nothing to report when a single test was selected since that cannot cover a module.
     uncovered = False
 
-    if coverage_c and config.coverage and not config.dry_run and count_fail == 0 and not config.run:
+    if coverage_c and config.coverage and not config.dry_run and count_fail == 0 and not config.test:
         uncovered = _coverage(config, test_list)
 
     log(

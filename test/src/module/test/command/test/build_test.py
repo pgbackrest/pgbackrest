@@ -22,65 +22,58 @@ from common.storage import path_list_recurse
 # The repository the build reads. Only the modules a harness shims are read as source, so those are the only ones written out.
 DEFINE = """
 unit:
-  - name: common
+  - name: common/error
+    total: 2
 
-    test:
-      - name: error
-        total: 2
+    coverage:
+      - common/error
 
-        coverage:
-          - common/error
+  - name: common/exec
+    total: 1
+    feature: exec
 
-      - name: exec
-        total: 1
-        feature: exec
+    harness:
+      - name: config
+        integration: false
 
-        harness:
-          - name: config
-            integration: false
-
-            shim:
-              - common/execOther
-              - name: common/exec
-                function:
-                  - execOne
-                  - execTwo
-                  - execThree:
-                      inc: execInc
-                  - execFour:
-                      inc: execInc
-
-        coverage:
-          - common/exec
+        shim:
           - common/execOther
+          - name: common/exec
+            function:
+              - execOne
+              - execTwo
+              - execThree:
+                  inc: execInc
+              - execFour:
+                  inc: execInc
 
-        depend:
-          - common/log
+    coverage:
+      - common/exec
+      - common/execOther
 
-      - name: after
-        total: 1
-        harness: extra
+    depend:
+      - common/log
 
-        coverage:
-          - common/after
+  - name: common/after
+    total: 1
+    harness: extra
+
+    coverage:
+      - common/after
 
 integration:
-  - name: real
-
-    test:
-      - name: all
-        total: 1
+  - name: real/all
+    total: 1
 
 performance:
-  - name: performance
+  - name: performance/type
+    total: 1
+    define: -DNDEBUG
 
-    test:
-      - name: type
-        total: 1
-        define: -DNDEBUG
+    coverage:
+      - performance/type
 
-        coverage:
-          - performance/type
+tool: []
 """
 
 MESON_OPTIONS = "option('fake', type: 'boolean', value: false)\n"

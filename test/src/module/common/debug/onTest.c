@@ -187,11 +187,11 @@ testRun(void)
         testFunction1(99, false, NULL, NULL, NULL, 0755);
 
         TEST_RESULT_LOG(
-            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
+            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction1: (paramInt: 99, paramBool: false,"
             " paramBoolP: null, paramBoolPP: null, paramVoidP: null, paramMode: 0755)\n"
-            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
-            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: => void\n"
-            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: => 1");
+            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction2: (void)\n"
+            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction2: => void\n"
+            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction1: => 1");
 
         // -------------------------------------------------------------------------------------------------------------------------
         bool testBool = true;
@@ -202,11 +202,11 @@ testRun(void)
         testFunction1(99, false, testBoolP, testBoolPP, testVoidP, 0755);
 
         TEST_RESULT_LOG(
-            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
+            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction1: (paramInt: 99, paramBool: false,"
             " paramBoolP: *true, paramBoolPP: **true, paramVoidP: null, paramMode: 0755)\n"
-            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
-            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: => void\n"
-            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: => 1");
+            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction2: (void)\n"
+            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction2: => void\n"
+            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction1: => 1");
 
         testBoolP = NULL;
         testVoidP = (void *)1;
@@ -214,11 +214,11 @@ testRun(void)
         testFunction1(99, false, testBoolP, testBoolPP, testVoidP, 0755);
 
         TEST_RESULT_LOG(
-            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: (paramInt: 99, paramBool: false,"
+            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction1: (paramInt: 99, paramBool: false,"
             " paramBoolP: null, paramBoolPP: *null, paramVoidP: *void, paramMode: 0755)\n"
-            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: (void)\n"
-            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction2: => void\n"
-            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debugOnTest::testFunction1: => 1");
+            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction2: (void)\n"
+            "P00  TRACE:         " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction2: => void\n"
+            "P00  DEBUG:     " TEST_PGB_PATH "/test/src/module/common/debug/onTest::testFunction1: => 1");
 
         // -------------------------------------------------------------------------------------------------------------------------
         harnessLogLevelReset();

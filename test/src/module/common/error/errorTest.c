@@ -248,7 +248,7 @@ testRun(void)
         CATCH_FATAL()
         {
             assert(errorCode() == AssertError.code);
-            assert(strcmp(errorFileName(), TEST_PGB_PATH "/test/src/module/common/errorTest.c") == 0);
+            assert(strcmp(errorFileName(), TEST_PGB_PATH "/test/src/module/common/error/errorTest.c") == 0);
             assert(strcmp(errorFunctionName(), "testTryRecurse") == 0);
             assert(errorFileLine() == 29);
             assert(errorStackTrace() != NULL);

@@ -14,7 +14,8 @@ from unittest.mock import patch
 
 from harness.test import *
 
-from command.test.define import TEST_LANG_C, TEST_LANG_PYTHON, TEST_TYPE_INTEGRATION, TEST_TYPE_PERFORMANCE, TEST_TYPE_UNIT
+from command.test.define import TEST_LANG_C, TEST_LANG_PYTHON, TEST_TYPE_INTEGRATION, TEST_TYPE_PERFORMANCE
+from command.test.define import TEST_TYPE_TOOL, TEST_TYPE_UNIT
 from command.test.define import TestDefModule
 from command.test.job import *
 from command.test.list import TestRun
@@ -100,14 +101,14 @@ class _Exec:
 
 
 ####################################################################################################################################
-def _run(name="common/error", vm=VM_NONE, type=TEST_TYPE_UNIT, lang=TEST_LANG_C, pg_version=None, run_list=None, total=0):
+def _run(name="common/error", vm=VM_NONE, type=TEST_TYPE_UNIT, lang=TEST_LANG_C, pg_version=None, test_list=None, total=0):
     """Build a test to run."""
 
     module = TestDefModule(name, type)
     module.lang = lang
     module.total = total
 
-    return TestRun(module, vm, pg_version, run_list)
+    return TestRun(module, vm, pg_version, test_list)
 
 
 ####################################################################################################################################
@@ -175,15 +176,15 @@ def test_job_command():
         assert_equal(command_list, [])
 
         # The test is listed at detail, since at info the log would be a list of tests that have not finished yet
-        assert_equal(output, "P00 DETAIL: P1-T1/1 - vm=none, module=common, test=error\n")
+        assert_equal(output, "P00 DETAIL: P1-T1/1 - vm=none, module=common/error\n")
 
-        # The paths the test writes to are created, and the data path only for a unit test
+        # The paths the test writes to are created, and the data path for everything but a performance test
         assert_true(os.path.isdir(os.path.join(path, "test-0")))
         assert_true(os.path.isdir(os.path.join(path, "unit-0/none")))
         assert_true(os.path.isdir(os.path.join(path, "data-0")))
 
         # A python test has nothing to build so the harness runs it, and it writes its own coverage
-        job = _job(config, _run(name="test/common/log", lang=TEST_LANG_PYTHON))
+        job = _job(config, _run(name="test/common/log", type=TEST_TYPE_TOOL, lang=TEST_LANG_PYTHON))
 
         _capture(job, lambda job: job.begin())
 
@@ -196,7 +197,7 @@ def test_job_command_option():
 
     with tempfile.TemporaryDirectory() as path:
         config = Config(path, vm_arch="ppc64le", tz="America/New_York", scale=4, back_trace=False, log_timestamp=True)
-        job = _job(config, _run(pg_version="15", run_list=[2, 1]))
+        job = _job(config, _run(pg_version="15", test_list=[2, 1]))
 
         _capture(job, lambda job: job.begin())
 
@@ -207,7 +208,7 @@ def test_job_command_option():
         assert_not_in("--no-log-timestamp", job.exec.command)
 
         # A run is listed with the sub-tests and the PostgreSQL version it was selected for
-        assert_equal(job.description, "P1-T1/1 - vm=none, module=common, test=error, run=1,2, pg-version=15")
+        assert_equal(job.description, "P1-T1/1 - vm=none, module=common/error, test=1,2, pg-version=15")
 
         # Coverage is not collected for a profile run since the instrumentation would skew the timing
         job = _job(Config(path, profile=True), _run())
@@ -292,10 +293,10 @@ def test_job_container():
         assert_true(job.exec.command.startswith(_expect("docker exec -i -u [USER] test-1 bash -l -c '\\\n", config)))
 
         # The vm and the test are numbered from one and padded out so the list lines up
-        assert_equal(job.description, "P2-T04/12 - vm=u24, module=common, test=error")
+        assert_equal(job.description, "P2-T04/12 - vm=u24, module=common/error")
 
         # An integration test starts its own containers and has nothing built for it, so neither is done here
-        job = _job(config, _run(name="integration/all", type=TEST_TYPE_INTEGRATION, vm=VM_U24, run_list=[1]))
+        job = _job(config, _run(name="integration/all", type=TEST_TYPE_INTEGRATION, vm=VM_U24, test_list=[1]))
 
         started, command_list, output = _capture(job, lambda job: job.begin())
 
@@ -318,7 +319,7 @@ def test_job_dry_run():
         started, command_list, output = _capture(job, lambda job: job.begin())
 
         assert_false(started)
-        assert_equal(output, "P00   INFO: P1-T1/1 - vm=none, module=common, test=error\n")
+        assert_equal(output, "P00   INFO: P1-T1/1 - vm=none, module=common/error\n")
 
         # Nothing is created since nothing will run
         assert_false(os.path.exists(os.path.join(path, "test-0")))
@@ -329,7 +330,7 @@ def test_job_dry_run():
         started, command_list, output = _capture(job, lambda job: job.begin())
 
         assert_true(started)
-        assert_equal(output, "P00 DETAIL: P1-T1/1 - vm=none, module=common, test=error\n")
+        assert_equal(output, "P00 DETAIL: P1-T1/1 - vm=none, module=common/error\n")
 
 
 ####################################################################################################################################
@@ -353,7 +354,7 @@ def test_job_end():
 
         assert_true(done)
         assert_false(fail)
-        assert_equal(output, "P00   INFO: P1-T1/1 - vm=none, module=common, test=error\n")
+        assert_equal(output, "P00   INFO: P1-T1/1 - vm=none, module=common/error\n")
 
         # The coverage the test left behind is written where the report is built from, and then the test path is removed
         assert_equal(
@@ -422,7 +423,7 @@ def test_job_end_output():
 
         # Nothing is cleaned up so the result can be looked at, and the elapsed time is reported
         assert_equal(command_list, [])
-        assert_true(re.match(r"^P00   INFO: P1-T1/1 - vm=none, module=common, test=error \(\d+\.\d\ds\):", output))
+        assert_true(re.match(r"^P00   INFO: P1-T1/1 - vm=none, module=common/error \(\d+\.\d\ds\):", output))
         assert_in("all good", output)
 
         # Output that arrived as it was written is not written again
@@ -447,7 +448,7 @@ def test_job_end_fail():
 
         assert_true(done)
         assert_true(fail)
-        assert_equal(output.split("\n")[0], "P00  ERROR: P1-T1/1 - vm=u24, module=common, test=error (err25):")
+        assert_equal(output.split("\n")[0], "P00  ERROR: P1-T1/1 - vm=u24, module=common/error (err25):")
         assert_in("it broke", output)
 
         # Nothing is written where coverage would go since the test did not finish, and the container is removed
@@ -513,7 +514,7 @@ def test_job_retry():
 
         assert_true(started)
         assert_in(" --log-level=debug ", job.exec.command)
-        assert_equal(job.description, "P1-T1/1 - vm=none, module=common, test=error (retry 1)")
+        assert_equal(job.description, "P1-T1/1 - vm=none, module=common/error (retry 1)")
 
         # There are no tries left so the driver is told to give up on it
         started, command_list, output = _capture(job, lambda job: job.begin())

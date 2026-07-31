@@ -18,31 +18,25 @@ from common.log import *
 # A define file with one C test and one python test, which is what the coverage command reads to know what should be covered
 DEFINE = """
 unit:
-  - name: common
+  - name: common/error
 
-    test:
-      - name: error
+    coverage:
+      - common/error
+      - common/errorInternal: noCode
 
-        coverage:
-          - common/error
-          - common/errorInternal: noCode
+  - name: common/stack-trace
 
-      - name: stack-trace
-
-        coverage:
-          - common/stackTrace
-
-  - name: test
-    lang: python
-
-    test:
-      - name: common/log
-
-        coverage:
-          - test/common/log
+    coverage:
+      - common/stackTrace
 
 integration: []
 performance: []
+
+tool:
+  - name: test/common/log
+
+    coverage:
+      - test/common/log
 """
 
 # Source of the C module, which the report is rendered against
@@ -454,7 +448,7 @@ def test_coverage_command_partial():
             {
                 "test-common-error.json": _raw_c("src/common/error.c", [{"line_number": 5, "count": 1}]),
             },
-            define=DEFINE.replace("          - common/stackTrace", "          - common/error"),
+            define=DEFINE.replace("      - common/stackTrace", "      - common/error"),
         )
 
         assert_equal(result, 0)

@@ -12,7 +12,7 @@ import os
 import time
 
 from command.test.container import container_remove
-from command.test.define import TEST_LANG_C, TEST_TYPE_UNIT
+from command.test.define import TEST_LANG_C, TEST_TYPE_PERFORMANCE
 from common.exec import Exec, exec_one
 from common.log import *
 from common.storage import path_create
@@ -119,7 +119,7 @@ class TestJob:
             + ("" if config.vm_arch is None else " --vm-arch=%s" % config.vm_arch)
             + " --vm-id=%u" % self.vm_idx
             + (" --profile" if config.profile else "")
-            + "".join(" --test=%u" % test for test in run.run_list or [])
+            + "".join(" --test=%u" % test for test in run.test_list or [])
             + ("" if config.log_timestamp else " --no-log-timestamp")
             + ("" if config.tz is None else " --tz='%s'" % config.tz)
             + " --scale=%u" % config.scale
@@ -182,7 +182,7 @@ class TestJob:
             self.log_level = DEBUG
 
         self.description = (
-            "P%0*d-T%0*d/%0*d - vm=%s, module=%s, test=%s"
+            "P%0*d-T%0*d/%0*d - vm=%s, module=%s"
             % (
                 len(str(self.vm_max)),
                 self.vm_idx + 1,
@@ -191,10 +191,9 @@ class TestJob:
                 len(str(self.test_max)),
                 self.test_max,
                 run.vm,
-                run.group,
-                run.test,
+                run.module.name,
             )
-            + ("" if run.run_list is None else ", run=%s" % ",".join(str(test) for test in sorted(run.run_list)))
+            + ("" if run.test_list is None else ", test=%s" % ",".join(str(test) for test in sorted(run.test_list)))
             + ("" if run.pg_version is None else ", pg-version=%s" % run.pg_version)
             + ("" if self.try_idx == 1 else " (retry %u)" % (self.try_idx - 1))
         )
@@ -215,7 +214,8 @@ class TestJob:
         if not run.integration:
             path_create(self.path_unit, mode=0o770)
 
-            if run.module.type == TEST_TYPE_UNIT:
+            # A performance test is timed rather than checked so it writes no data
+            if run.module.type != TEST_TYPE_PERFORMANCE:
                 path_create(self.path_data, mode=0o770)
 
             if run.vm != VM_NONE:

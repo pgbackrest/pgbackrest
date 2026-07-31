@@ -20,55 +20,46 @@ from common.log import *
 # A define file with the C and python tests the command has to tell apart
 DEFINE = """
 unit:
-  - name: common
+  - name: common/error
+    total: 1
 
-    test:
-      - name: error
-        total: 1
+    coverage:
+      - common/error
 
-        coverage:
-          - common/error
+  - name: common/release
+    total: 1
+    define: -DNDEBUG
 
-      - name: release
-        total: 1
-        define: -DNDEBUG
+    coverage:
+      - common/release
 
-        coverage:
-          - common/release
+  - name: common/bogus
+    total: 1
+    define: -DBOGUS
 
-      - name: bogus
-        total: 1
-        define: -DBOGUS
-
-        coverage:
-          - common/bogus
-
-  - name: test
-    lang: python
-
-    test:
-      - name: common/log
-
-        coverage:
-          - test/common/log
-          - test/common/logInternal: noCode
-
-        depend:
-          - test/common/error
-
-        include:
-          - test/common/render
+    coverage:
+      - common/bogus
 
 integration: []
 performance:
-  - name: performance
+  - name: performance/type
+    total: 1
 
-    test:
-      - name: type
-        total: 1
+    coverage:
+      - performance/type
 
-        coverage:
-          - performance/type
+tool:
+  - name: test/common/log
+
+    coverage:
+      - test/common/log
+      - test/common/logInternal: noCode
+
+    depend:
+      - test/common/error
+
+    include:
+      - test/common/render
 """
 
 
