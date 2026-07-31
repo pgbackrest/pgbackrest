@@ -342,17 +342,16 @@ Build a container to run tests. The vm must be pre-configured but a variety are 
 
 pgbackrest-dev => Build a VM
 ```
-pgbackrest/test/test.py --vm-build --vm=u24
+pgbackrest/test/test.py vm-build --vm=u24
 
 --- output ---
 
-    P00   INFO: test command begin 2.60.0dev: --vm-build --vm=u24 --no-log-timestamp
-    P00   INFO: test begin on aarch64 - log level info
+    P00   INFO: vm-build command begin 2.60.0dev: vm-build --vm=u24 --no-log-timestamp
     P00   INFO: Checking cache ghcr.io/pgbackrest/test:u24-base-aarch64-20260710A-496791f6b079 ...
     P00   INFO: Building ghcr.io/pgbackrest/test:u24-base-aarch64 image (ghcr.io/pgbackrest/test:u24-base-aarch64-20260710A-496791f6b079) ...
     P00   INFO: Building ghcr.io/pgbackrest/test:u24-test-aarch64 image ...
     P00   INFO: Build Complete
-    P00   INFO: test command end: completed successfully
+    P00   INFO: vm-build command end: completed successfully
 ```
 > **NOTE:** to build all the vms, use `--vm=all` above.
 

@@ -131,7 +131,7 @@ def test_run(config):
     if config.vm != VM_NONE:
         step(
             "%s build" % config.vm,
-            ["%s/test/test.py --vm-build --vm=%s%s" % (config.repo_path, config.vm, vm_arch)],
+            ["%s/test/test.py vm-build --vm=%s%s" % (config.repo_path, config.vm, vm_arch)],
             show_output=True,
         )
 

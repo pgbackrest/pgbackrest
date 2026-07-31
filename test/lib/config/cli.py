@@ -4,6 +4,7 @@ The commands the harness runs, the first of which is the default so a test run n
 
 test        run the tests, e.g. test.py --vm=u24 --module=common
 unit        build the unit test for one test module and run it, run once per test by the test run above
+vm-build    build the containers the tests run in, e.g. test.py vm-build --vm=u24
 code-format format the source to the project standards, or check that it is
 
 Running the tests is by far the most common thing to do, so its options are on the main parser as well as on the test command and
@@ -102,8 +103,6 @@ def _parser_test(parent):
 
     # Vm
     result.add_argument("--vm-arch", metavar="ARCH", help="vm architecture (defaults to the host architecture)")
-    result.add_argument("--vm-build", action="store_true", help="build the vm containers and exit")
-    result.add_argument("--vm-force", action="store_true", help="force a rebuild of the vm containers")
     result.add_argument("--vm-out", action="store_true", help="show the output of the tests")
     result.add_argument("--vm-max", type=int, default=1, metavar="COUNT", help="max vms to run in parallel")
     result.add_argument("--retry", type=int, default=0, metavar="COUNT", help="retry a failed test this many times")
@@ -139,6 +138,21 @@ def _parser_unit(command, parent):
 
 
 ####################################################################################################################################
+def _parser_vm_build(command, parent):
+    """The vm-build command, which builds the containers the tests run in.
+
+    A vm is named rather than defaulted since building every vm takes a long time, so it must be asked for."""
+
+    result = command.add_parser(
+        "vm-build", parents=[parent], help="build the vm containers", description="Build the containers the tests run in."
+    )
+
+    result.add_argument("--vm", default="none", metavar="VM", help="vm to build, or all of them")
+    result.add_argument("--vm-arch", metavar="ARCH", help="vm architecture (defaults to the host architecture)")
+    result.add_argument("--no-cache", dest="cache", action="store_false", help="build the containers without the cache")
+
+
+####################################################################################################################################
 def cli_parse(arg_list, version):
     """Build the parser and parse the command line."""
 
@@ -157,6 +171,10 @@ def cli_parse(arg_list, version):
     command.add_parser("test", parents=[test], help="run the tests (default)", description="Run the tests.")
 
     _parser_unit(command, test_path)
+
+    # Vm build
+    # ---------------------------------------------------------------------------------------------------------------------------
+    _parser_vm_build(command, common)
 
     # Code format
     # ---------------------------------------------------------------------------------------------------------------------------

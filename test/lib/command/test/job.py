@@ -11,8 +11,8 @@ import math
 import os
 import time
 
-from command.test.container import container_remove
 from command.test.define import TEST_LANG_C, TEST_TYPE_PERFORMANCE
+from command.vm.build import container_remove
 from common.exec import Exec, exec_one
 from common.log import *
 from common.storage import path_create

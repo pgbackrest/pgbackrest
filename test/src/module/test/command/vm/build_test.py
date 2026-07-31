@@ -1,4 +1,4 @@
-"""Test Container Build.
+"""Test Vm Build Command.
 
 The script for one vm is compared in full, since its hash is the cache key and any change to it rebuilds every image built from it.
 The user and group are whoever runs the tests so the expected script names them with tokens, and the certificate and key data is
@@ -15,7 +15,7 @@ from unittest.mock import patch
 
 from harness.test import *
 
-from command.test.container import *
+from command.vm.build import *
 from common.error import *
 from common.log import *
 from common.storage import file_read, file_write
@@ -143,7 +143,7 @@ def _collapse(script):
 
 ####################################################################################################################################
 def _repo_write(path):
-    """Write the part of the repository the container build reads."""
+    """Write the part of the repository the vm build reads."""
 
     file_write(os.path.join(path, "test/container.yaml"), "all: '1'\n%s: '2'\n%s-%s: '3'\n" % (VM_U24, VM_U24, VM_ARCH_X86_64))
     file_write(
@@ -154,13 +154,13 @@ def _repo_write(path):
 
 ####################################################################################################################################
 class _Config:
-    """The options the container build reads."""
+    """The options the vm build reads."""
 
-    def __init__(self, path_repo, vm, vm_arch=VM_ARCH_X86_64, vm_force=False, log_level=INFO):
+    def __init__(self, path_repo, vm, vm_arch=VM_ARCH_X86_64, cache=True, log_level=INFO):
         self.repo_path = path_repo
         self.vm = vm
         self.vm_arch = vm_arch
-        self.vm_force = vm_force
+        self.cache = cache
         self.log_level = log_level
 
 
@@ -176,9 +176,6 @@ class _Docker:
     ################################################################################################################################
     def one(self, command, result_expect=0, show_output=False):
         self.command_list.append(command)
-
-        if command.startswith("docker images"):
-            return "%s:%s-base-%s\nubuntu:24.04\n" % (container_repo(), VM_U24, VM_ARCH_X86_64)
 
         if command.startswith("docker ps"):
             return "test-0\ntest-build\nunrelated\n"
@@ -300,7 +297,7 @@ def test_container_script_test_vm():
         # RHEL puts the certificate authority elsewhere, needs sudo configured differently, and starts ssh differently. The
         # architecture is the host architecture rather than the one being built for, so it is set here to get the same script
         # whichever machine the tests are run on.
-        with patch("command.test.container.host_arch", return_value=VM_ARCH_X86_64):
+        with patch("command.vm.build.host_arch", return_value=VM_ARCH_X86_64):
             script = script_test(VM_RH9, path)
 
         assert_true("/etc/pki/ca-trust/source/anchors/pgbackrest-test-ca.crt" in script)
@@ -312,7 +309,7 @@ def test_container_script_test_vm():
         # The language setup only gets in the way on aarch64
         assert_true("rm /etc/profile.d/lang.sh" not in script)
 
-        with patch("command.test.container.host_arch", return_value=VM_ARCH_AARCH64):
+        with patch("command.vm.build.host_arch", return_value=VM_ARCH_AARCH64):
             assert_true("rm /etc/profile.d/lang.sh" in script_test(VM_RH9, path))
 
         # Alpine creates the group differently, needs a password for the test user, and starts ssh without a service
@@ -365,7 +362,7 @@ def test_container_revision():
 
 
 ####################################################################################################################################
-def test_container_build():
+def test_vm_build():
     """A base image is pulled from the cache when it is there and built and pushed when it is not."""
 
     with tempfile.TemporaryDirectory() as path:
@@ -378,9 +375,9 @@ def test_container_build():
         # specific one so it is the one in the cache tag.
         docker = _Docker(status=0)
 
-        with patch("command.test.container.exec_one", docker.one):
-            with patch("command.test.container.exec_status", docker.status_get):
-                container_build(_Config(path, VM_U24))
+        with patch("command.vm.build.exec_one", docker.one):
+            with patch("command.vm.build.exec_status", docker.status_get):
+                cmd_vm_build(_Config(path, VM_U24))
 
         assert_equal(len(docker.match("^docker pull .*-base-.*-3-")), 1)
         assert_equal(docker.match("^docker tag"), ["docker tag %s-3-%s %s" % (image_base, _hash(docker), image_base)])
@@ -394,10 +391,10 @@ def test_container_build():
         # the pgbackrest one.
         docker = _Docker(status=1, status_push=0)
 
-        with patch("command.test.container.exec_one", docker.one):
-            with patch("command.test.container.exec_status", docker.status_get):
+        with patch("command.vm.build.exec_one", docker.one):
+            with patch("command.vm.build.exec_status", docker.status_get):
                 with patch.dict(os.environ, {"GITHUB_REPOSITORY_OWNER": "Someone"}):
-                    container_build(_Config(path, VM_U24, log_level=DETAIL))
+                    cmd_vm_build(_Config(path, VM_U24, log_level=DETAIL))
 
         assert_equal(len(docker.match("^docker pull %s:" % container_repo())), 1)
         assert_equal(len(docker.match("^docker pull %s:" % container_repo("someone"))), 1)
@@ -407,33 +404,42 @@ def test_container_build():
         # A push that fails is not reported, since write access is not available everywhere
         docker = _Docker(status=1)
 
-        with patch("command.test.container.exec_one", docker.one):
-            with patch("command.test.container.exec_status", docker.status_get):
-                container_build(_Config(path, VM_D12))
+        with patch("command.vm.build.exec_one", docker.one):
+            with patch("command.vm.build.exec_status", docker.status_get):
+                cmd_vm_build(_Config(path, VM_D12))
 
         assert_equal(len(docker.match("^docker push %s:" % container_repo())), 1)
 
-        # Force removes what was built before and builds without the cache, both the images and the files they were built from
+        # Building without the cache neither pulls nor lets docker reuse a layer. The images built before are left in place, so
+        # they are still there to go back to.
         docker = _Docker(status=1)
 
-        with patch("command.test.container.exec_one", docker.one):
-            with patch("command.test.container.exec_status", docker.status_get):
-                container_build(_Config(path, VM_U24, vm_force=True))
+        with patch("command.vm.build.exec_one", docker.one):
+            with patch("command.vm.build.exec_status", docker.status_get):
+                cmd_vm_build(_Config(path, VM_U24, cache=False))
 
-        assert_equal(docker.match("^rm -f"), ["rm -f %s/test/result/docker/%s-*" % (path, VM_U24)])
-        assert_equal(docker.match("^docker rmi"), ["docker rmi -f %s" % image_base])
         assert_equal(len(docker.match("^docker pull")), 0)
         assert_equal(len(docker.match("--no-cache")), 2)
 
-        # Every vm is built when all of them are asked for, and force then removes every file and image
+        # Every vm is built when all of them are asked for
         docker = _Docker(status=1)
 
-        with patch("command.test.container.exec_one", docker.one):
-            with patch("command.test.container.exec_status", docker.status_get):
-                container_build(_Config(path, VM_ALL, vm_force=True))
+        with patch("command.vm.build.exec_one", docker.one):
+            with patch("command.vm.build.exec_status", docker.status_get):
+                cmd_vm_build(_Config(path, VM_ALL))
 
-        assert_equal(docker.match("^rm -f"), ["rm -f %s/test/result/docker/*" % path])
         assert_equal(len(docker.match("^docker build")), len(VM_LIST) * 2)
+
+        # A vm must be named since there is no container to build for the host and a typo is not a vm
+        with assert_raises(ToolError) as error:
+            cmd_vm_build(_Config(path, VM_NONE))
+
+        assert_equal(str(error.exception), "select a vm to build, or all of them")
+
+        with assert_raises(ToolError) as error:
+            cmd_vm_build(_Config(path, "bogus"))
+
+        assert_equal(str(error.exception), "no definition for vm 'bogus'")
 
 
 ####################################################################################################################################
@@ -445,12 +451,12 @@ def _hash(docker):
 
 ####################################################################################################################################
 def test_container_remove():
-    """Containers are removed by name and an image that does not match is left alone."""
+    """Containers are removed by name and one that does not match is left alone."""
 
     docker = _Docker()
 
-    with patch("command.test.container.exec_one", docker.one):
-        with patch("command.test.container.exec_status", docker.status_get):
+    with patch("command.vm.build.exec_one", docker.one):
+        with patch("command.vm.build.exec_status", docker.status_get):
             container_remove("^test-([0-9]+|build)$")
 
     assert_equal(docker.match("^docker rm"), ["docker rm -f test-0", "docker rm -f test-build"])

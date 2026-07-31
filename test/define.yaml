@@ -1277,10 +1277,10 @@ tool:
       - test/command/test/list
 
   # --------------------------------------------------------------------------------------------------------------------------------
-  - name: test/command/test/container
+  - name: test/command/vm/build
 
     coverage:
-      - test/command/test/container
+      - test/command/vm/build
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: test/command/test/job

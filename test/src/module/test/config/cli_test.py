@@ -65,6 +65,7 @@ def test_cli_unit_default():
 
     assert_equal(status, 0)
     assert_in("code-format", output)
+    assert_in("vm-build", output)
     assert_not_in("unit", output)
 
 
@@ -165,6 +166,29 @@ def test_cli_test():
     assert_equal(config.command, "test")
     assert_equal(config.vm, "u24")
     assert_equal(config.module, ["common/error"])
+
+
+####################################################################################################################################
+def test_cli_vm_build():
+    """The vm-build command builds the containers a test run needs."""
+
+    config = cli_parse(["vm-build", "--vm=u24"], VERSION)
+
+    assert_equal(config.command, "vm-build")
+    assert_equal(config.vm, "u24")
+
+    # The cache is used unless it is turned off, which is what the option names since docker names it that way
+    assert_true(config.cache)
+    assert_is_none(config.vm_arch)
+
+    config = cli_parse(["vm-build", "--vm=all", "--vm-arch=aarch64", "--no-cache"], VERSION)
+
+    assert_equal(config.vm, "all")
+    assert_equal(config.vm_arch, "aarch64")
+    assert_false(config.cache)
+
+    # A vm is named rather than defaulted, since building every vm takes a long time
+    assert_equal(cli_parse(["vm-build"], VERSION).vm, "none")
 
 
 ####################################################################################################################################

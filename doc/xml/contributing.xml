@@ -385,7 +385,7 @@ pgbackrest/doc/doc.py --help
                     <title>Build a VM</title>
 
                     <execute output="y">
-                        <exe-cmd>pgbackrest/test/test.py --vm-build --vm=u24</exe-cmd>
+                        <exe-cmd>pgbackrest/test/test.py vm-build --vm=u24</exe-cmd>
                         <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                     </execute>
                 </execute-list>

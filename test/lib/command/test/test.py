@@ -13,10 +13,10 @@ import time
 
 from command.coverage.coverage import cmd_coverage
 from command.lint.lint import cmd_lint
-from command.test.container import container_build, container_remove, container_repo
 from command.test.define import test_def_parse
 from command.test.job import TestJob
 from command.test.list import test_list_get
+from command.vm.build import container_remove, container_repo
 from common.error import ToolError, check
 from common.exec import exec_one
 from common.log import *
@@ -243,14 +243,12 @@ def cmd_test(config):
 
     # Check the options that the parser cannot
     check(len(config.test) <= 1, "only one --test can be provided")
-    check(not config.vm_build or config.vm != VM_NONE, "select a vm to build, or all of them")
 
-    # Every vm can be built at once but a test runs on one vm, since it needs the binary and the build for the vm it runs on
-    check(config.vm != VM_ALL or config.vm_build, "select a single vm to test on")
+    # A test runs on one vm, since it needs the binary and the build for the vm it runs on
+    check(config.vm != VM_ALL, "select a single vm to test on")
 
     # Check the vm now so a typo is reported before anything is generated or built
-    if config.vm != VM_ALL:
-        vm_get(config.vm)
+    vm_get(config.vm)
 
     # The test path holds everything the tests generate, which would be a mess to sort out from the repository
     check(
@@ -276,12 +274,6 @@ def cmd_test(config):
 
         if config.clean_only:
             return 0
-
-    # Build the containers
-    if config.vm_build:
-        container_build(config)
-
-        return 0
 
     # Load the test definitions
     module_list = test_def_parse(path_repo)

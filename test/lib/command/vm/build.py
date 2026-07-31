@@ -1,11 +1,14 @@
-"""Container Build.
+"""Vm Build Command.
 
 Generates a Dockerfile for each vm and builds it. Every vm has a base image with the packages the tests need and a test image that
 adds the test user, ssh, and the certificate authority, so a change to the test setup does not rebuild the packages.
 
 Base images are cached in a container registry keyed by a hash of the generated Dockerfile combined with the manual revision in
 test/container.yaml. The revision forces a rebuild when the Dockerfile is unchanged but the upstream packages have changed, e.g. a
-new PostgreSQL beta."""
+new PostgreSQL beta.
+
+The containers are defined here so the registry they are tagged in and removing them by name are here as well, which is what a test
+run needs to know about them."""
 
 ####################################################################################################################################
 import hashlib
@@ -526,7 +529,7 @@ def revision_check(revision):
 
 
 ####################################################################################################################################
-def _container_write(path_repo, name, arch, title, image_parent, image, script, revision_map, force, show_output):
+def _container_write(path_repo, name, arch, title, image_parent, image, script, revision_map, cache, show_output):
     """Write the Dockerfile for an image and build it, using the cache when the image is already there."""
 
     path_temp = os.path.join(path_repo, "test/result/docker")
@@ -549,7 +552,7 @@ def _container_write(path_repo, name, arch, title, image_parent, image, script, 
 
         # Pull from the pgbackrest cache first, then the fork's own cache. A failed pull (image missing or no read access) falls
         # through to the next cache or a local build.
-        if not force:
+        if cache:
             for pull_tag in [cache_tag] + ([] if fork_cache_tag is None else [fork_cache_tag]):
                 log(INFO, "Checking cache %s ..." % pull_tag)
 
@@ -569,7 +572,7 @@ def _container_write(path_repo, name, arch, title, image_parent, image, script, 
     file_write(os.path.join(path_temp, image), script.strip() + "\n")
     exec_one(
         "docker build --platform linux/%s%s -f %s -t %s %s"
-        % (arch, " --no-cache" if force else "", os.path.join(path_temp, image), tag, os.path.join(path_repo, "test")),
+        % (arch, "" if cache else " --no-cache", os.path.join(path_temp, image), tag, os.path.join(path_repo, "test")),
         show_output=show_output,
     )
 
@@ -596,19 +599,7 @@ def container_remove(expression):
 
 
 ####################################################################################################################################
-def _image_remove(expression):
-    """Remove the images whose name matches an expression."""
-
-    regexp = re.compile(expression)
-
-    for image in sorted(exec_one('docker images --format "{{.Repository}}:{{.Tag}}"').strip().split("\n")):
-        if regexp.search(image):
-            log(INFO, "Removing %s image..." % image)
-            exec_one("docker rmi -f %s" % image)
-
-
-####################################################################################################################################
-def container_build(config):
+def cmd_vm_build(config):
     """Build the containers for one vm or for all of them."""
 
     path_repo = config.repo_path
@@ -616,19 +607,19 @@ def container_build(config):
     arch = config.vm_arch if config.vm_arch is not None else host_arch()
     show_output = config.log_level >= DETAIL
 
+    # There is no container to build when the tests run on the host. Check the vm now so a typo is reported before anything is
+    # written or built.
+    check(config.vm != VM_NONE, "select a vm to build, or all of them")
+
+    if config.vm != VM_ALL:
+        vm_get(config.vm)
+
     path_create(path_temp, mode=0o770)
 
     with open(os.path.join(path_repo, "test/container.yaml"), "r") as file:
         revision_map = yaml.safe_load(file)
 
     revision_check(revision_map)
-
-    # Remove old images on force
-    if config.vm_force:
-        expression = "^" + container_repo() + ("" if config.vm == VM_ALL else ":%s-" % config.vm)
-
-        exec_one("rm -f %s/%s" % (path_temp, "*" if config.vm == VM_ALL else "%s-*" % config.vm))
-        _image_remove(expression + ".*")
 
     for name in VM_LIST if config.vm == VM_ALL else [config.vm]:
         # Base image
@@ -643,7 +634,7 @@ def container_build(config):
             image_base,
             script_base(name, arch),
             revision_map,
-            config.vm_force,
+            config.cache,
             show_output,
         )
 
@@ -657,7 +648,7 @@ def container_build(config):
             "%s-test-%s" % (name, arch),
             script_test(name, path_repo),
             revision_map,
-            config.vm_force,
+            config.cache,
             show_output,
         )
 

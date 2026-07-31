@@ -31,6 +31,7 @@ for lib in ("build", "doc", "test"):
 from command.code.format import cmd_code_format  # noqa: E402
 from command.test.test import cmd_test  # noqa: E402
 from command.test.unit import cmd_unit  # noqa: E402
+from command.vm.build import cmd_vm_build  # noqa: E402
 from common.error import EXIT_ERROR, ToolError  # noqa: E402
 from common.log import *  # noqa: E402
 from config.config import cfg_load  # noqa: E402
@@ -46,6 +47,8 @@ def command_run(config):
 
     if config.command == "unit":
         cmd_unit(config)
+    elif config.command == "vm-build":
+        cmd_vm_build(config)
     else:
         cmd_code_format(config)
 

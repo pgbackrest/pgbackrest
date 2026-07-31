@@ -67,7 +67,7 @@ jobs:
         run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
 
       - name: Build VM
-        run: ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm-build --vm=u22 --vm-arch=${{matrix.arch}}
+        run: ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py vm-build --vm=u22 --vm-arch=${{matrix.arch}}
 
       # Compiling under emulation is slow enough that a warm ccache saves a lot of time
       - name: Restore ccache

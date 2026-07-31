@@ -84,8 +84,6 @@ class Config:
         self.test_path = test_path
         self.vm = VM_NONE
         self.vm_arch = None
-        self.vm_build = False
-        self.vm_force = False
         self.vm_out = False
         self.vm_max = 1
         self.module = []
@@ -194,14 +192,13 @@ def _cmd_test(config, exec_result=None, job_fail=None, job_start=True, job_poll=
     try:
         with patch("command.test.test.exec_one", exec_fake), patch("command.test.test.TestJob", _Job):
             with patch("command.test.test.cmd_coverage", return_value=coverage_status) as coverage:
-                with patch("command.test.test.cmd_lint") as lint, patch("command.test.test.container_build") as container_build:
+                with patch("command.test.test.cmd_lint") as lint:
                     with patch("command.test.test.container_remove") as container_remove, redirect_stdout(output):
                         try:
                             status = cmd_test(config)
                         except ToolError as error:
                             status = str(error)
 
-        _cmd_test.container_build = container_build
         _cmd_test.container_remove = container_remove
         _cmd_test.coverage = coverage
         _cmd_test.lint = lint
@@ -312,7 +309,6 @@ def test_test_option_error():
 
         assert_equal(error(test=[1, 2]), "only one --test can be provided")
         assert_equal(error(module=["common"], test=[1]), "--test requires a single --module naming a test module")
-        assert_equal(error(vm_build=True), "select a vm to build, or all of them")
         assert_equal(error(vm=VM_ALL), "select a single vm to test on")
         assert_equal(error(vm="bogus"), "no definition for vm 'bogus'")
 
@@ -377,27 +373,12 @@ def test_test_build():
 
 ####################################################################################################################################
 def test_test_container():
-    """The containers are built when they were asked for and cleaned up before a run."""
+    """The containers a run left behind are cleaned up before the next one."""
 
     with tempfile.TemporaryDirectory() as path:
         path_repo = _repo_create(path)
         path_test = os.path.join(path, "test")
 
-        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, vm=VM_U24, vm_build=True))
-
-        assert_equal(status, 0)
-        assert_equal(_cmd_test.container_build.call_count, 1)
-
-        # Nothing else is done since the containers are all that was asked for
-        assert_equal(command_list, [])
-
-        # Every vm can be built at once, which is the only thing that can be done for all of them
-        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, vm=VM_ALL, vm_build=True))
-
-        assert_equal(status, 0)
-        assert_equal(_cmd_test.container_build.call_count, 1)
-
-        # A run on a vm removes whatever the last run left behind
         status, command_list, started, output = _cmd_test(Config(path_repo, path_test, vm=VM_U24, module=["common"]))
 
         assert_equal(_cmd_test.container_remove.call_args[0][0], "test-([0-9]+|build)")
