@@ -50,10 +50,9 @@ _PATH_SITE = "site"
 # CNAME is what points the domain at the site, so removing it takes the site off its domain until someone puts it back.
 _SITE_KEEP_LIST = ("CNAME",)
 
-# The platforms the documentation is built for. The user guide for each is kept under a name of its own, since a reader picks the one
-# for the system they are on.
-_VM_RHEL = "rh9"
-_VM_DEBIAN = "u24"
+# The distributions the documentation is built for, named for the os type the documentation generates commands for. The user guide
+# for each is kept under a name of its own, since a reader picks the one for the system they are on.
+_DISTRO_LIST = ("debian", "rhel")
 
 _FILE_USER_GUIDE = "user-guide.html"
 _FILE_USER_GUIDE_RHEL = "user-guide-rhel.html"
@@ -78,7 +77,9 @@ def cfg_load(arg_list, path_repo):
     parser.add_argument("--dist", action="store_true", help="build the documentation that ships in the distribution")
     parser.add_argument("--no-gen", dest="gen", action="store_false", help="do not regenerate the git history and coverage summary")
     parser.add_argument("--no-exe", dest="exe", action="store_false", help="do not run the commands (only applies to --dist)")
-    parser.add_argument("--vm", metavar="VM", help="build the documentation for one platform rather than for every one")
+    parser.add_argument(
+        "--distro", choices=_DISTRO_LIST, help="build the documentation for one distribution rather than for every one"
+    )
     parser.add_argument("--quiet", action="store_true", help="set the log level to error")
     parser.add_argument(
         "--log-level", default="info", choices=sorted(LEVEL_NAME.values()), metavar="LEVEL", help="console log level"
@@ -195,18 +196,18 @@ def cmd_build(config):
     # Remove the hosts of any previous build so the addresses they are given are the same every time
     host_remove()
 
-    if config.vm is None or config.vm == _VM_RHEL:
+    if config.distro is None or config.distro == "rhel":
         log(INFO, "generate RHEL documentation")
 
         doc_build(config, ["--deploy", "--key-var=os-type=rhel", "--out=html"], show_output=True)
 
-    if config.vm is None or config.vm == _VM_DEBIAN:
+    if config.distro is None or config.distro == "debian":
         log(INFO, "generate Debian/Ubuntu documentation")
 
         doc_build(config, ["--deploy", "--out=man", "--out=html", "--out=markdown"], show_output=True)
 
     # A copy of everything for review, which is the documentation as the website will have it
-    if config.vm is None:
+    if config.distro is None:
         log(INFO, "generate full documentation for review")
 
         doc_build(

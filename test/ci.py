@@ -47,6 +47,7 @@ def cfg_load(arg_list, path_repo):
     parser.add_argument("target", choices=("doc", "test"), help="run the tests or build the documentation")
     parser.add_argument("--vm", default=VM_NONE, metavar="VM", help="vm to run on")
     parser.add_argument("--vm-arch", metavar="ARCH", help="vm architecture (defaults to the host architecture)")
+    parser.add_argument("--distro", metavar="DISTRO", help="distribution to build the documentation for")
     parser.add_argument("--param", action="append", default=[], metavar="OPTION", help="option to pass to the test harness")
     parser.add_argument("--sudo", action="store_true", help="leave passwordless sudo in place for the run")
     parser.add_argument("--no-tempfs", dest="tempfs", action="store_false", help="do not mount a tmpfs for the test path")
@@ -94,9 +95,11 @@ def doc_build(config):
         ["ln -s %s %s/%s" % (config.repo_path, os.environ["HOME"], PROJECT_EXE)],
     )
 
+    distro = "" if config.distro is None else " --distro=%s" % config.distro
+
     step(
         "release documentation",
-        ["%s/doc/release.py --build --no-gen --vm=%s" % (config.repo_path, config.vm)],
+        ["%s/doc/release.py --build --no-gen%s" % (config.repo_path, distro)],
         show_output=True,
     )
 
