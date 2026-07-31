@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """pgBackRest Test Harness.
 
-Builds and runs the tests and reports coverage. A run with no command selects the tests, manages the containers, and calls this
-harness again with the unit command for each test, which is why a run works on the repository it is part of while every command is
-told where the repository copy is.
+Builds and runs the tests and reports coverage. The test command, which is the default so it never has to be typed, selects the
+tests, manages the containers, and calls this harness again with the unit command for each test, which is why a test run works on
+the repository it is part of while every other command is told where the repository copy is.
 
-Exit status: 0 = success, 1 = the coverage command found modules missing coverage, greater = error. All output, including errors,
-goes to stdout since a test that writes anything to stderr has failed."""
+Exit status: 0 = success, 1 = a run found modules missing coverage, greater = error. All output, including errors, goes to stdout
+since a test that writes anything to stderr has failed."""
 
 ####################################################################################################################################
 import os
@@ -29,8 +29,6 @@ for lib in ("build", "doc", "test"):
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), lib, "lib"))
 
 from command.code.format import cmd_code_format  # noqa: E402
-from command.coverage.coverage import cmd_coverage  # noqa: E402
-from command.lint.lint import cmd_lint  # noqa: E402
 from command.test.test import cmd_test  # noqa: E402
 from command.test.unit import cmd_unit  # noqa: E402
 from common.error import EXIT_ERROR, ToolError  # noqa: E402
@@ -43,18 +41,13 @@ from config.project import project_version  # noqa: E402
 def command_run(config):
     """Run the requested command."""
 
-    # Running the tests is what a developer does, so it is what happens when no command is given
-    if config.command is None:
+    if config.command == "test":
         return cmd_test(config)
 
     if config.command == "unit":
         cmd_unit(config)
-    elif config.command == "coverage":
-        return cmd_coverage(config)
-    elif config.command == "code-format":
-        cmd_code_format(config)
     else:
-        cmd_lint(config.repo_path)
+        cmd_code_format(config)
 
     return 0
 
@@ -77,16 +70,13 @@ def main():
 
         return EXIT_ERROR
 
-    # A run with no command runs the tests, which is what it is called in the log
-    command = "test" if config.command is None else config.command
-
-    log(INFO, "%s command begin %s: %s" % (command, project_version(path_harness), " ".join(sys.argv[1:])))
+    log(INFO, "%s command begin %s: %s" % (config.command, project_version(path_harness), " ".join(sys.argv[1:])))
 
     try:
         result = command_run(config)
     except ToolError as error:
         log(ERROR, error)
-        log(INFO, "%s command end: aborted with exception" % command)
+        log(INFO, "%s command end: aborted with exception" % config.command)
 
         return error.status
     except Exception:
@@ -99,7 +89,7 @@ def main():
     # that must be the same every time
     elapsed = " (%ums)" % int((time.time() - time_begin) * 1000) if config.log_timestamp else ""
 
-    log(INFO, "%s command end: completed successfully%s" % (command, elapsed))
+    log(INFO, "%s command end: completed successfully%s" % (config.command, elapsed))
 
     return result
 

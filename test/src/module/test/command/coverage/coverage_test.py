@@ -48,12 +48,11 @@ SOURCE_PY = "def func(a):\n    if a:\n        return 1\n\n    return 0\n"
 
 ####################################################################################################################################
 class Config:
-    """What the coverage command reads from the command line."""
+    """What the coverage command reads from the configuration of the run it is part of."""
 
-    def __init__(self, repo_path, test_path, module, vm="none", coverage_summary=False):
+    def __init__(self, repo_path, test_path, vm="none", coverage_summary=False):
         self.repo_path = repo_path
         self.test_path = test_path
-        self.module = module
         self.vm = vm
         self.coverage_summary = coverage_summary
 
@@ -352,7 +351,7 @@ def _cmd_coverage(path, module_list, raw_map, vm="none", coverage_summary=False,
 
     try:
         with redirect_stdout(output):
-            result = cmd_coverage(Config(path_repo, path, module_list, vm, coverage_summary))
+            result = cmd_coverage(Config(path_repo, path, vm, coverage_summary), module_list)
     finally:
         log_init(INFO, True)
 

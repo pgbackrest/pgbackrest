@@ -3,21 +3,22 @@
 Selects the tests to run, generates the code they need, lints the source, builds the pgbackrest binary when a test uses it, and runs
 the tests. Each test runs in a separate process (and its own container when the vm is not none) so several can run at once.
 
-This is what a developer runs, which is why it needs no command. The unit and coverage commands are the steps it drives, and
-they are commands of their own because a test runs inside a container where only the repository copy is available."""
+This is what a developer runs, which is why it needs no command. The unit command is the one step it drives that is a command of
+its own, since a test runs inside a container where only the repository copy is available."""
 
 ####################################################################################################################################
 import os
 import re
 import time
 
+from command.coverage.coverage import cmd_coverage
 from command.lint.lint import cmd_lint
 from command.test.container import container_build, container_remove, container_repo
 from command.test.define import test_def_parse
 from command.test.job import TestJob
 from command.test.list import test_list_get
 from common.error import ToolError, check
-from common.exec import Exec, exec_one
+from common.exec import exec_one
 from common.log import *
 from common.storage import file_read, file_write, file_write_differs, path_create
 from common.user import user_name
@@ -204,24 +205,8 @@ def _run(config, test_list, image):
 def _coverage(config, test_list):
     """Merge the coverage the tests produced and write the report, reporting whether any module is missing coverage."""
 
-    command = Exec(
-        "python3 %s/test/test.py coverage --log-level=warn --vm=%s --repo-path=%s --test-path=%s%s %s"
-        % (
-            config.repo_path,
-            config.vm,
-            config.repo_path,
-            config.test_path,
-            " --coverage-summary" if config.coverage_summary else "",
-            " ".join(run.module.name for run in test_list),
-        ),
-        show_output=True,
-    )
-    command.begin()
-    status = command.end()
-
-    # The coverage command reports incomplete coverage with a status of one, which is not an error here since the tests all passed
-    if status > 1:
-        raise ToolError("coverage command failed", status)
+    # Incomplete coverage is reported with a status of one, which is not an error here since the tests all passed
+    status = cmd_coverage(config, [run.module.name for run in test_list])
 
     if status == 0:
         log(INFO, "tested modules have full coverage")
@@ -370,6 +355,9 @@ def cmd_test(config):
     # Lint the repository copy, which is what the tests are built and run from. This runs once here rather than in the unit command
     # so a run does not lint the same source again for every test.
     cmd_lint(path_repo_copy)
+
+    if config.lint_only:
+        return 0
 
     # Determine which tests to run and what they need built
     test_list = []

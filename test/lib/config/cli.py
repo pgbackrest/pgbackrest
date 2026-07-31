@@ -1,14 +1,19 @@
 """Command Line Interface.
 
-Running the tests is what a developer does so it needs no command, e.g. test.py --vm=u24 --module=common. The commands are the
-steps that run underneath it and the ones that are not about running tests at all:
+The commands the harness runs, the first of which is the default so a test run never has to name one:
 
+test        run the tests, e.g. test.py --vm=u24 --module=common
 unit        build the unit test for one test module and run it, run once per test by the test run above
-coverage    merge the coverage the unit tests produced and write the report
-lint        run the source linter on its own
 code-format format the source to the project standards, or check that it is
 
-A command parses into the same configuration as the test run, so a command option always wins over one given before the command."""
+Running the tests is by far the most common thing to do, so its options are on the main parser as well as on the test command and
+the help shows them without being asked for the command.
+
+The unit command is not in the command list the help shows since a test run is what calls it, in a container where only the
+repository copy is available, rather than something to run by hand.
+
+A command parses into the same configuration as the test run, so an option belongs after the command, which replaces whatever was
+given before it."""
 
 ####################################################################################################################################
 import argparse
@@ -56,10 +61,13 @@ def _parser_test_path(parent):
 
 
 ####################################################################################################################################
-def _parser_test(result):
+def _parser_test(parent):
     """Options for running the tests, which select the tests, build what they need, and run them.
 
-    These are on the main parser rather than on a command of their own so the tests can be run without naming a command."""
+    These are on the main parser as well as on the test command, since running the tests is what a command line with no command
+    does and it is by far the most common one, so the help must show them without being asked for the command."""
+
+    result = argparse.ArgumentParser(add_help=False, parents=[parent])
 
     # Test selection
     result.add_argument("--module", action="append", default=[], metavar="MODULE", help="module or path of modules to test")
@@ -74,6 +82,7 @@ def _parser_test(result):
     # What to build and how
     result.add_argument("--build-only", action="store_true", help="build the binary but do not run tests")
     result.add_argument("--gen-only", action="store_true", help="only generate code")
+    result.add_argument("--lint-only", action="store_true", help="only lint the source")
     result.add_argument("--no-back-trace", dest="back_trace", action="store_false", help="do not build with back trace")
     result.add_argument("--no-valgrind", dest="valgrind", action="store_false", help="do not run the C tests with valgrind")
     result.add_argument("--no-coverage", dest="coverage", action="store_false", help="do not collect coverage")
@@ -99,14 +108,17 @@ def _parser_test(result):
     result.add_argument("--vm-max", type=int, default=1, metavar="COUNT", help="max vms to run in parallel")
     result.add_argument("--retry", type=int, default=0, metavar="COUNT", help="retry a failed test this many times")
 
+    return result
+
 
 ####################################################################################################################################
 def _parser_unit(command, parent):
-    """The unit command, which builds one test module and runs it when it is python."""
+    """The unit command, which builds one test module and runs it when it is python.
 
-    result = command.add_parser(
-        "unit", parents=[parent], help="build the unit test for a test module", description="Build a unit test."
-    )
+    It is left out of the command list since a test run is what calls it, so no help is given for it here. Leaving out the help is
+    what keeps a command out of the list."""
+
+    result = command.add_parser("unit", parents=[parent], description="Build a unit test.")
 
     result.add_argument("module", metavar="module", help="test module to build")
     result.add_argument("--vm-id", type=int, default=0, metavar="ID", help="0-based id of the vm the test runs on")
@@ -133,30 +145,18 @@ def cli_parse(arg_list, version):
     common = _parser_common()
     repo = _parser_repo(common)
     test_path = _parser_test_path(repo)
+    test = _parser_test(_parser_test_path(common))
 
-    parser = argparse.ArgumentParser(prog="test.py", description="pgBackRest Test Harness", parents=[_parser_test_path(common)])
+    parser = argparse.ArgumentParser(prog="test.py", description="pgBackRest Test Harness", parents=[test])
     parser.add_argument("--version", action="version", version="pgBackRest %s Test Harness" % version)
-
-    _parser_test(parser)
 
     command = parser.add_subparsers(dest="command", metavar="command")
 
+    # Test
+    # ---------------------------------------------------------------------------------------------------------------------------
+    command.add_parser("test", parents=[test], help="run the tests (default)", description="Run the tests.")
+
     _parser_unit(command, test_path)
-
-    # Coverage
-    # ---------------------------------------------------------------------------------------------------------------------------
-    coverage = command.add_parser(
-        "coverage",
-        parents=[test_path],
-        help="merge coverage and write the report",
-        description="Merge the coverage produced by the unit tests and write the report.",
-    )
-    coverage.add_argument("module", nargs="+", metavar="module", help="test modules that were run")
-    coverage.add_argument("--coverage-summary", action="store_true", help="write the coverage summary for the documentation")
-
-    # Lint
-    # ---------------------------------------------------------------------------------------------------------------------------
-    command.add_parser("lint", parents=[repo], help="lint the source", description="Run the source linter.")
 
     # Code format
     # ---------------------------------------------------------------------------------------------------------------------------
@@ -168,4 +168,10 @@ def cli_parse(arg_list, version):
     )
     code_format.add_argument("--check", action="store_true", help="check the formatting rather than changing it")
 
-    return parser.parse_args(arg_list)
+    result = parser.parse_args(arg_list)
+
+    # Fill in the command a command line with no command was asking for, so nothing downstream has to know it was left out
+    if result.command is None:
+        result.command = "test"
+
+    return result

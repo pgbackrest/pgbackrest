@@ -283,8 +283,8 @@ def _coverage_list_build(module_def_list, module_name_list):
 
 
 ####################################################################################################################################
-def cmd_coverage(config):
-    """Merge the coverage from the tests that ran and write the report.
+def cmd_coverage(config, module_list):
+    """Merge the coverage the test modules given produced and write the report.
 
     Returns 1 when a module is missing coverage, else 0."""
 
@@ -292,7 +292,7 @@ def cmd_coverage(config):
     from command.coverage.report import report_render, summary_render
 
     module_def_list = test_def_parse(config.repo_path)
-    coverage_module_list = _coverage_list_build(module_def_list, config.module)
+    coverage_module_list = _coverage_list_build(module_def_list, module_list)
 
     # Combine the coverage written by each test that ran. Both languages report into the same model so a run that covered C and
     # python produces a single report.

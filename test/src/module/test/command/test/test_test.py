@@ -99,6 +99,7 @@ class Config:
         self.dry_run = False
         self.build_only = False
         self.gen_only = False
+        self.lint_only = False
         self.clean = False
         self.clean_only = False
         self.cleanup = True
@@ -155,25 +156,6 @@ class _Job:
 
 
 ####################################################################################################################################
-class _Exec:
-    """Stand in for the coverage command, which reports whether every module was covered."""
-
-    status = 0
-    command = None
-
-    def __init__(self, command, show_output=False):
-        _Exec.command = command
-
-    ################################################################################################################################
-    def begin(self):
-        pass
-
-    ################################################################################################################################
-    def end(self, wait=True):
-        return _Exec.status
-
-
-####################################################################################################################################
 def _repo_create(path, define=DEFINE):
     """Write the repository the command reads, i.e. the version, the meson build, and the test definitions."""
 
@@ -206,23 +188,23 @@ def _cmd_test(config, exec_result=None, job_fail=None, job_start=True, job_poll=
         return result
 
     _Job.fail, _Job.start, _Job.poll, _Job.started = {} if job_fail is None else job_fail, job_start, job_poll, []
-    _Exec.status, _Exec.command = coverage_status, None
 
     log_init(INFO, False)
 
     try:
         with patch("command.test.test.exec_one", exec_fake), patch("command.test.test.TestJob", _Job):
-            with patch("command.test.test.Exec", _Exec), patch("command.test.test.container_build") as container_build:
-                with patch("command.test.test.container_remove") as container_remove, patch("command.test.test.cmd_lint") as lint:
-                    with redirect_stdout(output):
+            with patch("command.test.test.cmd_coverage", return_value=coverage_status) as coverage:
+                with patch("command.test.test.cmd_lint") as lint, patch("command.test.test.container_build") as container_build:
+                    with patch("command.test.test.container_remove") as container_remove, redirect_stdout(output):
                         try:
                             status = cmd_test(config)
                         except ToolError as error:
                             status = str(error)
 
-                    _cmd_test.container_build = container_build
-                    _cmd_test.container_remove = container_remove
-                    _cmd_test.lint = lint
+        _cmd_test.container_build = container_build
+        _cmd_test.container_remove = container_remove
+        _cmd_test.coverage = coverage
+        _cmd_test.lint = lint
     finally:
         log_init(INFO, True)
 
@@ -442,6 +424,14 @@ def test_test_run():
         assert_equal(_cmd_test.lint.call_count, 1)
         assert_equal(_cmd_test.lint.call_args[0][0], os.path.join(path_test, "repo"))
 
+        # Linting only stops the run once the source has been linted, which is how the linter is run on its own
+        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, lint_only=True))
+
+        assert_equal(status, 0)
+        assert_equal(_cmd_test.lint.call_count, 1)
+        assert_equal(started, [])
+        assert_not_in("selected", output)
+
         # A test that fails is started again until it runs out of retries, and then the run has failed
         status, command_list, started, output = _cmd_test(
             Config(path_repo, path_test, module=["common/error"], retry=1), job_fail={"common/error": 1}
@@ -478,9 +468,10 @@ def test_test_coverage():
         status, command_list, started, output = _cmd_test(Config(path_repo, path_test, module=["common"]))
 
         assert_equal(status, 0)
-        assert_in("test.py coverage --log-level=warn --vm=none", _Exec.command)
-        assert_in("common/error common/exec", _Exec.command)
         assert_in("tested modules have full coverage", output)
+
+        # Coverage is merged for the tests that ran rather than for the modules that were selected
+        assert_equal(_cmd_test.coverage.call_args[0][1], ["common/error", "common/exec"])
 
         # A module that is not fully covered fails the run, and the report says which one so it is not repeated here
         status, command_list, started, output = _cmd_test(Config(path_repo, path_test, module=["common"]), coverage_status=1)
@@ -495,26 +486,20 @@ def test_test_coverage():
         )
 
         assert_equal(status, 0)
-        assert_in(" --coverage-summary ", _Exec.command)
-
-        # Anything worse than incomplete coverage is an error
-        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, module=["common"]), coverage_status=2)
-
-        assert_equal(status, "coverage command failed")
 
         # There is nothing to report when coverage was not collected, when a single run was selected since that cannot cover a
         # module, or on a vm that does not collect it
         _cmd_test(Config(path_repo, path_test, module=["common"], coverage=False))
 
-        assert_is_none(_Exec.command)
+        assert_equal(_cmd_test.coverage.call_count, 0)
 
         _cmd_test(Config(path_repo, path_test, module=["common/error"], test=[1]))
 
-        assert_is_none(_Exec.command)
+        assert_equal(_cmd_test.coverage.call_count, 0)
 
         _cmd_test(Config(path_repo, path_test, vm=VM_D12, module=["common"]))
 
-        assert_is_none(_Exec.command)
+        assert_equal(_cmd_test.coverage.call_count, 0)
 
 
 ####################################################################################################################################

@@ -60,6 +60,13 @@ def test_cli_unit_default():
     assert_false(config.optimize)
     assert_false(config.profile)
 
+    # The command is not in the list the help shows, since a test run is what calls it rather than a developer
+    status, output = _cli_parse_exit(["--help"])
+
+    assert_equal(status, 0)
+    assert_in("code-format", output)
+    assert_not_in("unit", output)
+
 
 ####################################################################################################################################
 def test_cli_unit_option():
@@ -112,30 +119,14 @@ def test_cli_unit_option():
 
 
 ####################################################################################################################################
-def test_cli_coverage():
-    """The coverage command takes every module that was run."""
-
-    config = cli_parse(["coverage", "common/error", "common/log"], VERSION)
-
-    assert_equal(config.command, "coverage")
-    assert_equal(config.module, ["common/error", "common/log"])
-    assert_false(config.coverage_summary)
-
-    # It works in the test path so it has those options as well
-    assert_equal(config.test_path, "test")
-
-    config = cli_parse(["coverage", "common/error", "--coverage-summary"], VERSION)
-
-    assert_true(config.coverage_summary)
-
-
-####################################################################################################################################
 def test_cli_test():
     """A command line with no command runs the tests, which is what a developer types."""
 
     config = cli_parse(["--vm=u24", "--module=common/error", "--module=postgres", "--vm-max=2"], VERSION)
 
-    assert_is_none(config.command)
+    # The command that was left out is filled in, so what ran is never in doubt downstream
+    assert_equal(config.command, "test")
+
     assert_equal(config.vm, "u24")
     assert_equal(config.module, ["common/error", "postgres"])
     assert_equal(config.vm_max, 2)
@@ -152,21 +143,28 @@ def test_cli_test():
     assert_true(config.valgrind)
     assert_true(config.back_trace)
     assert_true(config.performance)
+    assert_false(config.coverage_summary)
     assert_false(config.dry_run)
     assert_false(config.quiet)
 
     # A run works on the repository it is part of so it is never told where that is
     assert_false(hasattr(config, "repo_path"))
 
+    # The run can be stopped after any of the steps that come before the tests, which is how each one is run on its own
+    assert_false(config.gen_only)
+    assert_false(config.lint_only)
+    assert_false(config.build_only)
 
-####################################################################################################################################
-def test_cli_lint():
-    """The lint command reads the repository only."""
+    config = cli_parse(["--lint-only"], VERSION)
 
-    config = cli_parse(["lint", "--repo-path=/repo"], VERSION)
+    assert_true(config.lint_only)
 
-    assert_equal(config.command, "lint")
-    assert_equal(config.repo_path, "/repo")
+    # The command can be named, which is the same run with the same options
+    config = cli_parse(["test", "--vm=u24", "--module=common/error"], VERSION)
+
+    assert_equal(config.command, "test")
+    assert_equal(config.vm, "u24")
+    assert_equal(config.module, ["common/error"])
 
 
 ####################################################################################################################################

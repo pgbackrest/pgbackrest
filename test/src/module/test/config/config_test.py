@@ -74,26 +74,12 @@ def test_config_load_test():
 
         config = _cfg_load(["--test-path=%s/test" % path], path)
 
-        assert_is_none(config.command)
+        assert_equal(config.command, "test")
         assert_equal(config.repo_path, path)
         assert_equal(config.log_level, INFO)
 
         # Quiet is a shorthand for turning the log off, which is how the documentation build runs the tests
         assert_equal(_cfg_load(["--test-path=%s/test" % path, "--quiet"], path).log_level, OFF)
-
-
-####################################################################################################################################
-def test_config_load_lint():
-    """The lint command is told where the repository is, since it runs from the copy the tests are built from."""
-
-    with tempfile.TemporaryDirectory() as path:
-        _version_write(path)
-
-        config = _cfg_load(["lint", "--repo-path=%s" % path], path)
-
-        assert_equal(config.command, "lint")
-        assert_equal(config.repo_path, path)
-        assert_equal(config.log_level, INFO)
 
 
 ####################################################################################################################################
@@ -106,6 +92,6 @@ def test_config_load_error():
         path_missing = os.path.join(path, "missing")
 
         with assert_raises(ToolError) as error:
-            _cfg_load(["lint", "--repo-path=%s" % path_missing], path)
+            _cfg_load(["unit", "common/error", "--repo-path=%s" % path_missing], path)
 
         assert_equal(str(error.exception), "repo path '%s' does not exist" % path_missing)
