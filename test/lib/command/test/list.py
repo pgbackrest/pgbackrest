@@ -78,6 +78,12 @@ def _check(module_list, config):
         "--test requires a single --module naming a test module",
     )
 
+    # A version the project does not support is a typo, which is worth reporting for the same reason a module name is
+    check(
+        config.pg_version in (PG_VERSION_ALL, PG_VERSION_MINIMAL) + PG_VERSION_LIST,
+        "'%s' does not match a supported PostgreSQL version" % config.pg_version,
+    )
+
 
 ####################################################################################################################################
 def test_list_get(module_list, config):
@@ -123,12 +129,24 @@ def test_list_get(module_list, config):
                 continue
 
             # PostgreSQL versions to test against, most recent first. Only an integration module declares that it needs them.
-            pg_version_list = list(reversed(vm.db_test_list)) if module.pg_required else [None]
+            #
+            # A run that does not name a version tests the versions the vm declares, which is the minimal set that covers every
+            # supported version across the default vms. A named version runs on every vm that installs it and --pg-version=all
+            # runs every version a vm installs, since what a vm declares only spreads the versions over the default vms rather
+            # than limiting what it is able to test.
+            pg_version_list = [None]
+
+            if module.pg_required:
+                if config.pg_version == PG_VERSION_MINIMAL:
+                    pg_version_list = vm.db_test_list
+                elif config.pg_version == PG_VERSION_ALL:
+                    pg_version_list = vm.db_list
+                else:
+                    pg_version_list = [version for version in vm.db_list if version == config.pg_version]
+
+                pg_version_list = list(reversed(pg_version_list))
 
             for pg_version in pg_version_list:
-                if pg_version is not None and config.pg_version not in ("all", "minimal", pg_version):
-                    continue
-
                 # An integration module runs each of its tests in its own container, so each one is a separate run here. Every
                 # other module runs all of its tests at once and passes on whatever --test selected.
                 if not integration:

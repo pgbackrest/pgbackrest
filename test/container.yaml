@@ -11,7 +11,8 @@
 # - 'default' marks a vm that --vm=all selects
 # - 'image' is the image the container is built from, and a vm without one has no container, i.e. it runs on the host
 # - 'os-base' is the os the container is built on, which decides its package manager and where PostgreSQL is installed
-# - 'db' is the PostgreSQL versions installed and 'db-test' the ones integration tests run against, which defaults to all of them
+# - 'db' is the PostgreSQL versions installed and 'db-test' the ones integration tests run against by default, all of them unless
+#   declared. Any installed version can be tested by naming it with --pg-version, e.g. --vm=u24 --pg-version=18.
 # - the rest is what the container build installs or configures, and each defaults to false or unset
 #
 # A vm with no container declares only 'default' and 'coverage-c'. Everything else says how a container is built, and the os the

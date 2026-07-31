@@ -73,7 +73,12 @@ def _parser_test(parent):
     # Test selection
     result.add_argument("--module", action="append", default=[], metavar="MODULE", help="module or path of modules to test")
     result.add_argument("--test", action="append", type=int, default=[], metavar="TEST", help="test to run in a module")
-    result.add_argument("--pg-version", default="minimal", metavar="VERSION", help="pg version integration tests run against")
+    result.add_argument(
+        "--pg-version",
+        default="minimal",
+        metavar="VERSION",
+        help="pg version integration tests run against, or all of them installed on the vm",
+    )
     result.add_argument("--c-only", action="store_true", help="only run C tests")
     result.add_argument("--container-only", action="store_true", help="only run tests that require a container")
     result.add_argument("--coverage-only", action="store_true", help="only run tests that provide coverage")

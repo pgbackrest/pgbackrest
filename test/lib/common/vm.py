@@ -56,6 +56,10 @@ _PG_LIST = bld_pg_version_list(_PATH_REPO)
 # PostgreSQL versions the project supports. Each one must be tested on a default vm, which vm_check() enforces.
 PG_VERSION_LIST = tuple(pg.version for pg in _PG_LIST)
 
+# Versions --pg-version selects rather than naming one of them, i.e. every version a vm installs and the versions it declares
+PG_VERSION_ALL = "all"
+PG_VERSION_MINIMAL = "minimal"
+
 # Versions that have not been released yet, which are only in the beta repository
 _PG_BETA_LIST = tuple(pg.version for pg in _PG_LIST if not pg.release)
 
@@ -93,7 +97,7 @@ class Vm:
         self.os_base = None  # Os the container is built on, which determines its package manager and where PostgreSQL is installed
         self.image = None  # Image the container is built from, None when the vm has no container
         self.db_list = []  # PostgreSQL versions installed
-        self.db_test_list = []  # Versions integration tests run against, which is every version installed unless declared
+        self.db_test_list = []  # Versions integration tests run against by default, every version installed unless declared
         self.pg_beta = None  # Unreleased version installed, which is only in the beta repository
         self.pg_repo = True  # Install PostgreSQL from the PGDG repo rather than from the distribution?
         self.pg_repo_key = True  # Import the PGDG signing key, which not every rpm backend accepts?

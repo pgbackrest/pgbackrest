@@ -139,26 +139,43 @@ def test_list_filter():
 
 ####################################################################################################################################
 def test_list_pg_version():
-    """An integration test runs against the PostgreSQL versions the vm tests, most recent first."""
+    """An integration test runs against the PostgreSQL versions the vm tests, most recent first.
 
-    version_list = vm_get("u24").db_test_list
+    A version named on the command line runs wherever it is installed, whether or not the vm tests it by default."""
+
+    vm = vm_get("u24")
 
     assert_equal(
         [run.pg_version for run in test_list_get(MODULE_LIST, _Config(vm="u24", module=["integration"]))],
-        [version for version in reversed(version_list) for _ in range(3)],
+        [version for version in reversed(vm.db_test_list) for _ in range(3)],
     )
 
-    # A single version can be selected, which is how a version specific problem is chased down
+    # A single version can be selected, which is how a version specific problem is chased down. Any version the vm installs may be
+    # named, not just the ones it tests by default, since a development vm installs every version.
+    version = next(version for version in vm.db_list if version not in vm.db_test_list)
+
     assert_equal(
-        [run.pg_version for run in test_list_get(MODULE_LIST, _Config(vm="u24", module=["integration"], pg_version="12"))],
-        ["12"] * 3,
+        [run.pg_version for run in test_list_get(MODULE_LIST, _Config(vm="u24", module=["integration"], pg_version=version))],
+        [version] * 3,
     )
 
-    # A version that the vm does not test selects nothing
+    # Every version the vm installs can be selected at once
     assert_equal(
-        test_list_get(MODULE_LIST, _Config(vm="u24", module=["integration"], pg_version="8.0")),
-        [],
+        [
+            run.pg_version
+            for run in test_list_get(MODULE_LIST, _Config(vm="u24", module=["integration"], pg_version=PG_VERSION_ALL))
+        ],
+        [version for version in reversed(vm.db_list) for _ in range(3)],
     )
+
+    # A version the vm does not install selects nothing, since another vm in the same run may well install it
+    assert_equal(test_list_get(MODULE_LIST, _Config(vm="d12", module=["integration"], pg_version="9.6")), [])
+
+    # A version the project does not support is a typo rather than a selection of nothing
+    with assert_raises(ToolError) as error:
+        test_list_get(MODULE_LIST, _Config(vm="u24", module=["integration"], pg_version="8.0"))
+
+    assert_equal(str(error.exception), "'8.0' does not match a supported PostgreSQL version")
 
 
 ####################################################################################################################################
