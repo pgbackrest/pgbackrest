@@ -10,7 +10,6 @@ Exit status: 0 = success, greater = error."""
 import os
 import signal
 import sys
-import traceback
 
 # Do not cache bytecode. The tool runs from the source tree, where a __pycache__ would show up as an unexpected binary file in the
 # linter and in the distribution. This must be set before the library modules are imported below.
@@ -22,7 +21,7 @@ for lib in ("build", "doc"):
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), lib, "lib"))
 
 from command.doc import cfg_load, cmd_doc  # noqa: E402
-from common.error import EXIT_ERROR, ToolError  # noqa: E402
+from common.error import EXIT_ERROR, EXIT_TERM, ToolError, error_trace  # noqa: E402
 from common.log import *  # noqa: E402
 
 
@@ -48,13 +47,18 @@ def main():
 
     try:
         cmd_doc(config)
+    except KeyboardInterrupt:
+        # A ctrl-c is what was asked for, so report it the way the C reports a signal rather than as a stack trace
+        log(ERROR, "terminated on signal SIGINT")
+
+        return EXIT_TERM
     except ToolError as error:
         log(ERROR, error)
 
         return error.status
-    except Exception:
-        # An unexpected exception is a bug here rather than a problem with the documentation, so show the traceback
-        print(traceback.format_exc())
+    except Exception as error:
+        # An unexpected exception is a bug here rather than a problem with the documentation, so show the stack trace
+        log(ERROR, error_trace(error, config.log_level >= DEBUG))
 
         return EXIT_ERROR
 

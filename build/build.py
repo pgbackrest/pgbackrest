@@ -21,7 +21,7 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
 
 from command.main import cfg_load, cmd_build  # noqa: E402
-from common.error import ToolError  # noqa: E402
+from common.error import EXIT_TERM, ToolError  # noqa: E402
 
 
 ####################################################################################################################################
@@ -35,6 +35,11 @@ def main():
     try:
         config = cfg_load(sys.argv[1:], path_repo)
         cmd_build(config)
+    except KeyboardInterrupt:
+        # A ctrl-c is what was asked for, so report it the way the C reports a signal rather than as a stack trace
+        print("ERROR: terminated on signal SIGINT")
+
+        return EXIT_TERM
     except ToolError as error:
         print("ERROR: %s" % error)
 

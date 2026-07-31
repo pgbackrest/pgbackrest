@@ -18,7 +18,6 @@ import re
 import shutil
 import signal
 import sys
-import traceback
 
 # Send everything written to stderr to stdout instead so the output is in the order it happened
 sys.stderr = sys.stdout
@@ -33,7 +32,7 @@ for lib in ("build", "doc"):
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), lib, "lib"))
 
 from command.render.release import release_last  # noqa: E402
-from common.error import EXIT_ERROR, ToolError  # noqa: E402
+from common.error import EXIT_ERROR, EXIT_TERM, ToolError, error_trace  # noqa: E402
 from common.exec import exec_result  # noqa: E402
 from common.log import *  # noqa: E402
 from common.storage import file_read, file_remove, file_write  # noqa: E402
@@ -382,13 +381,18 @@ def main():
 
     try:
         return command_run(config)
+    except KeyboardInterrupt:
+        # A ctrl-c is what was asked for, so report it the way the C reports a signal rather than as a stack trace
+        log(ERROR, "terminated on signal SIGINT")
+
+        return EXIT_TERM
     except ToolError as error:
         log(ERROR, error)
 
         return error.status
-    except Exception:
-        # An unexpected exception is a bug here rather than a problem with the release, so show the traceback
-        print(traceback.format_exc())
+    except Exception as error:
+        # An unexpected exception is a bug here rather than a problem with the release, so show the stack trace
+        log(ERROR, error_trace(error, config.log_level >= DEBUG))
 
         return EXIT_ERROR
 

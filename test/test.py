@@ -13,7 +13,6 @@ import os
 import signal
 import sys
 import time
-import traceback
 
 # Send everything written to stderr to stdout instead. Anything a test writes to stderr is a failure, so an error raised before
 # the handler in main() is installed, e.g. while importing below, would otherwise look like one.
@@ -32,7 +31,7 @@ from command.code.format import cmd_code_format  # noqa: E402
 from command.test.test import cmd_test  # noqa: E402
 from command.test.unit import cmd_unit  # noqa: E402
 from command.vm.build import cmd_vm_build  # noqa: E402
-from common.error import EXIT_ERROR, ToolError  # noqa: E402
+from common.error import EXIT_ERROR, EXIT_TERM, ToolError, error_trace  # noqa: E402
 from common.log import *  # noqa: E402
 from config.config import cfg_load  # noqa: E402
 from config.project import project_version  # noqa: E402
@@ -77,14 +76,19 @@ def main():
 
     try:
         result = command_run(config)
+    except KeyboardInterrupt:
+        # A ctrl-c is what was asked for, so report it the way the C reports a signal rather than as a stack trace
+        log(ERROR, "terminated on signal SIGINT")
+
+        return EXIT_TERM
     except ToolError as error:
         log(ERROR, error)
         log(INFO, "%s command end: aborted with exception" % config.command)
 
         return error.status
-    except Exception:
-        # An unexpected exception is a harness bug, so show the traceback. It goes to stdout like everything else.
-        print(traceback.format_exc())
+    except Exception as error:
+        # An unexpected exception is a harness bug, so show the stack trace. It goes to stdout like everything else.
+        log(ERROR, error_trace(error, config.log_level >= DEBUG))
 
         return EXIT_ERROR
 
