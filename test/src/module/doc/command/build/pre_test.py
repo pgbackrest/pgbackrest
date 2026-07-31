@@ -9,7 +9,7 @@ import xml.etree.ElementTree as etree
 from harness.test import *
 
 from command.build.pre import *
-from command.build.var_store import VarStore
+from common.var_store import VarStore
 from common.error import *
 from common.xml import xml_document_parse
 
@@ -43,7 +43,7 @@ def _pre(content, var_map=None):
 
     document = build_pre(xml_document_parse("<doc>%s</doc>" % content, "test.xml"), BldHlp(), var_store)
 
-    return etree.tostring(document.root, encoding="unicode")
+    return etree.tostring(document, encoding="unicode")
 
 
 ####################################################################################################################################

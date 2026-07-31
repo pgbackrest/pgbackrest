@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]} User Guide" subtitle="{[user-guide-subtitle]}" cmd-line-len="85">
     <description>The {[project]} User Guide demonstrates how to quickly and easily setup {[project]} for your {[postgres]} database. Step-by-step instructions lead the user through all the important features of the fastest, most reliable {[postgres]} backup and restore solution.</description>
 
@@ -173,7 +172,7 @@
         <variable key="host-mem" if="'{[host-mem-limit]}' eq 'y'">-m 512m</variable>
         <variable key="host-mem" if="'{[host-mem-limit]}' eq 'n'"></variable>
 
-        <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
+        <variable key="host-user" eval="y">'vagrant' if user == 'root' else user</variable>
         <variable key="host-mount">{[host-repo-path]}:{[pgbackrest-repo-path]}</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
@@ -415,12 +414,6 @@
 
         # Install PostgreSQL
         RUN yum install -y postgresql{[pg-version]}-server postgresql{[pg-version-upgrade]}-server
-
-        # XML::Checker::Parser has no RHEL package; install its packaged XML::Parser dependency, cpanm the pure-Perl layer, and
-        # remove the build tools in the same layer so they do not persist in the image
-        RUN yum install -y perl-XML-Parser perl-App-cpanminus make perl-ExtUtils-MakeMaker &amp;&amp; \
-            cpanm --notest XML::Checker::Parser &amp;&amp; \
-            yum remove -y perl-App-cpanminus make perl-ExtUtils-MakeMaker
 
         # Install systemctl replacement that works without systemd running
         ENV SYSCTL_REP_VER=1.5.9063
@@ -1081,7 +1074,7 @@
                 </exe-cmd>
             </execute>
 
-            <!-- Create a distribution tarball with meson dist. Fake the dist output of release.pl to save time. -->
+            <!-- Create a distribution tarball with meson dist. Fake the dist output of release.py to save time. -->
             <execute show="n">
                 <exe-cmd>
                     meson setup {[build-meson-path]} {[build-br-path-tmp]} &amp;&amp;

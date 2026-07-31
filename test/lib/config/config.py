@@ -3,29 +3,11 @@
 Parses the command line, resolves paths, and initializes logging."""
 
 import os
-import re
 
 from common.error import ToolError
 from common.log import *
-from common.storage import file_read
 from config.cli import cli_parse
-
-# Name of the project executable, which is also the name of the repository and of the container registry namespace
-PROJECT_EXE = "pgbackrest"
-
-
-####################################################################################################################################
-def project_version(path_repo):
-    """Read the project version from src/version.h in the repository this script was checked out into.
-
-    The harness always runs from a copy of the repository so the version is never ambiguous."""
-
-    match = re.search(r'^#define PROJECT_VERSION\s+"([^"]+)"', file_read(os.path.join(path_repo, "src/version.h")), re.M)
-
-    if match is None:
-        raise ToolError("unable to find PROJECT_VERSION in src/version.h")
-
-    return match.group(1)
+from config.project import project_version
 
 
 ####################################################################################################################################

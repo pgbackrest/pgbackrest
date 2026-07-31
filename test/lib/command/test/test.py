@@ -21,6 +21,7 @@ from common.log import *
 from common.storage import file_read, file_write, file_write_differs, path_create
 from common.user import user_name
 from common.vm import *
+from config.project import project_version, project_version_part
 
 
 ####################################################################################################################################
@@ -31,16 +32,9 @@ def _version_update(path_repo):
     meson builds with are all generated from them rather than being kept in sync by hand."""
 
     path_version = os.path.join(path_repo, "src/version.h")
-    part = {}
+    part = project_version_part(path_repo)
 
-    for name in ("MAJOR", "MINOR", "PATCH", "SUFFIX"):
-        match = re.search(r"^#define PROJECT_VERSION_%s\s+(\S+)$" % name, file_read(path_version), re.M)
-
-        check(match is not None, "unable to find PROJECT_VERSION_%s in src/version.h" % name)
-
-        part[name] = match.group(1)
-
-    version = "%s.%s.%s%s" % (part["MAJOR"], part["MINOR"], part["PATCH"], part["SUFFIX"].strip('"'))
+    version = project_version(path_repo)
     version_num = "%d%03d%03d" % (int(part["MAJOR"]), int(part["MINOR"]), int(part["PATCH"]))
 
     # Version defines in src/version.h

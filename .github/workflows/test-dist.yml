@@ -27,13 +27,12 @@ jobs:
         with:
           path: pgbackrest
 
-      # The build environment for the code generator and the documentation C helper, plus libxml-checker-perl, which the
-      # documentation tooling requires (XML::Checker::Parser). The runner already provides perl, git, and python3.
+      # The build environment for the binary the documentation runs. The runner already provides git and python3.
       - name: Install
         run: |
           sudo apt-get update
           DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y meson gcc pkg-config \
-            libssl-dev libxml2-dev libpq-dev liblz4-dev libzstd-dev libbz2-dev zlib1g-dev libxml-checker-perl
+            libssl-dev libxml2-dev libpq-dev liblz4-dev libzstd-dev libbz2-dev zlib1g-dev
 
       - name: Build Tarball
         run: |
@@ -43,7 +42,7 @@ jobs:
           # gitignored so the tree stays clean for meson dist. --no-exe skips executing the commands embedded in the documentation,
           # which would require containers and a great deal of time; it still produces all the files, which are shipped in the
           # tarball but not used by the build or the smoke test.
-          pgbackrest/doc/release.pl --dist --no-exe
+          pgbackrest/doc/release.py --dist --no-exe
 
           # Configure the build, which meson dist runs the code generator from to produce the shipped generated files
           meson setup build pgbackrest

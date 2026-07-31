@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]}" subtitle="Contributing to {[project]}" toc="y" cmd-line-len="132">
     <description>{[project]} Contributing Guidelines.</description>
 
     <!-- Variables used by the rest of the script ============================================================================== -->
     <variable-list>
-        <variable key="host-user-id" eval="y">use English; $UID</variable>
+        <variable key="host-user-id" eval="y">uid</variable>
 
         <!-- Options to pass to test.py so log output is reproducible -->
         <variable key="test-cmd-extra">--no-log-timestamp</variable>
@@ -20,7 +19,7 @@
         <variable key="github-url-src">{[github-url-main]}/src</variable>
         <variable key="github-url-src-common">{[github-url-src]}/common</variable>
 
-        <variable key="cwd" eval="y">use Cwd qw(cwd); cwd()</variable>
+        <variable key="cwd" eval="y">cwd</variable>
     </variable-list>
 
     <!-- Setup hosts used to build the documentation =========================================================================== -->
@@ -37,8 +36,11 @@
         RUN apt-get update &amp;&amp; \
             apt-get install -y sudo ssh curl vim 2>&amp;1
 
-        # Add test user with sudo privileges
-        RUN adduser --disabled-password --uid={[host-user-id]} --gecos "" {[host-user]} &amp;&amp; \
+        # Add test user with sudo privileges. Remove any user and group the image ships at that id first, e.g. Ubuntu 24.04 ships
+        # both at 1000, since what matters here is the id rather than the name. The group goes as well because adduser gives the
+        # new group the same id as the user.
+        RUN sed -i '/^[^:]*:x:{[host-user-id]}:/d' /etc/passwd /etc/group &amp;&amp; \
+            adduser --disabled-password --uid={[host-user-id]} --gecos "" {[host-user]} &amp;&amp; \
             echo '%{[host-user]} ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
         WORKDIR /home/{[host-user]}
@@ -91,9 +93,9 @@
 
             <execute user="root" pre="y">
                 <exe-cmd>
-                    apt-get install rsync git build-essential valgrind libssl-dev zlib1g-dev
-                    libxml2-dev libpq-dev pkg-config libxml-checker-perl liblz4-dev liblz4-tool
-                    zstd libzstd-dev bzip2 libbz2-dev ccache meson python3-yaml python3-coverage
+                    apt-get install rsync git build-essential valgrind libssl-dev zlib1g-dev libxml2-dev
+                    libpq-dev pkg-config liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev ccache
+                    meson python3-yaml python3-coverage
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -141,8 +143,6 @@
                 </exe-cmd>
             </execute>
         </execute-list>
-
-        <p>If using a RHEL-based system, the CPAN XML parser is required to run <file>doc.pl</file>. Instructions for installing Docker and the XML parser can be found in the <file>README.md</file> file of the <backrest/> <link url="{[github-url-main]}/doc">doc</link> directory in the section <quote>The following is a sample RHEL 7 configuration that can be used for building the documentation</quote>.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -313,7 +313,7 @@ myObjToLog(const MyObj *this)
         <p>Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under <code>pgbackrest/doc/output/html</code>. More details can be found in the <backrest/> <link url="{[github-url-main]}/doc/README.md">doc/README.md</link> file.</p>
 
         <code-block>
-            pgbackrest/doc/doc.pl --out=html
+            pgbackrest/doc/doc.py --out=html
         </code-block>
 
         <admonition type="note"><code>ERROR: [028]</code> regarding cache is invalid is OK; it just means there have been changes and the documentation will be built from scratch. In this case, be patient as the build could take 20 minutes or more depending on your system.</admonition>
@@ -336,7 +336,7 @@ myObjToLog(const MyObj *this)
 
             <code-block>
 pgbackrest/test/test.py --help
-pgbackrest/doc/doc.pl --help
+pgbackrest/doc/doc.py --help
             </code-block>
 
             <!-- =============================================================================================================== -->
@@ -771,17 +771,17 @@ test/bin/none/pgbackrest help backup repo-type
             <p>To quickly view the HTML documentation, the <code>--no-exe</code> option can be passed to the documentation generator in order to bypass executing the code elements:</p>
 
             <code-block>
-pgbackrest/doc/doc.pl --out=html --no-exe
+pgbackrest/doc/doc.py --out=html --no-exe
             </code-block>
 
             <p>The generated HTML files will be placed in the <file>doc/output/html</file> directory where they can be viewed locally in a browser.</p>
 
-            <p>If Docker is installed, it will be used by the documentation generator to execute the code elements while building the documentation, therefore, the <setting>--no-exe</setting> should be omitted, (i.e. <code>pgbackrest/doc/doc.pl --output=html</code>). <setting>--no-cache</setting> may be used to force a full build even when no code elements have changed since the last build. <setting>--pre</setting> will reuse the container definitions from the prior build and saves time during development.</p>
+            <p>If Docker is installed, it will be used by the documentation generator to execute the code elements while building the documentation, therefore, the <setting>--no-exe</setting> should be omitted, (i.e. <code>pgbackrest/doc/doc.py --output=html</code>). <setting>--no-cache</setting> may be used to force a full build even when no code elements have changed since the last build. <setting>--pre</setting> will reuse the container definitions from the prior build and saves time during development.</p>
 
             <p>The containers created for documentation builds can be useful for manually testing or trying out new code or features. The following demonstrates building through just the <code>quickstart</code> section of the <file>user-guide</file> without encryption.</p>
 
             <code-block>
-pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache --pre
+pgbackrest/doc/doc.py --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache --pre
             </code-block>
 
             <p>The resulting Docker containers can be listed with <code>docker ps</code> and the container can be entered with <code>docker exec doc-pg-primary bash</code>. Additionally, the <code>-u</code> option can be added for entering the container as a specific user (e.g. <code>postgres</code>).</p>

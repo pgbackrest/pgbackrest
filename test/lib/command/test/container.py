@@ -431,6 +431,10 @@ def script_test(name, path_repo):
         + "    sed -i 's/^[^:]*:x:%u:.*/%s:x:%u:/' /etc/group" % (group_id(), group_name(), group_id())
     )
 
+    # Remove an existing user that would conflict with our user id, e.g. Ubuntu 24.04 ships one at 1000. What matters is the id
+    # rather than the name, so the account holding it goes. Hacky like the group rename above and safe for the same reason.
+    result += _SECTION + "# Remove conflicting user\n" + "    sed -i '/^[^:]*:x:%u:/d' /etc/passwd" % user_id()
+
     result += (
         _SECTION
         + "# Create test user\n"

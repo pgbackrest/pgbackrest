@@ -162,15 +162,15 @@ def _option_render(xml_section, opt_cmd_cfg, opt_cfg, opt_hlp):
 def _document_new(title, description, introduction):
     """Build a reference document, which begins with what it is and an introduction to it."""
 
-    result = xml_document_new("doc", dtd_name="doc", dtd_file="doc.dtd")
+    result = xml_document_new("doc")
 
-    xml_node_attribute_set(result.root, "title", "{[project]}")
-    xml_node_attribute_set(result.root, "subtitle", title)
-    xml_node_attribute_set(result.root, "toc", "y")
+    xml_node_attribute_set(result, "title", "{[project]}")
+    xml_node_attribute_set(result, "subtitle", title)
+    xml_node_attribute_set(result, "toc", "y")
 
-    xml_node_content_add(xml_node_add(result.root, "description"), description)
+    xml_node_content_add(xml_node_add(result, "description"), description)
 
-    xml_intro = xml_node_add(result.root, "section")
+    xml_intro = xml_node_add(result, "section")
 
     xml_node_attribute_set(xml_intro, "id", "introduction")
     xml_node_content_add(xml_node_add(xml_intro, "title"), "Introduction")
@@ -186,7 +186,7 @@ def reference_configuration_render(bld_cfg, bld_hlp):
     result = _document_new(bld_hlp.opt_title, bld_hlp.opt_description, bld_hlp.opt_introduction)
 
     for section in bld_hlp.sct_list:
-        xml_section = xml_node_add(result.root, "section")
+        xml_section = xml_node_add(result, "section")
 
         xml_node_attribute_set(xml_section, "id", "section-%s" % section.id)
         xml_node_content_add(xml_node_add(xml_section, "title"), "%s Options" % section.name)
@@ -275,7 +275,7 @@ def reference_command_render(bld_cfg, bld_hlp):
         if cmd_cfg.internal:
             continue
 
-        xml_section = xml_node_add(result.root, "section")
+        xml_section = xml_node_add(result, "section")
         xml_title = xml_node_add(xml_section, "title")
 
         xml_node_attribute_set(xml_section, "id", "command-%s" % cmd_hlp.name)

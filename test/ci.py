@@ -34,7 +34,7 @@ from common.exec import exec_one  # noqa: E402
 from common.log import *  # noqa: E402
 from common.user import user_name  # noqa: E402
 from common.vm import *  # noqa: E402
-from config.config import PROJECT_EXE, project_version  # noqa: E402
+from config.project import PROJECT_EXE, project_version  # noqa: E402
 
 
 ####################################################################################################################################
@@ -87,9 +87,6 @@ def sudo_remove():
 def doc_build(config):
     """Build the documentation."""
 
-    # The documentation is the only thing left that runs on Perl
-    step("install documentation packages", ["sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libxml-checker-perl"])
-
     sudo_remove()
 
     step(
@@ -99,7 +96,7 @@ def doc_build(config):
 
     step(
         "release documentation",
-        ["%s/doc/release.pl --build --no-gen --vm=%s" % (config.repo_path, config.vm)],
+        ["%s/doc/release.py --build --no-gen --vm=%s" % (config.repo_path, config.vm)],
         show_output=True,
     )
 

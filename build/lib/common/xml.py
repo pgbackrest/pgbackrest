@@ -6,55 +6,64 @@ Text is the awkward part. A document like the user guide is mixed content -- tex
 element tree stores as the text before a node's first child plus the text trailing each child. So adding text to a node means appending
 to whichever of those came last, and reading a node's text means gathering all of it. Both are done here so nothing else has to know.
 
+A document may also be assembled from parts, which it declares as external entities and refers to by name. The parser does not fetch
+them so they are expanded here before it sees the document, which is what lets the release list be one file per release.
+
 Comments never appear in a parsed document, since the parser drops them, so nothing here has to skip them."""
 
 ####################################################################################################################################
 import copy
+import os
 import re
 import xml.etree.ElementTree as etree
 
 from common.error import ToolError
+from common.storage import file_read
+
+
+# The parts a document is assembled from, which are declared in the internal subset of its document type. Nothing validates against
+# a document type, so the only reason to look at one is to find these.
+_SUBSET_EXP = re.compile(r"<!DOCTYPE\s+\S+\s*\[(.*?)\]\s*>", re.DOTALL)
+
+# Part of a document declared in the internal subset, which is named as an entity but used as an include
+_ENTITY_EXP = re.compile(r"""<!ENTITY\s+(\S+)\s+SYSTEM\s+"([^"]+)"\s*>""")
 
 
 ####################################################################################################################################
-class XmlDocument:
-    """An xml document, i.e. a root node plus the declarations that go above it."""
-
-    def __init__(self, root, dtd_name=None, dtd_file=None):
-        self.root = root
-        self.dtd_name = dtd_name  # Document type, if any
-        self.dtd_file = dtd_file  # File the document type is declared in
-
-    ################################################################################################################################
-    def render(self):
-        """Render the document as the xml text of it."""
-
-        result = '<?xml version="1.0" encoding="UTF-8"?>\n'
-
-        if self.dtd_name is not None:
-            result += '<!DOCTYPE %s SYSTEM "%s">\n' % (self.dtd_name, self.dtd_file)
-
-        return result + etree.tostring(self.root, encoding="unicode") + "\n"
-
-
-# Document type a document declares, which is kept so a document that is read and written again declares the same
-_DTD_EXP = re.compile(r"""<!DOCTYPE\s+(\S+)\s+SYSTEM\s+"([^"]+)"\s*>""")
-
-
-####################################################################################################################################
-def xml_document_new(root_name, dtd_name=None, dtd_file=None):
+def xml_document_new(root_name):
     """Build an empty document."""
 
-    return XmlDocument(etree.Element(root_name), dtd_name, dtd_file)
+    return etree.Element(root_name)
+
+
+####################################################################################################################################
+def _entity_expand(content, subset, path_base):
+    """Replace every reference to a part of the document with what the file holding that part holds.
+
+    A part is named relative to the document that declares it, since that is where a reader looking for it would start."""
+
+    for name, file in _ENTITY_EXP.findall(subset):
+        reference = "&%s;" % name
+
+        # A declaration that is never used is a leftover, and leaving it be would mean the file it names is silently not read
+        if reference not in content:
+            raise ToolError("part '%s' is declared but never used" % name)
+
+        content = content.replace(reference, file_read(os.path.join(path_base, file)))
+
+    return content
 
 
 ####################################################################################################################################
 def xml_document_parse(content, path):
-    """Parse a document, keeping the document type it declares."""
+    """Parse a document, expanding the parts it is assembled from."""
 
-    match = _DTD_EXP.search(content)
+    match = _SUBSET_EXP.search(content)
 
-    return XmlDocument(xml_parse(content, path), *(match.groups() if match is not None else (None, None)))
+    if match is not None:
+        content = _entity_expand(content, match.group(1), os.path.dirname(path))
+
+    return xml_parse(content, path)
 
 
 ####################################################################################################################################
@@ -95,14 +104,23 @@ def xml_node_attribute_remove(node, name):
 
 ####################################################################################################################################
 def xml_node_child(node, name, error_on_missing=False):
-    """First child of a node with a name, or None when there is none."""
+    """The one child of a node with a name, or None when there is none.
 
-    result = node.find(name)
+    More than one is an error because a caller asking for the child rather than the list of them is asking for something a node has
+    at most one of, e.g. its title, so a second is a mistake in the document rather than a choice to make."""
 
-    if result is None and error_on_missing:
-        raise ToolError("unable to find child '%s' in node '%s'" % (name, node.tag))
+    result = node.findall(name)
 
-    return result
+    if len(result) > 1:
+        raise ToolError("found more than one child '%s' in node '%s'" % (name, node.tag))
+
+    if len(result) == 0:
+        if error_on_missing:
+            raise ToolError("unable to find child '%s' in node '%s'" % (name, node.tag))
+
+        return None
+
+    return result[0]
 
 
 ####################################################################################################################################
@@ -113,10 +131,87 @@ def xml_node_child_list(node, name):
 
 
 ####################################################################################################################################
-def xml_node_add(node, name):
+def xml_node_field(node, name, error_on_missing=False):
+    """Text of the one child of a node with a name, or None when there is none.
+
+    A field is a child that holds nothing but text, e.g. the command an execute runs, so it reads as a property of the node that
+    holds it rather than as part of the document."""
+
+    child = xml_node_child(node, name, error_on_missing)
+
+    return None if child is None else xml_node_content(child)
+
+
+####################################################################################################################################
+def xml_node_field_test(node, name, value):
+    """Does a node have a field with a value?"""
+
+    return xml_node_field(node, name) == value
+
+
+# Tags that are text rather than tags that hold some, which is what decides where the text of a node is found
+_TAG_IS_TEXT = ("admonition", "list-item", "p", "summary", "table-cell", "table-column", "title")
+
+# Tags that may hold text and markup at once, which is every tag that is text plus the tag that holds nothing else
+_TAG_MIXED = _TAG_IS_TEXT + ("text",)
+
+# What a document uses to lay itself out but does not mean. Carriage returns are not here because the parser has already turned them
+# into linefeeds by the time a document is walked.
+_LAYOUT = "\t"
+
+
+####################################################################################################################################
+def xml_node_text(node, error_on_missing=False):
+    """The node holding a node's text, or None when there is none.
+
+    A tag that is text itself holds it directly and everything else holds it in a text child, which is the difference between a
+    paragraph, which is text, and a section, which has some."""
+
+    if node.tag in _TAG_IS_TEXT:
+        return node
+
+    return xml_node_child(node, "text", error_on_missing)
+
+
+####################################################################################################################################
+def xml_node_normalize(node):
+    """Drop what a document uses to lay itself out but does not mean, and check that text and markup are not mixed where they cannot
+    be.
+
+    A tab is how the xml is written rather than something to render, so it is dropped once rather than everywhere text is used. A node
+    that holds markup may not also hold text, since there is nowhere in the output for text that belongs to no tag -- except in a node
+    that is text itself, where interleaving the two is the whole point."""
+
+    if node.text is not None:
+        node.text = node.text.replace(_LAYOUT, "")
+
+    for child in node:
+        xml_node_normalize(child)
+
+        if child.tail is not None:
+            child.tail = child.tail.replace(_LAYOUT, "")
+
+    if node.tag not in _TAG_MIXED and len(node) > 0:
+        text = (node.text or "") + "".join(child.tail or "" for child in node)
+
+        if text.strip() != "":
+            raise ToolError("text mixed with markup in node '%s'" % node.tag)
+
+
+####################################################################################################################################
+def xml_node_text_add(node):
+    """The node to put a node's text in, adding it when the node holds its text in a child.
+
+    A caller building a document says what a node says without having to know which kind of node it is building."""
+
+    return node if node.tag in _TAG_IS_TEXT else xml_node_add(node, "text")
+
+
+####################################################################################################################################
+def xml_node_add(node, name, attrib=None):
     """Add a child to a node."""
 
-    return etree.SubElement(node, name)
+    return etree.SubElement(node, name, attrib or {})
 
 
 ####################################################################################################################################

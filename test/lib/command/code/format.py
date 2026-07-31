@@ -20,9 +20,8 @@ _LINE_LENGTH = 132
 # usually the result of an editor or a file system that does not preserve modes.
 _FILE_EXECUTABLE_LIST = (
     "build/build.py",
-    "doc/doc.pl",
     "doc/doc.py",
-    "doc/release.pl",
+    "doc/release.py",
     "build/dist.sh",
     "test/ci.py",
     "test/smoke.py",

@@ -10,19 +10,23 @@ from common.error import *
 from common.log import *
 from config.config import *
 
-# The version header as the project writes it, i.e. the define padded out to the comment column
+# The parts of the version, which is what the version is built from
 VERSION = "2.60.0dev"
-VERSION_H = '#define PROJECT_VERSION                                             "%s"\n' % VERSION
+VERSION_H = """#define PROJECT_VERSION_MAJOR                                       2
+#define PROJECT_VERSION_MINOR                                       60
+#define PROJECT_VERSION_PATCH                                       0
+#define PROJECT_VERSION_SUFFIX                                      "dev"
+"""
 
 
 ####################################################################################################################################
-def _version_write(path, content=VERSION_H):
+def _version_write(path):
     """Write the version header, which is the only part of the repository the config load reads."""
 
     os.mkdir(os.path.join(path, "src"))
 
     with open(os.path.join(path, "src/version.h"), "w") as file:
-        file.write(content)
+        file.write(VERSION_H)
 
 
 ####################################################################################################################################
@@ -33,30 +37,6 @@ def _cfg_load(arg_list, path):
         return cfg_load(arg_list, path)
     finally:
         log_init(INFO, True)
-
-
-####################################################################################################################################
-def test_config_version():
-    """The version comes from the repository the harness was checked out into."""
-
-    with tempfile.TemporaryDirectory() as path:
-        _version_write(path)
-
-        assert_equal(project_version(path), VERSION)
-
-
-####################################################################################################################################
-def test_config_version_error():
-    """A version header without the define is an error rather than a version of nothing."""
-
-    with tempfile.TemporaryDirectory() as path:
-        # The define must be at the start of a line so a mention of it in a comment is not read as the version
-        _version_write(path, '// #define PROJECT_VERSION "9.9"\n#define PROJECT_NAME "pgbackrest"\n')
-
-        with assert_raises(ToolError) as error:
-            project_version(path)
-
-        assert_equal(str(error.exception), "unable to find PROJECT_VERSION in src/version.h")
 
 
 ####################################################################################################################################

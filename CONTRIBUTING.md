@@ -30,9 +30,9 @@ This example is based on Ubuntu 24.04, but it should work on many versions of De
 
 pgbackrest-dev => Install development tools
 ```
-sudo apt-get install rsync git build-essential valgrind libssl-dev zlib1g-dev \
-       libxml2-dev libpq-dev pkg-config libxml-checker-perl liblz4-dev liblz4-tool \
-       zstd libzstd-dev bzip2 libbz2-dev ccache meson python3-yaml python3-coverage
+sudo apt-get install rsync git build-essential valgrind libssl-dev zlib1g-dev libxml2-dev \
+       libpq-dev pkg-config liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev ccache \
+       meson python3-yaml python3-coverage
 ```
 
 Some unit tests and all the integration tests require Docker. Running in containers allows us to simulate multiple hosts, test on different distributions and versions of PostgreSQL, and use sudo without affecting the host system.
@@ -49,8 +49,6 @@ pgbackrest-dev => Clone pgBackRest repository
 ```
 git clone https://github.com/pgbackrest/pgbackrest.git
 ```
-
-If using a RHEL-based system, the CPAN XML parser is required to run `doc.pl`. Instructions for installing Docker and the XML parser can be found in the `README.md` file of the pgBackRest [doc](https://github.com/pgbackrest/pgbackrest/blob/main/doc) directory in the section "The following is a sample RHEL 7 configuration that can be used for building the documentation".
 
 ## Coding
 
@@ -200,7 +198,7 @@ pgbackrest/test/test.py --gen-only
 
 Prior to any submission, the html version of the documentation should also be run and the output checked by viewing the generated html on the local file system under `pgbackrest/doc/output/html`. More details can be found in the pgBackRest [doc/README.md](https://github.com/pgbackrest/pgbackrest/blob/main/doc/README.md) file.
 ```
-pgbackrest/doc/doc.pl --out=html
+pgbackrest/doc/doc.py --out=html
 ```
 > **NOTE:** `ERROR: [028]` regarding cache is invalid is OK; it just means there have been changes and the documentation will be built from scratch. In this case, be patient as the build could take 20 minutes or more depending on your system.
 
@@ -218,7 +216,7 @@ Examples of test runs are provided in the following sections. There are several 
 For more options, run the test or documentation engine with the `--help` option:
 ```
 pgbackrest/test/test.py --help
-pgbackrest/doc/doc.pl --help
+pgbackrest/doc/doc.py --help
 ```
 
 #### Without Docker
@@ -233,13 +231,13 @@ pgbackrest/test/test.py --dry-run
 
     P00   INFO: test command begin 2.60.0dev: --dry-run --no-log-timestamp
     P00   INFO: test begin on aarch64 - log level info
-    P00   INFO: clean autogenerate code
---> P00   INFO: 117 tests selected
+    P00   INFO: autogenerate code
+--> P00   INFO: 127 tests selected
                 
-    P00   INFO: P1-T001/117 - vm=none, module=common, test=error
-           [filtered 114 lines of output]
-    P00   INFO: P1-T116/117 - vm=none, module=performance, test=type
-    P00   INFO: P1-T117/117 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T001/127 - vm=none, module=common, test=error
+           [filtered 124 lines of output]
+    P00   INFO: P1-T126/127 - vm=none, module=performance, test=type
+    P00   INFO: P1-T127/127 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
     P00   INFO: test command end: completed successfully
 ```
@@ -254,7 +252,7 @@ pgbackrest/test/test.py --vm-out --module=common --test=wait
     P00   INFO: test begin on aarch64 - log level info
     P00   INFO: cleanup old data
     P00   INFO: autogenerate code
-    P00   INFO: build for none (/home/vagrant/test/build/none)
+    P00   INFO: clean build for none (/home/vagrant/test/build/none)
     P00   INFO: 1 test selected
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
@@ -351,8 +349,8 @@ pgbackrest/test/test.py --vm-build --vm=u24
 
     P00   INFO: test command begin 2.60.0dev: --vm-build --vm=u24 --no-log-timestamp
     P00   INFO: test begin on aarch64 - log level info
-    P00   INFO: Checking cache ghcr.io/pgbackrest/test:u24-base-aarch64-20260710A-ccbab513fcbd ...
-    P00   INFO: Building ghcr.io/pgbackrest/test:u24-base-aarch64 image (ghcr.io/pgbackrest/test:u24-base-aarch64-20260710A-ccbab513fcbd) ...
+    P00   INFO: Checking cache ghcr.io/pgbackrest/test:u24-base-aarch64-20260710A-496791f6b079 ...
+    P00   INFO: Building ghcr.io/pgbackrest/test:u24-base-aarch64 image (ghcr.io/pgbackrest/test:u24-base-aarch64-20260710A-496791f6b079) ...
     P00   INFO: Building ghcr.io/pgbackrest/test:u24-test-aarch64 image ...
     P00   INFO: Build Complete
     P00   INFO: test command end: completed successfully
@@ -627,7 +625,7 @@ repo-test-type:
 
 When `test.py` is run the `config.auto.h` file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
 
-### help.xml
+### reference.xml
 
 All options must be documented or the system will error during the build. To add an option, find the command section identified by `command id="COMMAND"` section where `COMMAND` is the name of the command (e.g. `expire`) or, if the option is used by more than one command and the definition for the option is the same for all of the commands, the `operation-general title="General Options"` section.
 
@@ -664,16 +662,16 @@ test/bin/none/pgbackrest help backup repo-type
 
 To quickly view the HTML documentation, the `--no-exe` option can be passed to the documentation generator in order to bypass executing the code elements:
 ```
-pgbackrest/doc/doc.pl --out=html --no-exe
+pgbackrest/doc/doc.py --out=html --no-exe
 ```
 
 The generated HTML files will be placed in the `doc/output/html` directory where they can be viewed locally in a browser.
 
-If Docker is installed, it will be used by the documentation generator to execute the code elements while building the documentation, therefore, the `--no-exe` should be omitted, (i.e. `pgbackrest/doc/doc.pl --output=html`). `--no-cache` may be used to force a full build even when no code elements have changed since the last build. `--pre` will reuse the container definitions from the prior build and saves time during development.
+If Docker is installed, it will be used by the documentation generator to execute the code elements while building the documentation, therefore, the `--no-exe` should be omitted, (i.e. `pgbackrest/doc/doc.py --output=html`). `--no-cache` may be used to force a full build even when no code elements have changed since the last build. `--pre` will reuse the container definitions from the prior build and saves time during development.
 
 The containers created for documentation builds can be useful for manually testing or trying out new code or features. The following demonstrates building through just the `quickstart` section of the `user-guide` without encryption.
 ```
-pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache --pre
+pgbackrest/doc/doc.py --out=html --include=user-guide --require=/quickstart --var=encrypt=n --no-cache --pre
 ```
 
 The resulting Docker containers can be listed with `docker ps` and the container can be entered with `docker exec doc-pg-primary bash`. Additionally, the `-u` option can be added for entering the container as a specific user (e.g. `postgres`).

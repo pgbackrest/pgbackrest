@@ -21,7 +21,7 @@ from common.storage import file_write, path_create
 # from the working tree and local is a path rather than a file, so neither is written as a file below.
 FILE_LIST = (
     "README.md",
-    "doc/doc.pl",
+    "doc/release.py",
     "local",
     "src/build/help.auto.c.inc",
     "src/gone.c",
@@ -119,7 +119,7 @@ def test_code_format():
         # The python, which is formatted to the same line length as the rest of the project
         assert_equal(
             command_list[2],
-            "black --line-length=132 %s/test/lib/common/log.py %s/test/test.py" % ((path_repo,) * 2),
+            "black --line-length=132 %s/doc/release.py %s/test/lib/common/log.py %s/test/test.py" % ((path_repo,) * 3),
         )
 
 
@@ -143,7 +143,7 @@ def test_code_format_skip():
 
         # Nothing in a language neither formatter handles
         assert_not_in("README.md", command)
-        assert_not_in("doc.pl", command)
+        assert_not_in("README.md", command)
 
         # A file that git reports but is no longer in the working tree, since there is nothing there to format
         assert_not_in("gone.c", command)
@@ -188,7 +188,7 @@ def test_code_format_permission():
         path_repo = _repo_create(path)
 
         # The files that are meant to be executable are
-        for file in ("doc/doc.pl", "test/test.py"):
+        for file in ("doc/release.py", "test/test.py"):
             os.chmod(os.path.join(path_repo, file), 0o755)
 
         command_list, error, output = _cmd_code_format(Config(path_repo))

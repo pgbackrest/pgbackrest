@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]} Command &amp; Configuration Reference">
     <config title="Configuration Reference">
         <description>The {[project]} Configuration Reference details all configuration options.</description>

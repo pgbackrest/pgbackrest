@@ -35,7 +35,8 @@ from command.test.test import cmd_test  # noqa: E402
 from command.test.unit import cmd_unit  # noqa: E402
 from common.error import EXIT_ERROR, ToolError  # noqa: E402
 from common.log import *  # noqa: E402
-from config.config import cfg_load, project_version  # noqa: E402
+from config.config import cfg_load  # noqa: E402
+from config.project import project_version  # noqa: E402
 
 
 ####################################################################################################################################

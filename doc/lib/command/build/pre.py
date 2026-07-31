@@ -7,8 +7,8 @@ parts of it apply at all.
 Everything here happens before a renderer sees the document, so a renderer only ever deals with content that is meant to be there."""
 
 ####################################################################################################################################
-from command.build.eval import eval_expression
-from command.build.var_store import VarStore
+from common.eval import eval_expression
+from common.var_store import VarStore
 from common.error import ToolError, check
 from common.xml import (
     xml_node_attribute,
@@ -82,7 +82,7 @@ def _pre_recurse(node, bld_hlp, block_map, var_store):
         elif child.tag == "cmd-description":
             _description(child, node, bld_hlp.cmd_list, xml_node_attribute(child, "key", True), "command")
         elif child.tag == "variable":
-            var_store.add(xml_node_attribute(child, "key", True), var_store.replace_str(xml_node_content(child)))
+            var_store.add_node(child)
         elif child.tag == "block-define":
             id = xml_node_attribute(child, "id", True)
 
@@ -106,6 +106,6 @@ def _pre_recurse(node, bld_hlp, block_map, var_store):
 def build_pre(document, bld_hlp, var_store):
     """Preprocess a document and return it."""
 
-    _pre_recurse(document.root, bld_hlp, {}, var_store)
+    _pre_recurse(document, bld_hlp, {}, var_store)
 
     return document

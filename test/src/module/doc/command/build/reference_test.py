@@ -9,6 +9,7 @@ configuration file line in the configuration reference -- so most options here a
 ####################################################################################################################################
 import os
 import tempfile
+import xml.etree.ElementTree as etree
 
 from harness.test import *
 
@@ -246,7 +247,10 @@ def _render():
         bld_cfg = bld_cfg_parse(path)
         bld_hlp = bld_hlp_parse(os.path.join(path, PATH_HELP), bld_cfg, True)
 
-        return reference_command_render(bld_cfg, bld_hlp).render(), reference_configuration_render(bld_cfg, bld_hlp).render()
+        return (
+            etree.tostring(reference_command_render(bld_cfg, bld_hlp), encoding="unicode"),
+            etree.tostring(reference_configuration_render(bld_cfg, bld_hlp), encoding="unicode"),
+        )
 
 
 ####################################################################################################################################
@@ -259,7 +263,7 @@ def test_reference_document():
         (command, "Command Reference", "Command description."),
         (configuration, "Configuration Reference", "Configuration description."),
     ):
-        assert_in('<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE doc SYSTEM "doc.dtd">\n', document)
+        assert_in('<doc title="{[project]}"', document)
         assert_in('<doc title="{[project]}" subtitle="%s" toc="y">' % subtitle, document)
         assert_in("<description>%s</description>" % description, document)
         assert_in('<section id="introduction"><title>Introduction</title><p>', document)

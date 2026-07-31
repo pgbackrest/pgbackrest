@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]}" subtitle="Reliable {[postgres]} Backup &amp; Restore" toc="n">
     <description>{[project]} is a reliable backup and restore solution for {[postgres]} that seamlessly scales up to the largest databases and workloads.</description>
 

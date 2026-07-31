@@ -1,17 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "manifest.dtd">
 <doc>
     <!-- System-wide variables -->
     <variable-list>
         <variable key="project">pgBackRest</variable>
         <variable key="project-tagline">Reliable PostgreSQL Backup &amp; Restore</variable>
-        <variable key="version" eval="y">use pgBackRestDoc::ProjectInfo; PROJECT_VERSION</variable>
-        <variable key="version-stable" eval="y">
-            use pgBackRestDoc::Custom::DocCustomRelease;
-
-            (new pgBackRestDoc::Custom::DocCustomRelease(
-                new pgBackRestDoc::Common::Doc("{[doc-path]}/xml/release.xml")))->currentStableVersion();
-        </variable>
         <variable key="project-exe">pgbackrest</variable>
         <variable key="project-url-root">/</variable>
         <variable key="postgres">PostgreSQL</variable>
@@ -29,54 +21,23 @@
         <!-- Add analytics to the HTML documentation? -->
         <variable key="analytics">n</variable>
 
-        <!-- Release date - static allows for reproducible builds -->
+        <!-- Release date - static allows for reproducible builds. The date itself is set by the build, since it comes from the
+             release list when it is static and from the clock when it is not. -->
         <variable key="release-date-static">n</variable>
-        <variable key="release-date" eval="y">
-            use Time::Local;
-            use pgBackRestDoc::Custom::DocCustomRelease;
-
-            my ($second, $minute , $hour, $mday, $month, $year) = localtime();
-            $year += 1900;
-
-            if ('{[release-date-static]}' eq 'y')
-            {
-                my $strDate = (new pgBackRestDoc::Custom::DocCustomRelease(
-                    new pgBackRestDoc::Common::Doc("{[doc-path]}/xml/release.xml")))->releaseLast()->paramGet('date');
-
-                if ($strDate eq 'XXXX-XX-XX')
-                {
-                    confess &amp;log(ERROR, 'not possible to use static release dates on a dev build');
-                }
-                else
-                {
-                    ($year, $month, $mday) = split(/[\s.\-]+/, $strDate);
-                    $month -= 1;
-                }
-            }
-
-            my @stryMonth = ('January', 'February', 'March', 'April', 'May', 'June',
-                             'July', 'August', 'September', 'October', 'November', 'December');
-
-            $stryMonth[$month] . ' ' . $mday . ', ' . $year;
-        </variable>
 
         <!-- HTML variables -->
-        <variable key="html-footer" eval='y'>
-            'Copyright &amp;copy; 2015' . '-' . substr('{[release-date]}', length('{[release-date]}') - 4) .
-            ', The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>. Updated ' .
-            '{[release-date]}';
-        </variable>
+        <variable key="html-footer">Copyright &amp;copy; 2015-{[release-year]}, The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>. Updated {[release-date]}</variable>
         <!-- <variable key="html-logo">&lt;img src=&quot;{[project-logo]}&quot;&gt;</variable> -->
     </variable-list>
 
+    <!-- A source with no file of its own is built rather than read, from the same declarations the binary is generated from -->
     <source-list>
         <source key="index"/>
         <source key="user-guide-index"/>
-        <source key="user-guide" file="output/xml/user-guide.xml"/>
-        <source key="command" file="output/xml/command.xml"/>
-        <source key="configuration" file="output/xml/configuration.xml"/>
-        <source key="reference" type="custom"/>
-        <source key="release" type="custom"/>
+        <source key="user-guide"/>
+        <source key="command"/>
+        <source key="configuration"/>
+        <source key="release"/>
         <source key="news"/>
         <source key="faq"/>
         <source key="metric"/>
@@ -106,7 +67,7 @@
 
             <!--
                 Building the contributing document has some special requirements because it runs Docker in Docker so the repo path
-                must align on the host and all Docker containers. Run `pgbackrest/doc/doc.pl` from within the home directory of the
+                must align on the host and all Docker containers. Run `pgbackrest/doc/doc.py` from within the home directory of the
                 user that will do the doc build, e.g. `home/vagrant`. If the repo is not located directly in the home directory,
                 e.g. `/home/vagrant/pgbackrest`, then a symlink may be used, e.g. `ln -s /path/to/repo /home/vagrant/pgbackrest`.
             -->

@@ -63,7 +63,7 @@ def test_cli_unit_default():
 
 ####################################################################################################################################
 def test_cli_unit_option():
-    """Every unit option is accepted, which is how the Perl test framework drives a build."""
+    """Every unit option is accepted, which is how a test run drives one test."""
 
     config = cli_parse(
         [

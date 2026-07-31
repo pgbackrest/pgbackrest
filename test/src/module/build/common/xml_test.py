@@ -4,11 +4,14 @@ Mixed content is what most of this is about, so the checks are written as the xm
 where an error in where text ended up actually shows."""
 
 ####################################################################################################################################
+import os
+import tempfile
 import xml.etree.ElementTree as etree
 
 from harness.test import *
 
 from common.error import *
+from common.storage import file_write
 from common.xml import *
 
 
@@ -21,40 +24,51 @@ def _render(node):
 
 ####################################################################################################################################
 def test_xml_document():
-    """A document is a root node and the declarations above it."""
+    """A document is built empty and filled in."""
 
     document = xml_document_new("doc")
-    xml_node_attribute_set(document.root, "title", "Reference")
+    xml_node_attribute_set(document, "title", "Reference")
+    xml_node_add(document, "section", {"id": "intro"})
+    xml_node_add(document, "p")
 
-    assert_equal(document.render(), '<?xml version="1.0" encoding="UTF-8"?>\n<doc title="Reference" />\n')
-
-    # A document type, which is what says where the tags it uses are declared
-    document = xml_document_new("doc", dtd_name="doc", dtd_file="doc.dtd")
-    xml_node_add(document.root, "p")
-
-    assert_equal(
-        document.render(),
-        '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE doc SYSTEM "doc.dtd">\n<doc><p /></doc>\n',
-    )
+    assert_equal(_render(document), '<doc title="Reference"><section id="intro" /><p /></doc>')
 
 
 ####################################################################################################################################
 def test_xml_document_parse():
-    """A document that is read and written again declares the same document type."""
+    """A document type says nothing this tool needs beyond the parts it declares, so one that declares none is read the same way."""
 
-    document = xml_document_parse('<?xml version="1.0"?>\n<!DOCTYPE doc SYSTEM "doc.dtd">\n<doc><p>text</p></doc>\n', "test.xml")
-
-    assert_equal(document.dtd_name, "doc")
-    assert_equal(document.dtd_file, "doc.dtd")
+    assert_equal(_render(xml_document_parse("<doc><p>text</p></doc>", "test.xml")), "<doc><p>text</p></doc>")
     assert_equal(
-        document.render(), '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE doc SYSTEM "doc.dtd">\n<doc><p>text</p></doc>\n'
+        _render(xml_document_parse('<?xml version="1.0"?>\n<!DOCTYPE doc>\n<doc><p>text</p></doc>\n', "test.xml")),
+        "<doc><p>text</p></doc>",
     )
 
-    # A document that declares none
-    document = xml_document_parse("<doc><p>text</p></doc>", "test.xml")
 
-    assert_is_none(document.dtd_name)
-    assert_equal(document.render(), '<?xml version="1.0" encoding="UTF-8"?>\n<doc><p>text</p></doc>\n')
+####################################################################################################################################
+def test_xml_document_parse_part():
+    """A document is assembled from the parts it declares, which are named relative to the document that declares them."""
+
+    content = """<!DOCTYPE doc [
+    <!ENTITY v1 SYSTEM "part/one.xml">
+    <!ENTITY v2 SYSTEM "part/two.xml">
+]>
+<doc>&v1;&v2;</doc>
+"""
+
+    with tempfile.TemporaryDirectory() as path:
+        file_write(os.path.join(path, "part/one.xml"), '<release version="1.0"/>')
+        file_write(os.path.join(path, "part/two.xml"), '<release version="2.0"/>')
+
+        document = xml_document_parse(content, os.path.join(path, "release.xml"))
+
+        assert_equal([xml_node_attribute(node, "version") for node in xml_node_child_list(document, "release")], ["1.0", "2.0"])
+
+        # A part that is declared but never used means the file it names is silently not read, so it is reported instead
+        with assert_raises(ToolError) as error:
+            xml_document_parse(content.replace("&v2;", ""), os.path.join(path, "release.xml"))
+
+        assert_equal(str(error.exception), "part 'v2' is declared but never used")
 
 
 ####################################################################################################################################
@@ -100,7 +114,7 @@ def test_xml_child():
 
     node = xml_parse("<doc><p>one</p><p>two</p><title>three</title></doc>", "test.xml")
 
-    assert_equal(xml_node_content(xml_node_child(node, "p")), "one")
+    assert_equal(xml_node_content(xml_node_child(node, "title")), "three")
     assert_equal([xml_node_content(child) for child in xml_node_child_list(node, "p")], ["one", "two"])
     assert_is_none(xml_node_child(node, "missing"))
 
@@ -109,10 +123,59 @@ def test_xml_child():
 
     assert_equal(str(error.exception), "unable to find child 'missing' in node 'doc'")
 
+    # Asking for the child rather than the list of them means there should only be one, so a second is a mistake in the document
+    with assert_raises(ToolError) as error:
+        xml_node_child(node, "p")
+
+    assert_equal(str(error.exception), "found more than one child 'p' in node 'doc'")
+
     # A node holds all the text under it, whatever markup it is spread across
     node = xml_parse("<p>Run <id>pgbackrest</id> as <b>root</b>.</p>", "test.xml")
 
     assert_equal(xml_node_content(node), "Run pgbackrest as root.")
+
+
+####################################################################################################################################
+def test_xml_field():
+    """A field is a child that holds nothing but text, so it reads as a property of the node that holds it."""
+
+    node = xml_parse(
+        "<execute><exe-cmd>pgbackrest backup</exe-cmd><exe-highlight-type>error</exe-highlight-type></execute>", "test.xml"
+    )
+
+    assert_equal(xml_node_field(node, "exe-cmd"), "pgbackrest backup")
+    assert_is_none(xml_node_field(node, "exe-cmd-extra"))
+
+    with assert_raises(ToolError) as error:
+        xml_node_field(node, "exe-cmd-extra", True)
+
+    assert_equal(str(error.exception), "unable to find child 'exe-cmd-extra' in node 'execute'")
+
+    assert_true(xml_node_field_test(node, "exe-highlight-type", "error"))
+    assert_false(xml_node_field_test(node, "exe-highlight-type", "warning"))
+
+
+####################################################################################################################################
+def test_xml_text():
+    """Text is held by the node itself when the node is text and in a text child when it is not."""
+
+    node = xml_parse("<p>Run it now.</p>", "test.xml")
+
+    assert_true(xml_node_text(node) is node)
+
+    node = xml_parse("<section><text>Run it now.</text><p>More.</p></section>", "test.xml")
+
+    assert_equal(xml_node_content(xml_node_text(node)), "Run it now.")
+
+    # A section that says nothing before its content has no text
+    node = xml_parse("<section><p>More.</p></section>", "test.xml")
+
+    assert_is_none(xml_node_text(node))
+
+    with assert_raises(ToolError) as error:
+        xml_node_text(node, True)
+
+    assert_equal(str(error.exception), "unable to find child 'text' in node 'section'")
 
 
 ####################################################################################################################################
@@ -230,3 +293,56 @@ def test_xml_child_replace():
     xml_node_child_replace(node, xml_node_child(node, "insert"), source)
 
     assert_equal(_render(node), "<p>after</p>")
+
+
+####################################################################################################################################
+def test_xml_normalize():
+    """What a document uses to lay itself out is dropped, since it is how the xml is written rather than what it says."""
+
+    node = xml_parse("<p>\ta\n<b>\tb</b>\tc</p>", "test.xml")
+
+    xml_node_normalize(node)
+
+    assert_equal(_render(node), "<p>a\n<b>b</b>c</p>")
+
+    # A node that holds no text at all has none to drop
+    node = xml_parse("<doc><p/></doc>", "test.xml")
+
+    xml_node_normalize(node)
+
+    assert_equal(_render(node), "<doc><p /></doc>")
+
+
+####################################################################################################################################
+def test_xml_normalize_mixed():
+    """Text that belongs to no tag has nowhere to go in the output, so it is reported rather than dropped."""
+
+    with assert_raises(ToolError) as error:
+        xml_node_normalize(xml_parse("<section><title>Title</title>stray</section>", "test.xml"))
+
+    assert_equal(str(error.exception), "text mixed with markup in node 'section'")
+
+    # A node that is text itself is where interleaving text and markup is the whole point
+    xml_node_normalize(xml_parse("<p>Run <id>pgbackrest</id> now.</p>", "test.xml"))
+    xml_node_normalize(xml_parse("<text>Run <id>pgbackrest</id> now.</text>", "test.xml"))
+
+    # Whitespace between tags is how the document is laid out to be read rather than text of its own
+    xml_node_normalize(xml_parse("<section>\n    <title>Title</title>\n</section>", "test.xml"))
+
+
+####################################################################################################################################
+def test_xml_text_add():
+    """A caller building a document says what a node says without having to know which kind of node it is building."""
+
+    node = xml_parse("<section/>", "test.xml")
+
+    xml_node_content_add(xml_node_text_add(node), "Some text.")
+
+    assert_equal(_render(node), "<section><text>Some text.</text></section>")
+
+    # A tag that is text holds it directly, so there is nothing to add it to
+    node = xml_parse("<title/>", "test.xml")
+
+    xml_node_content_add(xml_node_text_add(node), "Title")
+
+    assert_equal(_render(node), "<title>Title</title>")

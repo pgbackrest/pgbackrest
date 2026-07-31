@@ -87,6 +87,9 @@ SCRIPT_TEST_U24 = """ && \\
 # Rename conflicting group
     sed -i 's/^[^:]*:x:[GROUP_ID]:.*/[GROUP]:x:[GROUP_ID]:/' /etc/group && \\
 
+# Remove conflicting user
+    sed -i '/^[^:]*:x:[USER_ID]:/d' /etc/passwd && \\
+
 # Create test user
     groupadd -f -g[GROUP_ID] [GROUP] && \\
     adduser --uid=[USER_ID] --ingroup=[GROUP] --disabled-password --gecos "" [USER] && \\

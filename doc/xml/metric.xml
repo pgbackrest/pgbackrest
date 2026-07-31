@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "doc.dtd" [<!ENTITY metricCoverageReport SYSTEM "auto/metric-coverage-report.auto.xml">]>
+<!DOCTYPE doc [<!ENTITY metricCoverageReport SYSTEM "auto/metric-coverage-report.auto.xml">]>
 <doc title="{[project]}" subtitle="Metrics">
     <description>{[project]} project metrics.</description>
 
