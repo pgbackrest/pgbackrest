@@ -213,7 +213,7 @@ def _cmd_test(config, exec_result=None, job_fail=None, job_start=True, job_poll=
     try:
         with patch("command.test.test.exec_one", exec_fake), patch("command.test.test.TestJob", _Job):
             with patch("command.test.test.Exec", _Exec), patch("command.test.test.container_build") as container_build:
-                with patch("command.test.test.container_remove") as container_remove:
+                with patch("command.test.test.container_remove") as container_remove, patch("command.test.test.cmd_lint") as lint:
                     with redirect_stdout(output):
                         try:
                             status = cmd_test(config)
@@ -222,6 +222,7 @@ def _cmd_test(config, exec_result=None, job_fail=None, job_start=True, job_poll=
 
                     _cmd_test.container_build = container_build
                     _cmd_test.container_remove = container_remove
+                    _cmd_test.lint = lint
     finally:
         log_init(INFO, True)
 
@@ -436,6 +437,10 @@ def test_test_run():
         assert_equal(started, ["common/error", "common/exec"])
         assert_in("2 tests selected", output)
         assert_in("TESTS COMPLETED SUCCESSFULLY", output)
+
+        # The source is linted once for the run rather than once per test, and it is the copy the tests are built from
+        assert_equal(_cmd_test.lint.call_count, 1)
+        assert_equal(_cmd_test.lint.call_args[0][0], os.path.join(path_test, "repo"))
 
         # A test that fails is started again until it runs out of retries, and then the run has failed
         status, command_list, started, output = _cmd_test(

@@ -1,7 +1,7 @@
 """Test Command.
 
-Selects the tests to run, generates the code they need, builds the pgbackrest binary when a test uses it, and runs the tests. Each
-test runs in a separate process (and its own container when the vm is not none) so several can run at once.
+Selects the tests to run, generates the code they need, lints the source, builds the pgbackrest binary when a test uses it, and runs
+the tests. Each test runs in a separate process (and its own container when the vm is not none) so several can run at once.
 
 This is what a developer runs, which is why it needs no command. The unit and coverage commands are the steps it drives, and
 they are commands of their own because a test runs inside a container where only the repository copy is available."""
@@ -11,6 +11,7 @@ import os
 import re
 import time
 
+from command.lint.lint import cmd_lint
 from command.test.container import container_build, container_remove, container_repo
 from command.test.define import test_def_parse
 from command.test.job import TestJob
@@ -365,6 +366,10 @@ def cmd_test(config):
         return 0
 
     _repo_copy(config)
+
+    # Lint the repository copy, which is what the tests are built and run from. This runs once here rather than in the unit command
+    # so a run does not lint the same source again for every test.
+    cmd_lint(path_repo_copy)
 
     # Determine which tests to run and what they need built
     test_list = []

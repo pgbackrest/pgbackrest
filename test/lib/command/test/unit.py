@@ -11,7 +11,6 @@ import os
 import shutil
 import sys
 
-from command.lint.lint import cmd_lint
 from command.test.build import TestBuild
 from command.test.define import (
     TEST_LANG_PYTHON,
@@ -100,9 +99,6 @@ def _test_python(config, module):
 ####################################################################################################################################
 def cmd_unit(config):
     """Prepare the unit test for a test module."""
-
-    # Linter
-    cmd_lint(config.repo_path)
 
     # Find test
     module = test_def_find(test_def_parse(config.repo_path), config.module)
