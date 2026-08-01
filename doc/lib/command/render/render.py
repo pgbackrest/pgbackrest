@@ -167,7 +167,6 @@ class DocRender:
         self.section_required = None
         self.pre_execute_map = {}
         self.toc = True
-        self.toc_number = True
 
         if key is None:
             return
@@ -193,7 +192,6 @@ class DocRender:
         manifest.page_anchor_map[key] = self._section_anchor_map()
 
         self.toc = xml_node_attribute(self.root, "toc") != "n"
-        self.toc_number = self.toc and xml_node_attribute(self.root, "toc-number") != "n"
 
     ################################################################################################################################
     def tag_set(self, tag, begin, end=""):

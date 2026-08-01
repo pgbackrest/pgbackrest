@@ -325,12 +325,18 @@ class _Release:
         root = xml_document_new("doc")
 
         xml_node_attribute_set(root, "title", xml_node_attribute(self.root, "title", True))
-        xml_node_attribute_set(root, "toc-number", xml_node_attribute(self.root, "toc-number", True))
+
+        # What the page is, which the header shows opposite what the project is
+        subtitle = xml_node_attribute(self.root, "subtitle")
+
+        if subtitle is not None:
+            xml_node_attribute_set(root, "subtitle", subtitle)
 
         # The description is what a search engine shows for the page
         xml_node_content_add(xml_node_add(root, "description"), xml_node_field(self.root, "description", True))
 
-        intro = xml_node_add(root, "section", {"id": "introduction"})
+        # The header is left off the page because the title of the page already introduces it
+        intro = xml_node_add(root, "section", {"id": "introduction", "header": "n"})
         xml_node_content_add(xml_node_text_add(xml_node_add(intro, "title")), "Introduction")
         xml_node_child_add(xml_node_text_add(intro), xml_node_child(xml_node_child(self.root, "intro", True), "text", True))
 

@@ -13,13 +13,13 @@ import shutil
 
 from common.error import ToolError
 from common.log import *
-from common.storage import file_write, path_create, path_list
+from common.storage import file_read, file_write, path_create, path_list
 from common.xml import xml_node_attribute, xml_node_child, xml_node_child_list, xml_node_content, xml_node_field, xml_node_text
 from command.render.execute import CacheInvalidError, DocExecute
 from command.render.manifest import RENDER_HTML
 from command.render.render import SECTION_ANCHOR, SECTION_ANCHOR_NO_INHERIT, child_list
 
-# How deep a page may be sectioned before the numbering runs out of styles
+# How deep a page may be sectioned before the headings run out of styles
 _SECTION_DEPTH_MAX = 3
 
 # What a page says about itself that is the same on every page
@@ -29,6 +29,12 @@ _ANALYTICS = (
     "<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}"
     "gtag('js',new Date());gtag('config','G-VKCRNV73H1');</script>",
 )
+
+# What a block that scrolls sideways says so a reader who cannot use a mouse can still reach what has scrolled out of it
+_SCROLL = 'tabindex="0"'
+
+# What a style or a script says about itself, which the page carries for a browser rather than for a reader
+_COMMENT_EXP = re.compile(r"/\*.*?\*/", re.DOTALL)
 
 # Leading linefeeds and trailing whitespace of a code block, which are how it sits in the xml rather than part of it
 _BLOCK_BEGIN_EXP = re.compile(r"^\n+")
@@ -132,6 +138,10 @@ class HtmlBuilder:
         result += "\n<title>" + self._escape(self.title) + "\n"
         result += "</title>"
         result += '<meta http-equiv="Content-Type" content="text/html;charset=utf-8"></meta>\n'
+
+        # Lay the page out at the width of the device rather than at the width of a desktop scaled down to fit
+        result += '<meta name="viewport" content="width=device-width, initial-scale=1"></meta>\n'
+
         result += '<meta property="og:site_name" content="%s"></meta>\n' % self._escape(self.name)
         result += '<meta property="og:title" content="%s"></meta>\n' % self._escape(self.title)
         result += '<meta property="og:type" content="website"></meta>\n'
@@ -148,6 +158,9 @@ class HtmlBuilder:
             result += '<meta property="og:description" content="%s"></meta>\n' % self._escape(self.description)
 
         result += '<link rel="stylesheet" href="default.css" type="text/css"></link>\n'
+
+        # Deferred because the script reads the page it marks, and nothing on the page waits for it
+        result += '<script src="default.js" defer="defer"></script>\n'
 
         if analytics:
             for line in _ANALYTICS:
@@ -220,14 +233,41 @@ class DocHtmlPage(DocExecute):
         toc_body = None
 
         if self.toc:
-            toc = builder.body.add_new("div", "page-toc")
+            # A page with contents puts them in a column beside the text, which the body says so the style does not have to work
+            # it out from what the page happens to hold
+            builder.body.class_name = "page-sidebar"
+
+            # The contents are held twice over: the outer element is as tall as the text beside it, and the inner one is what
+            # sticks, so it can never be carried past the text into the footer below
+            toc = builder.body.add_new("div", "page-toc").add_new("div", "page-toc-inner")
             toc.add_new("div", "page-toc-header").add_new("div", "page-toc-title", content="Table of Contents")
             toc_body = toc.add_new("div", "page-toc-body")
 
         body = builder.body.add_new("div", "page-body")
 
-        for section_no, section in enumerate(xml_node_child_list(self.root, "section")):
+        # A section set aside goes first whatever the document says, since the text can only run beside what is already there. Which
+        # sections were written after it is kept as a class, so a page too narrow to put it down the side can put it back where the
+        # document had it rather than at the end. The document keeps its own order for every other way it is rendered.
+        aside_list = []
+        before_list = []
+        after_list = []
+
+        for section in xml_node_child_list(self.root, "section"):
+            if xml_node_attribute(section, "html") == "n":
+                continue
+
+            if xml_node_attribute(section, "aside") == "y":
+                aside_list.append(section)
+            elif len(aside_list) > 0:
+                after_list.append(section)
+            else:
+                before_list.append(section)
+
+        for section_no, section in enumerate(aside_list + before_list + after_list):
             element, toc_element = self._section_process(section, None, str(section_no + 1), 1)
+
+            if section in after_list:
+                element.class_name += " section-after-aside"
 
             body.add(element)
 
@@ -256,22 +296,31 @@ class DocHtmlPage(DocExecute):
         ) + xml_node_attribute(section, "id", True)
 
         toc_element = HtmlElement("div", "section%d-toc" % depth)
-        element = HtmlElement("div", "section%d" % depth)
+
+        # A section set aside is put down the side of the page rather than in the run of it, which the style does from the class
+        element = HtmlElement(
+            "div", "section%d%s" % (depth, " section-aside" if xml_node_attribute(section, "aside") == "y" else "")
+        )
 
         element.add_new("a", id=anchor)
 
-        header = element.add_new("div", "section%d-header" % depth)
         title = self.process_text(xml_node_child(section, "title", True))
 
-        if self.toc_number:
-            header.add_new("div", "section%d-number" % depth)
+        # A section can leave its header off the page when the page already says what the header would say. The section keeps its
+        # title for the contents and its anchor for a link to point at.
+        if xml_node_attribute(section, "header") != "n":
+            element.add_new("div", "section%d-header" % depth).add_new("div", "section%d-title" % depth, content=title)
 
-        header.add_new("div", "section%d-title" % depth, content=title)
+        # The contents are not numbered. The numbering says where a section sits on the page, which the contents already show by
+        # the order and the indent of their entries, so beside the text it would only take room from the titles.
 
-        if self.toc_number:
-            toc_element.add_new("div", "section%d-toc-number" % depth)
+        # A section can give the contents a shorter title than it gives the page, since a heading has the width of the text to say
+        # what a section is and the contents beside the text have a column
+        title_toc = xml_node_attribute(section, "toc-title")
 
-        toc_element.add_new("div", "section%d-toc-title" % depth).add_new("a", content=title, ref="#%s" % anchor)
+        toc_element.add_new("div", "section%d-toc-title" % depth).add_new(
+            "a", content=title if title_toc is None else title_toc, ref="#%s" % anchor
+        )
 
         text = xml_node_text(section)
 
@@ -284,10 +333,15 @@ class DocHtmlPage(DocExecute):
         for child in child_list(section):
             log(DEBUG, "    " * (depth + 2) + "process child %s" % child.tag)
 
+            # Something the document keeps for another way of rendering it and this one leaves out. A condition cannot say this
+            # because a condition is evaluated once for the document rather than once for each way it is rendered.
+            if xml_node_attribute(child, "html") == "n":
+                continue
+
             if child.tag == "execute-list":
                 self._execute_list_process(section, child, body, depth)
             elif child.tag == "code-block":
-                body.add_new("pre", "code-block", content=_code_block(child), pre=True)
+                body.add_new("pre", "code-block", content=_code_block(child), pre=True, extra=_SCROLL)
             elif child.tag == "table":
                 self._table_process(child, body)
             elif child.tag == "p":
@@ -358,7 +412,7 @@ class DocHtmlPage(DocExecute):
             if not (show and show_command):
                 continue
 
-            execute_body.add_new("pre", "execute-body-cmd", content=cmd.replace("\n", "\n   "), pre=True)
+            execute_body.add_new("pre", "execute-body-cmd", content=cmd.replace("\n", "\n   "), pre=True, extra=_SCROLL)
 
             highlight = self.manifest.var_store.replace_str(xml_node_field(command, "exe-highlight"))
             found = False
@@ -375,7 +429,7 @@ class DocHtmlPage(DocExecute):
                     highlighted = highlight is not None and re.search(highlight, line) is not None
 
                     if previous is not None and highlighted != previous:
-                        execute_body.add_new("pre", _output_class(previous, expect_error), content=run, pre=True)
+                        execute_body.add_new("pre", _output_class(previous, expect_error), content=run, pre=True, extra=_SCROLL)
                         run = None
 
                     run = line if run is None else run + "\n" + line
@@ -383,7 +437,7 @@ class DocHtmlPage(DocExecute):
                     found = found or highlighted
 
                 # Whatever is left is the last run, since output always holds at least one line
-                execute_body.add_new("pre", _output_class(previous, expect_error), content=run, pre=True)
+                execute_body.add_new("pre", _output_class(previous, expect_error), content=run, pre=True, extra=_SCROLL)
 
             if self.exe and self.is_required(section) and highlight is not None and not found:
                 raise ToolError("unable to find a match for highlight: %s" % highlight)
@@ -474,9 +528,36 @@ class DocHtmlPage(DocExecute):
             "div",
             "config-body-output",
             content=("<No PgBackRest Settings>" if config is None else config.replace("\n", "<br/>\n")),
+            extra=_SCROLL,
         )
 
         return element
+
+
+####################################################################################################################################
+def _resource_render(text, line_comment=False):
+    """A style or a script with what it says about itself taken out.
+
+    Where the lines fall is left alone, so one build of the documentation can still be compared with the next, which is the same
+    reason the pages themselves are not written on one line."""
+
+    result = []
+
+    for line in _COMMENT_EXP.sub("", text).split("\n"):
+        line = line.rstrip()
+
+        # A comment on a line of its own goes with the line. One after code is left, since telling code from a string that holds
+        # what looks like a comment takes a parser rather than a rule, and the scripts here do not write one.
+        if line_comment and line.lstrip().startswith("//"):
+            continue
+
+        # A line that held nothing but a comment is empty now, and a run of empty lines is left as one
+        if line == "" and (len(result) == 0 or result[-1] == ""):
+            continue
+
+        result.append(line)
+
+    return "\n".join(result).strip("\n") + "\n"
 
 
 ####################################################################################################################################
@@ -509,7 +590,12 @@ def html_render(manifest, path_doc, path_out, exe):
     render = manifest.render_get(RENDER_HTML)
     var_store = manifest.var_store
 
-    shutil.copyfile(os.path.join(path_doc, "resource/html/default.css"), os.path.join(path_out, "default.css"))
+    style = file_read(os.path.join(path_doc, "resource/html/default.css"))
+    script = file_read(os.path.join(path_doc, "resource/html/default.js"))
+
+    file_write(os.path.join(path_out, "default.css"), _resource_render(style))
+    file_write(os.path.join(path_out, "default.js"), _resource_render(script, line_comment=True))
+    shutil.copyfile(os.path.join(path_doc, "resource/slogo.svg"), os.path.join(path_out, "slogo.svg"))
 
     favicon = var_store.get("project-favicon")
 

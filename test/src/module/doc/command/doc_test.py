@@ -90,7 +90,7 @@ USER_GUIDE = """<doc title="User Guide">
 </doc>
 """
 
-RELEASE = """<doc title="{[project]} Releases" toc-number="n">
+RELEASE = """<doc title="{[project]} Releases">
     <description>Releases of {[project]}.</description>
 
     <intro>
@@ -172,6 +172,8 @@ def _repo(path):
     file_write(os.path.join(path, "doc/xml/release.xml"), RELEASE)
     file_write(os.path.join(path, "doc/resource/git-history.cache"), HISTORY)
     file_write(os.path.join(path, "doc/resource/html/default.css"), "body { color: black; }\n")
+    file_write(os.path.join(path, "doc/resource/html/default.js"), "// script\n")
+    file_write(os.path.join(path, "doc/resource/slogo.svg"), "<svg></svg>\n")
     file_write(os.path.join(path, "doc/resource/logo.png"), "png")
     file_write(os.path.join(path, "doc/resource/logo.svg"), "svg")
     file_write(os.path.join(path, "doc/resource/sponsor/one.png"), "png")
@@ -304,7 +306,7 @@ def test_doc():
         assert_equal(sorted(path_list(path_out)), ["html", "man", "markdown"])
         assert_equal(
             sorted(path_list(os.path.join(path_out, "html"))),
-            ["default.css", "index.html", "logo.png", "logo.svg", "sponsor", "user-guide.html"],
+            ["default.css", "default.js", "index.html", "logo.png", "logo.svg", "slogo.svg", "sponsor", "user-guide.html"],
         )
 
         # What goes beside the pages is copied rather than rendered

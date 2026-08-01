@@ -1,146 +1,307 @@
-/*******************************************************************************
-Html and body
-*******************************************************************************/
-html
-{
-    font-family: Avenir, Corbel, sans-serif;
-    font-size: 12pt;
-    margin-top: 8px;
-    margin-left: 1%;
-    margin-right: 1%;
-    width: 98%;
-}
+/***********************************************************************************************************************************
+Documentation Style
 
-body
-{
-    background: #f8f8f8;
-    margin: 0px auto;
-    padding: 0px;
-    width: 100%;
-    text-align: justify;
-    font-weight: 400;
-    counter-reset: section1-counter;
-    counter-reset: section1-toc-counter;
-}
+Every color is a token declared once and declared again for a dark page, so light and dark are one design rather than one being a
+patch on the other. A rule that names a color directly steps outside that, since only the tokens are redeclared.
 
-a:link, a:visited, a:hover, a:active
-{
-    text-decoration: underline;
-    color: black;
-    display: inline-block;
-}
+The page header and the menu run the full width of the window while their content stays in the reading column, and the menu sticks
+to the top of the viewport so the way out of a long page is always in reach. A section is marked by a bar down the left edge that
+thins as the level drops, so depth is read down that edge rather than from the size of the type.
+***********************************************************************************************************************************/
 
-@media (min-width: 1000px)
+/***********************************************************************************************************************************
+Tokens
+***********************************************************************************************************************************/
+:root
 {
-    body
-    {
-        width: 1000px;
-    }
+    --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+    /* The page is this wide and centered, until the window is too narrow for it and the gutter falls back to its minimum */
+    --page-width: 69rem;
+    --gutter: max(1.25rem, calc((100% - var(--page-width)) / 2));
+    --radius: 6px;
+    --radius-lg: 10px;
+    --bar-height: 3rem;
+
+    /* The contents beside the text. At the width of the page the column and the gap add up to the space the bar above them leaves
+       over, and it gives the column back as the window narrows so the text keeps a reasonable measure. */
+    --sidebar-width: clamp(13rem, 20vw, 17rem);
+    --sidebar-gap: 1.5rem;
+
+
+    --bg: #ffffff;
+    --bg-surface: #f7f9fb;
+    --bg-surface-2: #eef2f6;
+    --bg-bar: #ffffff;
+    --text: #0f172a;
+    --text-muted: #55637a;
+    --border: #e3e8ef;
+    --border-strong: #cbd4e1;
+
+    --accent: #0d5f9e;
+    --accent-hover: #0a4a7c;
+    --accent-soft: #e8f1f9;
+
+    --code-bg: #1b2330;
+    --code-text: #e2e8f0;
+    --code-border: #2a3441;
+    --code-output-bg: #263141;
+    --code-prompt: #6aa9e0;
+    --code-highlight-bg: #1d6b33;
+    --code-error-bg: #9c3030;
+
+    --note-accent: #2f74b5;
+    --note-bg: #eef5fb;
+    --tip-accent: #2f8f4e;
+    --tip-bg: #edf7f0;
+    --important-accent: #7c56b8;
+    --important-bg: #f3effa;
+    --caution-accent: #b07d16;
+    --caution-bg: #fbf5e6;
+    --warning-accent: #bf3d3d;
+    --warning-bg: #fdeeee;
+
+    --shadow: 0 1px 2px rgba(15, 23, 42, .06);
 }
 
 @media (prefers-color-scheme: dark)
 {
-    body
+    :root
     {
-        color: #e2e2e2;
-        background: #181818;
-        font-weight: 350;
-    }
+        --bg: #0b0f15;
+        --bg-surface: #121923;
+        --bg-surface-2: #18212e;
+        --bg-bar: #0e141c;
+        --text: #e2e8f0;
+        --text-muted: #94a3b8;
+        --border: #1f2937;
+        --border-strong: #334155;
 
-    body a:link, body a:visited, body a:hover, body a:active
-    {
-        text-decoration: underline;
-        color: #e2e2e2;
+        --accent: #64a8ef;
+        --accent-hover: #8fc3f5;
+        --accent-soft: #12233a;
+
+        --code-bg: #060a0f;
+        --code-text: #e2e8f0;
+        --code-border: #1c2531;
+        --code-output-bg: #121a24;
+        --code-prompt: #64a8ef;
+        --code-highlight-bg: #1c5c2c;
+        --code-error-bg: #8c2f2f;
+
+        --note-accent: #64a8ef;
+        --note-bg: #101c2b;
+        --tip-accent: #4fb974;
+        --tip-bg: #0f2216;
+        --important-accent: #a98be0;
+        --important-bg: #1c172c;
+        --caution-accent: #d3a13c;
+        --caution-bg: #241c10;
+        --warning-accent: #e57676;
+        --warning-bg: #291616;
+
+        --shadow: 0 1px 2px rgba(0, 0, 0, .4);
     }
 }
 
-/*******************************************************************************
+/***********************************************************************************************************************************
+Html and body
+***********************************************************************************************************************************/
+html
+{
+    font-family: var(--font-body);
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Jumping from the contents to a section glides rather than cuts, for readers who have not asked for less motion */
+@media (prefers-reduced-motion: no-preference)
+{
+    html
+    {
+        scroll-behavior: smooth;
+    }
+}
+
+body
+{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.7;
+    font-weight: 400;
+    overflow-wrap: break-word;
+}
+
+.page-header, .page-toc, .page-body, .page-footer, .menu-body
+{
+    padding-left: var(--gutter);
+    padding-right: var(--gutter);
+}
+
+a:link, a:visited
+{
+    color: var(--accent);
+    text-decoration: none;
+}
+
+a:hover, a:active
+{
+    color: var(--accent-hover);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.section-body-text a:link, .section-body-text a:visited, .section-intro a:link, .section-intro a:visited,
+li.list-unordered a:link, li.list-unordered a:visited
+{
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--border-strong);
+}
+
+.section-body-text a:hover, .section-intro a:hover, li.list-unordered a:hover
+{
+    text-decoration-color: var(--accent);
+}
+
+/* Leave room under the sticky bar when a link jumps to a section */
+a[id]
+{
+    scroll-margin-top: calc(var(--bar-height) + 1rem);
+}
+
+/***********************************************************************************************************************************
 Header
-*******************************************************************************/
+***********************************************************************************************************************************/
 .page-header
 {
-    width:100%;
-    text-align:center;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .85rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
 }
 
+/* The mark and the name together, drawn as itself rather than masked, so it keeps the colors it was drawn with and the ones it
+   was drawn with for a dark page. Only the height is set, and the ratio below is the viewBox of the file it draws. */
+.page-header:before
+{
+    content: "";
+    flex: none;
+    height: 3.5rem;
+    aspect-ratio: 383.2 / 101.3;
+    background-image: url("slogo.svg");
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: contain;
+}
+
+/* The logo says the name, so the heading is left for what reads the page rather than what looks at it */
 .page-header-title
 {
-    font-size: xx-large;
-    font-weight: bolder;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
+/* What the page is sits opposite what the project is, on the same line and centered against it */
 .page-header-subtitle
 {
-    position: relative;
-    top: -.25em;
-    font-size: large;
-    font-weight: bold;
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 1.25rem;
 }
 
 .page-header-logo
 {
-    float: left;
-    margin-top: 0.3em;
+    display: none;
 }
 
-.page-header-logo > img
-{
-    width: 69px;
-    height: 69px;
-}
-
-/*******************************************************************************
+/***********************************************************************************************************************************
 Menu
-*******************************************************************************/
-/*.page-menu*/
+***********************************************************************************************************************************/
+.page-menu
+{
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-bar);
+    box-shadow: var(--shadow);
+}
 
 .menu-body
 {
-    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0 1.75rem;
+    height: var(--bar-height);
+    overflow-x: auto;
 }
 
 .menu
 {
     white-space: nowrap;
-    display: inline;
-    margin-left: .5em;
-    font-size: 13pt;
 }
 
-.menu:first-of-type
+a.menu-link:link, a.menu-link:visited
 {
-    margin-left: 0px;
-}
-
-.menu:before
-{
-    content: "[";
-}
-
-.menu:after
-{
-    content: "]";
-}
-
-/*.menu-link*/
-
-a.menu-link:link, a.menu-link:visited, a.menu-link:active
-{
+    display: block;
+    color: var(--text-muted);
+    font-size: .9375rem;
+    font-weight: 550;
+    letter-spacing: -.005em;
     text-decoration: none;
 }
 
-a.menu-link:hover
+a.menu-link:hover, a.menu-link:active
 {
-    text-decoration: underline;
+    color: var(--accent);
+    text-decoration: none;
 }
 
-/*******************************************************************************
+/***********************************************************************************************************************************
 Table of Contents
-*******************************************************************************/
+***********************************************************************************************************************************/
+.page-toc
+{
+    margin-top: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.page-toc-header
+{
+    margin-bottom: .75rem;
+    color: var(--text-muted);
+    font-size: .8125rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+}
+
 .page-toc-body
 {
-    margin-top: .25em;
-    margin-bottom: 2em;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    padding: 1.25rem 1.5rem;
+}
+
+.section1-toc
+{
+    margin-top: .9rem;
 }
 
 .section1-toc:first-of-type
@@ -148,246 +309,391 @@ Table of Contents
     margin-top: 0;
 }
 
-.section1-toc
-{
-    margin-top: .5em;
-}
-
-.section1-toc-number
-{
-    display: inline;
-    font-size: 14pt;
-    margin-right: .75em;
-    counter-reset: section2-toc-counter;
-}
-
-.section1-toc-number:before
-{
-    counter-increment: section1-toc-counter;
-    content: counter(section1-toc-counter);
-}
-
 .section1-toc-title
 {
-    display: inline;
-    font-size: 14pt;
+    font-size: 1.0625rem;
+    font-weight: 650;
 }
 
 .section2-toc
 {
-    margin-left: 1.8em;
-}
-
-.section2-toc-number
-{
-    display: inline;
-    margin-right: .75em;
-    counter-reset: section3-toc-counter;
-}
-
-.section2-toc-number:before
-{
-    counter-increment: section2-toc-counter;
-    content: counter(section1-toc-counter) "." counter(section2-toc-counter);
-}
-
-.section2-toc-title
-{
-    display: inline;
+    margin-top: .1rem;
+    margin-left: 1.1rem;
 }
 
 .section3-toc
 {
-    margin-left: 2.3em;
+    margin-left: 1.1rem;
 }
 
-.section3-toc-number
+.page-toc a:link, .page-toc a:visited
 {
-    display: inline;
-    margin-right: .75em;
+    color: var(--text);
+    text-decoration: none;
 }
 
-.section3-toc-number:before
+.page-toc a.toc-active:link, .page-toc a.toc-active:visited
 {
-    counter-increment: section3-toc-counter;
-    content: counter(section1-toc-counter) "." counter(section2-toc-counter) "." counter(section3-toc-counter);
+    color: var(--accent);
+    font-weight: 700;
 }
 
-.section3-toc-title
+.page-toc a.toc-active-parent:link, .page-toc a.toc-active-parent:visited
 {
-    display: inline;
+    color: var(--text);
+    font-weight: 700;
 }
 
-/*******************************************************************************
+.page-toc a:hover, .page-toc a:active
+{
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/***********************************************************************************************************************************
+Contents Beside the Text
+
+Given a window wide enough for a column of its own, the contents leave the flow and sit beside the text, where they stay in view
+while the page scrolls. Narrower than that they stay above the text, which is the only place a small screen has room for them.
+
+The width that decides this is the narrowest one that still leaves the text a readable measure once the contents have taken their
+column, which is well under a full screen: a window at three quarters of a laptop screen is a normal way to read a page.
+***********************************************************************************************************************************/
+@media (min-width: 56rem)
+{
+    body.page-sidebar
+    {
+        display: grid;
+        grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+        column-gap: var(--sidebar-gap);
+        padding-left: var(--gutter);
+        padding-right: var(--gutter);
+    }
+
+    body.page-sidebar > .page-header, body.page-sidebar > .page-menu, body.page-sidebar > .page-footer
+    {
+        grid-column: 1 / -1;
+    }
+
+    /* The bar is drawn across the window, so it reaches back out through the padding the grid is inset by */
+    body.page-sidebar > .page-menu
+    {
+        margin-left: calc(var(--gutter) * -1);
+        margin-right: calc(var(--gutter) * -1);
+    }
+
+    /* The grid holds the page off the edge of the window now, so nothing inside it holds itself off as well */
+    body.page-sidebar > .page-header, body.page-sidebar > .page-toc, body.page-sidebar > .page-body,
+    body.page-sidebar > .page-footer
+    {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    /* The column is as tall as the text beside it, which is what stops what sticks inside it short of the footer, so it ends
+       where the text ends rather than short of it */
+    body.page-sidebar > .page-toc
+    {
+        grid-column: 1;
+        margin-top: 1rem;
+        margin-bottom: 0;
+        font-size: .875rem;
+    }
+
+    /* A column of section links beside the text says what it is by sitting there, so it is not told as well */
+    .page-toc-header
+    {
+        display: none;
+    }
+
+    body.page-sidebar > .page-toc > .page-toc-inner
+    {
+        position: sticky;
+        top: var(--bar-height);
+        max-height: calc(100vh - var(--bar-height));
+        padding-right: .5rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    body.page-sidebar > .page-body
+    {
+        grid-column: 2;
+    }
+
+    /* A column this narrow has no room for a card, so the contents are set apart by the space around them instead */
+    body.page-sidebar .page-toc-body
+    {
+        border: none;
+        border-radius: 0;
+        background: none;
+        padding: 0;
+    }
+
+    .page-toc .section1-toc, .page-toc .section2-toc, .page-toc .section3-toc
+    {
+        line-height: 1.45;
+    }
+
+    .page-toc .section1-toc
+    {
+        margin-top: .7rem;
+    }
+
+    .page-toc .section1-toc:first-of-type
+    {
+        margin-top: 0;
+    }
+
+    .page-toc .section2-toc, .page-toc .section3-toc
+    {
+        margin-top: .25rem;
+        margin-left: .9rem;
+    }
+
+    .page-toc .section1-toc-title
+    {
+        font-size: .9375rem;
+    }
+
+    /* A keyword in a title is set in the same box as one in the text, which is more furniture than a column this narrow can hold */
+    .page-toc .path, .page-toc .br-option, .page-toc .br-setting, .page-toc .pg-option, .page-toc .pg-setting, .page-toc .id,
+    .page-toc .user, .page-toc .file
+    {
+        border: none;
+        background: none;
+        padding: 0;
+        white-space: normal;
+    }
+}
+
+/***********************************************************************************************************************************
 Section
-*******************************************************************************/
+***********************************************************************************************************************************/
 .section1
 {
-    margin-top: 2.5em;
-    counter-reset: section2-counter;
-    counter-increment: section1-counter;
+    margin-top: 1.75rem;
 }
 
 .section1:first-of-type
 {
-    margin-top: 1em;
+    margin-top: 1rem;
 }
 
-.section2, .section3
+/* Each level is marked by a bar that thins as the level drops, so depth is read down the left edge rather than from type size */
+.section1-header
 {
-    margin-top: 1em;
-}
-
-.section2
-{
-    counter-reset: section3-counter;
-    counter-increment: section2-counter;
-}
-
-.section3
-{
-    counter-increment: section3-counter;
-}
-
-.section1-header, .section2-header, .section3-header, .page-toc-header
-{
-    margin-top: .5em;
-    font-weight: 500;
-}
-
-.section1-header, .page-toc-header
-{
-    border-radius: 3px;
-    background-color: #205581;
-    color: #f2f2f2;
-    font-size: 22pt;
-    padding-left: .5em;
-    margin-bottom: .5em;
-}
-
-.section1-number, .section2-number, .section3-number
-{
-    display: inline;
-    margin-right: .5em;
-}
-
-.section1-title, .section2-title, .section3-title
-{
-    display: inline;
-}
-
-.section1-subtitle, .section2-subtitle, .section3-subtitle
-{
-    font-weight: bold;
-    font-size: 16pt;
-    margin-top: .5em;
-}
-
-.section1-subsubtitle, .section2-subsubtitle, .section3-subsubtitle
-{
-    font-style: italic;
-    font-size: 14pt;
-    margin-top: 0px;
-}
-
-.section1-number:before
-{
-    content: counter(section1-counter);
-}
-
-.section1-subtitle
-{
-    font-size: 16pt;
-}
-
-.section1-subsubtitle
-{
-    font-size: 14pt;
+    border-left: 4px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    background: var(--bg-surface-2);
+    padding: .45rem .85rem;
+    margin-bottom: .9rem;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -.022em;
+    line-height: 1.25;
 }
 
 .section2
 {
-    margin-top: 1em;
+    margin-top: 1.25rem;
 }
 
 .section2-header
 {
-    border-bottom: 2px #27689d solid;
-    color: #27689d;
-    font-size: 16pt;
-}
-
-.section2-number:before
-{
-    content: counter(section1-counter) "." counter(section2-counter);
-}
-
-.section2-subtitle, .section2-subtitle
-{
-    font-size: 14pt;
-}
-
-.section2-subsubtitle, .section3-subsubtitle
-{
-    font-size: 12pt;
+    border-left: 3px solid var(--accent);
+    padding: .05rem 0 .05rem .7rem;
+    margin-bottom: .5rem;
+    font-size: 1.3125rem;
+    font-weight: 650;
+    letter-spacing: -.015em;
+    line-height: 1.35;
 }
 
 .section3
 {
-    margin-left: 1em;
-    margin-top: 1em;
-}
-
-.section3:first-of-type
-{
-    border-top: none;
+    margin-top: 1rem;
 }
 
 .section3-header
 {
-    display: inline;
-    font-size: 14pt;
-    color: #27689d;
-    border-bottom: 1px #27689d solid;
+    border-left: 2px solid var(--border-strong);
+    padding: 0 0 0 .7rem;
+    margin-bottom: .35rem;
+    font-size: 1.0625rem;
+    font-weight: 650;
 }
 
-.section3-number:before
+.section1-subtitle, .section2-subtitle, .section3-subtitle
 {
-    content: counter(section1-counter) "." counter(section2-counter) "." counter(section3-counter);
+    margin-top: 1.5rem;
+    font-size: 1.0625rem;
+    font-weight: 650;
+}
+
+.section1-subsubtitle, .section2-subsubtitle, .section3-subsubtitle
+{
+    margin-top: .75rem;
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-style: italic;
 }
 
 .section-intro
 {
-    margin-top: .75em;
+    margin-top: .85rem;
 }
 
-/*.section-body*/
+/***********************************************************************************************************************************
+Section Set Aside
 
-/*******************************************************************************
+A section set aside runs down the side of the page with the text beside it, and the text returns to the full width of the page once
+the aside ends rather than being held narrow the whole way down. Only a float does that, which is why one is worth its trouble
+here: a block with a background of its own runs under a float rather than beside it unless it is told to lay itself out.
+***********************************************************************************************************************************/
+/* Too narrow to sit beside the text, so it goes back to where the document had it. The page is written with the aside first,
+   since that is the only way the text can run beside it, and the order here undoes that: what came before it stays put, then the
+   aside, then what came after. */
+.page-body:has(> .section-aside)
+{
+    display: flex;
+    flex-direction: column;
+}
+
+.section-aside
+{
+    order: 1;
+}
+
+.section-after-aside
+{
+    order: 2;
+}
+
+@media (min-width: 56rem)
+{
+    .section-aside
+    {
+        float: right;
+        width: 17rem;
+        margin-left: 2.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Set to the size of a column rather than the size of the page. Below this width the aside is a section like any other and
+       reads as one, so it keeps the type every other section has. */
+    .section-aside .section1-header
+    {
+        border-left-width: 3px;
+        padding: .3rem .7rem;
+        margin-bottom: .5rem;
+        font-size: 1.1875rem;
+    }
+
+    .section-aside .section-body-text
+    {
+        margin-top: .6rem;
+        font-size: .875rem;
+        line-height: 1.55;
+    }
+
+    /* The text beside the aside starts level with it rather than where a second section would start */
+    .section-aside + .section1
+    {
+        margin-top: 1rem;
+    }
+
+    /* A column this narrow has room for one at a time */
+    .section-aside .sponsor-list
+    {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.25rem;
+        padding: 1.25rem 1rem;
+        margin: .75rem 0;
+    }
+
+    /* These carry a background or a rule, so they lay themselves out beside the aside instead of running under it. A table, a
+       grid, a flex container and a pre that scrolls all do this already and are left alone. */
+    .section1-header, .section2-header, .section3-header, .execute-title, .execute-body, .config-title, .config-body
+    {
+        display: flow-root;
+    }
+
+    /* Back in the run of the page, which also holds its own floats so a tall aside cannot reach past the text into the footer */
+    .page-body:has(> .section-aside)
+    {
+        display: flow-root;
+    }
+}
+
+/***********************************************************************************************************************************
+Body text and lists
+***********************************************************************************************************************************/
+.section-body-text
+{
+    margin-top: 1rem;
+}
+
+.section-body-text:first-of-type
+{
+    margin-top: .85rem;
+}
+
+ul.list-unordered
+{
+    margin: .85rem 0 0 0;
+    padding-left: 1.4rem;
+}
+
+li.list-unordered
+{
+    margin-top: .45rem;
+    padding-left: .25rem;
+}
+
+li.list-unordered::marker
+{
+    color: var(--accent);
+}
+
+/***********************************************************************************************************************************
 Table Elements
-*******************************************************************************/
+***********************************************************************************************************************************/
 .table
 {
-    margin-top: .5em;
-    border-spacing: .5em 0;
+    width: 100%;
+    margin-top: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    border-spacing: 0;
+    overflow: hidden;
+    font-size: .9375rem;
 }
 
 .table-caption
 {
+    margin-bottom: .5rem;
+    color: var(--text-muted);
     text-align: left;
-    font-size: 12pt;
-    font-weight: bold;
-    color: #27689d;
+    font-weight: 650;
 }
 
-/*.table-header-row*/
-
-.table-header-left,
-.table-header-center,
-.table-header-right
+.table-header-row
 {
+    background: var(--bg-surface-2);
+}
+
+.table-header-left, .table-header-center, .table-header-right
+{
+    border-bottom: 1px solid var(--border);
+    padding: .5rem .85rem;
+    color: var(--text-muted);
     white-space: nowrap;
-    border-bottom: 1px black solid;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
 }
 
 .table-header-left
@@ -410,18 +716,19 @@ Table Elements
     width: 100%;
 }
 
-/*.table-row*/
-
-.table-data-left,
-.table-data-center,
-.table-data-right
+.table-row:nth-child(even)
 {
+    background: var(--bg-surface);
+}
+
+.table-data-left, .table-data-center, .table-data-right
+{
+    padding: .4rem .85rem;
     white-space: nowrap;
 }
 
 .table-data-left
 {
-    padding-top: 0px;
     text-align: left;
 }
 
@@ -433,151 +740,221 @@ Table Elements
 .table-data-right
 {
     text-align: right;
+    font-variant-numeric: tabular-nums;
 }
 
-/*******************************************************************************
-Config, Execute, Code Block, Release Elements
-*******************************************************************************/
-.section-body-text
+/***********************************************************************************************************************************
+Config, Execute, Code Block
+***********************************************************************************************************************************/
+.execute, .config, .code-block
 {
-    margin-top: 1em;
+    margin: 1.25rem 0 1.5rem 0;
 }
 
-.section-body-text:first-of-type
+/* Not a flex container: the title mixes text and spans, and flex would make an item of every text run and space them apart */
+.execute-title, .config-title
 {
-    margin-top: .75em;
+    border: 1px solid var(--code-border);
+    border-bottom: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background: var(--code-output-bg);
+    padding: .4rem .9rem;
+    color: var(--code-text);
+    font-size: .8125rem;
 }
 
-.execute,
-.config,
-.code-block
+.execute-title .host, .config-title .host, .config-title .file
 {
-    /*white-space: nowrap;*/
-    margin-left: 1em;
-    margin-right: 1em;
-    margin-top: .8em;
-    margin-bottom: 1em;
+    color: var(--code-prompt);
 }
 
-.execute-title,
-.config-title
+.execute-body, .config-body, .code-block
 {
-    font-size: 11pt;
-    margin-bottom: .125em;
-}
-
-.execute-body,
-.config-body,
-.code-block
-{
-    border-radius: 3px;
-    background-color: #444444;
-    font-family: monospace;
+    border: 1px solid var(--code-border);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    background-color: var(--code-bg);
+    padding: .7rem 0;
+    color: var(--code-text);
+    font-family: var(--font-mono);
+    font-size: .8125rem;
+    line-height: 1.6;
     unicode-bidi: embed;
-    color: #f8f8f8;
-    /*color: white;*/
-    font-size: 10pt;
 }
 
-.execute-body-cmd,
-.execute-body-output, .execute-body-output-highlight,
-.config-body-title,
 .code-block
 {
-    padding-left: .5em;
-    padding-right: .5em;
+    border-radius: var(--radius-lg);
+    padding: .7rem .9rem;
+}
+
+/* A command, its output, and a config file are shown as they were written and scroll sideways when they do not fit, since a line
+   broken to fit is harder to read and copies back as something that was never typed. Each block scrolls on its own so the inset
+   background of an output block stays with the block rather than ending where the panel does. */
+pre, .config-body-output
+{
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--code-border) transparent;
 }
 
 /* Would rather not use pre at all, but Firefox won't copy code samples correctly without it */
 pre
 {
-    margin: 0px;
-    padding: 0px;
-    white-space: pre-wrap;
+    margin: 0;
+    padding: 0;
+    white-space: pre;
+}
+
+/* A config file is written with its line breaks as markup rather than as text, so it is not a pre and only the wrapping is off */
+.config-body-output
+{
+    white-space: nowrap;
+}
+
+.execute-body-cmd
+{
+    padding: .1rem .9rem;
 }
 
 .execute-body-cmd:before
 {
     content: "$ ";
+    color: var(--code-prompt);
 }
 
-.execute-body-cmd:first-of-type, .execute-body-output,
-.config-body-title, .config-body-output,
-.code-block,
-.execute-body-output-highlight, .execute-body-output-highlight-error
+.execute-body-output, .execute-body-output-highlight, .execute-body-output-highlight-error, .config-body-output
 {
-    padding-top: .25em;
-}
-
-.execute-body-cmd, .execute-body-output,
-.config-body-title, .config-body-output,
-.code-block,
-.execute-body-output-highlight, .execute-body-output-highlight-error
-{
-    padding-bottom: .25em;
-}
-
-.execute-body-output,
-.config-body-output,
-.code-block
-{
-    border-radius: 3px;
-    background-color: #606060;
+    margin: .4rem .9rem;
+    border-radius: var(--radius);
+    background-color: var(--code-output-bg);
+    padding: .35rem .7rem;
 }
 
 .execute-body-output-highlight
 {
-    border-radius: 3px;
-    background-color: #1e7b1e;
+    background-color: var(--code-highlight-bg);
 }
 
 .execute-body-output-highlight-error
 {
-    border-radius: 3px;
-    background-color: #a32929;
+    background-color: var(--code-error-bg);
 }
 
-.execute-body-output, .execute-body-output-highlight, .execute-body-output-highlight-error,
-.config-body-output
+/***********************************************************************************************************************************
+Admonition
+***********************************************************************************************************************************/
+.admonition
 {
-    padding-left: 1.75em;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    border: 1px solid var(--note-accent);
+    border-left-width: 4px;
+    border-radius: var(--radius);
+    background-color: var(--note-bg);
+    padding: .75rem 1rem;
+    margin: 1.25rem 0;
 }
 
-/*.code-block*/
-
-/*.section-body-execute-output*/
-
-/*******************************************************************************
-Lists
-*******************************************************************************/
-ul.list-unordered
+.admonition > .note, .admonition > .warning, .admonition > .caution, .admonition > .important, .admonition > .tip
 {
-    margin-top: .5em;
+    float: none;
+    color: var(--note-accent);
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    line-height: 1.4;
 }
 
-li.list-unordered
+.admonition > .note-text, .admonition > .warning-text, .admonition > .caution-text, .admonition > .important-text,
+.admonition > .tip-text
 {
-    margin-top: .5em;
+    overflow: visible;
+    min-width: 0;
 }
 
-/*******************************************************************************
+.admonition:has(> .tip)
+{
+    border-color: var(--tip-accent);
+    background-color: var(--tip-bg);
+}
+
+.admonition:has(> .tip) > .tip
+{
+    color: var(--tip-accent);
+}
+
+.admonition:has(> .important)
+{
+    border-color: var(--important-accent);
+    background-color: var(--important-bg);
+}
+
+.admonition:has(> .important) > .important
+{
+    color: var(--important-accent);
+}
+
+.admonition:has(> .caution)
+{
+    border-color: var(--caution-accent);
+    background-color: var(--caution-bg);
+}
+
+.admonition:has(> .caution) > .caution
+{
+    color: var(--caution-accent);
+}
+
+.admonition:has(> .warning)
+{
+    border-color: var(--warning-accent);
+    background-color: var(--warning-bg);
+}
+
+.admonition:has(> .warning) > .warning
+{
+    color: var(--warning-accent);
+}
+
+/***********************************************************************************************************************************
 Sponsor
-*******************************************************************************/
+***********************************************************************************************************************************/
 .sponsor-list
 {
     display: grid;
-    grid-template-columns: repeat(3, max-content);
-    justify-content: center;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
     justify-items: center;
     align-items: center;
-    gap: .75em 2.5em;
-    margin-top: 1.5em;
-    margin-bottom: 1.5em;
+    gap: 1.75rem 2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    padding: 2rem 1.5rem;
+    margin: 1.75rem 0;
 }
 
 .sponsor
 {
     text-align: center;
+}
+
+.sponsor a
+{
+    display: inline-block;
+    opacity: .78;
+    transition: opacity .15s ease;
+}
+
+.sponsor a:hover
+{
+    opacity: 1;
+}
+
+.sponsor-img
+{
+    max-width: 100%;
+    height: auto;
 }
 
 .sponsor-img-dark
@@ -598,53 +975,95 @@ Sponsor
     }
 }
 
-
-/*******************************************************************************
-Admonition
-*******************************************************************************/
-.admonition
-{
-    padding-left: 20px;
-    font-style: italic;
-    margin: 10px 0px;
-}
-
-.admonition>.note, .admonition>.warning, .admonition>.caution, .admonition>.important, .admonition>.tip
-{
-    font-weight: bold;
-    float: left;
-    padding-right: 10px;
-}
-
-.admonition>.note-text, .admonition>.warning-text, .admonition>.caution-text, .admonition>.important-text, .admonition>.tip-text
-{
-    overflow: hidden;
-}
-
-/*******************************************************************************
+/***********************************************************************************************************************************
 Keywords
-*******************************************************************************/
+***********************************************************************************************************************************/
 .backrest, .cmd, .postgres, .host, .proper
 {
-    font-weight: 500;
+    font-weight: 600;
 }
 
-.path, .br-option, .br-setting, .pg-option, .pg-setting, .id, .user, .file, .path
+.path, .br-option, .br-setting, .pg-option, .pg-setting, .id, .user, .file
 {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background-color: var(--bg-surface-2);
+    padding: .05em .35em;
+    font-family: var(--font-mono);
+    font-size: .8125em;
     unicode-bidi: embed;
-    font-family: monospace;
+}
+
+.path, .br-option, .br-setting, .pg-option, .pg-setting, .user, .file
+{
     white-space: nowrap;
 }
 
-/*******************************************************************************
+.execute-title .path, .execute-title .file, .execute-title .id, .execute-title .br-option,
+.config-title .path, .config-title .file, .config-title .id, .config-title .br-option
+{
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 1em;
+}
+
+/***********************************************************************************************************************************
 Footer
-*******************************************************************************/
+***********************************************************************************************************************************/
 .page-footer
 {
-    border-top: 2px #cccccc solid;
-    margin-top: 1em;
-    padding-top: .25em;
-    font-size: x-small;
-    white-space: nowrap;
+    border-top: 1px solid var(--border);
+    margin-top: 1.5rem;
+    padding-top: .75rem;
+    padding-bottom: 1.125rem;
+    color: var(--text-muted);
     text-align: center;
+    font-size: .8125rem;
+}
+
+/***********************************************************************************************************************************
+Narrow screens
+***********************************************************************************************************************************/
+@media (max-width: 40rem)
+{
+    body
+    {
+        font-size: .9375rem;
+        line-height: 1.65;
+    }
+
+    .page-header
+    {
+        padding-top: 1.5rem;
+        padding-bottom: 1rem;
+    }
+
+    .page-header-title
+    {
+        font-size: 1.625rem;
+    }
+
+    /* Too narrow to sit opposite the name, so it goes back under it */
+    .page-header-subtitle
+    {
+        flex-basis: 100%;
+        margin-left: 0;
+    }
+
+    .section2-header
+    {
+        font-size: 1.1875rem;
+    }
+
+    .page-toc-body
+    {
+        padding: 1rem;
+    }
+
+    .table
+    {
+        display: block;
+        overflow-x: auto;
+    }
 }

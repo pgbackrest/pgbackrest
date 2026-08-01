@@ -139,7 +139,7 @@ def _doc(release_list=RELEASE_LIST, contributor=CONTRIBUTOR):
     """The release document, which is the list of releases and who worked on them."""
 
     return (
-        '<doc title="Releases" toc-number="n"><description>What changed.</description>'
+        '<doc title="Releases" subtitle="What Changed"><description>What changed.</description>'
         "<intro><text><p>About the releases.</p></text></intro>"
         "<release-list>%s</release-list>%s</doc>" % (release_list, contributor)
     )
@@ -193,9 +193,12 @@ def test_release_render():
 
     assert_equal(_section_list(root), ["introduction", "development", "current", "supported", "unsupported"])
 
+    # The introduction says what the page is, which the title of the page already says, so it has no header of its own
+    assert_equal(xml_node_attribute(xml_node_child_list(root, "section")[0], "header"), "n")
+
     # The document says what it is and what a search engine should show for it
     assert_equal(xml_node_attribute(root, "title"), "Releases")
-    assert_equal(xml_node_attribute(root, "toc-number"), "n")
+    assert_equal(xml_node_attribute(root, "subtitle"), "What Changed")
     assert_equal(xml_node_content(xml_node_child(root, "description")), "What changed.")
     assert_in("About the releases.", xml_node_content(xml_node_child_list(root, "section")[0]))
 

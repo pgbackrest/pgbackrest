@@ -3,7 +3,8 @@
     <description>{[project]} Frequently Asked Questions (FAQ).</description>
 
     <!-- ======================================================================================================================= -->
-    <section id="introduction">
+    <!-- The header is left off the page because the title of the page already introduces it -->
+    <section id="introduction" header="n">
         <title>Introduction</title>
 
         <p>Frequently Asked Questions are intended to provide details for specific questions that may or may not be covered in the User Guide, Configuration, or Command reference. If you are unable to find details for your specific issue here, remember that the <backrest/> <link url="https://github.com/pgbackrest/pgbackrest/issues">Issues List in GitHub</link> is also a valuable resource.</p>

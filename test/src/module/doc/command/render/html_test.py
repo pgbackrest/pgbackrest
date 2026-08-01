@@ -49,6 +49,8 @@ USER_GUIDE = """<doc title="User Guide" subtitle="Reliable">
 
         <p>A paragraph with <id>markup</id>.</p>
 
+        <p html="n">Only in the markdown.</p>
+
         <admonition type="note">Careful.</admonition>
 
         <list>
@@ -98,7 +100,7 @@ USER_GUIDE = """<doc title="User Guide" subtitle="Reliable">
             <postgres-config-option key="archive_mode">on</postgres-config-option>
         </postgres-config>
 
-        <section id="shown">
+        <section id="shown" toc-title="Shown">
             <title>Shown In Contents</title>
         </section>
 
@@ -111,11 +113,30 @@ USER_GUIDE = """<doc title="User Guide" subtitle="Reliable">
         </section>
     </section>
 
+    <section id="side" aside="y">
+        <title>Aside</title>
+
+        <p>Down the side of the page.</p>
+    </section>
+
     <section id="quiet" toc="n">
         <title>Quiet</title>
 
         <p>Not in the contents.</p>
     </section>
+
+    <section id="bare" header="n">
+        <title>Bare</title>
+
+        <p>No header on the page.</p>
+    </section>
+
+    <section id="elsewhere" html="n">
+        <title>Elsewhere</title>
+
+        <p>Only in the markdown.</p>
+    </section>
+
 </doc>
 """
 
@@ -134,7 +155,7 @@ SIMPLE_GUIDE = """<doc title="User Guide">
 </doc>
 """
 
-INDEX = """<doc title="Index">
+INDEX = """<doc title="Index" toc="n">
     <description>The index.</description>
 
     <section id="about">
@@ -174,6 +195,8 @@ def _doc_path(path, manifest=MANIFEST, user_guide=USER_GUIDE):
     file_write(os.path.join(path, "xml/index.xml"), INDEX)
     file_write(os.path.join(path, "xml/user-guide.xml"), user_guide)
     file_write(os.path.join(path, "resource/html/default.css"), "body\n{\n    color: black; /* black */\n}\n")
+    file_write(os.path.join(path, "resource/html/default.js"), "// what it is\nvar page = 1;\n")
+    file_write(os.path.join(path, "resource/slogo.svg"), "<svg></svg>\n")
 
     return path
 
@@ -222,6 +245,8 @@ def test_builder():
     assert_in('<meta property="og:image" content="{[backrest-url-base]}/logo.png"></meta>', result)
     assert_in('<meta name="description" content="How to use it."></meta>', result)
     assert_in('<link rel="stylesheet" href="default.css" type="text/css"></link>', result)
+    assert_in('<script src="default.js" defer="defer"></script>', result)
+    assert_in('<meta name="viewport" content="width=device-width, initial-scale=1"></meta>', result)
     assert_in("googletagmanager.com", result)
 
     # What cannot appear in an attribute is escaped
@@ -243,15 +268,35 @@ def test_page():
         assert_in('<a class="menu-link" href="/">\nHome\n', page)
         assert_not_in(">\nGuide\n<", page)
 
-        # A section is numbered and anchored so a link can point at it
+        # A section is anchored so a link can point at it
         assert_in('<a id="start"></a>', page)
         assert_in('<a id="start/inner"></a>', page)
-        assert_in('<div class="section1-number">', page)
         assert_in('<div class="page-toc-title">\nTable of Contents\n', page)
+
+        # A page with contents says so, since that is what puts them in a column beside the text
+        assert_in('<body class="page-sidebar">', page)
+
+        # A section can give the contents a shorter title than it gives the page
+        assert_in('<div class="section2-title">\nShown In Contents\n', page)
+        assert_in('<a href="#start/shown">\nShown\n', page)
 
         # A section that says it is not in the contents is still on the page
         assert_in('<a id="quiet"></a>', page)
         assert_not_in('href="#quiet"', page)
+
+        # A section set aside says so and goes first, since the text can only run beside what is already there
+        assert_in('<div class="section1 section-aside"><a id="side"></a>', page)
+        assert_true(page.index('id="side"') < page.index('id="start"'))
+
+        # What the document wrote after it says so, which is what puts the aside back in place when it cannot go down the side
+        assert_in('<div class="section1 section-after-aside"><a id="quiet"></a>', page)
+        assert_not_in('section-after-aside"><a id="start"', page)
+
+        # A section that says it has no header keeps its anchor, its content, and its place in the contents
+        assert_in('<a id="bare"></a>', page)
+        assert_not_in('<div class="section1-title">\nBare\n', page)
+        assert_in("No header on the page.", page)
+        assert_in('href="#bare"', page)
 
         assert_in('<div class="page-footer">\nFooter.\n', page)
 
@@ -265,13 +310,17 @@ def test_page_content():
 
         assert_in('<div class="section-intro">\nAn introduction.\n', page)
         assert_in('A paragraph with <span class="id">markup</span>.', page)
+
+        # Something the document keeps for another way of rendering it is left out of this one, whether it is part of a section
+        assert_not_in("Only in the markdown.", page)
+        assert_not_in('id="elsewhere"', page)
         assert_in('<div class="note">\nNOTE:\n', page)
         assert_in('<li class="list-unordered">\nOne\n', page)
         assert_in('<div class="section2-subtitle">\nA Subtitle\n', page)
         assert_in('<div class="section2-subsubtitle">\nA Subsubtitle\n', page)
 
         # A code block is shown at the indent it was written at rather than at the indent it sits at in the xml
-        assert_in('<pre class="code-block">echo one\n  echo two</pre>', page)
+        assert_in('<pre class="code-block" tabindex="0">echo one\n  echo two</pre>', page)
 
         # A table says what it is and how each column is lined up
         assert_in('<caption class="table-caption">\nTable 1: Options\n', page)
@@ -288,15 +337,15 @@ def test_page_execute():
         page = _page(_doc_path(path))
 
         assert_in('<span class="host">repo</span> <b>&#x21d2;</b> Run it', page)
-        assert_in('<pre class="execute-body-cmd">pgbackrest info</pre>', page)
-        assert_in('<pre class="execute-body-output-highlight">Output suppressed for testing</pre>', page)
+        assert_in('<pre class="execute-body-cmd" tabindex="0">pgbackrest info</pre>', page)
+        assert_in('<pre class="execute-body-output-highlight" tabindex="0">Output suppressed for testing</pre>', page)
 
         # A configuration is shown as the file it leaves behind
         assert_in('<span class="host">repo</span>:<span class="file">/etc/pgbackrest.conf</span>', page)
-        assert_in('<div class="config-body-output">\nConfig suppressed for testing\n', page)
+        assert_in('<div class="config-body-output" tabindex="0">\nConfig suppressed for testing\n', page)
 
         # Laid out content is separated from what is around it, and two of them in a row are not separated again
-        assert_in('\n<pre class="execute-body-cmd">', page)
+        assert_in('\n<pre class="execute-body-cmd" tabindex="0">', page)
         assert_in("</pre>\n<pre", page)
 
 
@@ -313,6 +362,10 @@ def test_page_sponsor():
 
         # A sponsor with a logo of its own for a dark page
         assert_in('<img class="sponsor-img sponsor-img-dark" src="sponsor/two-dark.png" alt="Two" width="50">', page)
+
+        # A page with no contents has no column beside the text to put them in
+        assert_in("<body>", page)
+        assert_not_in("page-sidebar", page)
 
 
 ####################################################################################################################################
@@ -334,14 +387,14 @@ def test_page_error():
 
 ####################################################################################################################################
 def test_page_no_toc():
-    """A document that says it has no table of contents has no numbers on its sections either."""
+    """A document that says it has no table of contents has none, and no column beside the text to put one in."""
 
     with tempfile.TemporaryDirectory() as path:
         guide = "<doc title='G' toc='n'><description>D</description><section id='a'><title>A</title></section></doc>"
         page = _page(_doc_path(path, user_guide=guide))
 
         assert_not_in("page-toc", page)
-        assert_not_in("section1-number", page)
+        assert_not_in("page-sidebar", page)
 
 
 ####################################################################################################################################
@@ -365,9 +418,15 @@ def test_html_render():
         html_render(manifest, path, path_out, False)
 
         assert_equal(
-            sorted(path_list(path_out)), ["default.css", "index.html", "logo.png", "logo.svg", "sponsor", "user-guide.html"]
+            sorted(path_list(path_out)),
+            ["default.css", "default.js", "index.html", "logo.png", "logo.svg", "slogo.svg", "sponsor", "user-guide.html"],
         )
         assert_equal(path_list(os.path.join(path_out, "sponsor")), ["one.png"])
+
+        # The style and the script carry no comments, since the page carries them for a browser rather than for a reader, but
+        # where their lines fall is left alone so one build can still be compared with the next
+        assert_equal(file_read(os.path.join(path_out, "default.css")), "body\n{\n    color: black;\n}\n")
+        assert_equal(file_read(os.path.join(path_out, "default.js")), "var page = 1;\n")
 
 
 ####################################################################################################################################
@@ -502,7 +561,7 @@ def test_page_other():
         assert_not_in("not shown", page)
 
         # Output the documentation is pointing at as an error looks different from output it is pointing at
-        assert_in('<pre class="execute-body-output-highlight-error">', page)
+        assert_in('<pre class="execute-body-output-highlight-error" tabindex="0">', page)
 
         # A configuration that is not shown
         assert_not_in("config-title", page)
@@ -549,7 +608,7 @@ def test_html_render_plain():
         os.makedirs(path_out)
         html_render(manifest, path, path_out, False)
 
-        assert_equal(sorted(path_list(path_out)), ["default.css", "index.html", "user-guide.html"])
+        assert_equal(sorted(path_list(path_out)), ["default.css", "default.js", "index.html", "slogo.svg", "user-guide.html"])
 
 
 ####################################################################################################################################
@@ -598,8 +657,8 @@ def test_page_output_run():
             render = manifest.render_get(RENDER_HTML)
             page = DocHtmlPage(manifest, "user-guide", render.menu, True).process()
 
-            assert_in('<pre class="execute-body-output">before</pre>', page)
-            assert_in('<pre class="execute-body-output-highlight">suppressed here</pre>', page)
-            assert_in('<pre class="execute-body-output">after</pre>', page)
+            assert_in('<pre class="execute-body-output" tabindex="0">before</pre>', page)
+            assert_in('<pre class="execute-body-output-highlight" tabindex="0">suppressed here</pre>', page)
+            assert_in('<pre class="execute-body-output" tabindex="0">after</pre>', page)
     finally:
         execute_module.DocExecute._execute_run = execute_run_real

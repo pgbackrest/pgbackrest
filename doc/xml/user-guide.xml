@@ -916,7 +916,7 @@
     </block-define>
 
     <!-- ======================================================================================================================= -->
-    <section id="introduction">
+    <section id="introduction" header="n">
         <title>Introduction</title>
 
         <!-- Create Azure server first to allow it time to boot before being used -->

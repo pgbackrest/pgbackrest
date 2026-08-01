@@ -434,12 +434,10 @@ def test_anchor_map():
 
 ####################################################################################################################################
 def test_toc():
-    """A document says whether it has a table of contents and whether the entries in it are numbered."""
+    """A document says whether it has a table of contents."""
 
     assert_true(_render("html", "<doc><section id='a'><title>A</title></section></doc>").toc)
-    assert_true(_render("html", "<doc><section id='a'><title>A</title></section></doc>").toc_number)
     assert_false(_render("html", "<doc toc='n'><section id='a'><title>A</title></section></doc>").toc)
-    assert_false(_render("html", "<doc toc-number='n'><section id='a'><title>A</title></section></doc>").toc_number)
 
 
 ####################################################################################################################################

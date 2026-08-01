@@ -266,7 +266,7 @@ def test_reference_document():
         assert_in('<doc title="{[project]}"', document)
         assert_in('<doc title="{[project]}" subtitle="%s" toc="y">' % subtitle, document)
         assert_in("<description>%s</description>" % description, document)
-        assert_in('<section id="introduction"><title>Introduction</title><p>', document)
+        assert_in('<section id="introduction" header="n"><title>Introduction</title><p>', document)
 
 
 ####################################################################################################################################
@@ -281,7 +281,8 @@ def test_reference_configuration():
 
     # An option is titled with its name and described with the help it was written with
     assert_in(
-        '<section id="option-process-max"><title>Process Max Option (<id>--process-max</id>)</title>'
+        '<section id="option-process-max" toc-title="Process Max">'
+        "<title>Process Max (<id>--process-max</id>)</title>"
         "<p>Summary.</p><p>Description of process-max.</p>",
         configuration,
     )
@@ -303,7 +304,10 @@ def test_reference_command():
 
     command, _ = _render()
 
-    assert_in('<section id="command-backup"><title>Backup Command (<id>backup</id>)</title><p>Backup description.</p>', command)
+    assert_in(
+        '<section id="command-backup" toc-title="Backup"><title>Backup (<id>backup</id>)</title>' "<p>Backup description.</p>",
+        command,
+    )
 
     # A command a reader has no use for is not here
     assert_not_in("command-expire", command)

@@ -76,10 +76,12 @@ jobs:
           doc/html/command.html
           doc/html/configuration.html
           doc/html/default.css
+          doc/html/default.js
           doc/html/faq.html
           doc/html/index.html
           doc/html/logo.svg
           doc/html/release.html
+          doc/html/slogo.svg
           doc/html/user-guide-index.html
           doc/html/user-guide-rhel.html
           doc/html/user-guide.html

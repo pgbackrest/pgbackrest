@@ -116,7 +116,11 @@ def _option_render(xml_section, opt_cmd_cfg, opt_cfg, opt_hlp):
     xml_title = xml_node_add(xml_option, "title")
 
     xml_node_attribute_set(xml_option, "id", "option-%s" % opt_hlp.name)
-    xml_node_content_add(xml_title, "%s Option (" % opt_hlp.title)
+
+    # The heading names the option, since that is what a reader scanning the page is looking for. The contents beside the text
+    # have a column rather than a line, so they get the title alone.
+    xml_node_attribute_set(xml_option, "toc-title", opt_hlp.title)
+    xml_node_content_add(xml_title, "%s (" % opt_hlp.title)
     xml_node_content_add(xml_node_add(xml_title, "id"), "--%s" % opt_hlp.name)
     xml_node_content_add(xml_title, ")")
     xml_node_child_add(xml_node_add(xml_option, "p"), opt_hlp.summary)
@@ -173,6 +177,7 @@ def _document_new(title, description, introduction):
     xml_intro = xml_node_add(result, "section")
 
     xml_node_attribute_set(xml_intro, "id", "introduction")
+    xml_node_attribute_set(xml_intro, "header", "n")
     xml_node_content_add(xml_node_add(xml_intro, "title"), "Introduction")
     xml_node_child_add(xml_intro, introduction)
 
@@ -279,7 +284,8 @@ def reference_command_render(bld_cfg, bld_hlp):
         xml_title = xml_node_add(xml_section, "title")
 
         xml_node_attribute_set(xml_section, "id", "command-%s" % cmd_hlp.name)
-        xml_node_content_add(xml_title, "%s Command (" % cmd_hlp.title)
+        xml_node_attribute_set(xml_section, "toc-title", cmd_hlp.title)
+        xml_node_content_add(xml_title, "%s (" % cmd_hlp.title)
         xml_node_content_add(xml_node_add(xml_title, "id"), cmd_hlp.name)
         xml_node_content_add(xml_title, ")")
         xml_node_child_add(xml_section, cmd_hlp.description)
