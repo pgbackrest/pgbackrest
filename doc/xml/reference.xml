@@ -2231,7 +2231,7 @@
         </operation-general>
 
         <command-list title="Commands">
-            <command id="annotate" name="Annotate">
+            <command id="annotate" name="Annotate Backup">
                 <summary>Add or modify backup annotation.</summary>
 
                 <text>
@@ -2327,7 +2327,7 @@
                 </text>
             </command>
 
-            <command id="check" name="Check">
+            <command id="check" name="Check Configuration">
                 <summary>Check the configuration.</summary>
 
                 <text>
@@ -2351,7 +2351,7 @@
                 </option-list>
             </command>
 
-            <command id="expire" name="Expire">
+            <command id="expire" name="Expire Backups">
                 <summary>Expire backups that exceed retention.</summary>
 
                 <text>
@@ -2601,7 +2601,7 @@
                 </option-list>
             </command>
 
-            <command id="restore" name="Restore">
+            <command id="restore" name="Restore Backup">
                 <summary>Restore a database cluster.</summary>
 
                 <text>
@@ -2711,7 +2711,7 @@
                 </option-list>
             </command>
 
-            <command id="info" name="Info">
+            <command id="info" name="Repository Info">
                 <summary>Retrieve information about backups.</summary>
 
                 <text>
@@ -2829,7 +2829,7 @@
                 </option-list>
             </command>
 
-            <command id="server" name="Server">
+            <command id="server" name="TLS Server">
                 <summary><backrest/> server.</summary>
 
                 <text>
@@ -2837,7 +2837,7 @@
                 </text>
             </command>
 
-            <command id="server-ping" name="Server Ping">
+            <command id="server-ping" name="TLS Server Ping">
                 <summary>Ping <backrest/> server.</summary>
 
                 <text>
@@ -2847,7 +2847,7 @@
                 </text>
             </command>
 
-            <command id="start" name="Start">
+            <command id="start" name="Stanza Start">
                 <summary>Allow <backrest/> processes to run.</summary>
 
                 <text>
@@ -2855,7 +2855,7 @@
                 </text>
             </command>
 
-            <command id="stop" name="Stop">
+            <command id="stop" name="Stanza Stop">
                 <summary>Stop <backrest/> processes from running.</summary>
 
                 <text>
@@ -2877,7 +2877,7 @@
                 </option-list>
             </command>
 
-            <command id="verify" name="Verify">
+            <command id="verify" name="Repository Verify">
                 <summary>Verify contents of a repository.</summary>
 
                 <text>
