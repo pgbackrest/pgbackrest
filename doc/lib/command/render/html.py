@@ -443,6 +443,11 @@ class DocHtmlPage(DocExecute):
                 if xml_node_field(command, "exe-highlight-type") == "error":
                     expect_error = True
 
+                # What a command wrote is one block that scrolls, with the lines held in a block of their own inside it, so that a
+                # line that is marked is marked across the width of the widest line rather than across the width of the part of it
+                # that is in view, and so that scrolling to the end of a line does not leave the lines around it behind
+                line_list = execute_body.add_new("div", "execute-body-output", extra=_SCROLL).add_new("div", "execute-line-list")
+
                 # Runs of lines are grouped by whether they are highlighted, so a run is one element rather than one per line
                 previous = None
                 run = None
@@ -451,7 +456,7 @@ class DocHtmlPage(DocExecute):
                     highlighted = highlight is not None and re.search(highlight, line) is not None
 
                     if previous is not None and highlighted != previous:
-                        execute_body.add_new("pre", _output_class(previous, expect_error), content=run, pre=True, extra=_SCROLL)
+                        line_list.add_new("pre", _output_class(previous, expect_error), content=run, pre=True)
                         run = None
 
                     run = line if run is None else run + "\n" + line
@@ -459,7 +464,7 @@ class DocHtmlPage(DocExecute):
                     found = found or highlighted
 
                 # Whatever is left is the last run, since output always holds at least one line
-                execute_body.add_new("pre", _output_class(previous, expect_error), content=run, pre=True, extra=_SCROLL)
+                line_list.add_new("pre", _output_class(previous, expect_error), content=run, pre=True)
 
             if self.exe and self.is_required(section) and highlight is not None and not found:
                 raise ToolError("unable to find a match for highlight: %s" % highlight)
@@ -603,9 +608,9 @@ def _output_class(highlighted, expect_error):
     """What a run of output is called, which is what decides how it looks."""
 
     if not highlighted:
-        return "execute-body-output"
+        return "execute-line"
 
-    return "execute-body-output-highlight" + ("-error" if expect_error else "")
+    return "execute-line-highlight" + ("-error" if expect_error else "")
 
 
 ####################################################################################################################################

@@ -193,7 +193,7 @@ with the window, so it is asked again whenever the window changes.
 (function()
 {
     // Captured once, since this is what removes the attribute the selector matches and the list must not shrink as it goes
-    var blockList = document.querySelectorAll("pre[tabindex], .config-body-output[tabindex]");
+    var blockList = document.querySelectorAll("pre[tabindex], .execute-body-output[tabindex], .config-body-output[tabindex]");
 
     if (blockList.length === 0)
         return;

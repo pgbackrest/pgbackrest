@@ -854,9 +854,9 @@ Config, Execute, Code Block
 }
 
 /* A command, its output, and a config file are shown as they were written and scroll sideways when they do not fit, since a line
-   broken to fit is harder to read and copies back as something that was never typed. Each block scrolls on its own so the inset
-   background of an output block stays with the block rather than ending where the panel does. */
-pre, .config-body-output
+   broken to fit is harder to read and copies back as something that was never typed. What a command wrote and what is in a config
+   file each scroll as one block rather than a line at a time, so that a line stays with the lines it is read against. */
+pre, .execute-body-output, .config-body-output
 {
     overflow-x: auto;
     scrollbar-width: thin;
@@ -882,7 +882,7 @@ pre
     color: var(--code-prompt);
 }
 
-.execute-body-output, .execute-body-output-highlight, .execute-body-output-highlight-error, .config-body-output
+.execute-body-output, .config-body-output
 {
     margin: .4rem .9rem;
     border-radius: var(--radius);
@@ -890,12 +890,33 @@ pre
     padding: .35rem .7rem;
 }
 
-.execute-body-output-highlight
+/* The lines of a block are as wide as the widest of them, so that a line that is marked is marked across the whole block rather
+   than across the part of it that is in view, and as wide as the block when every line fits in it */
+.execute-line-list, .config-line-list
+{
+    width: max-content;
+    min-width: 100%;
+}
+
+.execute-line, .execute-line-highlight, .execute-line-highlight-error, .config-line, .config-line-add, .config-line-remove
+{
+    /* A line scrolls with the block rather than on its own, since the block is read down the lines and a line that carried its own
+       scroll would take the reader across one line at a time */
+    overflow-x: visible;
+
+    /* The line reaches into the padding of the block so that a line that is marked is marked to the edge of it */
+    margin: 0 -.7rem;
+    padding: 0 .7rem;
+}
+
+/* What a command wrote is marked where it is what the documentation is pointing at, and marked as an error where the command was
+   expected to fail */
+.execute-line-highlight
 {
     background-color: var(--code-highlight-bg);
 }
 
-.execute-body-output-highlight-error
+.execute-line-highlight-error
 {
     background-color: var(--code-error-bg);
 }
@@ -903,26 +924,6 @@ pre
 /* A config file is shown in full every time it changes, so each line says what the change did to it, marked the way the output of a
    command is marked. The mark is written by the style rather than into the line so that what a reader copies out of the file is the
    file. */
-.config-line-list
-{
-    /* As wide as the widest line, so that a line the change marks is marked across the whole file rather than across the part of it
-       that is in view, and as wide as the block when every line fits in it */
-    width: max-content;
-    min-width: 100%;
-}
-
-.config-line, .config-line-add, .config-line-remove
-{
-    /* A line scrolls with the file rather than on its own, since a file is read down the lines and a line that carried its own
-       scroll would take the reader across one line at a time */
-    overflow-x: visible;
-
-    /* The line reaches into the padding of the block so that the mark has the room a margin gives it rather than sitting against
-       the edge of the block */
-    margin: 0 -.7rem;
-    padding: 0 .7rem;
-}
-
 .config-line:before
 {
     content: "  ";

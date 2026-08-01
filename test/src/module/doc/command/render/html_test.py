@@ -346,15 +346,18 @@ def test_page_execute():
 
         assert_in('<span class="host">repo</span> <b>&#x21d2;</b> Run it', page)
         assert_in('<pre class="execute-body-cmd" tabindex="0">pgbackrest info</pre>', page)
-        assert_in('<pre class="execute-body-output-highlight" tabindex="0">Output suppressed for testing</pre>', page)
+        assert_in(
+            '<div class="execute-body-output" tabindex="0"><div class="execute-line-list">\n'
+            '<pre class="execute-line-highlight">Output suppressed for testing</pre>',
+            page,
+        )
 
         # A configuration is shown as the file it leaves behind, a line at a time so each line can say what the change did to it
         assert_in('<span class="host">repo</span>:<span class="file">/etc/pgbackrest.conf</span>', page)
         assert_in('<div class="config-line-list">\n<pre class="config-line">Config suppressed for testing</pre>', page)
 
-        # Laid out content is separated from what is around it, and two of them in a row are not separated again
+        # Laid out content is separated from what is around it
         assert_in('\n<pre class="execute-body-cmd" tabindex="0">', page)
-        assert_in("</pre>\n<pre", page)
 
 
 ####################################################################################################################################
@@ -575,7 +578,7 @@ def test_page_other():
         assert_not_in("not shown", page)
 
         # Output the documentation is pointing at as an error looks different from output it is pointing at
-        assert_in('<pre class="execute-body-output-highlight-error" tabindex="0">', page)
+        assert_in('<pre class="execute-line-highlight-error">', page)
 
         # A configuration that is not shown
         assert_not_in("config-title", page)
@@ -690,8 +693,11 @@ def test_page_output_run():
             render = manifest.render_get(RENDER_HTML)
             page = DocHtmlPage(manifest, "user-guide", render.menu, True).process()
 
-            assert_in('<pre class="execute-body-output" tabindex="0">before</pre>', page)
-            assert_in('<pre class="execute-body-output-highlight" tabindex="0">suppressed here</pre>', page)
-            assert_in('<pre class="execute-body-output" tabindex="0">after</pre>', page)
+            assert_in('<pre class="execute-line">before</pre>', page)
+            assert_in('<pre class="execute-line-highlight">suppressed here</pre>', page)
+            assert_in('<pre class="execute-line">after</pre>', page)
+
+            # Laid out content that follows laid out content is not separated from it again
+            assert_in("</pre>\n<pre", page)
     finally:
         execute_module.DocExecute._execute_run = execute_run_real
