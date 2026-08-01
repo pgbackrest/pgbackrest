@@ -3,8 +3,9 @@
 The declarations are written out here rather than read from the repository, since what needs testing is how an option is rendered rather
 than what the project happens to declare. The rendered documents are checked as fragments of the xml that comes out.
 
-An option appears in both references and is rendered differently in each -- an example is a command line in the command reference and a
-configuration file line in the configuration reference -- so most options here are checked in both."""
+An option that can be set in the configuration file is described in the configuration reference and linked to from the command
+reference, so what is checked there is the link. An option that can only be given on the command line is described in the command
+reference, where an example is a command line rather than the configuration file line the configuration reference shows."""
 
 ####################################################################################################################################
 import os
@@ -216,9 +217,9 @@ HELP = """<doc title="Reference">
     ),
     "".join(
         (
-            _option("delta", "Delta", example=["y"]),
+            _option("delta", "Delta", example=["y", "n"]),
             _option("force", "Force"),
-            _option("stanza", "Stanza"),
+            _option("stanza", "Stanza", example=["main"]),
             _option("target", "Target"),
         )
     ),
@@ -323,12 +324,41 @@ def test_reference_command():
     # An option a command does not take is not under it, nor is one the command marks internal, nor one no user can give
     assert_not_in("option-delta</", command.split('id="command-backup"')[1].split('id="command-help"')[0])
 
+    # An option that can be set in the configuration file is a link to where the configuration reference describes it, named the way
+    # a heading names it
+    assert_in(
+        '<section id="category-repository" toc="n"><title>Repository Options</title><list><list-item>'
+        '<link page="configuration" section="/section-repository/option-repo-path">Repo Path (<id>--repo-path</id>)</link>'
+        "</list-item>",
+        command,
+    )
+
+    # An option that can only be given on the command line is a link to the general options of this document, wherever the command
+    # groups it
+    assert_in('<link section="/section-general/option-stanza">Stanza (<id>--stanza</id>)</link>', command)
+
+
+####################################################################################################################################
+def test_reference_command_general():
+    """The command reference describes the options that can only be given on the command line before it gets to the commands."""
+
+    command, _ = _render()
+
+    # The options are described in one place rather than under every command that takes them, and are left out of the contents since
+    # the contents list the commands
+    assert_in('<section id="section-general"><title>General Options</title><section id="option-delta"', command)
+    assert_in('<section id="option-stanza" toc-title="Stanza" toc="n"><title>Stanza (<id>--stanza</id>)</title>', command)
+
+    # An option that can be set in the configuration file is described in the configuration reference instead, as is one a reader
+    # has no use for or should not be told about
+    for name in ("option-process-max", "option-force", "option-repo-cipher-pass"):
+        assert_not_in(name, command.split('id="section-general"')[1].split('id="command-backup"')[0])
+
     # An example is a command line, with the options given one after another
-    assert_in("example: --compress-type=lz4</code-block>", command)
+    assert_in("example: --stanza=main</code-block>", command)
 
     # A boolean is given by naming it, so turning it off is naming the negation of it
-    assert_in("example: --no-online</code-block>", command)
-    assert_in("example: --delta", command)
+    assert_in("example: --delta --no-delta</code-block>", command)
 
 
 ####################################################################################################################################

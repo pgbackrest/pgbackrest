@@ -398,7 +398,9 @@ class DocRender:
         """Render a link, which is where a document says what it points at rather than how to get there."""
 
         url = xml_node_attribute(node, "url")
-        value = node.text or ""
+
+        # What the link says is text and markup, since a link to an option names it the way the rest of the documentation does
+        value = self.process_text(node)
 
         if url is None:
             page = self.variable_replace(xml_node_attribute(node, "page"))

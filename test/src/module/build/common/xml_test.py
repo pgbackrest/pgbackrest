@@ -322,9 +322,11 @@ def test_xml_normalize_mixed():
 
     assert_equal(str(error.exception), "text mixed with markup in node 'section'")
 
-    # A node that is text itself is where interleaving text and markup is the whole point
+    # A node that is text itself is where interleaving text and markup is the whole point, as is a link, which says what it points at
+    # the way the text around it would say it
     xml_node_normalize(xml_parse("<p>Run <id>pgbackrest</id> now.</p>", "test.xml"))
     xml_node_normalize(xml_parse("<text>Run <id>pgbackrest</id> now.</text>", "test.xml"))
+    xml_node_normalize(xml_parse("<link>Repo Path (<id>--repo-path</id>)</link>", "test.xml"))
 
     # Whitespace between tags is how the document is laid out to be read rather than text of its own
     xml_node_normalize(xml_parse("<section>\n    <title>Title</title>\n</section>", "test.xml"))

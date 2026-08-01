@@ -4,8 +4,12 @@ Renders the reference documents from the same declarations the binary is generat
 rather than a second description of it that has to be kept in step.
 
 The configuration reference documents every option that can be set in the configuration file, grouped by the section it belongs to. The
-command reference documents every command and, under each, the options that command takes, grouped by what they are about. An option
-therefore appears in both, described once and rendered twice."""
+command reference documents every command and, under each, the options that command takes, grouped by what they are about.
+
+An option is described once and listed wherever it is taken, since describing it again under every command that takes it makes the
+command reference too long to read. An option that is about the command itself is described with the command, one that can only be
+given on the command line is described at the top of the command reference, and the rest are described in the configuration
+reference."""
 
 ####################################################################################################################################
 from common.xml import xml_document_new, xml_node_add, xml_node_attribute_set, xml_node_child_add, xml_node_content_add
@@ -33,6 +37,13 @@ def _find(item_list, name):
             return item
 
     return None
+
+
+####################################################################################################################################
+def _section_title(section):
+    """The heading a group of options is listed under."""
+
+    return "%s Options" % (section[:1].upper() + section[1:])
 
 
 ####################################################################################################################################
@@ -109,8 +120,8 @@ def _example_block(block_list, opt_cfg, opt_hlp, command):
 
 
 ####################################################################################################################################
-def _option_render(xml_section, opt_cmd_cfg, opt_cfg, opt_hlp):
-    """Render one option, either as a command takes it or as the configuration file sets it."""
+def _option_render(xml_section, opt_cmd_cfg, opt_cfg, opt_hlp, command):
+    """Render one option, either as a command takes it or as the configuration file sets it, and return the section it is in."""
 
     xml_option = xml_node_add(xml_section, "section")
     xml_title = xml_node_add(xml_option, "title")
@@ -142,7 +153,7 @@ def _option_render(xml_section, opt_cmd_cfg, opt_cfg, opt_hlp):
         _allow_range_block(block_list, opt_cfg)
 
     if opt_hlp.example_list is not None:
-        _example_block(block_list, opt_cfg, opt_hlp, opt_cmd_cfg is not None)
+        _example_block(block_list, opt_cfg, opt_hlp, command)
 
     if len(block_list) > 0:
         xml_node_content_add(xml_node_add(xml_option, "code-block"), "\n".join(block_list).strip())
@@ -160,6 +171,31 @@ def _option_render(xml_section, opt_cmd_cfg, opt_cfg, opt_hlp):
                 xml_node_add(xml_option, "p"),
                 "Deprecated Name%s:%s" % ("s" if len(opt_cfg.deprecate_list) > 1 else "", deprecate),
             )
+
+    return xml_option
+
+
+####################################################################################################################################
+def _option_link_render(xml_list, opt_cfg, opt_hlp):
+    """Render an option as a link to where it is described.
+
+    The link names the option the way a heading does, so a reader finds the same name at the other end of it."""
+
+    xml_item = xml_node_add(xml_list, "list-item")
+    xml_link = xml_node_add(xml_item, "link")
+
+    # An option that can only be given on the command line is described in the general options of this document and the rest are
+    # described in the configuration reference
+    section = _SECTION_DEFAULT
+
+    if opt_cfg.section != SECTION_COMMAND_LINE:
+        section = opt_hlp.section or _SECTION_DEFAULT
+        xml_node_attribute_set(xml_link, "page", "configuration")
+
+    xml_node_attribute_set(xml_link, "section", "/section-%s/option-%s" % (section, opt_hlp.name))
+    xml_node_content_add(xml_link, "%s (" % opt_hlp.title)
+    xml_node_content_add(xml_node_add(xml_link, "id"), "--%s" % opt_hlp.name)
+    xml_node_content_add(xml_link, ")")
 
 
 ####################################################################################################################################
@@ -208,7 +244,7 @@ def reference_configuration_render(bld_cfg, bld_hlp):
             if opt_cfg.section == SECTION_COMMAND_LINE or opt_cfg.internal:
                 continue
 
-            _option_render(xml_section, None, opt_cfg, opt_hlp)
+            _option_render(xml_section, None, opt_cfg, opt_hlp, False)
 
     return result
 
@@ -268,10 +304,35 @@ def _command_option_list(cmd_cfg, cmd_hlp, bld_cfg, bld_hlp):
 
 
 ####################################################################################################################################
+def _command_general_render(result, bld_cfg, bld_hlp):
+    """Render the options that can only be given on the command line.
+
+    These are described here rather than with a command because they are not about any one command, and the configuration reference
+    does not document them since they cannot be set in the configuration file."""
+
+    xml_section = xml_node_add(result, "section")
+
+    xml_node_attribute_set(xml_section, "id", "section-%s" % _SECTION_DEFAULT)
+    xml_node_content_add(xml_node_add(xml_section, "title"), _section_title(_SECTION_DEFAULT))
+
+    for opt_hlp in bld_hlp.opt_list:
+        opt_cfg = _find(bld_cfg.opt_list, opt_hlp.name)
+
+        # Skip an option that can be set in the configuration file, and one a reader has no use for or should not be told about
+        if opt_cfg.section != SECTION_COMMAND_LINE or opt_cfg.internal or opt_cfg.secure:
+            continue
+
+        # The contents list the commands rather than the options each of them takes, so these options are left out of it as well
+        xml_node_attribute_set(_option_render(xml_section, None, opt_cfg, opt_hlp, True), "toc", "n")
+
+
+####################################################################################################################################
 def reference_command_render(bld_cfg, bld_hlp):
     """Render the command reference, i.e. every command and the options it takes."""
 
     result = _document_new(bld_hlp.cmd_title, bld_hlp.cmd_description, bld_hlp.cmd_introduction)
+
+    _command_general_render(result, bld_cfg, bld_hlp)
 
     for cmd_hlp in bld_hlp.cmd_list:
         cmd_cfg = _find(bld_cfg.cmd_list, cmd_hlp.name)
@@ -297,10 +358,19 @@ def reference_command_render(bld_cfg, bld_hlp):
 
             xml_node_attribute_set(xml_category, "id", "category-%s" % section)
             xml_node_attribute_set(xml_category, "toc", "n")
-            xml_node_content_add(xml_node_add(xml_category, "title"), "%s Options" % (section[:1].upper() + section[1:]))
+            xml_node_content_add(xml_node_add(xml_category, "title"), _section_title(section))
+
+            # An option about the command itself is described here since what it means depends on the command. Anything else is a
+            # link to where it is described.
+            xml_list = None if section == _SECTION_COMMAND else xml_node_add(xml_category, "list")
 
             for opt in opt_list:
-                if opt.section == section:
-                    _option_render(xml_category, opt.opt_cmd_cfg, opt.opt_cfg, opt.opt_hlp)
+                if opt.section != section:
+                    continue
+
+                if xml_list is None:
+                    _option_render(xml_category, opt.opt_cmd_cfg, opt.opt_cfg, opt.opt_hlp, True)
+                else:
+                    _option_link_render(xml_list, opt.opt_cfg, opt.opt_hlp)
 
     return result

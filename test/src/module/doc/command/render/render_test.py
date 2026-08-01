@@ -450,6 +450,12 @@ def test_link_url():
     assert_equal(DocRender("markdown").process_tag(_doc("<link url='https://x'>X</link>")), "[X](https://x)")
     assert_equal(DocRender("text").process_tag(_doc("<link url='https://x'>X</link>")), "X")
 
+    # What a link says is text and markup, so a link to an option names it the way the rest of the documentation does
+    assert_equal(
+        render.process_tag(_doc("<link url='https://x'>X (<id>--x</id>)</link>")),
+        '<a href="https://x">X (<span class="id">--x</span>)</a>',
+    )
+
 
 ####################################################################################################################################
 def test_link_page():

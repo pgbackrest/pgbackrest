@@ -2115,7 +2115,7 @@
         <description>The {[project]} Command Reference details all commands and options.</description>
 
         <text>
-            <p>Commands are used to execute the various <backrest/> functions. Here the command options are listed exhaustively, that is, each option applicable to a command is listed with that command even if it applies to one or more other commands. This includes all the options that may also be configured in <file>pgbackrest.conf</file>.</p>
+            <p>Commands are used to execute the various <backrest/> functions. Every option applicable to a command is listed with that command, even if it applies to one or more other commands. An option that can only be set on the command-line is described in <link section="/section-general">General Options</link> below and an option that may also be configured in <file>pgbackrest.conf</file> is described in the <link page="configuration">Configuration Reference</link>.</p>
 
             <p>Non-boolean options configured in <file>pgbackrest.conf</file> can be reset to default on the command-line by using the <id>reset-</id> prefix. This feature may be used to restore a backup directly on a repository host. Normally, <backrest/> will error because it can see that the database host is remote and restores cannot be done remotely. By adding <br-option>--reset-pg1-host</br-option> on the command-line, <backrest/> will ignore the remote database host and restore locally. It may be necessary to pass a new <br-option>--pg1-path</br-option> to force the restore to happen in a specific path, i.e. not the path used on the database host.</p>
 

@@ -152,8 +152,9 @@ def xml_node_field_test(node, name, value):
 # Tags that are text rather than tags that hold some, which is what decides where the text of a node is found
 _TAG_IS_TEXT = ("admonition", "list-item", "p", "summary", "table-cell", "table-column", "title")
 
-# Tags that may hold text and markup at once, which is every tag that is text plus the tag that holds nothing else
-_TAG_MIXED = _TAG_IS_TEXT + ("text",)
+# Tags that may hold text and markup at once, which is every tag that is text plus the tag that holds nothing else and a link, which
+# says what it points at the way the text around it would say it
+_TAG_MIXED = _TAG_IS_TEXT + ("link", "text")
 
 # What a document uses to lay itself out but does not mean. Carriage returns are not here because the parser has already turned them
 # into linefeeds by the time a document is walked.
