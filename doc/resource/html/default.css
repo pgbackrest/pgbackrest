@@ -527,9 +527,9 @@ Section
     font-weight: 650;
 }
 
+/* The date sits right under the title of the release so the two read as one block rather than as separate lines */
 .section1-subsubtitle, .section2-subsubtitle, .section3-subsubtitle
 {
-    margin-top: .75rem;
     color: var(--text-muted);
     font-size: 1rem;
     font-style: italic;

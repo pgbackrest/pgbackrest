@@ -326,6 +326,10 @@ class _Release:
 
         xml_node_attribute_set(root, "title", xml_node_attribute(self.root, "title", True))
 
+        # The releases are listed at the top of the page already, so contents would only repeat them and take space the notes can
+        # make better use of
+        xml_node_attribute_set(root, "toc", "n")
+
         # What the page is, which the header shows opposite what the project is
         subtitle = xml_node_attribute(self.root, "subtitle")
 
@@ -355,8 +359,6 @@ class _Release:
             commit_list, remaining_list, commit_map, check = self._commit_list(version, release_idx, release_all)
 
             # Where the release is listed, which is by how interesting it still is rather than by when it happened
-            toc = True
-
             if dev:
                 if dev_total > 0:
                     raise ToolError("only one development release is allowed")
@@ -374,19 +376,14 @@ class _Release:
                     xml_node_content_add(xml_node_text_add(xml_node_add(section, "title")), "Stable Releases")
 
                 stable_total += 1
-                toc = False
             else:
                 if unsupported_total == 0:
                     section = xml_node_add(root, "section", {"id": "unsupported"})
                     xml_node_content_add(xml_node_text_add(xml_node_add(section, "title")), "Pre-Stable Releases")
 
                 unsupported_total += 1
-                toc = False
 
             release_section = xml_node_add(section, "section", {"id": version})
-
-            if not toc:
-                xml_node_attribute_set(release_section, "toc", "n")
 
             # A release keeps its own anchor whichever group it ends up in, so a link to it does not break when it moves
             xml_node_attribute_set(release_section, SECTION_ANCHOR, SECTION_ANCHOR_NO_INHERIT)

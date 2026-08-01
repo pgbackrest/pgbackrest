@@ -196,9 +196,11 @@ def test_release_render():
     # The introduction says what the page is, which the title of the page already says, so it has no header of its own
     assert_equal(xml_node_attribute(xml_node_child_list(root, "section")[0], "header"), "n")
 
-    # The document says what it is and what a search engine should show for it
+    # The document says what it is and what a search engine should show for it, and leaves out the contents since the releases are
+    # listed at the top of the page anyway
     assert_equal(xml_node_attribute(root, "title"), "Releases")
     assert_equal(xml_node_attribute(root, "subtitle"), "What Changed")
+    assert_equal(xml_node_attribute(root, "toc"), "n")
     assert_equal(xml_node_content(xml_node_child(root, "description")), "What changed.")
     assert_in("About the releases.", xml_node_content(xml_node_child_list(root, "section")[0]))
 
@@ -211,10 +213,9 @@ def test_release_render():
     assert_equal(xml_node_content(xml_node_child(release, "title")), "v2.03dev Notes")
     assert_equal(xml_node_content(xml_node_child(release, "subsubtitle")), "No Release Date Set")
 
-    # A release that is out says when it came out, and a release that is only listed for the record is not in the contents
+    # A release that is out says when it came out
     supported = xml_node_child_list(root, "section")[3]
 
-    assert_equal(xml_node_attribute(xml_node_child_list(supported, "section")[0], "toc"), "n")
     assert_equal(
         xml_node_content(xml_node_child(xml_node_child_list(supported, "section")[0], "subsubtitle")), "Released January 2, 2026"
     )
