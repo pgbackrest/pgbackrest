@@ -31,7 +31,7 @@ MANIFEST = """<doc>
     </source-list>
 
     <render-list>
-        <render type="html" pretty="y">
+        <render type="html">
             <render-source key="index" menu="Home"/>
             <render-source key="user-guide" menu="Guide"/>
         </render>
@@ -192,38 +192,28 @@ def _page(path, key="user-guide", config=None):
     manifest = _manifest(path, config)
     render = manifest.render_get(RENDER_HTML)
 
-    return manifest.var_store.replace_str(
-        DocHtmlPage(
-            manifest,
-            key,
-            render.menu,
-            False,
-            render.compact,
-            file_read(os.path.join(path, "resource/html/default.css")),
-            render.pretty,
-        ).process()
-    )
+    return manifest.var_store.replace_str(DocHtmlPage(manifest, key, render.menu, False).process())
 
 
 ####################################################################################################################################
 def test_element():
     """A page is built as a tree of elements so the code that decides what it holds never deals with markup."""
 
-    builder = HtmlBuilder("Name", "Title", None, None, None, True, True, None)
+    builder = HtmlBuilder("Name", "Title", None, None, None)
     body = builder.body
 
     body.add_new("div", "one", content="Content")
     body.add(HtmlElement("div", "two"))
 
     assert_in('<div class="one">\nContent\n', builder.render())
-    assert_in('<div class="two">\n', builder.render())
+    assert_in('<div class="two"></div>', builder.render())
 
 
 ####################################################################################################################################
 def test_builder():
-    """A page says what it is, and a page that is not being written to be read says it without the layout."""
+    """A page says what it is."""
 
-    builder = HtmlBuilder("pgBackRest", "Guide", "logo.svg", "logo.png", "How to use it.", False, False, None)
+    builder = HtmlBuilder("pgBackRest", "Guide & More", "logo.svg", "logo.png", "How to use it.")
 
     result = builder.render(analytics=True)
 
@@ -234,18 +224,8 @@ def test_builder():
     assert_in('<link rel="stylesheet" href="default.css" type="text/css"></link>', result)
     assert_in("googletagmanager.com", result)
 
-    # A page that carries its own style has the whitespace and the comments taken out of it
-    builder = HtmlBuilder("pgBackRest", "Guide & More", None, None, None, False, True, "body\n{\n    color: black; /* c */\n}\n")
-
-    result = builder.render()
-
-    assert_in('<style type="text/css">\nbody{color: black; }\n', result)
-
     # What cannot appear in an attribute is escaped
     assert_in("Guide &amp; More", result)
-
-    # A page that is compact says less about itself, since nothing is going to read it but a browser
-    assert_not_in("og:site_name", result)
 
 
 ####################################################################################################################################
@@ -314,6 +294,10 @@ def test_page_execute():
         # A configuration is shown as the file it leaves behind
         assert_in('<span class="host">repo</span>:<span class="file">/etc/pgbackrest.conf</span>', page)
         assert_in('<div class="config-body-output">\nConfig suppressed for testing\n', page)
+
+        # Laid out content is separated from what is around it, and two of them in a row are not separated again
+        assert_in('\n<pre class="execute-body-cmd">', page)
+        assert_in("</pre>\n<pre", page)
 
 
 ####################################################################################################################################
@@ -431,23 +415,20 @@ def test_page_highlight_missing():
             render = manifest.render_get(RENDER_HTML)
 
             with assert_raises(ToolError) as raised:
-                DocHtmlPage(manifest, "user-guide", render.menu, True, render.compact, "", render.pretty).process()
+                DocHtmlPage(manifest, "user-guide", render.menu, True).process()
 
             assert_equal(str(raised.exception), "unable to find a match for highlight: suppressed")
     finally:
         execute_module.DocExecute._execute_run = execute_run_real
 
 
-# A manifest that writes a page for a browser rather than for a reader, and a document of the cases the main one does not hold
-MANIFEST_COMPACT = (
-    MANIFEST.replace('<render type="html" pretty="y">', '<render type="html" compact="y">')
-    .replace(' menu="Home"', "")
-    .replace(' menu="Guide"', "")
-)
-
 # A manifest where one page is in the menu and the other is not, so the menu is built from what is in it
 MANIFEST_MENU = MANIFEST.replace(' menu="Home"', "")
 
+# A manifest where no page is in the menu, so there is no menu at all
+MANIFEST_NO_MENU = MANIFEST_MENU.replace(' menu="Guide"', "")
+
+# A document of the cases the main one does not hold
 OTHER_GUIDE = """<doc title="User Guide">
     <description>How to use it.</description>
 
@@ -499,25 +480,6 @@ OTHER_GUIDE = """<doc title="User Guide">
 
 
 ####################################################################################################################################
-def test_page_compact():
-    """A page written for a browser carries its own style and puts a linefeed around laid out content to stay diffable."""
-
-    with tempfile.TemporaryDirectory() as path:
-        _doc_path(path, MANIFEST_COMPACT)
-
-        manifest = _manifest(path)
-        render = manifest.render_get(RENDER_HTML)
-        page = DocHtmlPage(manifest, "user-guide", render.menu, False, render.compact, "body{}", render.pretty).process()
-
-        assert_in("<style", page)
-        assert_not_in("og:site_name", page)
-
-        # Laid out content is separated from what is around it, and two of them in a row are not separated again
-        assert_in('\n<pre class="execute-body-cmd">', page)
-        assert_in("</pre>\n<pre", page)
-
-
-####################################################################################################################################
 def test_page_other():
     """The cases a page holds that the documentation does not use everywhere."""
 
@@ -526,7 +488,7 @@ def test_page_other():
         manifest.var_store.add("html-logo", "<img src='logo.png'>")
 
         render = manifest.render_get(RENDER_HTML)
-        page = DocHtmlPage(manifest, "user-guide", render.menu, False, render.compact, "", render.pretty).process()
+        page = DocHtmlPage(manifest, "user-guide", render.menu, False).process()
 
         # A logo of its own for the header
         assert_in('<div class="page-header-logo">', page)
@@ -563,27 +525,11 @@ def test_page_postgres_empty():
         with tempfile.TemporaryDirectory() as path:
             manifest = _manifest(_doc_path(path, user_guide=guide))
             render = manifest.render_get(RENDER_HTML)
-            page = DocHtmlPage(manifest, "user-guide", render.menu, False, render.compact, "", render.pretty).process()
+            page = DocHtmlPage(manifest, "user-guide", render.menu, False).process()
 
             assert_in("<No PgBackRest Settings>", page)
     finally:
         execute_module.DocExecute.postgres_config = postgres_real
-
-
-####################################################################################################################################
-def test_html_render_compact():
-    """A page that carries its own style needs nothing beside it."""
-
-    with tempfile.TemporaryDirectory() as path:
-        _doc_path(path, MANIFEST_COMPACT)
-
-        manifest = _manifest(path)
-        path_out = os.path.join(path, "output/html")
-
-        os.makedirs(path_out)
-        html_render(manifest, path, path_out, False)
-
-        assert_equal(sorted(path_list(path_out)), ["index.html", "user-guide.html"])
 
 
 ####################################################################################################################################
@@ -608,17 +554,13 @@ def test_html_render_plain():
 
 ####################################################################################################################################
 def test_builder_plain():
-    """A page that says nothing about itself beyond what it must, and one that carries its style laid out to be read."""
+    """A page that says nothing about itself beyond what it must."""
 
-    result = HtmlBuilder("pgBackRest", "Guide", None, None, None, False, False, None).render()
+    result = HtmlBuilder("pgBackRest", "Guide", None, None, None).render()
 
     assert_not_in("og:image", result)
     assert_not_in('name="description"', result)
     assert_not_in('rel="icon"', result)
-
-    result = HtmlBuilder("pgBackRest", "Guide", None, None, None, True, True, "body\n{\n    color: black;\n}\n").render()
-
-    assert_in("body\n{\n    color: black;\n}", result)
 
 
 ####################################################################################################################################
@@ -626,9 +568,11 @@ def test_page_menu():
     """A page that is not in the menu is not in it, however it is rendered."""
 
     with tempfile.TemporaryDirectory() as path:
-        page = _page(_doc_path(path, MANIFEST_MENU))
+        assert_not_in("menu-link", _page(_doc_path(path, MANIFEST_MENU)))
 
-        assert_not_in("menu-link", page)
+    # A build where no page is in the menu has no menu at all
+    with tempfile.TemporaryDirectory() as path:
+        assert_not_in("page-menu", _page(_doc_path(path, MANIFEST_NO_MENU)))
 
 
 ####################################################################################################################################
@@ -652,7 +596,7 @@ def test_page_output_run():
                 )
             )
             render = manifest.render_get(RENDER_HTML)
-            page = DocHtmlPage(manifest, "user-guide", render.menu, True, render.compact, "", render.pretty).process()
+            page = DocHtmlPage(manifest, "user-guide", render.menu, True).process()
 
             assert_in('<pre class="execute-body-output">before</pre>', page)
             assert_in('<pre class="execute-body-output-highlight">suppressed here</pre>', page)

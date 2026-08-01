@@ -61,10 +61,8 @@ class RenderOut:
 class Render:
     """One render type and everything rendered to it."""
 
-    def __init__(self, type, compact, pretty):
+    def __init__(self, type):
         self.type = type
-        self.compact = compact  # Write the css into the page rather than beside it?
-        self.pretty = pretty  # Indent the output?
         self.menu = False  # Does any page have a menu caption?
         self.order = []  # Page keys in the order the manifest lists them, which is the order the menu is in
         self.out_map = {}
@@ -137,7 +135,7 @@ class Manifest:
             if type in self.render_map:
                 raise ToolError("render '%s' has already been defined" % type)
 
-            render = Render(type, xml_node_attribute(render_xml, "compact") == "y", xml_node_attribute(render_xml, "pretty") == "y")
+            render = Render(type)
 
             for out in xml_node_child_list(render_xml, "render-source"):
                 key = xml_node_attribute(out, "key", True)

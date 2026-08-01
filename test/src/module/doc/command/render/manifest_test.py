@@ -28,13 +28,13 @@ MANIFEST = """<doc>
     </source-list>
 
     <render-list>
-        <render type="html" pretty="y">
+        <render type="html">
             <render-source key="index" menu="Home"/>
             <render-source key="user-guide"/>
             <render-source key="news"/>
         </render>
 
-        <render type="markdown" compact="y">
+        <render type="markdown">
             <render-source key="index" file="../../../README.md"/>
         </render>
     </render-list>
@@ -126,8 +126,6 @@ def test_manifest_render():
 
         html = manifest.render_get(RENDER_HTML)
 
-        assert_true(html.pretty)
-        assert_false(html.compact)
         assert_true(html.menu)
 
         # The order is the order the manifest lists the pages in, which is the order the menu is in
@@ -137,7 +135,6 @@ def test_manifest_render():
 
         markdown = manifest.render_get(RENDER_MARKDOWN)
 
-        assert_true(markdown.compact)
         assert_false(markdown.menu)
         assert_equal(markdown.out_map["index"].file, "../../../README.md")
 
@@ -157,7 +154,7 @@ def test_manifest_error():
 
     with tempfile.TemporaryDirectory() as path:
         with assert_raises(ToolError) as raised:
-            _manifest(_doc_path(path, MANIFEST.replace('<render type="markdown" compact="y">', '<render type="html">')))
+            _manifest(_doc_path(path, MANIFEST.replace('<render type="markdown">', '<render type="html">')))
 
         assert_equal(str(raised.exception), "render 'html' has already been defined")
 
