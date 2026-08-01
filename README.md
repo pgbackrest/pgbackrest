@@ -16,16 +16,6 @@ Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if y
 
 **May 18, 2026** - [pgBackRest Will Continue!](https://pgbackrest.org/news.html#will-continue)
 
-## Sponsors
-
-pgBackRest would not exist without sponsorship. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
-
-Our sponsors: [AWS](https://aws.amazon.com), [Supabase](https://supabase.com), [pgEdge](https://pgedge.com), [Tiger Data](https://tigerdata.com), [Percona](https://percona.com), [Eon](https://eon.io), [Xata](https://xata.io), [Dalibo](https://dalibo.com), [Data Egret](https://dataegret.com/).
-
-We are grateful to our sponsors for investing in open-source infrastructure that benefits the entire PostgreSQL community.
-
-Past sponsors: [Crunchy Data](https://crunchydata.com), [Resonate](https://resonate.com).
-
 ## Features
 
 ### Parallel Backup & Restore
@@ -119,6 +109,16 @@ pgBackRest strives to be easy to configure and operate:
 - [User guides](https://pgbackrest.org/user-guide-index.html) for various operating systems and PostgreSQL versions.
 - [Command reference](https://pgbackrest.org/command.html) for command-line operations.
 - [Configuration reference](https://pgbackrest.org/configuration.html) for creating pgBackRest configurations.
+
+## Sponsors
+
+pgBackRest would not exist without sponsorship: new features, bug fixes, contribution reviews, community support, and maintenance all take considerable time. Please consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
+
+Our sponsors: [AWS](https://aws.amazon.com), [Supabase](https://supabase.com), [pgEdge](https://pgedge.com), [Tiger Data](https://tigerdata.com), [Percona](https://percona.com), [Eon](https://eon.io), [Xata](https://xata.io), [Dalibo](https://dalibo.com), [Data Egret](https://dataegret.com/).
+
+We are grateful to our sponsors for investing in open-source infrastructure that benefits the entire PostgreSQL community.
+
+Past sponsors: [Crunchy Data](https://crunchydata.com), [Resonate](https://resonate.com).
 
 ## Contributions
 
