@@ -211,7 +211,7 @@ def test_lint_clean():
             "src/x.auto.c.inc": b'#define ANY STRID5("any", 0x1)\n',
             "src/x.vendor.c.inc": b'#define ANY STRID5("any", 0x1)\n',
             # A binary file that is on the skip list, which is a deliberate and reviewable decision
-            "doc/resource/logo.png": b"\x00binary\n",
+            "doc/resource/card.png": b"\x00binary\n",
         },
         symlink=True,
     )

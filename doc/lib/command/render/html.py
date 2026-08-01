@@ -10,6 +10,7 @@ change to the tool changed nothing about the documentation, and output that is a
 import os
 import re
 import shutil
+import struct
 
 from common.error import ToolError
 from common.log import *
@@ -74,11 +75,12 @@ class HtmlElement:
 class HtmlBuilder:
     """Builds a page from the elements it holds."""
 
-    def __init__(self, name, title, favicon, logo, description):
+    def __init__(self, name, title, favicon, card, card_size, description):
         self.name = name
         self.title = title
         self.favicon = favicon
-        self.logo = logo
+        self.card = card
+        self.card_size = card_size
         self.description = description
 
         self.body = HtmlElement("body")
@@ -149,9 +151,17 @@ class HtmlBuilder:
         if self.favicon is not None:
             result += '<link rel="icon" href="%s" type="image/svg+xml"></link>\n' % self.favicon
 
-        if self.logo is not None:
+        # The card is what a link to the page looks like where it is posted. It is laid out at 1200x630 because that is the frame
+        # the sites that show a preview crop to, and a card that is not that shape loses its top and bottom to the crop.
+        if self.card is not None:
+            result += '<meta property="og:image" content="{[backrest-url-base]}/%s"></meta>\n' % self.card
             result += '<meta property="og:image:type" content="image/png"></meta>\n'
-            result += '<meta property="og:image" content="{[backrest-url-base]}/%s"></meta>\n' % self.logo
+            result += '<meta property="og:image:width" content="%d"></meta>\n' % self.card_size[0]
+            result += '<meta property="og:image:height" content="%d"></meta>\n' % self.card_size[1]
+            result += '<meta property="og:image:alt" content="%s"></meta>\n' % self._escape(self.name)
+
+            # Without this the preview is a thumbnail beside the text rather than the card above it
+            result += '<meta name="twitter:card" content="summary_large_image"></meta>\n'
 
         if self.description is not None:
             result += '<meta name="description" content="%s"></meta>\n' % self._escape(self.description)
@@ -193,19 +203,18 @@ class DocHtmlPage(DocExecute):
 
         tagline = var_store.get("project-tagline")
 
+        card = None if var_store.test("card", "n") else var_store.get("project-card")
+
         builder = HtmlBuilder(
             var_store.replace_str("{[project]}" + ("" if tagline is None else " - " + tagline)),
             var_store.replace_str(title + ("" if subtitle is None else " - " + subtitle)),
             var_store.get("project-favicon"),
-            None if var_store.test("logo", "n") else var_store.get("project-logo"),
+            card,
+            None if card is None else _png_size(os.path.join(self.manifest.path_doc, "resource", card)),
             var_store.replace_str(xml_node_field(self.root, "description", True).strip()),
         )
 
         header = builder.body.add_new("div", "page-header")
-
-        if var_store.get("html-logo") is not None:
-            header.add_new("div", "page-header-logo", content="{[html-logo]}")
-
         header.add_new("div", "page-header-title", content=title)
 
         if subtitle is not None:
@@ -535,6 +544,17 @@ class DocHtmlPage(DocExecute):
 
 
 ####################################################################################################################################
+def _png_size(file):
+    """Read what a png says it measures.
+
+    The card says its size in the page so a crawler can lay the preview out before it has the image, and the size is read from the
+    image rather than written down so the two cannot disagree."""
+
+    with open(file, "rb") as handle:
+        return struct.unpack(">II", handle.read(24)[16:24])
+
+
+####################################################################################################################################
 def _resource_render(text, line_comment=False):
     """A style or a script with what it says about itself taken out.
 
@@ -602,10 +622,10 @@ def html_render(manifest, path_doc, path_out, exe):
     if favicon is not None:
         shutil.copyfile(os.path.join(path_doc, "resource", favicon), os.path.join(path_out, favicon))
 
-    logo = var_store.get("project-logo")
+    card = var_store.get("project-card")
 
-    if logo is not None and not var_store.test("logo", "n"):
-        shutil.copyfile(os.path.join(path_doc, "resource", logo), os.path.join(path_out, logo))
+    if card is not None and not var_store.test("card", "n"):
+        shutil.copyfile(os.path.join(path_doc, "resource", card), os.path.join(path_out, card))
 
     if not var_store.test("sponsor", "n"):
         path_sponsor = os.path.join(path_doc, "resource/sponsor")

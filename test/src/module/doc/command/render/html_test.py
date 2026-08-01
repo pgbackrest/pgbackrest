@@ -5,6 +5,7 @@ linefeed goes is what makes one build of the documentation comparable with the n
 
 ####################################################################################################################################
 import os
+import struct
 import tempfile
 
 from harness.test import *
@@ -222,7 +223,7 @@ def _page(path, key="user-guide", config=None):
 def test_element():
     """A page is built as a tree of elements so the code that decides what it holds never deals with markup."""
 
-    builder = HtmlBuilder("Name", "Title", None, None, None)
+    builder = HtmlBuilder("Name", "Title", None, None, None, None)
     body = builder.body
 
     body.add_new("div", "one", content="Content")
@@ -236,13 +237,20 @@ def test_element():
 def test_builder():
     """A page says what it is."""
 
-    builder = HtmlBuilder("pgBackRest", "Guide & More", "logo.svg", "logo.png", "How to use it.")
+    builder = HtmlBuilder("pgBackRest", "Guide & More", "logo.svg", "card.png", (1200, 630), "How to use it.")
 
     result = builder.render(analytics=True)
 
     assert_in("<!DOCTYPE html PUBLIC", result)
     assert_in('<link rel="icon" href="logo.svg" type="image/svg+xml"></link>', result)
-    assert_in('<meta property="og:image" content="{[backrest-url-base]}/logo.png"></meta>', result)
+
+    # The card says where it is and what shape it is, so a preview can be laid out before the image has been fetched
+    assert_in('<meta property="og:image" content="{[backrest-url-base]}/card.png"></meta>', result)
+    assert_in('<meta property="og:image:width" content="1200"></meta>', result)
+    assert_in('<meta property="og:image:height" content="630"></meta>', result)
+    assert_in('<meta property="og:image:alt" content="pgBackRest"></meta>', result)
+    assert_in('<meta name="twitter:card" content="summary_large_image"></meta>', result)
+
     assert_in('<meta name="description" content="How to use it."></meta>', result)
     assert_in('<link rel="stylesheet" href="default.css" type="text/css"></link>', result)
     assert_in('<script src="default.js" defer="defer"></script>', result)
@@ -404,12 +412,17 @@ def test_html_render():
     with tempfile.TemporaryDirectory() as path:
         _doc_path(path)
 
-        file_write(os.path.join(path, "resource/logo.png"), "png")
+        # Only the header of the card is needed, since that is all that is read of it, and a size of its own shows the page says
+        # what the file measures rather than what the tool expects it to
+        file_write(
+            os.path.join(path, "resource/card.png"),
+            b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 400, 200),
+        )
         file_write(os.path.join(path, "resource/logo.svg"), "svg")
         file_write(os.path.join(path, "resource/sponsor/one.png"), "png")
 
         manifest = _manifest(path)
-        manifest.var_store.add("project-logo", "logo.png")
+        manifest.var_store.add("project-card", "card.png")
         manifest.var_store.add("project-favicon", "logo.svg")
 
         path_out = os.path.join(path, "output/html")
@@ -419,9 +432,14 @@ def test_html_render():
 
         assert_equal(
             sorted(path_list(path_out)),
-            ["default.css", "default.js", "index.html", "logo.png", "logo.svg", "slogo.svg", "sponsor", "user-guide.html"],
+            ["card.png", "default.css", "default.js", "index.html", "logo.svg", "slogo.svg", "sponsor", "user-guide.html"],
         )
         assert_equal(path_list(os.path.join(path_out, "sponsor")), ["one.png"])
+
+        index = file_read(os.path.join(path_out, "index.html"))
+
+        assert_in('<meta property="og:image:width" content="400"></meta>', index)
+        assert_in('<meta property="og:image:height" content="200"></meta>', index)
 
         # The style and the script carry no comments, since the page carries them for a browser rather than for a reader, but
         # where their lines fall is left alone so one build can still be compared with the next
@@ -544,13 +562,9 @@ def test_page_other():
 
     with tempfile.TemporaryDirectory() as path:
         manifest = _manifest(_doc_path(path, user_guide=OTHER_GUIDE))
-        manifest.var_store.add("html-logo", "<img src='logo.png'>")
 
         render = manifest.render_get(RENDER_HTML)
         page = DocHtmlPage(manifest, "user-guide", render.menu, False).process()
-
-        # A logo of its own for the header
-        assert_in('<div class="page-header-logo">', page)
 
         # A table with no header lines every column up left
         assert_in('<td class="table-data-left">', page)
@@ -593,15 +607,16 @@ def test_page_postgres_empty():
 
 ####################################################################################################################################
 def test_html_render_plain():
-    """A build with no logo and no sponsors copies only the style."""
+    """A build with no card and no sponsors copies only the style."""
 
     with tempfile.TemporaryDirectory() as path:
         _doc_path(path)
 
+        # The card is named but turned off, which is how the documentation that ships with the distribution is built
         manifest = _manifest(path)
         manifest.var_store.add("sponsor", "n")
-        manifest.var_store.add("logo", "n")
-        manifest.var_store.add("project-logo", "logo.png")
+        manifest.var_store.add("card", "n")
+        manifest.var_store.add("project-card", "card.png")
 
         path_out = os.path.join(path, "output/html")
 
@@ -615,7 +630,7 @@ def test_html_render_plain():
 def test_builder_plain():
     """A page that says nothing about itself beyond what it must."""
 
-    result = HtmlBuilder("pgBackRest", "Guide", None, None, None).render()
+    result = HtmlBuilder("pgBackRest", "Guide", None, None, None, None).render()
 
     assert_not_in("og:image", result)
     assert_not_in('name="description"', result)

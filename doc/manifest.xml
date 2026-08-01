@@ -8,11 +8,11 @@
         <variable key="project-url-root">/</variable>
         <variable key="postgres">PostgreSQL</variable>
         <variable key="dash">-</variable>
-        <variable key="project-logo">logo.png</variable>
+        <variable key="project-card">card.png</variable>
         <variable key="project-favicon">logo.svg</variable>
 
-        <!-- Include logo? -->
-        <variable key="logo">y</variable>
+        <!-- Include the card that a link to the documentation shows where it is posted? -->
+        <variable key="card">y</variable>
 
         <!-- Is this a development or debug build of the docs? -->
         <variable key="dev">n</variable>
@@ -27,7 +27,6 @@
 
         <!-- HTML variables -->
         <variable key="html-footer">Copyright &amp;copy; 2015-{[release-year]}, The PostgreSQL Global Development Group, &lt;a href="{[github-url-license]}">MIT License&lt;/a>. Updated {[release-date]}</variable>
-        <!-- <variable key="html-logo">&lt;img src=&quot;{[project-logo]}&quot;&gt;</variable> -->
     </variable-list>
 
     <!-- A source with no file of its own is built rather than read, from the same declarations the binary is generated from -->

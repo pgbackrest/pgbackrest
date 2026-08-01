@@ -5,6 +5,7 @@ variables the caller gave before the documents that use them."""
 
 ####################################################################################################################################
 import os
+import struct
 import tempfile
 
 from harness.test import *
@@ -122,7 +123,7 @@ MANIFEST = """<doc>
         <variable key="project">pgBackRest</variable>
         <variable key="project-exe">pgbackrest</variable>
         <variable key="project-url-root">/</variable>
-        <variable key="project-logo">logo.png</variable>
+        <variable key="project-card">card.png</variable>
         <variable key="project-favicon">logo.svg</variable>
         <variable key="html-footer">Updated {[release-date]}</variable>
         <variable key="mode">release</variable>
@@ -174,7 +175,11 @@ def _repo(path):
     file_write(os.path.join(path, "doc/resource/html/default.css"), "body { color: black; }\n")
     file_write(os.path.join(path, "doc/resource/html/default.js"), "// script\n")
     file_write(os.path.join(path, "doc/resource/slogo.svg"), "<svg></svg>\n")
-    file_write(os.path.join(path, "doc/resource/logo.png"), "png")
+    # Only the header of the card is needed, since that is all that is read of it
+    file_write(
+        os.path.join(path, "doc/resource/card.png"),
+        b"\x89PNG\r\n\x1a\n" + struct.pack(">I", 13) + b"IHDR" + struct.pack(">II", 1200, 630),
+    )
     file_write(os.path.join(path, "doc/resource/logo.svg"), "svg")
     file_write(os.path.join(path, "doc/resource/sponsor/one.png"), "png")
 
@@ -306,7 +311,7 @@ def test_doc():
         assert_equal(sorted(path_list(path_out)), ["html", "man", "markdown"])
         assert_equal(
             sorted(path_list(os.path.join(path_out, "html"))),
-            ["default.css", "default.js", "index.html", "logo.png", "logo.svg", "slogo.svg", "sponsor", "user-guide.html"],
+            ["card.png", "default.css", "default.js", "index.html", "logo.svg", "slogo.svg", "sponsor", "user-guide.html"],
         )
 
         # What goes beside the pages is copied rather than rendered

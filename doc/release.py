@@ -309,7 +309,7 @@ def cmd_dist(config, dev):
         "--var=project-url-root=index.html",
         "--exclude=metric",
         "--exclude=news",
-        "--var=logo=n",
+        "--var=card=n",
         "--var=news=n",
         "--var=sponsor=n",
     ]
