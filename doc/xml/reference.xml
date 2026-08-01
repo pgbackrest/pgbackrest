@@ -396,7 +396,7 @@
                         <example>y</example>
                     </config-key>
 
-                    <config-key id="sck-keep-alive" name="Keep Alive">
+                    <config-key id="sck-keep-alive" name="Socket Keep Alive">
                         <summary>Keep-alive enable.</summary>
 
                         <text>
@@ -406,7 +406,7 @@
                         <example>n</example>
                     </config-key>
 
-                   <config-key id="tcp-keep-alive-count" name="Keep Alive Count">
+                   <config-key id="tcp-keep-alive-count" name="TCP Keep Alive Count">
                         <summary>Keep-alive count.</summary>
 
                         <text>
@@ -418,7 +418,7 @@
                         <example>3</example>
                     </config-key>
 
-                    <config-key id="tcp-keep-alive-idle" name="Keep Alive Idle">
+                    <config-key id="tcp-keep-alive-idle" name="TCP Keep Alive Idle">
                         <summary>Keep-alive idle time.</summary>
 
                         <text>
@@ -430,7 +430,7 @@
                         <example>60</example>
                     </config-key>
 
-                    <config-key id="tcp-keep-alive-interval" name="Keep Alive Interval">
+                    <config-key id="tcp-keep-alive-interval" name="TCP Keep Alive Interval">
                         <summary>Keep-alive interval time.</summary>
 
                         <text>
@@ -442,7 +442,7 @@
                         <example>30</example>
                     </config-key>
 
-                    <config-key id="tls-cipher-12" name="TLSv1.2 cipher suites">
+                    <config-key id="tls-cipher-12" name="TLSv1.2 Cipher Suites">
                         <summary>Allowed TLSv1.2 cipher suites.</summary>
 
                         <text>
@@ -456,7 +456,7 @@
                         <example>HIGH:MEDIUM:+3DES:!aNULL</example>
                     </config-key>
 
-                    <config-key id="tls-cipher-13" name="TLSv1.3 cipher suites">
+                    <config-key id="tls-cipher-13" name="TLSv1.3 Cipher Suites">
                         <summary>Allowed TLSv1.3 cipher suites.</summary>
 
                         <text>
@@ -483,7 +483,7 @@
                 </text>
 
                 <config-key-list>
-                    <config-key id="archive-header-check" name="Check WAL Headers">
+                    <config-key id="archive-header-check" name="WAL Header Check">
                         <summary>Check PostgreSQL version/id in WAL headers.</summary>
 
                         <text>

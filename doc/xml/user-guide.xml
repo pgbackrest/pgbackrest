@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<doc title="{[project]} User Guide" subtitle="{[user-guide-subtitle]}" cmd-line-len="85">
+<doc title="{[project]}" subtitle="{[user-guide-subtitle]} User Guide" cmd-line-len="85">
     <description>The {[project]} User Guide demonstrates how to quickly and easily setup {[project]} for your {[postgres]} database. Step-by-step instructions lead the user through all the important features of the fastest, most reliable {[postgres]} backup and restore solution.</description>
 
     <!-- ======================================================================================================================= -->
@@ -991,7 +991,7 @@
 
         <!-- =================================================================================================================== -->
         <section id="v2.x">
-            <title>Upgrading {[project]} from v2.x to v2.y</title>
+            <title>From v2.x to v2.y</title>
 
             <p>Upgrading from <proper>v2.x</proper> to <proper>v2.y</proper> is straight-forward. The repository format has not changed, so for most installations it is simply a matter of installing binaries for the new version. It is also possible to downgrade if you have not used new features that are unsupported by the older version.</p>
 
@@ -1282,7 +1282,7 @@
 
         <!-- =================================================================================================================== -->
         <section id="azure-support" if="'{[azure-all]}' eq 'y'">
-            <title>Azure-Compatible Object Store Support</title>
+            <title>Azure Support</title>
 
             <block id="azure-setup">
                 <block-variable-replace key="azure-setup-repo-id">1</block-variable-replace>
@@ -1295,7 +1295,7 @@
 
         <!-- =================================================================================================================== -->
         <section id="gcs-support" if="'{[gcs-all]}' eq 'y'">
-            <title>GCS-Compatible Object Store Support</title>
+            <title>GCS Support</title>
 
             <block id="gcs-setup">
                 <block-variable-replace key="gcs-setup-repo-id">1</block-variable-replace>
@@ -1307,7 +1307,7 @@
 
         <!-- =================================================================================================================== -->
         <section id="s3-support" if="'{[s3-all]}' eq 'y'">
-            <title>S3-Compatible Object Store Support</title>
+            <title>S3 Support</title>
 
             <block id="s3-setup">
                 <block-variable-replace key="s3-setup-repo-id">1</block-variable-replace>
@@ -2476,7 +2476,7 @@
 
     <!-- ======================================================================================================================= -->
     <section id="azure-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
-        <title>Azure-Compatible Object Store Support</title>
+        <title>Azure Support</title>
 
         <block id="azure-setup">
             <block-variable-replace key="azure-setup-repo-id">2</block-variable-replace>
@@ -2514,7 +2514,7 @@
 
     <!-- ======================================================================================================================= -->
     <section id="s3-support" if="!{[object-any-all]}" depend="/azure-support">
-        <title>S3-Compatible Object Store Support</title>
+        <title>S3 Support</title>
 
         <block id="s3-setup">
             <block-variable-replace key="s3-setup-repo-id">3</block-variable-replace>
@@ -2657,7 +2657,7 @@
     <!-- ======================================================================================================================= -->
     <!-- This section must be last of all drivers tested since there is no GCS server to make it work. -->
     <section id="gcs-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
-        <title>GCS-Compatible Object Store Support</title>
+        <title>GCS Support</title>
 
         <block id="gcs-setup">
             <block-variable-replace key="gcs-setup-repo-id">5</block-variable-replace>

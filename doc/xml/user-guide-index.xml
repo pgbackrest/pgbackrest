@@ -4,7 +4,7 @@
 
     <!-- ======================================================================================================================= -->
     <section id="index">
-        <title>Available User Guides</title>
+        <title>User Guides</title>
 
         <list>
             <list-item><link url="user-guide.html">{[os-debian-title]}</link></list-item>
