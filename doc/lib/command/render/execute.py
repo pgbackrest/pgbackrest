@@ -8,10 +8,12 @@ so replaying the cache checks as it goes that the document still describes the s
 longer describes the document and the whole document is built again.
 
 Configuration is handled here rather than in a renderer because a configuration file is built up across a document: a section adds an
-option and a later section shows the file with everything added so far."""
+option and a later section shows the file with everything added so far. That also makes this the only place that knows what the file
+looked like the last time the document showed it, so it is here that each line is marked with what the section changed."""
 
 ####################################################################################################################################
 import copy
+import difflib
 import json
 import os
 import re
@@ -40,6 +42,11 @@ _CMD_LINE_LEN = 80
 # Options that are set so the build can watch what happens but are not part of what the documentation is showing
 _CONFIG_SECTION_GLOBAL = "global"
 _CONFIG_HIDE_LIST = ("log-level-stderr", "log-timestamp")
+
+# What a line of a configuration file is marked with, i.e. what the change the document is showing did to it
+CONFIG_MARK_ADD = "add"
+CONFIG_MARK_REMOVE = "remove"
+CONFIG_MARK_SAME = "same"
 
 # Linefeeds around what a command wrote, which are how the output ends rather than part of it
 _OUTPUT_TRIM_EXP = re.compile(r"^\n+|\n$")
@@ -74,6 +81,7 @@ class DocExecute(DocRender):
         self.host_map = {}
         self.config_map = {}
         self.pg_config_map = {}
+        self.config_show_map = {}  # Each configuration file as the document last showed it, which a change is marked against
 
         self.cmd_line_len = int(xml_node_attribute(self.root, "cmd-line-len") or _CMD_LINE_LEN)
 
@@ -296,12 +304,43 @@ class DocExecute(DocRender):
         return key
 
     ################################################################################################################################
+    def _config_mark(self, key, config, show):
+        """Mark each line of a configuration file with what the change the document is showing did to it.
+
+        A file is shown in full every time it changes, so a change of one option in a file that has grown to fifty leaves the reader
+        to find which one it was. The file is compared against the file as the document last showed it, which is not the same as the
+        file as it was: a change the document did not show is left for the next change that is shown, so that nothing the reader is
+        shown goes unmarked. A file that was reset has nothing to compare against and is shown as all new."""
+
+        file_key = (key["host"], key["file"])
+        line_list = [] if config is None else config.rstrip("\n").split("\n")
+        prior_list = [] if key.get("reset") else self.config_show_map.get(file_key, [])
+        result = []
+
+        matcher = difflib.SequenceMatcher(None, prior_list, line_list, autojunk=False)
+
+        for tag, prior_begin, prior_end, begin, end in matcher.get_opcodes():
+            if tag in ("delete", "replace"):
+                result += [(CONFIG_MARK_REMOVE, line) for line in prior_list[prior_begin:prior_end]]
+
+            if tag in ("insert", "replace"):
+                result += [(CONFIG_MARK_ADD, line) for line in line_list[begin:end]]
+
+            if tag == "equal":
+                result += [(CONFIG_MARK_SAME, line) for line in line_list[begin:end]]
+
+        if show:
+            self.config_show_map[file_key] = line_list
+
+        return result
+
+    ################################################################################################################################
     def backrest_config(self, section, config, depth):
-        """Apply a change to the configuration and return the file, what is in it, and whether to show it."""
+        """Apply a change to the configuration and return the file, the lines of it and how each changed, and whether to show it."""
 
         key = self.config_key(config)
         file = key["file"]
-        result = None
+        show = xml_node_attribute(config, "show") != "n"
 
         log(DEBUG, "    " * depth + "process backrest config: %s" % file)
 
@@ -313,10 +352,13 @@ class DocExecute(DocRender):
             else:
                 result = self._backrest_config_apply(config, key, depth)
                 self.cache_push(cache_type, key, {"config": None if result is None else result.split("\n")})
-        else:
-            result = _SUPPRESS_CONFIG
 
-        return file, result, xml_node_attribute(config, "show") != "n"
+            result = self._config_mark(key, result, show)
+        else:
+            # A build that does not run the commands has no file to show and nothing to compare it against
+            result = [(CONFIG_MARK_SAME, _SUPPRESS_CONFIG)]
+
+        return file, result, show
 
     ################################################################################################################################
     def _backrest_config_apply(self, config, key, depth):
@@ -382,11 +424,12 @@ class DocExecute(DocRender):
 
     ################################################################################################################################
     def postgres_config(self, section, config, depth):
-        """Apply a change to the PostgreSQL configuration and return the file, what was added, and whether to show it."""
+        """Apply a change to the PostgreSQL configuration and return the file, what was added and how it changed, and whether to
+        show it."""
 
         key = self.config_key(config)
         file = key["file"]
-        result = None
+        show = xml_node_attribute(config, "show") != "n"
 
         if self.exe and self.is_required(section):
             hit, cache_type, key, value = self.cache_pop("cfg-postgresql", key)
@@ -396,10 +439,13 @@ class DocExecute(DocRender):
             else:
                 result = self._postgres_config_apply(config, key, depth)
                 self.cache_push(cache_type, key, {"config": None if result is None else result.split("\n")})
-        else:
-            result = _SUPPRESS_CONFIG
 
-        return file, result, xml_node_attribute(config, "show") != "n"
+            result = self._config_mark(key, result, show)
+        else:
+            # A build that does not run the commands has no file to show and nothing to compare it against
+            result = [(CONFIG_MARK_SAME, _SUPPRESS_CONFIG)]
+
+        return file, result, show
 
     ################################################################################################################################
     def _postgres_config_apply(self, config, key, depth):

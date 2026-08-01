@@ -16,7 +16,7 @@ from common.error import ToolError
 from common.log import *
 from common.storage import file_read, file_write, path_create, path_list
 from common.xml import xml_node_attribute, xml_node_child, xml_node_child_list, xml_node_content, xml_node_field, xml_node_text
-from command.render.execute import CacheInvalidError, DocExecute
+from command.render.execute import CONFIG_MARK_ADD, CONFIG_MARK_REMOVE, CONFIG_MARK_SAME, CacheInvalidError, DocExecute
 from command.render.manifest import RENDER_HTML
 from command.render.render import SECTION_ANCHOR, SECTION_ANCHOR_NO_INHERIT, child_list
 
@@ -40,6 +40,19 @@ _COMMENT_EXP = re.compile(r"/\*.*?\*/", re.DOTALL)
 # Leading linefeeds and trailing whitespace of a code block, which are how it sits in the xml rather than part of it
 _BLOCK_BEGIN_EXP = re.compile(r"^\n+")
 _BLOCK_END_EXP = re.compile(r"\s+$")
+
+# What a line of a configuration file is called, which is what decides how it looks and what marks it
+_CONFIG_CLASS_MAP = {
+    CONFIG_MARK_ADD: "config-line-add",
+    CONFIG_MARK_REMOVE: "config-line-remove",
+    CONFIG_MARK_SAME: "config-line",
+}
+
+# The button that hands a reader the configuration file rather than the change to it. What it is drawn with is left to the style,
+# which says it once for the documentation rather than once for every configuration file the documentation shows.
+_CONFIG_COPY = (
+    '<button class="config-copy" type="button" title="Copy the configuration" aria-label="Copy the configuration"></button>'
+)
 
 
 ####################################################################################################################################
@@ -524,21 +537,26 @@ class DocHtmlPage(DocExecute):
         host_name = self.manifest.var_store.replace_str(xml_node_attribute(node, "host", True))
         element = HtmlElement("div", "config")
 
+        # The title carries the button that copies the file, since what is shown of the file is a change to it rather than the file
+        # itself. The button does nothing until the script has it, so the script is what shows it.
         element.add_new(
             "div",
             "config-title",
-            content='<span class="host">%s</span>:<span class="file">%s</span> <b>&#x21d2;</b> %s'
+            content=_CONFIG_COPY
+            + '<span class="host">%s</span>:<span class="file">%s</span> <b>&#x21d2;</b> %s'
             % (host_name, file, self.process_text(xml_node_child(node, "title", True))),
         )
 
-        body = element.add_new("div", "config-body")
+        # The lines are held in a block of their own inside the block that scrolls, so that a line the change marks is marked across
+        # the width of the widest line rather than across the width of the part of it that is in view
+        output = element.add_new("div", "config-body").add_new("div", "config-body-output", extra=_SCROLL)
+        line_list = output.add_new("div", "config-line-list")
 
-        body.add_new(
-            "div",
-            "config-body-output",
-            content=("<No PgBackRest Settings>" if config is None else config.replace("\n", "<br/>\n")),
-            extra=_SCROLL,
-        )
+        if len(config) == 0:
+            line_list.add_new("pre", "config-line", content="<No PgBackRest Settings>", pre=True)
+        else:
+            for mark, line in config:
+                line_list.add_new("pre", _CONFIG_CLASS_MAP[mark], content=line, pre=True)
 
         return element
 

@@ -29,6 +29,17 @@ Tokens
     --sidebar-width: clamp(13rem, 20vw, 17rem);
     --sidebar-gap: 1.5rem;
 
+    /* The icon a button is drawn with, declared here rather than drawn in the page, which would carry one for every button it has.
+       Each is drawn as a mask, so the color it is drawn in is the color of the button rather than a color of its own, and the color
+       in it is only there to say what the mask covers. A linefeed inside one is escaped so that the file keeps its width, and what
+       that leaves behind is space between attributes, which is nothing. */
+    --icon-copy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'\
+        stroke='black' stroke-width='2'%3E%3Crect x='9' y='9' width='12' height='12' rx='2'/%3E%3Cpath d='M6 15H5a2 2 0 0 1-2-2V5a2\
+        2 0 0 1 2-2h8a2 2 0 0 1 2 2v1'/%3E%3C/svg%3E");
+    --icon-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'\
+        stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12.5l5.5 5.5L20\
+        7'/%3E%3C/svg%3E");
+
 
     --bg: #ffffff;
     --bg-surface: #f7f9fb;
@@ -763,6 +774,66 @@ Config, Execute, Code Block
     color: var(--code-prompt);
 }
 
+/* The button that hands over a config file sits at the end of the title, where it is clear of the file below it and of the title
+   beside it, which wraps around it rather than under it. It is hidden until the script that makes it work has run. */
+.config-title
+{
+    display: flow-root;
+}
+
+.config-copy
+{
+    display: none;
+    float: right;
+    margin-left: .6rem;
+    border: 1px solid var(--code-border);
+    border-radius: var(--radius);
+    background-color: var(--code-bg);
+    padding: .15rem .3rem;
+    color: var(--code-text);
+    cursor: pointer;
+}
+
+.config-copy-ready
+{
+    display: block;
+}
+
+.config-copy:hover
+{
+    border-color: var(--border-strong);
+    background-color: var(--code-border);
+}
+
+.config-copy:before
+{
+    content: "";
+    display: block;
+    width: .9rem;
+    height: .9rem;
+    background-color: currentColor;
+    -webkit-mask: var(--icon-copy) no-repeat center / contain;
+    mask: var(--icon-copy) no-repeat center / contain;
+}
+
+/* What the button says it did, which is a tick where the file was copied and the color of a warning where a browser refused to */
+.config-copy-done
+{
+    color: var(--tip-accent);
+}
+
+.config-copy-done:before
+{
+    -webkit-mask-image: var(--icon-tick);
+    mask-image: var(--icon-tick);
+}
+
+.config-copy-fail
+{
+    border-color: var(--warning-accent);
+    color: var(--warning-accent);
+}
+
 .execute-body, .config-body, .code-block
 {
     border: 1px solid var(--code-border);
@@ -800,12 +871,6 @@ pre
     white-space: pre;
 }
 
-/* A config file is written with its line breaks as markup rather than as text, so it is not a pre and only the wrapping is off */
-.config-body-output
-{
-    white-space: nowrap;
-}
-
 .execute-body-cmd
 {
     padding: .1rem .9rem;
@@ -833,6 +898,54 @@ pre
 .execute-body-output-highlight-error
 {
     background-color: var(--code-error-bg);
+}
+
+/* A config file is shown in full every time it changes, so each line says what the change did to it, marked the way the output of a
+   command is marked. The mark is written by the style rather than into the line so that what a reader copies out of the file is the
+   file. */
+.config-line-list
+{
+    /* As wide as the widest line, so that a line the change marks is marked across the whole file rather than across the part of it
+       that is in view, and as wide as the block when every line fits in it */
+    width: max-content;
+    min-width: 100%;
+}
+
+.config-line, .config-line-add, .config-line-remove
+{
+    /* A line scrolls with the file rather than on its own, since a file is read down the lines and a line that carried its own
+       scroll would take the reader across one line at a time */
+    overflow-x: visible;
+
+    /* The line reaches into the padding of the block so that the mark has the room a margin gives it rather than sitting against
+       the edge of the block */
+    margin: 0 -.7rem;
+    padding: 0 .7rem;
+}
+
+.config-line:before
+{
+    content: "  ";
+}
+
+.config-line-add
+{
+    background-color: var(--code-highlight-bg);
+}
+
+.config-line-add:before
+{
+    content: "+ ";
+}
+
+.config-line-remove
+{
+    background-color: var(--code-error-bg);
+}
+
+.config-line-remove:before
+{
+    content: "- ";
 }
 
 /***********************************************************************************************************************************

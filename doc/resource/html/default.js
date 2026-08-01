@@ -1,8 +1,9 @@
 /***********************************************************************************************************************************
 Documentation Script
 
-Two things that a page reads better with and works without. A browser that runs no script loses both and loses nothing it needs:
-the contents are links and work as links, and every block that can scroll is already reachable from the keyboard.
+Three things that a page reads better with and works without. A browser that runs no script loses them and loses nothing it needs:
+the contents are links and work as links, every block that can scroll is already reachable from the keyboard, and the button that
+copies a config file is not shown until there is a script to make it work.
 
 The first marks the section being read in the contents beside the text, so a long page says where the reader is rather than only
 where they can go. The section being read is the last one that begins above the menu bar, which is what a reader means by the
@@ -231,4 +232,86 @@ with the window, so it is asked again whenever the window changes.
     window.addEventListener("resize", schedule, {passive: true});
 
     reach();
+})();
+
+/***********************************************************************************************************************************
+Copying a config file
+
+What is shown of a config file is what a section changed it to, so the lines the section took out are on the page beside the lines
+it put in, and the marks that say which is which are written by the style rather than by the page. None of that is the file, so the
+button hands over the lines that are in the file and leaves the rest of it behind.
+
+The page is written with the button and the style keeps it hidden, so it is shown here rather than written here. A browser that
+cannot copy never shows it at all, since a button that does nothing is worse than no button.
+***********************************************************************************************************************************/
+(function()
+{
+    // How long the button says what happened before it goes back to saying what it does when it is pressed
+    var SAID_TIME = 2000;
+
+    var buttonList = document.querySelectorAll(".config-copy");
+
+    if (buttonList.length === 0 || navigator.clipboard === undefined)
+        return;
+
+    /*******************************************************************************************************************************
+    The config file of the block a button is in, which is the lines that are in it
+    *******************************************************************************************************************************/
+    function configText(button)
+    {
+        var lineList = button.closest(".config").querySelectorAll(".config-line, .config-line-add");
+        var result = "";
+
+        for (var idx = 0; idx < lineList.length; idx++)
+            result += lineList[idx].textContent + "\n";
+
+        return result;
+    }
+
+    /*******************************************************************************************************************************
+    Make a button work and show it
+    *******************************************************************************************************************************/
+    function ready(button)
+    {
+        var timeout = null;
+
+        function reset()
+        {
+            button.classList.remove("config-copy-done", "config-copy-fail");
+            timeout = null;
+        }
+
+        function said(state)
+        {
+            if (timeout !== null)
+                window.clearTimeout(timeout);
+
+            reset();
+
+            button.classList.add(state);
+            timeout = window.setTimeout(reset, SAID_TIME);
+        }
+
+        function done()
+        {
+            said("config-copy-done");
+        }
+
+        // A browser can refuse to copy, e.g. when the page is not the tab the reader is on, and saying nothing would read as done
+        function fail()
+        {
+            said("config-copy-fail");
+        }
+
+        function copy()
+        {
+            navigator.clipboard.writeText(configText(button)).then(done, fail);
+        }
+
+        button.addEventListener("click", copy);
+        button.classList.add("config-copy-ready");
+    }
+
+    for (var buttonIdx = 0; buttonIdx < buttonList.length; buttonIdx++)
+        ready(buttonList[buttonIdx]);
 })();

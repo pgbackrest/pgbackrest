@@ -497,7 +497,8 @@ def test_cache_push():
 
 ####################################################################################################################################
 def test_backrest_config():
-    """A configuration file is built up across a document, so a section shows the file with everything added so far."""
+    """A configuration file is built up across a document, so a section shows the file with everything added so far and says what
+    it changed."""
 
     with tempfile.TemporaryDirectory() as path:
         render = _execute(path)
@@ -519,13 +520,22 @@ def test_backrest_config():
         assert_equal(file, "/etc/pgbackrest.conf")
         assert_true(show)
 
-        # What a reader sees leaves out the options that are only there so the build can watch what happens
-        assert_equal(content, "[global]\npg1-path=/pg1\npg1-path=/pg2\nrepo1-path=/var/lib/pgbackrest\n")
+        # What a reader sees leaves out the options that are only there so the build can watch what happens, and a file the document
+        # has not shown before is all new
+        assert_equal(
+            content,
+            [
+                ("add", "[global]"),
+                ("add", "pg1-path=/pg1"),
+                ("add", "pg1-path=/pg2"),
+                ("add", "repo1-path=/var/lib/pgbackrest"),
+            ],
+        )
 
         # The file that is installed on the host has everything in it
         assert_in("log-level-stderr=off", file_read(os.path.join(path, "output/pgbackrest.conf")))
 
-        # A later section adds to what is already there
+        # A later section adds to what is already there and only what it added is marked
         config = _doc(
             """<backrest-config host="repo" file="/etc/pgbackrest.conf"><title>More</title>
                 <backrest-config-option section="demo" key="pg1-path">/pg</backrest-config-option>
@@ -534,13 +544,39 @@ def test_backrest_config():
 
         _, content, _ = render.backrest_config(section, config, 1)
 
-        assert_in("[demo]\npg1-path=/pg\n", content)
-        assert_in("repo1-path=/var/lib/pgbackrest", content)
+        assert_equal(
+            content,
+            [
+                ("add", "[demo]"),
+                ("add", "pg1-path=/pg"),
+                ("add", ""),
+                ("same", "[global]"),
+                ("same", "pg1-path=/pg1"),
+                ("same", "pg1-path=/pg2"),
+                ("same", "repo1-path=/var/lib/pgbackrest"),
+            ],
+        )
+
+        # A file on another host is compared against that host rather than against the file of the same name on this one
+        render.host_map["repo2"] = _Host("repo2", "doc-repo2", "image:1", "vagrant")
+
+        _, content, _ = render.backrest_config(
+            section,
+            _doc(
+                """<backrest-config host="repo2" file="/etc/pgbackrest.conf"><title>Other</title>
+                    <backrest-config-option section="demo" key="pg1-path">/pg</backrest-config-option>
+                </backrest-config>"""
+            ),
+            1,
+        )
+
+        assert_equal(content, [("add", "[demo]"), ("add", "pg1-path=/pg")])
 
 
 ####################################################################################################################################
 def test_backrest_config_remove():
-    """An option that is removed and a file that is reset leave nothing behind for a later section to show."""
+    """An option that is removed leaves nothing behind for a later section to show, and a change that was not shown is marked on the
+    next change that is."""
 
     with tempfile.TemporaryDirectory() as path:
         render = _execute(path)
@@ -568,9 +604,24 @@ def test_backrest_config_remove():
             1,
         )
 
-        # A file with nothing left in it has nothing to show
-        assert_is_none(content)
+        # A file with nothing left in it is all of what it held marked as gone
+        assert_equal(content, [("remove", "[global]"), ("remove", "repo1-path=/var/lib")])
         assert_false(show)
+
+        # A change the reader was not shown is left for the next change that is shown, so the option that was removed is marked here
+        # rather than in the section that removed it
+        _, content, show = render.backrest_config(
+            section,
+            _doc(
+                """<backrest-config host="repo" file="/etc/pgbackrest.conf"><title>C</title>
+                    <backrest-config-option section="global" key="repo1-path">/other</backrest-config-option>
+                </backrest-config>"""
+            ),
+            1,
+        )
+
+        assert_true(show)
+        assert_equal(content, [("same", "[global]"), ("remove", "repo1-path=/var/lib"), ("add", "repo1-path=/other")])
 
         # A configuration against a host that was never started
         with assert_raises(ToolError) as raised:
@@ -602,11 +653,31 @@ def test_postgres_config():
 
         assert_equal(file, "/pg/postgresql.conf")
         assert_true(show)
-        assert_equal(content, "archive_command = pgbackrest archive-push %p\narchive_mode = on")
+        assert_equal(content, [("add", "archive_command = pgbackrest archive-push %p"), ("add", "archive_mode = on")])
 
         # The file installed on the host is what was there plus what the documentation added
         assert_in("shared_buffers = 128MB", file_read(os.path.join(path, "output/postgresql.conf")))
         assert_in("# pgBackRest Configuration", file_read(os.path.join(path, "output/postgresql.conf")))
+
+        # An option that is changed is marked as gone and added back rather than as a line that is somehow both
+        _, content, _ = render.postgres_config(
+            section,
+            _doc(
+                """<postgres-config host="repo" file="/pg/postgresql.conf"><title>C</title>
+                    <postgres-config-option key="archive_mode">off</postgres-config-option>
+                </postgres-config>"""
+            ),
+            1,
+        )
+
+        assert_equal(
+            content,
+            [
+                ("same", "archive_command = pgbackrest archive-push %p"),
+                ("remove", "archive_mode = on"),
+                ("add", "archive_mode = off"),
+            ],
+        )
 
         # An option that is reset leaves nothing behind
         _, content, _ = render.postgres_config(
@@ -620,7 +691,10 @@ def test_postgres_config():
             1,
         )
 
-        assert_is_none(content)
+        assert_equal(
+            content,
+            [("remove", "archive_command = pgbackrest archive-push %p"), ("remove", "archive_mode = off")],
+        )
 
         with assert_raises(ToolError) as raised:
             render.postgres_config(
@@ -642,13 +716,13 @@ def test_config_no_exe():
             section, _doc('<backrest-config host="repo" file="/etc/x"><title>C</title></backrest-config>'), 1
         )
 
-        assert_equal(content, "Config suppressed for testing")
+        assert_equal(content, [("same", "Config suppressed for testing")])
 
         _, content, _ = render.postgres_config(
             section, _doc('<postgres-config host="repo" file="/pg/x"><title>C</title></postgres-config>'), 1
         )
 
-        assert_equal(content, "Config suppressed for testing")
+        assert_equal(content, [("same", "Config suppressed for testing")])
 
 
 ####################################################################################################################################
@@ -838,19 +912,20 @@ def test_config_cache():
             section, _doc('<backrest-config host="repo" file="/etc/x"><title>C</title></backrest-config>'), 1
         )
 
-        assert_equal(content, "[global]")
+        assert_equal(content, [("add", "[global]")])
 
         _, content, _ = render.postgres_config(
             section, _doc('<postgres-config host="repo" file="/pg/x"><title>C</title></postgres-config>'), 1
         )
 
-        assert_is_none(content)
+        assert_equal(content, [])
         assert_equal(HOST_LIST, [])
 
 
 ####################################################################################################################################
 def test_backrest_config_reset():
-    """A configuration that is reset starts from nothing rather than from what an earlier section left."""
+    """A configuration that is reset starts from nothing rather than from what an earlier section left, so what is shown of it is
+    all new rather than mostly gone."""
 
     with tempfile.TemporaryDirectory() as path:
         render = _execute(path)
@@ -879,7 +954,7 @@ def test_backrest_config_reset():
             1,
         )
 
-        assert_equal(content, "[global]\nrepo1-path=/other\n")
+        assert_equal(content, [("add", "[global]"), ("add", "repo1-path=/other")])
 
 
 ####################################################################################################################################
@@ -903,7 +978,7 @@ def test_backrest_config_hidden():
             1,
         )
 
-        assert_is_none(content)
+        assert_equal(content, [])
 
 
 ####################################################################################################################################
@@ -937,4 +1012,4 @@ def test_backrest_config_remove_one():
             1,
         )
 
-        assert_equal(content, "[global]\nb=2\n")
+        assert_equal(content, [("same", "[global]"), ("remove", "a=1"), ("same", "b=2")])

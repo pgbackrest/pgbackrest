@@ -13,7 +13,7 @@ from harness.test import *
 from common.error import *
 from common.storage import file_read, file_write, path_list
 from common.var_store import VarStore
-from common.xml import xml_parse
+from common.xml import xml_node_attribute, xml_parse
 from command.render.execute import CacheInvalidError
 from command.render.html import DocHtmlPage, HtmlBuilder, HtmlElement, html_render
 from command.render.manifest import RENDER_HTML, Manifest
@@ -348,9 +348,9 @@ def test_page_execute():
         assert_in('<pre class="execute-body-cmd" tabindex="0">pgbackrest info</pre>', page)
         assert_in('<pre class="execute-body-output-highlight" tabindex="0">Output suppressed for testing</pre>', page)
 
-        # A configuration is shown as the file it leaves behind
+        # A configuration is shown as the file it leaves behind, a line at a time so each line can say what the change did to it
         assert_in('<span class="host">repo</span>:<span class="file">/etc/pgbackrest.conf</span>', page)
-        assert_in('<div class="config-body-output" tabindex="0">\nConfig suppressed for testing\n', page)
+        assert_in('<div class="config-line-list">\n<pre class="config-line">Config suppressed for testing</pre>', page)
 
         # Laid out content is separated from what is around it, and two of them in a row are not separated again
         assert_in('\n<pre class="execute-body-cmd" tabindex="0">', page)
@@ -582,23 +582,41 @@ def test_page_other():
 
 
 ####################################################################################################################################
-def test_page_postgres_empty():
-    """A PostgreSQL configuration the documentation added nothing to says so rather than showing nothing."""
+def test_page_postgres_config():
+    """Every line of a configuration says what the change did to it, and a configuration the documentation added nothing to says so
+    rather than showing nothing."""
 
     import command.render.execute as execute_module
 
+    line_list = [("same", "archive_mode = on"), ("remove", "wal_level = minimal"), ("add", "wal_level = replica")]
+
+    def postgres_config(self, section, config, depth):
+        """Stand in for a configuration a section changed and for one the documentation added nothing to."""
+
+        file = xml_node_attribute(config, "file", True)
+
+        return file, line_list if file == "/pg/x" else [], True
+
     postgres_real = execute_module.DocExecute.postgres_config
-    execute_module.DocExecute.postgres_config = lambda self, section, config, depth: ("/pg/x", None, True)
+    execute_module.DocExecute.postgres_config = postgres_config
 
     try:
         guide = """<doc title="G"><description>D</description><section id="a"><title>A</title>
             <postgres-config host="repo" file="/pg/x"><title>C</title></postgres-config>
+            <postgres-config host="repo" file="/pg/y"><title>C</title></postgres-config>
         </section></doc>"""
 
         with tempfile.TemporaryDirectory() as path:
             manifest = _manifest(_doc_path(path, user_guide=guide))
             render = manifest.render_get(RENDER_HTML)
             page = DocHtmlPage(manifest, "user-guide", render.menu, False).process()
+
+            # The title carries the button that hands over the file rather than the change to it, which the style draws
+            assert_in('<div class="config-title">\n<button class="config-copy" type="button" title="Copy', page)
+
+            assert_in('<pre class="config-line">archive_mode = on</pre>', page)
+            assert_in('<pre class="config-line-remove">wal_level = minimal</pre>', page)
+            assert_in('<pre class="config-line-add">wal_level = replica</pre>', page)
 
             assert_in("<No PgBackRest Settings>", page)
     finally:
