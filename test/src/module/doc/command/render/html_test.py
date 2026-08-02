@@ -345,7 +345,11 @@ def test_page_execute():
         page = _page(_doc_path(path))
 
         assert_in('<span class="host">repo</span> <b>&#x21d2;</b> Run it', page)
-        assert_in('<pre class="execute-body-cmd" tabindex="0">pgbackrest info</pre>', page)
+        assert_in(
+            '<div class="execute-body-cmd">\n<pre class="execute-cmd" tabindex="0">pgbackrest info</pre>\n'
+            '<button class="code-copy" type="button" title="Copy the command" aria-label="Copy the command"></button>',
+            page,
+        )
         assert_in(
             '<div class="execute-body-output" tabindex="0"><div class="execute-line-list">\n'
             '<pre class="execute-line-highlight">Output suppressed for testing</pre>',
@@ -357,7 +361,7 @@ def test_page_execute():
         assert_in('<div class="config-line-list">\n<pre class="config-line">Config suppressed for testing</pre>', page)
 
         # Laid out content is separated from what is around it
-        assert_in('\n<pre class="execute-body-cmd" tabindex="0">', page)
+        assert_in('\n<pre class="execute-cmd" tabindex="0">', page)
 
 
 ####################################################################################################################################
@@ -615,7 +619,7 @@ def test_page_postgres_config():
             page = DocHtmlPage(manifest, "user-guide", render.menu, False).process()
 
             # The title carries the button that hands over the file rather than the change to it, which the style draws
-            assert_in('<div class="config-title">\n<button class="config-copy" type="button" title="Copy', page)
+            assert_in('<div class="config-title"><button class="code-copy" type="button" title="Copy the configuration"', page)
 
             assert_in('<pre class="config-line">archive_mode = on</pre>', page)
             assert_in('<pre class="config-line-remove">wal_level = minimal</pre>', page)

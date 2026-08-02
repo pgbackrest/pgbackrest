@@ -48,12 +48,6 @@ _CONFIG_CLASS_MAP = {
     CONFIG_MARK_SAME: "config-line",
 }
 
-# The button that hands a reader the configuration file rather than the change to it. What it is drawn with is left to the style,
-# which says it once for the documentation rather than once for every configuration file the documentation shows.
-_CONFIG_COPY = (
-    '<button class="config-copy" type="button" title="Copy the configuration" aria-label="Copy the configuration"></button>'
-)
-
 
 ####################################################################################################################################
 class HtmlElement:
@@ -434,7 +428,12 @@ class DocHtmlPage(DocExecute):
             if not (show and show_command):
                 continue
 
-            execute_body.add_new("pre", "execute-body-cmd", content=cmd.replace("\n", "\n   "), pre=True, extra=_SCROLL)
+            # The command runs beside the button that copies it rather than under it, so the button covers nothing a reader is
+            # reading however wide the command is
+            command_element = execute_body.add_new("div", "execute-body-cmd")
+
+            command_element.add_new("pre", "execute-cmd", content=cmd.replace("\n", "\n   "), pre=True, extra=_SCROLL)
+            _copy_add(command_element, "command")
 
             highlight = self.manifest.var_store.replace_str(xml_node_field(command, "exe-highlight"))
             found = False
@@ -543,12 +542,15 @@ class DocHtmlPage(DocExecute):
         element = HtmlElement("div", "config")
 
         # The title carries the button that copies the file, since what is shown of the file is a change to it rather than the file
-        # itself. The button does nothing until the script has it, so the script is what shows it.
-        element.add_new(
-            "div",
-            "config-title",
-            content=_CONFIG_COPY
-            + '<span class="host">%s</span>:<span class="file">%s</span> <b>&#x21d2;</b> %s'
+        # itself. The button comes before what the title says so that the title wraps around it rather than under it.
+        title = element.add_new("div", "config-title")
+
+        _copy_add(title, "configuration")
+
+        title.add_new(
+            "span",
+            "config-title-text",
+            content='<span class="host">%s</span>:<span class="file">%s</span> <b>&#x21d2;</b> %s'
             % (host_name, file, self.process_text(xml_node_child(node, "title", True))),
         )
 
@@ -601,6 +603,16 @@ def _resource_render(text, line_comment=False):
         result.append(line)
 
     return "\n".join(result).strip("\n") + "\n"
+
+
+####################################################################################################################################
+def _copy_add(element, what):
+    """Add the button that hands a reader what a block is showing rather than what the documentation wrote around it.
+
+    What the button is drawn with is left to the style, which says it once for the documentation rather than once for every block
+    that carries one."""
+
+    element.add_new("button", "code-copy", extra='type="button" title="Copy the %s" aria-label="Copy the %s"' % (what, what))
 
 
 ####################################################################################################################################
