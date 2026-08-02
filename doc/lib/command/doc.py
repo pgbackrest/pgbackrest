@@ -13,12 +13,14 @@ import os
 import shutil
 import time
 
+from common.date import date_render
 from common.error import ToolError
 from common.log import *
 from common.storage import file_read, file_write, path_create, path_list
 from common.var_store import VarStore
 from common.xml import xml_document_parse, xml_node_attribute, xml_node_child_list, xml_node_content, xml_node_normalize
 from command.build.man import reference_man_render
+from command.build.news import news_index_render, news_render
 from command.build.pre import build_pre
 from command.build.reference import reference_command_render, reference_configuration_render
 from command.render.host import image_build_cached
@@ -35,21 +37,6 @@ _PATH_XML = "xml"
 _PATH_OUT = "output"
 
 _FILE_MAN = "pgbackrest.1.txt"
-
-_MONTH_LIST = (
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-)
 
 
 ####################################################################################################################################
@@ -163,13 +150,11 @@ def _release_date(release_root, static):
 
         if date == "XXXX-XX-XX":
             raise ToolError("not possible to use static release dates on a dev build")
-
-        year, month, day = (int(part) for part in date.split("-"))
     else:
         now = time.localtime()
-        year, month, day = now.tm_year, now.tm_mon, now.tm_mday
+        date = "%04d-%02d-%02d" % (now.tm_year, now.tm_mon, now.tm_mday)
 
-    return "%s %d, %d" % (_MONTH_LIST[month - 1], day, year), str(year)
+    return date_render(date), date[0:4]
 
 
 ####################################################################################################################################
@@ -183,6 +168,7 @@ def _build(config, var_store):
     bld_hlp = bld_hlp_parse(os.path.join(path_xml, "reference.xml"), bld_cfg, True)
 
     index = _read(os.path.join(path_xml, "index.xml"))
+    news = _read(os.path.join(path_xml, "news.xml"))
     user_guide = _read(os.path.join(path_xml, "user-guide.xml"))
     release = _read(os.path.join(path_xml, "release.xml"))
 
@@ -198,6 +184,8 @@ def _build(config, var_store):
     document_map = {
         "command": reference_command_render(bld_cfg, bld_hlp),
         "configuration": reference_configuration_render(bld_cfg, bld_hlp),
+        "index": news_index_render(index, news),
+        "news": news_render(news),
         "user-guide": build_pre(user_guide, bld_hlp, var_store),
         "release": release_render(release, config.doc_path, config.var_map.get("dev") == "y"),
     }

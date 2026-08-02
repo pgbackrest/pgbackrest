@@ -72,6 +72,29 @@ INDEX = """<doc title="{[project]}" subtitle="Reliable Backup">
 
         <p>Running in {[mode]} mode.</p>
     </section>
+
+    <section id="news">
+        <title>News</title>
+
+        <news-list total="1"/>
+    </section>
+</doc>
+"""
+
+NEWS = """<doc title="News">
+    <description>What is new.</description>
+
+    <section id="tarball" date="2026-07-20">
+        <title>New Tarball</title>
+
+        <p>Every release includes a tarball.</p>
+    </section>
+
+    <section id="continue" date="2026-05-18">
+        <title>It Will Continue</title>
+
+        <p>The project continues.</p>
+    </section>
 </doc>
 """
 
@@ -131,6 +154,7 @@ MANIFEST = """<doc>
 
     <source-list>
         <source key="index"/>
+        <source key="news"/>
         <source key="user-guide"/>
         <source key="command"/>
         <source key="configuration"/>
@@ -140,6 +164,7 @@ MANIFEST = """<doc>
     <render-list>
         <render type="html">
             <render-source key="index" menu="Home"/>
+            <render-source key="news" menu="News"/>
             <render-source key="user-guide"/>
         </render>
 
@@ -168,6 +193,7 @@ def _repo(path):
     file_write(os.path.join(path, "build/config.yaml"), CONFIG)
     file_write(os.path.join(path, "doc/manifest.xml"), MANIFEST)
     file_write(os.path.join(path, "doc/xml/index.xml"), INDEX)
+    file_write(os.path.join(path, "doc/xml/news.xml"), NEWS)
     file_write(os.path.join(path, "doc/xml/reference.xml"), HELP)
     file_write(os.path.join(path, "doc/xml/user-guide.xml"), USER_GUIDE)
     file_write(os.path.join(path, "doc/xml/release.xml"), RELEASE)
@@ -311,7 +337,17 @@ def test_doc():
         assert_equal(sorted(path_list(path_out)), ["html", "man", "markdown"])
         assert_equal(
             sorted(path_list(os.path.join(path_out, "html"))),
-            ["card.png", "default.css", "default.js", "index.html", "logo.svg", "slogo.svg", "sponsor", "user-guide.html"],
+            [
+                "card.png",
+                "default.css",
+                "default.js",
+                "index.html",
+                "logo.svg",
+                "news.html",
+                "slogo.svg",
+                "sponsor",
+                "user-guide.html",
+            ],
         )
 
         # What goes beside the pages is copied rather than rendered
@@ -323,6 +359,16 @@ def test_doc():
         assert_in("<title>", index)
         assert_in("Running in release mode.", index)
         assert_in("Updated ", index)
+
+        # The index lists the news it asks for, which is taken from the news rather than listed on the index as well
+        assert_in('<b>July 20, 2026</b> - <a href="news.html#tarball">New Tarball</a>', index)
+        assert_not_in("It Will Continue", index)
+
+        # Every news item is dated from the date it was posted, whether the index lists it or not
+        news = file_read(os.path.join(path_out, "html/news.html"))
+
+        assert_in("<b>July 20, 2026</b>", news)
+        assert_in("<b>May 18, 2026</b>", news)
 
         # The user guide resolves the variables it declares
         assert_in("Running on local.", file_read(os.path.join(path_out, "html/user-guide.html")))

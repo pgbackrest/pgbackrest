@@ -216,6 +216,17 @@ def xml_node_add(node, name, attrib=None):
 
 
 ####################################################################################################################################
+def xml_node_insert(node, index, name, attrib=None):
+    """Add a child to a node at a position rather than at the end, which is how a node goes where it belongs in what is already
+    there."""
+
+    result = etree.Element(name, attrib or {})
+    node.insert(index, result)
+
+    return result
+
+
+####################################################################################################################################
 def xml_node_dup(node):
     """Copy a node and everything under it, so what is copied can be changed without changing what it came from."""
 

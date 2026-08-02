@@ -12,6 +12,7 @@ import os
 import re
 from collections import deque
 
+from common.date import date_render
 from common.error import ToolError
 from common.storage import file_read
 from common.xml import (
@@ -54,21 +55,6 @@ _CONTRIBUTOR_LIST = (
     ("release-item-ideator", "Reported", "Suggested"),
 )
 
-_MONTH_LIST = (
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-)
-
 _VERSION_BUG_FIX_EXP = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 _VERSION_DATE_EXP = re.compile(r"^(XXXX-XX-XX)|([0-9]{4}-[0-9]{2}-[0-9]{2})$")
 
@@ -108,7 +94,7 @@ def _date_render(date, version):
     if _VERSION_DATE_EXP.match(date) is None:
         raise ToolError("invalid date %s for release %s" % (date, version))
 
-    return "Released %s %d, %s" % (_MONTH_LIST[int(date[5:7]) - 1], int(date[8:10]), date[0:4])
+    return "Released %s" % date_render(date)
 
 
 ####################################################################################################################################

@@ -179,6 +179,17 @@ def test_xml_text():
 
 
 ####################################################################################################################################
+def test_xml_insert():
+    """A node is added where it belongs in what is already there rather than at the end."""
+
+    node = xml_parse("<section><title>Backup</title><p>text</p></section>", "test.xml")
+
+    xml_node_content_add(xml_node_insert(node, 1, "p", {"class": "date"}), "July 20, 2026")
+
+    assert_equal(_render(node), '<section><title>Backup</title><p class="date">July 20, 2026</p><p>text</p></section>')
+
+
+####################################################################################################################################
 def test_xml_dup():
     """A copy can be changed without changing what it came from, which is what makes a block reusable."""
 
