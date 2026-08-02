@@ -200,9 +200,8 @@ Header
 
 /* The mark and the name together, drawn as itself rather than masked, so it keeps the colors it was drawn with and the ones it
    was drawn with for a dark page. Only the height is set, and the ratio below is the viewBox of the file it draws. */
-.page-header:before
+.page-header-logo
 {
-    content: "";
     flex: none;
     height: 3.5rem;
     aspect-ratio: 383.2 / 101.3;
@@ -212,8 +211,9 @@ Header
     background-size: contain;
 }
 
-/* The logo says the name, so the heading is left for what reads the page rather than what looks at it */
-.page-header-title
+/* The logo says the name, so the heading is left for what reads the page rather than what looks at it, and so is the name the logo
+   holds, which is what the logo says to a reader who cannot see it */
+.page-header-title, .page-header-logo-name
 {
     position: absolute;
     width: 1px;

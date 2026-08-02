@@ -268,6 +268,9 @@ def test_page():
     with tempfile.TemporaryDirectory() as path:
         page = _page(_doc_path(path))
 
+        # The logo is a link home and holds the name for a reader who cannot see what it is drawn as
+        assert_in('<a class="page-header-logo" href="/"><span class="page-header-logo-name">\npgBackRest\n', page)
+
         assert_in('<div class="page-header-title">\nUser Guide\n', page)
         assert_in('<div class="page-header-subtitle">\nReliable\n', page)
         assert_in("<title>", page)
@@ -370,6 +373,9 @@ def test_page_sponsor():
 
     with tempfile.TemporaryDirectory() as path:
         page = _page(_doc_path(path), "index")
+
+        # The logo is not a link on the page it would link to, since the reader is already there
+        assert_in('<div class="page-header-logo"><span class="page-header-logo-name">\npgBackRest\n', page)
 
         assert_in('<a href="https://one">', page)
         assert_in('<img class="sponsor-img sponsor-img-light" src="sponsor/one.png" alt="One" width="100">', page)

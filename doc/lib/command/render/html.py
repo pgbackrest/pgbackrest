@@ -222,6 +222,17 @@ class DocHtmlPage(DocExecute):
         )
 
         header = builder.body.add_new("div", "page-header")
+
+        # The logo goes home, which is where a reader expects a logo to take them, unless they are already home, since the menu
+        # leaves out the page a reader is on as well. It is drawn by the style, so the name it holds is only for a reader who
+        # cannot see it, and on every other page it is also what says where the link goes.
+        if self.key == "index":
+            logo = header.add_new("div", "page-header-logo")
+        else:
+            logo = header.add_new("a", "page-header-logo", ref="{[project-url-root]}")
+
+        logo.add_new("span", "page-header-logo-name", content="{[project]}")
+
         header.add_new("div", "page-header-title", content=title)
 
         if subtitle is not None:
