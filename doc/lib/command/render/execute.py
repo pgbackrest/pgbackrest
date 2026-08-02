@@ -304,13 +304,16 @@ class DocExecute(DocRender):
         return key
 
     ################################################################################################################################
-    def _config_mark(self, key, config, show):
+    def _config_mark(self, section, key, config, show):
         """Mark each line of a configuration file with what the change the document is showing did to it.
 
         A file is shown in full every time it changes, so a change of one option in a file that has grown to fifty leaves the reader
         to find which one it was. The file is compared against the file as the document last showed it, which is not the same as the
         file as it was: a change the document did not show is left for the next change that is shown, so that nothing the reader is
-        shown goes unmarked. A file that was reset has nothing to compare against and is shown as all new."""
+        shown goes unmarked. A file that was reset has nothing to compare against and is shown as all new.
+
+        A change that is shown but leaves the file as the reader last saw it is an error, since the reader is given a file to read
+        and nothing in it to find. The change belongs where it changes something, or nowhere."""
 
         file_key = (key["host"], key["file"])
         line_list = [] if config is None else config.rstrip("\n").split("\n")
@@ -330,6 +333,12 @@ class DocExecute(DocRender):
                 result += [(CONFIG_MARK_SAME, line) for line in line_list[begin:end]]
 
         if show:
+            if not any(mark != CONFIG_MARK_SAME for mark, _ in result):
+                raise ToolError(
+                    "config %s:%s in section %s is shown but changes nothing since it was last shown"
+                    % (key["host"], key["file"], xml_node_attribute(section, "path"))
+                )
+
             self.config_show_map[file_key] = line_list
 
         return result
@@ -353,7 +362,7 @@ class DocExecute(DocRender):
                 result = self._backrest_config_apply(config, key, depth)
                 self.cache_push(cache_type, key, {"config": None if result is None else result.split("\n")})
 
-            result = self._config_mark(key, result, show)
+            result = self._config_mark(section, key, result, show)
         else:
             # A build that does not run the commands has no file to show and nothing to compare it against
             result = [(CONFIG_MARK_SAME, _SUPPRESS_CONFIG)]
@@ -440,7 +449,7 @@ class DocExecute(DocRender):
                 result = self._postgres_config_apply(config, key, depth)
                 self.cache_push(cache_type, key, {"config": None if result is None else result.split("\n")})
 
-            result = self._config_mark(key, result, show)
+            result = self._config_mark(section, key, result, show)
         else:
             # A build that does not run the commands has no file to show and nothing to compare it against
             result = [(CONFIG_MARK_SAME, _SUPPRESS_CONFIG)]

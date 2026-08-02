@@ -498,7 +498,7 @@ def test_cache_push():
 ####################################################################################################################################
 def test_backrest_config():
     """A configuration file is built up across a document, so a section shows the file with everything added so far and says what
-    it changed."""
+    it changed, and a section that changes nothing has nothing to show."""
 
     with tempfile.TemporaryDirectory() as path:
         render = _execute(path)
@@ -571,6 +571,24 @@ def test_backrest_config():
         )
 
         assert_equal(content, [("add", "[demo]"), ("add", "pg1-path=/pg")])
+
+        # A change that is shown but leaves the file as the reader last saw it gives the reader a file to read and nothing in it to
+        # find, so it is an error
+        with assert_raises(ToolError) as raised:
+            render.backrest_config(
+                section,
+                _doc(
+                    """<backrest-config host="repo2" file="/etc/pgbackrest.conf"><title>Again</title>
+                        <backrest-config-option section="demo" key="pg1-path">/pg</backrest-config-option>
+                    </backrest-config>"""
+                ),
+                1,
+            )
+
+        assert_equal(
+            str(raised.exception),
+            "config repo2:/etc/pgbackrest.conf in section /one is shown but changes nothing since it was last shown",
+        )
 
 
 ####################################################################################################################################
@@ -914,8 +932,10 @@ def test_config_cache():
 
         assert_equal(content, [("add", "[global]")])
 
+        # A change that is not shown is not compared against anything the reader has seen, so a file with nothing in it is not an
+        # error the way it would be if the reader were being shown it
         _, content, _ = render.postgres_config(
-            section, _doc('<postgres-config host="repo" file="/pg/x"><title>C</title></postgres-config>'), 1
+            section, _doc('<postgres-config host="repo" file="/pg/x" show="n"><title>C</title></postgres-config>'), 1
         )
 
         assert_equal(content, [])
@@ -959,7 +979,8 @@ def test_backrest_config_reset():
 
 ####################################################################################################################################
 def test_backrest_config_hidden():
-    """A file that holds nothing but the options the build watches with has nothing for a reader to see."""
+    """A file that holds nothing but the options the build watches with has nothing for a reader to see, so showing it is an
+    error."""
 
     with tempfile.TemporaryDirectory() as path:
         render = _execute(path)
@@ -967,18 +988,22 @@ def test_backrest_config_hidden():
 
         render.host_map["repo"] = _Host("repo", "doc-repo", "image:1", "vagrant")
 
-        _, content, _ = render.backrest_config(
-            section,
-            _doc(
-                """<backrest-config host="repo" file="/etc/pgbackrest.conf"><title>C</title>
-                    <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
-                    <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
-                </backrest-config>"""
-            ),
-            1,
-        )
+        with assert_raises(ToolError) as raised:
+            render.backrest_config(
+                section,
+                _doc(
+                    """<backrest-config host="repo" file="/etc/pgbackrest.conf"><title>C</title>
+                        <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
+                        <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
+                    </backrest-config>"""
+                ),
+                1,
+            )
 
-        assert_equal(content, [])
+        assert_equal(
+            str(raised.exception),
+            "config repo:/etc/pgbackrest.conf in section /one is shown but changes nothing since it was last shown",
+        )
 
 
 ####################################################################################################################################

@@ -590,19 +590,16 @@ def test_page_other():
 
 ####################################################################################################################################
 def test_page_postgres_config():
-    """Every line of a configuration says what the change did to it, and a configuration the documentation added nothing to says so
-    rather than showing nothing."""
+    """Every line of a configuration says what the change did to it."""
 
     import command.render.execute as execute_module
 
     line_list = [("same", "archive_mode = on"), ("remove", "wal_level = minimal"), ("add", "wal_level = replica")]
 
     def postgres_config(self, section, config, depth):
-        """Stand in for a configuration a section changed and for one the documentation added nothing to."""
+        """Stand in for a configuration a section changed."""
 
-        file = xml_node_attribute(config, "file", True)
-
-        return file, line_list if file == "/pg/x" else [], True
+        return xml_node_attribute(config, "file", True), line_list, True
 
     postgres_real = execute_module.DocExecute.postgres_config
     execute_module.DocExecute.postgres_config = postgres_config
@@ -610,7 +607,6 @@ def test_page_postgres_config():
     try:
         guide = """<doc title="G"><description>D</description><section id="a"><title>A</title>
             <postgres-config host="repo" file="/pg/x"><title>C</title></postgres-config>
-            <postgres-config host="repo" file="/pg/y"><title>C</title></postgres-config>
         </section></doc>"""
 
         with tempfile.TemporaryDirectory() as path:
@@ -624,8 +620,6 @@ def test_page_postgres_config():
             assert_in('<pre class="config-line">archive_mode = on</pre>', page)
             assert_in('<pre class="config-line-remove">wal_level = minimal</pre>', page)
             assert_in('<pre class="config-line-add">wal_level = replica</pre>', page)
-
-            assert_in("<No PgBackRest Settings>", page)
     finally:
         execute_module.DocExecute.postgres_config = postgres_real
 

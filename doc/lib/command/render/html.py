@@ -559,11 +559,8 @@ class DocHtmlPage(DocExecute):
         output = element.add_new("div", "config-body").add_new("div", "config-body-output", extra=_SCROLL)
         line_list = output.add_new("div", "config-line-list")
 
-        if len(config) == 0:
-            line_list.add_new("pre", "config-line", content="<No PgBackRest Settings>", pre=True)
-        else:
-            for mark, line in config:
-                line_list.add_new("pre", _CONFIG_CLASS_MAP[mark], content=line, pre=True)
+        for mark, line in config:
+            line_list.add_new("pre", _CONFIG_CLASS_MAP[mark], content=line, pre=True)
 
         return element
 

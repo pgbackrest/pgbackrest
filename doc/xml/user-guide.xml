@@ -1860,13 +1860,7 @@
 
             <p>The <br-option>repo1-retention-full-type</br-option> determines how the option <br-option>repo1-retention-full</br-option> is interpreted; either as the count of full backups to be retained or how many days to retain full backups. New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>repo1-retention-full-type=count</br-setting> and <br-setting>repo1-retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired, or if <br-setting>repo1-retention-full-type=time</br-setting> and <br-setting>repo1-retention-full=20</br-setting> then there must be one full backup that is at least 20 days old before expiration can occur.</p>
 
-            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
-                <title>Configure <br-option>repo1-retention-full</br-option></title>
-
-                <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
-            </backrest-config>
-
-            <p>Backup <br-setting>repo1-retention-full=2</br-setting> but currently there is only one full backup so the next full backup to run will not expire any full backups.</p>
+            <p><br-setting>repo1-retention-full=2</br-setting> was set in <link section="/quickstart/retention">Configure Retention</link> but currently there is only one full backup so the next full backup to run will not expire any full backups.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Perform a full backup</title>
@@ -3508,14 +3502,6 @@
             </execute-list>
 
             <admonition type="note">The <pg-setting>primary_conninfo</pg-setting> setting has been written into the <file>{[pg-recovery-file-demo]}</file> file because it was configured as a <br-option>recovery-option</br-option> in <file>{[project-exe]}.conf</file>. The <br-setting>{[dash]}-type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>{[pg-recovery-file-demo]}</file> file in place if that behavior is preferred.</admonition>
-
-            <p if="{[os-type-is-rhel]}">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory. That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again. Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
-
-            <postgres-config host="{[host-pg2]}" if="{[os-type-is-rhel]}" file="{[postgres-config-demo]}">
-                <title>Enable <pg-option>hot_standby</pg-option></title>
-
-                <postgres-config-option key="hot_standby">on</postgres-config-option>
-            </postgres-config>
 
             <execute-list host="{[host-pg2]}">
                 <title>Start <postgres/></title>
