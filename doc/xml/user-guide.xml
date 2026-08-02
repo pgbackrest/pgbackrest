@@ -225,7 +225,9 @@
         <variable key="test-table-data">Important Data</variable>
 
         <!-- Database cluster commands -->
-        <variable key="pg-cluster-wait">sleep 2</variable>
+        <!-- The full path is required because sudo strips the PostgreSQL bin path from PATH on RHEL, where only psql is linked
+             into a path that survives -->
+        <variable key="pg-cluster-wait">timeout 60 bash -c "until {[pg-bin-path]}/pg_isready -q; do sleep 0.1; done"</variable>
 
         <variable key="pg-cluster-create" if="{[os-type-is-debian]}">pg_createcluster {[pg-version]} {[postgres-cluster-demo]}</variable>
 
@@ -1081,7 +1083,7 @@
                     mkdir -p {[build-br-path-tmp]}/doc/output/html &amp;&amp;
                     mkdir -p {[build-br-path-tmp]}/doc/output/man &amp;&amp;
                     touch {[build-br-path-tmp]}/doc/DIST.md &amp;&amp;
-                    PYTHONWARNINGS=ignore meson dist -C {[build-meson-path]} --formats gztar &amp;&amp;
+                    PYTHONWARNINGS=ignore meson dist -C {[build-meson-path]} --formats gztar --no-tests &amp;&amp;
                     tar zx -C {[build-path]} -f {[build-meson-path]}/meson-dist/pgbackrest-{[version]}.tar.gz &amp;&amp;
                     rm -rf {[build-meson-path]}
                 </exe-cmd>
@@ -3856,7 +3858,7 @@
                 <title>Check results in the log</title>
 
                 <execute user="postgres" show="n">
-                    <exe-cmd>sleep 5</exe-cmd>
+                    <exe-cmd>timeout 60 bash -c "until grep -sqE 'found [0-F]{24}' /var/log/pgbackrest/demo-archive-get-async.log; do sleep 0.1; done"</exe-cmd>
                 </execute>
                 <execute user="postgres" output="y">
                     <exe-cmd>cat /var/log/pgbackrest/demo-archive-get-async.log</exe-cmd>

@@ -323,6 +323,9 @@ def test_execute_error():
 
         render.execute(section, "repo", _doc('<execute cmd-line-len="120"><exe-cmd>%s</exe-cmd></execute>' % ("x" * 100)))
 
+        # A command that is not shown is never read, so how wide it is does not matter
+        render.execute(section, "repo", _doc('<execute show="n"><exe-cmd>%s</exe-cmd></execute>' % ("x" * 100)))
+
         # A command against a host that was never started
         with assert_raises(ToolError) as raised:
             render.execute(section, "missing", _doc("<execute><exe-cmd>ls</exe-cmd></execute>"))

@@ -201,9 +201,10 @@ class DocExecute(DocRender):
         cmd = "\n".join(key["cmd"])
         output = None
 
-        if show and self.exe and self.is_required(section):
-            # A line that is too wide to read is an error, since the documentation is showing it to be read. A command may raise the
-            # limit for itself when it holds something that cannot be broken, e.g. a url.
+        if show and self.exe and self.is_required(section) and xml_node_attribute(command, "show") != "n":
+            # A line that is too wide to read is an error, since the documentation is showing it to be read. A command that is not
+            # shown is never read, so how wide it is does not matter. A command may raise the limit for itself when it holds
+            # something that cannot be broken, e.g. a url.
             line_len = int(xml_node_attribute(command, "cmd-line-len") or self.cmd_line_len)
 
             for line in cmd.split("\n"):
