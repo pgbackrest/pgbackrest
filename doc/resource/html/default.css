@@ -126,15 +126,6 @@ html
     -webkit-text-size-adjust: 100%;
 }
 
-/* Jumping from the contents to a section glides rather than cuts, for readers who have not asked for less motion */
-@media (prefers-reduced-motion: no-preference)
-{
-    html
-    {
-        scroll-behavior: smooth;
-    }
-}
-
 body
 {
     margin: 0;

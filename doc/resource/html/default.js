@@ -126,16 +126,20 @@ The second takes the focus stop back off the blocks that turned out to fit, whic
     var active = null;
     var pending = false;
 
+    // A link into the page leaves the section it points at this far down, clear of the menu bar over the top of the text. The same
+    // distance decides which section is being read, so following a link marks what it arrived at rather than what sits above it.
+    // Asked of the style once rather than on every frame of a scroll, since scrolling cannot change it.
+    var edge = null;
+
     function mark()
     {
         pending = false;
 
         fit();
 
-        // A link into the page leaves the section it points at this far down, clear of the menu bar over the top of the text. The
-        // same distance decides which section is being read, so following a link marks what it arrived at rather than what sits
-        // above it.
-        var edge = parseFloat(window.getComputedStyle(anchorList[0]).scrollMarginTop) + 1;
+        if (edge === null)
+            edge = parseFloat(window.getComputedStyle(anchorList[0]).scrollMarginTop) + 1;
+
         var found = anchorList[0];
 
         for (var idx = 0; idx < anchorList.length; idx++)
@@ -176,8 +180,16 @@ The second takes the focus stop back off the blocks that turned out to fit, whic
         window.requestAnimationFrame(mark);
     }
 
+    // How far down a section sits is written in units the window can change, so it is asked for again when the window changes
+    function resize()
+    {
+        edge = null;
+
+        schedule();
+    }
+
     window.addEventListener("scroll", schedule, {passive: true});
-    window.addEventListener("resize", schedule, {passive: true});
+    window.addEventListener("resize", resize, {passive: true});
 
     mark();
 })();
