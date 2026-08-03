@@ -223,9 +223,9 @@ class DocHtmlPage(DocExecute):
 
         header = builder.body.add_new("div", "page-header")
 
-        # The logo goes home, which is where a reader expects a logo to take them, unless they are already home, since the menu
-        # leaves out the page a reader is on as well. It is drawn by the style, so the name it holds is only for a reader who
-        # cannot see it, and on every other page it is also what says where the link goes.
+        # The logo goes home, which is where a reader expects a logo to take them, unless they are already home, since a page
+        # never links to itself. It is drawn by the style, so the name it holds is only for a reader who cannot see it, and on
+        # every other page it is also what says where the link goes.
         if self.key == "index":
             logo = header.add_new("div", "page-header-logo")
         else:
@@ -243,19 +243,22 @@ class DocHtmlPage(DocExecute):
 
             # The menu is in the order the manifest lists the pages rather than in the order they were rendered
             for key in render.order:
-                # The page a reader is on is not in the menu, since they are already there
-                if key == self.key:
-                    continue
-
                 out = self.manifest.render_out_get(RENDER_HTML, key)
 
                 if out is not None and out.menu is not None:
-                    menu_body.add_new("div", "menu").add_new(
-                        "a",
-                        "menu-link",
-                        content=out.menu,
-                        ref="{[project-url-root]}" if key == "index" else "%s.html" % key,
-                    )
+                    menu = menu_body.add_new("div", "menu")
+
+                    # The page a reader is on is marked rather than linked, so the menu says where they are without offering a
+                    # link to where they already are
+                    if key == self.key:
+                        menu.add_new("span", "menu-current", content=out.menu)
+                    else:
+                        menu.add_new(
+                            "a",
+                            "menu-link",
+                            content=out.menu,
+                            ref="{[project-url-root]}" if key == "index" else "%s.html" % key,
+                        )
 
         toc_body = None
 

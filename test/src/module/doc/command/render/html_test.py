@@ -275,9 +275,9 @@ def test_page():
         assert_in('<div class="page-header-subtitle">\nReliable\n', page)
         assert_in("<title>", page)
 
-        # The page a reader is on is not in the menu, since they are already there
+        # The page a reader is on is in the menu with the rest, marked rather than linked
         assert_in('<a class="menu-link" href="/">\nHome\n', page)
-        assert_not_in(">\nGuide\n<", page)
+        assert_in('<span class="menu-current">\nGuide\n', page)
 
         # A section is anchored so a link can point at it
         assert_in('<a id="start"></a>', page)
@@ -667,7 +667,11 @@ def test_page_menu():
     """A page that is not in the menu is not in it, however it is rendered."""
 
     with tempfile.TemporaryDirectory() as path:
-        assert_not_in("menu-link", _page(_doc_path(path, MANIFEST_MENU)))
+        page = _page(_doc_path(path, MANIFEST_MENU))
+
+        # The page being rendered is still marked, so the menu holds no links at all
+        assert_not_in("menu-link", page)
+        assert_in("menu-current", page)
 
     # A build where no page is in the menu has no menu at all
     with tempfile.TemporaryDirectory() as path:
