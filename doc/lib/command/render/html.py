@@ -7,6 +7,7 @@ Where those linefeeds go matters more than it looks. The pages are compared agai
 change to the tool changed nothing about the documentation, and output that is all on one line makes that comparison useless."""
 
 ####################################################################################################################################
+import hashlib
 import os
 import re
 import shutil
@@ -82,13 +83,15 @@ class HtmlElement:
 class HtmlBuilder:
     """Builds a page from the elements it holds."""
 
-    def __init__(self, name, title, favicon, card, card_size, description):
+    def __init__(self, name, title, favicon, card, card_size, description, style_version, script_version):
         self.name = name
         self.title = title
         self.favicon = favicon
         self.card = card
         self.card_size = card_size
         self.description = description
+        self.style_version = style_version
+        self.script_version = script_version
 
         self.body = HtmlElement("body")
         self._pre_prior = False
@@ -174,10 +177,12 @@ class HtmlBuilder:
             result += '<meta name="description" content="%s"></meta>\n' % self._escape(self.description)
             result += '<meta property="og:description" content="%s"></meta>\n' % self._escape(self.description)
 
-        result += '<link rel="stylesheet" href="default.css" type="text/css"></link>\n'
+        # The style and the script are linked with a version of their content, since a browser caches by the whole url, so a
+        # cached copy is refetched when the content changes and kept when it does not
+        result += '<link rel="stylesheet" href="default.css?v=%s" type="text/css"></link>\n' % self.style_version
 
         # Deferred because the script reads the page it marks, and nothing on the page waits for it
-        result += '<script src="default.js" defer="defer"></script>\n'
+        result += '<script src="default.js?v=%s" defer="defer"></script>\n' % self.script_version
 
         if analytics:
             for line in _ANALYTICS:
@@ -193,10 +198,12 @@ class HtmlBuilder:
 class DocHtmlPage(DocExecute):
     """Renders one document as a page."""
 
-    def __init__(self, manifest, key, menu, exe):
+    def __init__(self, manifest, key, menu, exe, style_version, script_version):
         super().__init__(RENDER_HTML, manifest, key, exe)
 
         self.menu = menu
+        self.style_version = style_version
+        self.script_version = script_version
 
     ################################################################################################################################
     def process(self):
@@ -219,6 +226,8 @@ class DocHtmlPage(DocExecute):
             card,
             None if card is None else _png_size(os.path.join(self.manifest.path_doc, "resource", card)),
             var_store.replace_str(xml_node_field(self.root, "description", True).strip()),
+            self.style_version,
+            self.script_version,
         )
 
         header = builder.body.add_new("div", "page-header")
@@ -617,6 +626,16 @@ def _resource_render(text, line_comment=False):
 
 
 ####################################################################################################################################
+def _resource_version(text):
+    """A short hash of a style or a script, which is the version the links to it carry.
+
+    It is the rendered content that is hashed, so a change to nothing but a comment, which the render takes out, does not change
+    the version either, and one build of the documentation still comes out the same as the next."""
+
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()[:8]
+
+
+####################################################################################################################################
 def _copy_add(element, what):
     """Add the button that hands a reader what a block is showing rather than what the documentation wrote around it.
 
@@ -656,11 +675,14 @@ def html_render(manifest, path_doc, path_out, exe):
     render = manifest.render_get(RENDER_HTML)
     var_store = manifest.var_store
 
-    style = file_read(os.path.join(path_doc, "resource/html/default.css"))
-    script = file_read(os.path.join(path_doc, "resource/html/default.js"))
+    style = _resource_render(file_read(os.path.join(path_doc, "resource/html/default.css")))
+    script = _resource_render(file_read(os.path.join(path_doc, "resource/html/default.js")), line_comment=True)
 
-    file_write(os.path.join(path_out, "default.css"), _resource_render(style))
-    file_write(os.path.join(path_out, "default.js"), _resource_render(script, line_comment=True))
+    file_write(os.path.join(path_out, "default.css"), style)
+    file_write(os.path.join(path_out, "default.js"), script)
+
+    style_version = _resource_version(style)
+    script_version = _resource_version(script)
     shutil.copyfile(os.path.join(path_doc, "resource/slogo.svg"), os.path.join(path_out, "slogo.svg"))
 
     favicon = var_store.get("project-favicon")
@@ -688,7 +710,7 @@ def html_render(manifest, path_doc, path_out, exe):
         out = render.out_map[key]
 
         def build():
-            return var_store.replace_str(DocHtmlPage(manifest, key, render.menu, exe).process())
+            return var_store.replace_str(DocHtmlPage(manifest, key, render.menu, exe, style_version, script_version).process())
 
         try:
             html = build()

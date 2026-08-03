@@ -15,7 +15,7 @@ from common.storage import file_read, file_write, path_list
 from common.var_store import VarStore
 from common.xml import xml_node_attribute, xml_parse
 from command.render.execute import CacheInvalidError
-from command.render.html import DocHtmlPage, HtmlBuilder, HtmlElement, html_render
+from command.render.html import DocHtmlPage, HtmlBuilder, HtmlElement, _resource_version, html_render
 from command.render.manifest import RENDER_HTML, Manifest
 
 MANIFEST = """<doc>
@@ -216,14 +216,14 @@ def _page(path, key="user-guide", config=None):
     manifest = _manifest(path, config)
     render = manifest.render_get(RENDER_HTML)
 
-    return manifest.var_store.replace_str(DocHtmlPage(manifest, key, render.menu, False).process())
+    return manifest.var_store.replace_str(DocHtmlPage(manifest, key, render.menu, False, "style1", "script1").process())
 
 
 ####################################################################################################################################
 def test_element():
     """A page is built as a tree of elements so the code that decides what it holds never deals with markup."""
 
-    builder = HtmlBuilder("Name", "Title", None, None, None, None)
+    builder = HtmlBuilder("Name", "Title", None, None, None, None, "style1", "script1")
     body = builder.body
 
     body.add_new("div", "one", content="Content")
@@ -237,7 +237,7 @@ def test_element():
 def test_builder():
     """A page says what it is."""
 
-    builder = HtmlBuilder("pgBackRest", "Guide & More", "logo.svg", "card.png", (1200, 630), "How to use it.")
+    builder = HtmlBuilder("pgBackRest", "Guide & More", "logo.svg", "card.png", (1200, 630), "How to use it.", "style1", "script1")
 
     result = builder.render(analytics=True)
 
@@ -252,8 +252,8 @@ def test_builder():
     assert_in('<meta name="twitter:card" content="summary_large_image"></meta>', result)
 
     assert_in('<meta name="description" content="How to use it."></meta>', result)
-    assert_in('<link rel="stylesheet" href="default.css" type="text/css"></link>', result)
-    assert_in('<script src="default.js" defer="defer"></script>', result)
+    assert_in('<link rel="stylesheet" href="default.css?v=style1" type="text/css"></link>', result)
+    assert_in('<script src="default.js?v=script1" defer="defer"></script>', result)
     assert_in('<meta name="viewport" content="width=device-width, initial-scale=1"></meta>', result)
     assert_in("googletagmanager.com", result)
 
@@ -459,6 +459,10 @@ def test_html_render():
         assert_equal(file_read(os.path.join(path_out, "default.css")), "body\n{\n    color: black;\n}\n")
         assert_equal(file_read(os.path.join(path_out, "default.js")), "var page = 1;\n")
 
+        # The links carry a version of the rendered content, so a comment changes neither
+        assert_in('href="default.css?v=%s"' % _resource_version("body\n{\n    color: black;\n}\n"), index)
+        assert_in('src="default.js?v=%s"' % _resource_version("var page = 1;\n"), index)
+
 
 ####################################################################################################################################
 def test_html_render_cache_reset():
@@ -505,7 +509,7 @@ def test_page_highlight_missing():
             render = manifest.render_get(RENDER_HTML)
 
             with assert_raises(ToolError) as raised:
-                DocHtmlPage(manifest, "user-guide", render.menu, True).process()
+                DocHtmlPage(manifest, "user-guide", render.menu, True, "style1", "script1").process()
 
             assert_equal(str(raised.exception), "unable to find a match for highlight: suppressed")
     finally:
@@ -577,7 +581,7 @@ def test_page_other():
         manifest = _manifest(_doc_path(path, user_guide=OTHER_GUIDE))
 
         render = manifest.render_get(RENDER_HTML)
-        page = DocHtmlPage(manifest, "user-guide", render.menu, False).process()
+        page = DocHtmlPage(manifest, "user-guide", render.menu, False, "style1", "script1").process()
 
         # A table with no header lines every column up left
         assert_in('<td class="table-data-left">', page)
@@ -618,7 +622,7 @@ def test_page_postgres_config():
         with tempfile.TemporaryDirectory() as path:
             manifest = _manifest(_doc_path(path, user_guide=guide))
             render = manifest.render_get(RENDER_HTML)
-            page = DocHtmlPage(manifest, "user-guide", render.menu, False).process()
+            page = DocHtmlPage(manifest, "user-guide", render.menu, False, "style1", "script1").process()
 
             # The title carries the button that hands over the file rather than the change to it, which the style draws
             assert_in('<div class="config-title"><button class="code-copy" type="button" title="Copy the configuration"', page)
@@ -655,7 +659,7 @@ def test_html_render_plain():
 def test_builder_plain():
     """A page that says nothing about itself beyond what it must."""
 
-    result = HtmlBuilder("pgBackRest", "Guide", None, None, None, None).render()
+    result = HtmlBuilder("pgBackRest", "Guide", None, None, None, None, "style1", "script1").render()
 
     assert_not_in("og:image", result)
     assert_not_in('name="description"', result)
@@ -699,7 +703,7 @@ def test_page_output_run():
                 )
             )
             render = manifest.render_get(RENDER_HTML)
-            page = DocHtmlPage(manifest, "user-guide", render.menu, True).process()
+            page = DocHtmlPage(manifest, "user-guide", render.menu, True, "style1", "script1").process()
 
             assert_in('<pre class="execute-line">before</pre>', page)
             assert_in('<pre class="execute-line-highlight">suppressed here</pre>', page)
