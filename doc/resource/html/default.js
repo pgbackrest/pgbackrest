@@ -1,9 +1,10 @@
 /***********************************************************************************************************************************
 Documentation Script
 
-Three things that a page reads better with and works without. A browser that runs no script loses them and loses nothing it needs:
-the contents are links and work as links, every block that can scroll is already reachable from the keyboard, and the button that
-copies a command or a config file is not shown until there is a script to make it work.
+Four things that a page reads better with and works without. A browser that runs no script loses them and loses nothing it needs:
+the contents are links and work as links, every block that can scroll is already reachable from the keyboard, a menu too wide for
+the window scrolls whether or not it says so, and the button that copies a command or a config file is not shown until there is a
+script to make it work.
 
 The first marks the section being read in the contents beside the text, so a long page says where the reader is rather than only
 where they can go. The section being read is the last one that begins above the menu bar, which is what a reader means by the
@@ -11,6 +12,8 @@ section they are in. An observer would report the sections in view instead, whic
 than the window.
 
 The second takes the focus stop back off the blocks that turned out to fit, which is most of them.
+
+The third fades out an end the menu carries on past, so that a window too narrow to show the whole menu says as much.
 ***********************************************************************************************************************************/
 "use strict";
 
@@ -244,6 +247,54 @@ with the window, so it is asked again whenever the window changes.
     window.addEventListener("resize", schedule, {passive: true});
 
     reach();
+})();
+
+/***********************************************************************************************************************************
+Which end the menu carries on past
+
+A menu too wide for the window scrolls sideways, and a phone draws the scrollbar only while a finger is on it, so at rest a reader
+is shown a menu that stops flat at the edge of the window and is told nothing about the rest of it. The style fades out an end the
+menu carries on past, and which end that is can only be measured, so it is measured here and handed over as a class. The class goes
+on the bar rather than on the menu, since the fade is drawn over the bar, which stays where it is while the menu scrolls under it.
+***********************************************************************************************************************************/
+(function()
+{
+    var bar = document.querySelector(".page-menu");
+    var menu = bar === null ? null : bar.querySelector(".menu-body");
+
+    if (menu === null)
+        return;
+
+    var pending = false;
+
+    /*******************************************************************************************************************************
+    Say which ends the menu carries on past
+    *******************************************************************************************************************************/
+    function fade()
+    {
+        pending = false;
+
+        // A pixel of slack, since a menu that fits can still measure a fraction wider than the room it has
+        bar.classList.toggle("page-menu-fade-left", menu.scrollLeft > 1);
+        bar.classList.toggle("page-menu-fade-right", menu.scrollLeft + menu.clientWidth < menu.scrollWidth - 1);
+    }
+
+    /*******************************************************************************************************************************
+    Run on a frame rather than on every event, since scrolling reports far more often than a page can be drawn
+    *******************************************************************************************************************************/
+    function schedule()
+    {
+        if (pending)
+            return;
+
+        pending = true;
+        window.requestAnimationFrame(fade);
+    }
+
+    menu.addEventListener("scroll", schedule, {passive: true});
+    window.addEventListener("resize", schedule, {passive: true});
+
+    fade();
 })();
 
 /***********************************************************************************************************************************
