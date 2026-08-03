@@ -246,15 +246,28 @@ Menu
     box-shadow: var(--shadow);
 }
 
+/* The bar keeps its height however many pages are in the menu, so a menu wider than the window scrolls sideways rather than
+   wrapping into rows the height would cut off. It is centered by the margins at its ends rather than by the bar, since a centered
+   row that overflows hangs out both ends and the start of it is past where the scroll can reach. */
 .menu-body
 {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
-    gap: 0 1.75rem;
+    gap: 1.75rem;
     height: var(--bar-height);
     overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+}
+
+.menu:first-child
+{
+    margin-left: auto;
+}
+
+.menu:last-child
+{
+    margin-right: auto;
 }
 
 .menu
