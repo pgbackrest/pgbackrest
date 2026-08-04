@@ -3003,6 +3003,25 @@
 
                         <example>n</example>
                     </option>
+
+                    <option id="repo-format" name="Repository Format">
+                        <summary>Repository format.</summary>
+
+                        <text>
+                            <p>The repository format determines the on-disk format and related features available in the repository. Each info file and manifest records the format it was written with, so a repository may contain more than one format while backups and archives written at an older format expire.</p>
+
+                            <p>The following formats are supported:</p>
+
+                            <list>
+                                <list-item><id>5</id> - Format supported by all versions since <proper>1.00</proper></list-item>
+                                <list-item><id>6</id> - Adds no features yet and is reserved for features in development</list-item>
+                            </list>
+
+                            <p>An existing stanza is migrated to a newer format with the <cmd>stanza-upgrade</cmd> command rather than with this command, which sets the format only for a stanza it creates.</p>
+                        </text>
+
+                        <example>6</example>
+                    </option>
                 </option-list>
             </command>
 
@@ -3024,6 +3043,25 @@
                         </text>
 
                         <example>n</example>
+                    </option>
+
+                    <option id="repo-format" name="Repository Format">
+                        <summary>Repository format.</summary>
+
+                        <text>
+                            <p>Migrate the stanza to the specified repository format. Migration applies to new backups and archives only, so backups and archives already in the repository are left at the format they were written with.</p>
+
+                            <p>The following formats are supported:</p>
+
+                            <list>
+                                <list-item><id>5</id> - Format supported by all versions since <proper>1.00</proper></list-item>
+                                <list-item><id>6</id> - Adds no features yet and is reserved for features in development</list-item>
+                            </list>
+
+                            <p>Once the info files have been migrated, a version of <backrest/> that does not support the new format is no longer able to read the stanza at all, including the parts of it that are still at the older format. The format cannot be downgraded.</p>
+                        </text>
+
+                        <example>6</example>
                     </option>
                 </option-list>
             </command>

@@ -38,7 +38,7 @@ typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *i
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN Info *infoNew(const String *cipherPassSub);
+FN_EXTERN Info *infoNew(unsigned int format, const String *cipherPassSub);
 
 // Create new object and load contents from a file
 FN_EXTERN Info *infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData);
@@ -48,9 +48,19 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct InfoPub
 {
+    unsigned int format;                                            // Repository format the file was written with
     const String *backrestVersion;                                  // pgBackRest version
     const String *cipherPass;                                       // Cipher passphrase if set
 } InfoPub;
+
+// Repository format
+FN_INLINE_ALWAYS unsigned int
+infoFormat(const Info *const this)
+{
+    return THIS_PUB(Info)->format;
+}
+
+FN_EXTERN void infoFormatSet(Info *this, unsigned int format);
 
 // Cipher passphrase if set
 FN_INLINE_ALWAYS const String *

@@ -230,9 +230,10 @@ cmdBackup(void)
         const ManifestBlockIncrMap blockIncrMap = backupBlockIncrMap();
 
         Manifest *const manifest = manifestNewBuild(
-            backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart, cfgOptionBool(cfgOptOnline),
-            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock), &blockIncrMap,
-            strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
+            backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, infoBackupFormat(infoBackup), timestampStart,
+            cfgOptionBool(cfgOptOnline), cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle),
+            cfgOptionBool(cfgOptRepoBlock), &blockIncrMap, strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
+            backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time
         manifestBuildValidate(

@@ -66,12 +66,14 @@ infoBackupNewInternal(void)
 /**********************************************************************************************************************************/
 FN_EXTERN InfoBackup *
 infoBackupNew(
-    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion, const String *const cipherPassSub)
+    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion, const unsigned int format,
+    const String *const cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
+        FUNCTION_LOG_PARAM(UINT, format);
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
@@ -84,7 +86,7 @@ infoBackupNew(
         this = infoBackupNewInternal();
 
         // Initialize the pg data
-        this->pub.infoPg = infoPgNew(infoPgBackup, cipherPassSub);
+        this->pub.infoPg = infoPgNew(infoPgBackup, format, cipherPassSub);
         infoBackupPgSet(this, pgVersion, pgSystemId, pgCatalogVersion);
     }
     OBJ_NEW_END();
@@ -389,6 +391,23 @@ infoBackupPgSet(
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN void
+infoBackupFormatSet(InfoBackup *const this, const unsigned int format)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(UINT, format);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    infoFormatSet(infoPgInfo(infoBackupPg(this)), format);
+    this->pub.updated = true;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN InfoBackupData
 infoBackupData(const InfoBackup *const this, const unsigned int backupDataIdx)
 {
@@ -453,7 +472,7 @@ infoBackupDataAdd(InfoBackup *const this, const Manifest *const manifest)
             InfoBackupData infoBackupData =
             {
                 .backupLabel = strDup(manData->backupLabel),
-                .backrestFormat = REPOSITORY_FORMAT,
+                .backrestFormat = manifestFormat(manifest),
                 .backrestVersion = strDup(manData->backrestVersion),
                 .backupInfoRepoSize = backupRepoSize,
                 .backupInfoRepoSizeDelta = backupRepoSizeDelta,

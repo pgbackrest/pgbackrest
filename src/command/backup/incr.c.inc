@@ -146,6 +146,10 @@ backupBuildIncr(
             // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
             manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
 
+            // Set the format from the prior manifest since the entire backup set must be a single format. This means a backup set
+            // continues at the format it started with even after the repository format has been upgraded.
+            infoFormatSet(manifestInfo(manifest), manifestFormat(manifestPrior));
+
             // Incremental was built
             result = true;
         }

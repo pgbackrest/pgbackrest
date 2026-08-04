@@ -74,11 +74,14 @@ cmdStanzaCreate(void)
                         (backupNotEmpty && archiveNotEmpty ? "and/or " : ""), (archiveNotEmpty ? "archive directory " : ""));
                 }
 
+                // Format for the new stanza
+                const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
+
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent archive files
                 const String *cipherPassSub = cipherPassGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save archive info
-                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherPassSub);
+                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, format, cipherPassSub);
 
                 infoArchiveSaveFile(
                     infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR,
@@ -88,7 +91,8 @@ cmdStanzaCreate(void)
                 cipherPassSub = cipherPassGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save backup info
-                infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, pgControl.catalogVersion, cipherPassSub);
+                infoBackup = infoBackupNew(
+                    pgControl.version, pgControl.systemId, pgControl.catalogVersion, format, cipherPassSub);
 
                 infoBackupSaveFile(
                     infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR,

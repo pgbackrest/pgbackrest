@@ -36,12 +36,14 @@ testRun(void)
     {
         InfoPg *infoPg = NULL;
 
-        TEST_ASSIGN(infoPg, infoPgNew(infoPgBackup, NULL), "infoPgNew(cipherTypeNone, NULL)");
+        TEST_ASSIGN(infoPg, infoPgNew(infoPgBackup, REPOSITORY_FORMAT_DEFAULT, NULL), "infoPgNew(cipherTypeNone, NULL)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
         TEST_RESULT_STR(infoCipherPass(infoPgInfo(infoPg)), NULL, "  cipherPass NULL");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
 
-        TEST_ASSIGN(infoPg, infoPgNew(infoPgArchive, STRDEF("123xyz")), "infoPgNew(cipherTypeAes256Cbc, 123xyz)");
+        TEST_ASSIGN(
+            infoPg, infoPgNew(infoPgArchive, REPOSITORY_FORMAT_DEFAULT, STRDEF("123xyz")),
+            "infoPgNew(cipherTypeAes256Cbc, 123xyz)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
         TEST_RESULT_STR_Z(infoCipherPass(infoPgInfo(infoPg)), "123xyz", "  cipherPass set");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
@@ -50,7 +52,7 @@ testRun(void)
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(infoPgArchive, NULL), infoPgArchive, PG_VERSION_18, 6569239123849665679,
+                infoPgNew(infoPgArchive, REPOSITORY_FORMAT_DEFAULT, NULL), infoPgArchive, PG_VERSION_18, 6569239123849665679,
                 hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgArchive");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
@@ -77,7 +79,8 @@ testRun(void)
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(infoPgBackup, STRDEF("123xyz")), infoPgBackup, PG_VERSION_18, 6569239123849665679,
+                infoPgNew(
+                    infoPgBackup, REPOSITORY_FORMAT_DEFAULT, STRDEF("123xyz")), infoPgBackup, PG_VERSION_18, 6569239123849665679,
                 hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgBackup");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");

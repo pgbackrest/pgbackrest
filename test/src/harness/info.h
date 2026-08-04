@@ -22,6 +22,7 @@ Write info to a file and add the checksum
 Functions
 ***********************************************************************************************************************************/
 Buffer *harnessInfoChecksum(const String *info);
+Buffer *harnessInfoChecksumFormat(unsigned int format, const String *info);
 Buffer *harnessInfoChecksumZ(const char *info);
 
 void harnessInfoLoadNewCallback(void *callbackData, const String *section, const String *key, JsonRead *json);

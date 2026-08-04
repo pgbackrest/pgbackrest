@@ -94,11 +94,14 @@ BUFFER_STRDEF_STATIC(INFO_CHECKSUM_END_BUF, "}}");
 
 /**********************************************************************************************************************************/
 FN_EXTERN Info *
-infoNew(const String *const cipherPass)
+infoNew(const unsigned int format, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, format);
         FUNCTION_TEST_PARAM(STRING, cipherPass);                 // Use FUNCTION_TEST so cipher is not logged
     FUNCTION_LOG_END();
+
+    ASSERT(format >= REPOSITORY_FORMAT_MIN && format <= REPOSITORY_FORMAT_MAX);
 
     OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -106,6 +109,7 @@ infoNew(const String *const cipherPass)
 
         // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
         infoCipherPassSet(this, cipherPass);
+        this->pub.format = format;
         this->pub.backrestVersion = STRDEF(PROJECT_VERSION);
     }
     OBJ_NEW_END();
@@ -176,15 +180,33 @@ infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, voi
                         // Process backrest section
                         if (strEqZ(value->section, INFO_SECTION_BACKREST))
                         {
-                            // Validate format
+                            // Validate and store format
                             if (strEqZ(value->key, INFO_KEY_FORMAT))
                             {
-                                if (varUInt64(jsonToVar(value->value)) != REPOSITORY_FORMAT)
+                                const uint64_t format = varUInt64(jsonToVar(value->value));
+
+                                // A format newer than this version can read requires an upgrade. Do not suggest a version since
+                                // this version cannot know which version added the format.
+                                if (format > REPOSITORY_FORMAT_MAX)
                                 {
                                     THROW_FMT(
-                                        FormatError, "expected format %d but found %" PRIu64, REPOSITORY_FORMAT,
-                                        varUInt64(jsonToVar(value->value)));
+                                        FormatError,
+                                        "repository format %" PRIu64 " requires a newer version of " PROJECT_NAME "\n"
+                                        "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format %d to %d.",
+                                        format, REPOSITORY_FORMAT_MIN, REPOSITORY_FORMAT_MAX);
                                 }
+
+                                // A format older than this version can read requires an older version to migrate the repository
+                                if (format < REPOSITORY_FORMAT_MIN)
+                                {
+                                    THROW_FMT(
+                                        FormatError,
+                                        "repository format %" PRIu64 " is no longer supported by " PROJECT_NAME "\n"
+                                        "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format %d to %d.",
+                                        format, REPOSITORY_FORMAT_MIN, REPOSITORY_FORMAT_MAX);
+                                }
+
+                                this->pub.format = (unsigned int)format;
                             }
                             // Store pgBackRest version
                             else if (strEqZ(value->key, INFO_KEY_VERSION))
@@ -362,7 +384,7 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
 
         // Add version and format
         callbackFunction(callbackData, STRDEF(INFO_SECTION_BACKREST), &data);
-        infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_FORMAT, jsonFromVar(VARUINT(REPOSITORY_FORMAT)));
+        infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_FORMAT, jsonFromVar(VARUINT(infoFormat(this))));
         infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_VERSION, jsonFromVar(VARSTRDEF(PROJECT_VERSION)));
 
         // Add cipher passphrase if defined
@@ -394,6 +416,22 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+FN_EXTERN void
+infoFormatSet(Info *const this, const unsigned int format)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+        FUNCTION_TEST_PARAM(UINT, format);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(format >= REPOSITORY_FORMAT_MIN && format <= REPOSITORY_FORMAT_MAX);
+
+    this->pub.format = format;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 FN_EXTERN void
 infoCipherPassSet(Info *const this, const String *const cipherPass)
 {

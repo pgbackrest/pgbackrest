@@ -62,10 +62,11 @@ infoPgNewInternal(const InfoPgType type)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoPg *
-infoPgNew(const InfoPgType type, const String *const cipherPassSub)
+infoPgNew(const InfoPgType type, const unsigned int format, const String *const cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, type);
+        FUNCTION_LOG_PARAM(UINT, format);
         FUNCTION_TEST_PARAM(STRING, cipherPassSub);
     FUNCTION_LOG_END();
 
@@ -74,7 +75,7 @@ infoPgNew(const InfoPgType type, const String *const cipherPassSub)
     OBJ_NEW_BASE_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoPgNewInternal(type);
-        this->pub.info = infoNew(cipherPassSub);
+        this->pub.info = infoNew(format, cipherPassSub);
     }
     OBJ_NEW_END();
 

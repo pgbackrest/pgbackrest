@@ -1711,6 +1711,21 @@ option:
     deprecate:
       repo-path: {}
 
+  # Command-line only so that a format left in the configuration cannot upgrade a repository as a side effect of an unrelated
+  # stanza-upgrade. The allow list must be kept in sync with REPOSITORY_FORMAT_MIN/MAX in version.h
+  repo-format:
+    group: repo
+    type: integer
+    default: 5
+    allow-list:
+      - 5
+      - 6
+    command:
+      stanza-create: {}
+      stanza-upgrade: {}
+    command-role:
+      main: {}
+
   repo-cipher-type:
     section: global
     type: string-id

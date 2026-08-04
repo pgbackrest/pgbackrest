@@ -47,7 +47,7 @@ typedef enum
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN InfoPg *infoPgNew(InfoPgType type, const String *cipherPassSub);
+FN_EXTERN InfoPg *infoPgNew(InfoPgType type, unsigned int format, const String *cipherPassSub);
 
 // Create new object and load contents from a file
 FN_EXTERN InfoPg *infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFunction, void *callbackData);
@@ -76,6 +76,13 @@ FN_INLINE_ALWAYS const String *
 infoPgCipherPass(const InfoPg *const this)
 {
     return infoCipherPass(infoPgInfo(this));
+}
+
+// Return the repository format
+FN_INLINE_ALWAYS unsigned int
+infoPgFormat(const InfoPg *const this)
+{
+    return infoFormat(infoPgInfo(this));
 }
 
 // Return current pgId from the history

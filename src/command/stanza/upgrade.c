@@ -60,6 +60,30 @@ cmdStanzaUpgrade(void)
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
             InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
+            // Determine if the repository format should be updated. The format is only updated when it is explicitly requested,
+            // since the option default would otherwise downgrade a repository that has already been upgraded.
+            bool formatUpgrade = false;
+
+            if (cfgOptionIdxSource(cfgOptRepoFormat, repoIdx) != cfgSourceDefault)
+            {
+                const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
+                const unsigned int formatRepo = infoArchiveFormat(infoArchive);
+
+                // Error when the format would be downgraded. Backups and archives written at a newer format would no longer be
+                // gated by the info files, so an older version could read the info files and then fail on newer files.
+                if (format < formatRepo)
+                {
+                    THROW_FMT(
+                        FormatError,
+                        "unable to downgrade repository format from %u to %u\n"
+                        "HINT: backups and archives already written at format %u would not be readable by a version that only"
+                        " supports format %u.",
+                        formatRepo, format, formatRepo, format);
+                }
+
+                formatUpgrade = format != formatRepo || format != infoBackupFormat(infoBackup);
+            }
+
             // Since the file save of archive.info and backup.info are not atomic, then check and update each separately.
             // Update archive
             if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
@@ -72,6 +96,18 @@ cmdStanzaUpgrade(void)
             if (pgControl.version != backupInfo.version || pgControl.systemId != backupInfo.systemId)
             {
                 infoBackupPgSet(infoBackup, pgControl.version, pgControl.systemId, pgControl.catalogVersion);
+                infoBackupUpgrade = true;
+            }
+
+            // Update the format on both info files together so they never disagree
+            if (formatUpgrade)
+            {
+                const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
+
+                infoArchiveFormatSet(infoArchive, format);
+                infoBackupFormatSet(infoBackup, format);
+
+                infoArchiveUpgrade = true;
                 infoBackupUpgrade = true;
             }
 

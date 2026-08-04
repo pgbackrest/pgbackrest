@@ -672,10 +672,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkStanzaInfo() - files match");
 
-        InfoArchive *archiveInfo = infoArchiveNew(PG_VERSION_96, 6569239123849665679, NULL);
+        InfoArchive *archiveInfo = infoArchiveNew(PG_VERSION_96, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, NULL);
         InfoPgData archivePg = infoPgData(infoArchivePg(archiveInfo), infoPgDataCurrentId(infoArchivePg(archiveInfo)));
 
-        InfoBackup *backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96), NULL);
+        InfoBackup *backupInfo = infoBackupNew(
+            PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL);
         InfoPgData backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_RESULT_VOID(checkStanzaInfo(&archivePg, &backupPg), "stanza info files match");
@@ -683,7 +684,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkStanzaInfo() - corrupted backup file: system id");
 
-        backupInfo = infoBackupNew(PG_VERSION_96, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_96), NULL);
+        backupInfo = infoBackupNew(
+            PG_VERSION_96, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR(
@@ -696,7 +698,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkStanzaInfo() - corrupted backup file: system id and version");
 
-        backupInfo = infoBackupNew(PG_VERSION_18, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_18), NULL);
+        backupInfo = infoBackupNew(
+            PG_VERSION_18, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT, NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR(
@@ -709,7 +712,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkStanzaInfo() - corrupted backup file: version");
 
-        backupInfo = infoBackupNew(PG_VERSION_18, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_18), NULL);
+        backupInfo = infoBackupNew(
+            PG_VERSION_18, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT, NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR(

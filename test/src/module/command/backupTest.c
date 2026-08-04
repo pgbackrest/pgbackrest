@@ -1505,7 +1505,10 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_96, HRN_PG_SYSTEMID_96, hrnPgCatalogVersion(PG_VERSION_96), NULL)), "backup init");
+            backupInit(
+                infoBackupNew(
+                    PG_VERSION_96, HRN_PG_SYSTEMID_96, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL)),
+            "backup init");
 
         TEST_RESULT_LOG(
             "P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary");
@@ -1525,13 +1528,17 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_11, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_11), NULL)),
+            backupInit(
+                infoBackupNew(
+                    PG_VERSION_11, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_11), REPOSITORY_FORMAT_DEFAULT, NULL)),
             BackupMismatchError,
             "PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match stanza version 11, system-id"
             " " HRN_PG_SYSTEMID_11_Z "\n"
             "HINT: is this the correct stanza?");
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_10, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_10), NULL)),
+            backupInit(
+                infoBackupNew(
+                    PG_VERSION_10, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT, NULL)),
             BackupMismatchError,
             "PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match stanza version 10, system-id"
             " " HRN_PG_SYSTEMID_11_Z "\n"
@@ -1568,7 +1575,10 @@ testRun(void)
 
         TEST_RESULT_VOID(
             dbFree(
-                backupInit(infoBackupNew(PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), NULL))->dbPrimary),
+                backupInit(
+                    infoBackupNew(
+                        PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT,
+                        NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
@@ -1595,7 +1605,10 @@ testRun(void)
 
         TEST_RESULT_VOID(
             dbFree(
-                backupInit(infoBackupNew(PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), NULL))->dbPrimary),
+                backupInit(
+                    infoBackupNew(
+                        PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT,
+                        NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
@@ -1608,7 +1621,10 @@ testRun(void)
 
         TEST_RESULT_VOID(
             dbFree(
-                backupInit(infoBackupNew(PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), NULL))->dbPrimary),
+                backupInit(
+                    infoBackupNew(
+                        PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT,
+                        NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
     }
@@ -1656,7 +1672,7 @@ testRun(void)
             HRN_PQ_SCRIPT_TIME_QUERY(1, 1575392589999));
 
         BackupData *backupData = backupInit(
-            infoBackupNew(PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), NULL));
+            infoBackupNew(PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT, NULL));
 
         TEST_RESULT_INT(backupTime(backupData, true), 1575392588, "multiple tries for sleep");
         TEST_ERROR(backupTime(backupData, true), KernelError, "PostgreSQL clock has not advanced to the next second after 3 tries");
@@ -1732,7 +1748,7 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifestResume = manifestNewInternal();
-            manifestResume->pub.info = infoNew(NULL);
+            manifestResume->pub.info = infoNew(REPOSITORY_FORMAT_DEFAULT, NULL);
             manifestResume->pub.data.backupType = backupTypeFull;
             manifestResume->pub.data.backupLabel = strNewZ("20191003-105320F");
             manifestResume->pub.data.backupTimestampStart = 1482182860;
@@ -2180,8 +2196,8 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), backupTimeStart, true, false, false, false, NULL,
-                NULL, NULL);
+                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), REPOSITORY_FORMAT_DEFAULT, backupTimeStart, true,
+                false, false, false, NULL, NULL, NULL);
 
             manifestResume->pub.data.backupType = backupTypeFull;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
@@ -2260,8 +2276,8 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), backupTimeStart, true, false, false, false, NULL,
-                NULL, NULL);
+                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), REPOSITORY_FORMAT_DEFAULT, backupTimeStart, true,
+                false, false, false, NULL, NULL, NULL);
 
             manifestResume->pub.data.backupType = backupTypeFull;
             manifestResume->pub.data.backupOptionCompressType = compressTypeGz;
@@ -2422,8 +2438,8 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), backupTimeStart, true, false, false, false, NULL,
-                NULL, NULL);
+                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), REPOSITORY_FORMAT_DEFAULT, backupTimeStart, true,
+                false, false, false, NULL, NULL, NULL);
 
             manifestResume->pub.data.backupOptionCompressType = compressTypeGz;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart - 100000);

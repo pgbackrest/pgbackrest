@@ -29,7 +29,8 @@ STRING_DECLARE(INFO_ARCHIVE_PATH_FILE_COPY_STR);
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const String *cipherPassSub);
+FN_EXTERN InfoArchive *infoArchiveNew(
+    const unsigned int pgVersion, const uint64_t pgSystemId, unsigned int format, const String *cipherPassSub);
 
 // Create new object and load contents from IoRead
 FN_EXTERN InfoArchive *infoArchiveNewLoad(IoRead *read);
@@ -52,6 +53,8 @@ infoArchivePg(const InfoArchive *const this)
 
 FN_EXTERN InfoArchive *infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
 
+FN_EXTERN void infoArchiveFormatSet(InfoArchive *this, unsigned int format);
+
 // Current archive id
 FN_INLINE_ALWAYS const String *
 infoArchiveId(const InfoArchive *const this)
@@ -64,6 +67,13 @@ FN_INLINE_ALWAYS const String *
 infoArchiveCipherPass(const InfoArchive *const this)
 {
     return infoPgCipherPass(infoArchivePg(this));
+}
+
+// Repository format
+FN_INLINE_ALWAYS unsigned int
+infoArchiveFormat(const InfoArchive *const this)
+{
+    return infoPgFormat(infoArchivePg(this));
 }
 
 /***********************************************************************************************************************************

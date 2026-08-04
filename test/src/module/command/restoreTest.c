@@ -119,7 +119,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
     OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         result = manifestNewInternal();
-        result->pub.info = infoNew(NULL);
+        result->pub.info = infoNew(REPOSITORY_FORMAT_DEFAULT, NULL);
 
         result->pub.data.backupLabel = strDup(label);
         result->pub.data.backupTimestampStart = 1;
@@ -2260,7 +2260,7 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
-            manifest->pub.info = infoNew(NULL);
+            manifest->pub.info = infoNew(REPOSITORY_FORMAT_DEFAULT, NULL);
             manifest->pub.data.backupLabel = strNewZ(TEST_LABEL);
             manifest->pub.data.pgVersion = PG_VERSION_11;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_11);
@@ -2329,7 +2329,8 @@ testRun(void)
             TEST_CIPHER_PASS_MANIFEST "\"\n\n" TEST_RESTORE_BACKUP_INFO_DB, .cipherType = cipherTypeAes256Cbc);
 
         // Write archive.info to the encrypted repo
-        InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_11, 6569239123849665679, STRDEF(TEST_CIPHER_PASS_ARCHIVE));
+        InfoArchive *infoArchive = infoArchiveNew(
+            PG_VERSION_11, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, STRDEF(TEST_CIPHER_PASS_ARCHIVE));
         infoArchiveSaveFile(
             infoArchive, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS));
 
@@ -2375,7 +2376,7 @@ testRun(void)
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
 
         // Store archive.info to repo1 - repo1 will be selected because of the priority order
-        infoArchive = infoArchiveNew(PG_VERSION_11, 6569239123849665679, NULL);
+        infoArchive = infoArchiveNew(PG_VERSION_11, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, NULL);
         infoArchiveSaveFile(infoArchive, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL);
 
         hrnCfgArgRawZ(argList, cfgOptTargetTimeline, "0xff");
@@ -2654,7 +2655,7 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
-            manifest->pub.info = infoNew(NULL);
+            manifest->pub.info = infoNew(REPOSITORY_FORMAT_DEFAULT, NULL);
             manifest->pub.data.backupLabel = strNewZ(TEST_LABEL);
             manifest->pub.data.backupTimestampStart = 1482182860;
             manifest->pub.data.pgVersion = PG_VERSION_10;
