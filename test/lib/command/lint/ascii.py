@@ -5,7 +5,7 @@ bidirectional, or homoglyph characters. Intentional non-ASCII byte values must b
 the source."""
 
 ####################################################################################################################################
-from common.log import WARN, log
+from common.log import *
 
 # Bytes that may appear in source: printable 7-bit ASCII plus tab and linefeed
 _BYTE_ALLOW = bytes(range(0x20, 0x7F)) + b"\t\n"

@@ -13,9 +13,8 @@ jobs:
   macos:
     runs-on: macos-26
     env:
-      LDFLAGS: -L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/libpq/lib -L/opt/homebrew/opt/libxml2/lib -L/opt/homebrew/opt/libyaml/lib
-      CPPFLAGS: -I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/libpq/include -I/opt/homebrew/opt/libxml2/include/libxml2 -I/opt/homebrew/opt/libyaml/include
-      PERL5LIB: /opt/homebrew/opt/perl5/lib/perl5
+      LDFLAGS: -L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/libpq/lib -L/opt/homebrew/opt/libxml2/lib
+      CPPFLAGS: -I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/libpq/include -I/opt/homebrew/opt/libxml2/include/libxml2
       PKG_CONFIG_PATH: /opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@3/lib/pkgconfig
 
     steps:
@@ -40,7 +39,7 @@ jobs:
               esac
           done
 
-          brew install -q pkg-config openssl@3 libpq libxml2 libyaml meson
+          brew install -q pkg-config openssl@3 libpq libxml2 meson
 
           # PyYAML for the test harness. Homebrew has no formula for it and its python is externally managed, so this is the
           # supported way to add a package to it.
@@ -73,7 +72,7 @@ jobs:
           ls -lah ${GITHUB_WORKSPACE?}
 
       - name: Run Test
-        run: cd .. && ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
+        run: cd .. && ${GITHUB_WORKSPACE?}/test/test.py --vm-max=2 --no-coverage --no-valgrind  --module=command/backup --module=command/info --module=command/archive-push
 
       # The integration tests cannot run here because there are no containers, but the smoke test drives a backup/restore cycle
       # against each PostgreSQL installed above, which covers the basics
@@ -139,8 +138,7 @@ jobs:
 
           # postgresql*-client provides the libpq to build against and postgresql*-server provides the tooling the smoke test needs
           # to create a cluster
-          sudo pkg install -y bash git ${pgServer%-server}-client ${pgServer} pkgconf libxml2 gmake perl5 libyaml \
-            p5-YAML-LibYAML rsync meson
+          sudo pkg install -y bash git ${pgServer%-server}-client ${pgServer} pkgconf libxml2 gmake rsync meson
 
           # PyYAML for the test harness. The package is py<version>-pyyaml, renamed from py<version>-yaml in 2024 so both names are
           # searched, and it is built only for the python flavors the ports tree selects, which is not necessarily the version the
@@ -157,7 +155,7 @@ jobs:
 
       - name: Run Test
         shell: cpa.sh {0}
-        run: cd .. && perl ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
+        run: cd .. && ${GITHUB_WORKSPACE?}/test/test.py --vm-max=2 --no-coverage --no-valgrind  --module=command/backup --module=command/info --module=command/archive-push
 
       # The integration tests cannot run here because there are no containers, but the smoke test drives a backup/restore cycle
       # against the PostgreSQL installed above, which covers the basics

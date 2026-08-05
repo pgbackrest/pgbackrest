@@ -69,7 +69,7 @@ jobs:
         run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
 
       - name: Run Test
-        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2
+        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.py ${{matrix.param}}
 
       # Upload the coverage report on failure in case the failure was caused by lack of coverage so uncovered lines can be
       # inspected from the run's artifacts

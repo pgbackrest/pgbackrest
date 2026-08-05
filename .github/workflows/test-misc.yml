@@ -22,7 +22,7 @@ jobs:
       - name: Install
         run: |
           sudo apt-get update
-          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config meson liblz4-dev libzstd-dev libbz2-dev
+          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y zlib1g-dev libssl-dev libxml2-dev libpq-dev pkg-config meson liblz4-dev libzstd-dev libbz2-dev
 
       - name: Build
         run: |
@@ -35,7 +35,7 @@ jobs:
 
   # Check that code is correctly formatted
   code-format:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Code
@@ -43,25 +43,13 @@ jobs:
         with:
           path: pgbackrest
 
-      # Check that the Python is formatted. On failure the exact command to fix it is printed so it can be copied and run locally.
-      # This runs before the C format check because that check runs ci.pl, which removes passwordless sudo, and installing black
-      # needs it.
-      - name: Check Python Format
+      # The formatters and the PyYAML the harness needs to load. Nothing else is required since the check only reads the source.
+      - name: Install
         run: |
           sudo apt-get update
-          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y black
+          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y uncrustify black \
+            python3-yaml
 
-          cd ${GITHUB_WORKSPACE?}/pgbackrest
-
-          if ! black --check --diff --line-length=132 test/smoke.py test/test.py test/lib test/src/module/test; then
-              echo
-              echo "ERROR: Python is not formatted correctly. Run this from the pgbackrest path to fix it:"
-              echo
-              echo "    black --line-length=132 test/smoke.py test/test.py test/lib test/src/module/test"
-              echo
-              exit 1
-          fi
-
-      - name: Check C Format
-        run: |
-          cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --param=code-format-check
+      # On failure the check says how to fix what it found so it can be run locally
+      - name: Check
+        run: ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py code-format --check

@@ -31,7 +31,7 @@ assert_is_instance = _case.assertIsInstance
 assert_in = _case.assertIn
 assert_not_in = _case.assertNotIn
 
-# Errors, used as a context manager, e.g. with assert_raises(TestError) as error:
+# Errors, used as a context manager, e.g. with assert_raises(ToolError) as error:
 assert_raises = _case.assertRaises
 
 # What a test module gets from "from harness.test import *". Listing it here means a test module never has to update its import

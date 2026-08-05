@@ -16,16 +16,6 @@ Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if y
 
 **May 18, 2026** - [pgBackRest Will Continue!](https://pgbackrest.org/news.html#will-continue)
 
-## Sponsors
-
-pgBackRest would not exist without sponsorship. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
-
-Our sponsors: [AWS](https://aws.amazon.com), [Supabase](https://supabase.com), [pgEdge](https://pgedge.com), [Tiger Data](https://tigerdata.com), [Percona](https://percona.com), [Eon](https://eon.io), [Xata](https://xata.io), [Dalibo](https://dalibo.com), [Data Egret](https://dataegret.com/).
-
-We are grateful to our sponsors for investing in open-source infrastructure that benefits the entire PostgreSQL community.
-
-Past sponsors: [Crunchy Data](https://crunchydata.com), [Resonate](https://resonate.com).
-
 ## Features
 
 ### Parallel Backup & Restore
@@ -94,7 +84,7 @@ Tablespaces are fully supported and on restore tablespaces can be remapped to an
 
 File and directory links are supported for any file or directory in the PostgreSQL cluster. When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.
 
-### S3, Azure, and GCS Compatible Object Store Support
+### S3, Azure, and GCS Support
 
 pgBackRest repositories can be located in S3, Azure, and GCS compatible object stores to allow for virtually unlimited capacity and retention.
 
@@ -119,6 +109,16 @@ pgBackRest strives to be easy to configure and operate:
 - [User guides](https://pgbackrest.org/user-guide-index.html) for various operating systems and PostgreSQL versions.
 - [Command reference](https://pgbackrest.org/command.html) for command-line operations.
 - [Configuration reference](https://pgbackrest.org/configuration.html) for creating pgBackRest configurations.
+
+## Sponsors
+
+pgBackRest would not exist without sponsorship: new features, bug fixes, contribution reviews, community support, and maintenance all take considerable time. Please consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
+
+Our sponsors: [AWS](https://aws.amazon.com), [Supabase](https://supabase.com), [pgEdge](https://pgedge.com), [Tiger Data](https://tigerdata.com), [Percona](https://percona.com), [Eon](https://eon.io), [Xata](https://xata.io), [Dalibo](https://dalibo.com), [Data Egret](https://dataegret.com/).
+
+We are grateful to our sponsors for investing in open-source infrastructure that benefits the entire PostgreSQL community.
+
+Past sponsors: [Crunchy Data](https://crunchydata.com), [Resonate](https://resonate.com).
 
 ## Contributions
 

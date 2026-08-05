@@ -20,55 +20,46 @@ from common.log import *
 # A define file with the C and python tests the command has to tell apart
 DEFINE = """
 unit:
-  - name: common
+  - name: common/error
+    total: 1
 
-    test:
-      - name: error
-        total: 1
+    coverage:
+      - common/error
 
-        coverage:
-          - common/error
+  - name: common/release
+    total: 1
+    define: -DNDEBUG
 
-      - name: release
-        total: 1
-        define: -DNDEBUG
+    coverage:
+      - common/release
 
-        coverage:
-          - common/release
+  - name: common/bogus
+    total: 1
+    define: -DBOGUS
 
-      - name: bogus
-        total: 1
-        define: -DBOGUS
-
-        coverage:
-          - common/bogus
-
-  - name: test
-    lang: python
-
-    test:
-      - name: common/log
-
-        coverage:
-          - test/common/log
-          - test/common/logInternal: noCode
-
-        depend:
-          - test/common/error
-
-        include:
-          - test/common/render
+    coverage:
+      - common/bogus
 
 integration: []
 performance:
-  - name: performance
+  - name: performance/type
+    total: 1
 
-    test:
-      - name: type
-        total: 1
+    coverage:
+      - performance/type
 
-        coverage:
-          - performance/type
+tool:
+  - name: test/common/log
+
+    coverage:
+      - test/common/log
+      - test/common/logInternal: noCode
+
+    depend:
+      - test/common/error
+
+    include:
+      - test/common/render
 """
 
 
@@ -148,7 +139,7 @@ def _cmd_unit(config, exec_result=None):
             try:
                 with redirect_stdout(output):
                     cmd_unit(config)
-            except TestError as exception:
+            except ToolError as exception:
                 error = str(exception)
 
             _cmd_unit.build = build
@@ -229,29 +220,21 @@ def test_unit_build():
     with tempfile.TemporaryDirectory() as path:
         path_repo = _repo_create(path)
 
-        command_list, output, error = _cmd_unit(Config(path_repo, path, "common/error"), ["x86_64\n"])
+        command_list, output, error = _cmd_unit(Config(path_repo, path, "common/error"))
 
         assert_is_none(error)
 
-        # The architecture comes from the machine, then meson is set up since there is nothing built yet, then ninja builds it
-        assert_equal(command_list[0], "uname -m")
-        assert_in("meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug -Db_coverage=true", command_list[1])
-        assert_in("ninja -C '%s/unit-0/none/build'" % path, command_list[2])
+        # Meson is set up since there is nothing built yet, then ninja builds it
+        assert_in("meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug -Db_coverage=true", command_list[0])
+        assert_in("ninja -C '%s/unit-0/none/build'" % path, command_list[1])
 
-        # The architecture is passed to the build
-        assert_equal(_cmd_unit.build.call_args[0][2], "x86_64")
+        # The architecture comes from the machine when it was not given
+        assert_equal(_cmd_unit.build.call_args[0][2], host_arch())
 
-        # A machine that reports an architecture under another name is normalized to the name the project uses
-        for report, expect in (("i686\n", "i386"), ("arm64\n", "aarch64"), ("aarch64\n", "aarch64")):
-            _cmd_unit(Config(path_repo, path, "common/error"), [report])
-
-            assert_equal(_cmd_unit.build.call_args[0][2], expect, report)
-
-        # An architecture that was given is used as it is, so the machine is not asked
-        command_list, output, error = _cmd_unit(Config(path_repo, path, "common/error", vm_arch="ppc64le"))
+        # An architecture that was given is used as it is
+        _cmd_unit(Config(path_repo, path, "common/error", vm_arch="ppc64le"))
 
         assert_equal(_cmd_unit.build.call_args[0][2], "ppc64le")
-        assert_not_in("uname -m", command_list)
 
 
 ####################################################################################################################################
@@ -329,7 +312,7 @@ def test_unit_build_retry():
 
         # The first ninja fails and the retry succeeds
         command_list, output, error = _cmd_unit(
-            Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", TestError("ninja said no"), "", ""]
+            Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", ToolError("ninja said no"), "", ""]
         )
 
         assert_is_none(error)
@@ -342,7 +325,7 @@ def test_unit_build_retry():
         # A second failure is the end of it, with the error from the build rather than from the retry
         command_list, output, error = _cmd_unit(
             Config(path_repo, path, "common/error", vm_arch="x86_64"),
-            ["", TestError("ninja said no"), "", TestError("ninja said no again")],
+            ["", ToolError("ninja said no"), "", ToolError("ninja said no again")],
         )
 
         assert_equal(error, "build failed for unit common/error: ninja said no again")
@@ -359,7 +342,7 @@ def test_unit_build_retry_clean():
         assert_false(os.path.exists(path_unit))
 
         command_list, output, error = _cmd_unit(
-            Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", TestError("ninja said no"), "", ""]
+            Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", ToolError("ninja said no"), "", ""]
         )
 
         assert_is_none(error)
@@ -376,7 +359,7 @@ def test_unit_build_retry_mode():
         # The path cannot be removed until the mode is reset, which is the second thing tried
         with patch("command.test.unit.shutil.rmtree", side_effect=[OSError("permission denied"), None]):
             command_list, output, error = _cmd_unit(
-                Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", TestError("ninja said no"), "", ""]
+                Config(path_repo, path, "common/error", vm_arch="x86_64"), ["", ToolError("ninja said no"), "", ""]
             )
 
         assert_is_none(error)

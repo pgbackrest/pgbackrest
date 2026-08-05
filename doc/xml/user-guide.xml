@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "doc.dtd">
-<doc title="{[project]} User Guide" subtitle="{[user-guide-subtitle]}" cmd-line-len="85">
+<doc title="{[project]}" subtitle="{[user-guide-subtitle]} User Guide" cmd-line-len="85">
     <description>The {[project]} User Guide demonstrates how to quickly and easily setup {[project]} for your {[postgres]} database. Step-by-step instructions lead the user through all the important features of the fastest, most reliable {[postgres]} backup and restore solution.</description>
 
     <!-- ======================================================================================================================= -->
@@ -173,7 +172,7 @@
         <variable key="host-mem" if="'{[host-mem-limit]}' eq 'y'">-m 512m</variable>
         <variable key="host-mem" if="'{[host-mem-limit]}' eq 'n'"></variable>
 
-        <variable key="host-user" eval="y">use English; getpwuid($UID) eq 'root' ? 'vagrant' : getpwuid($UID) . ''</variable>
+        <variable key="host-user" eval="y">'vagrant' if user == 'root' else user</variable>
         <variable key="host-mount">{[host-repo-path]}:{[pgbackrest-repo-path]}</variable>
         <variable key="image-repo">pgbackrest/test</variable>
 
@@ -226,7 +225,9 @@
         <variable key="test-table-data">Important Data</variable>
 
         <!-- Database cluster commands -->
-        <variable key="pg-cluster-wait">sleep 2</variable>
+        <!-- The full path is required because sudo strips the PostgreSQL bin path from PATH on RHEL, where only psql is linked
+             into a path that survives -->
+        <variable key="pg-cluster-wait">timeout 60 bash -c "until {[pg-bin-path]}/pg_isready -q; do sleep 0.1; done"</variable>
 
         <variable key="pg-cluster-create" if="{[os-type-is-debian]}">pg_createcluster {[pg-version]} {[postgres-cluster-demo]}</variable>
 
@@ -322,7 +323,7 @@
         RUN rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
             apt-get install -y --no-install-recommends sudo ssh curl vim gnupg lsb-release iputils-ping ca-certificates \
-                    tzdata locales libssh2-1-dev unzip git libyaml-dev libxml-checker-perl 2>&amp;1
+                    tzdata locales libssh2-1-dev unzip git python3-yaml 2>&amp;1
 
         # Install the AWS CLI from the vendor installer since it is no longer packaged for Debian/Ubuntu
         RUN curl -sL "https://awscli.amazonaws.com/awscli-exe-linux-`uname -m`.zip" -o /tmp/awscliv2.zip &amp;&amp; \
@@ -391,7 +392,7 @@
         RUN dnf install -y azure-cli
 
         # Install dev packages
-        RUN yum install -y libyaml-devel 2>&amp;1
+        RUN dnf install -y python3-pyyaml
 
         # Install CA certificate
         RUN update-ca-trust extract
@@ -415,12 +416,6 @@
 
         # Install PostgreSQL
         RUN yum install -y postgresql{[pg-version]}-server postgresql{[pg-version-upgrade]}-server
-
-        # XML::Checker::Parser has no RHEL package; install its packaged XML::Parser dependency, cpanm the pure-Perl layer, and
-        # remove the build tools in the same layer so they do not persist in the image
-        RUN yum install -y perl-XML-Parser perl-App-cpanminus make perl-ExtUtils-MakeMaker &amp;&amp; \
-            cpanm --notest XML::Checker::Parser &amp;&amp; \
-            yum remove -y perl-App-cpanminus make perl-ExtUtils-MakeMaker
 
         # Install systemctl replacement that works without systemd running
         ENV SYSCTL_REP_VER=1.5.9063
@@ -923,7 +918,7 @@
     </block-define>
 
     <!-- ======================================================================================================================= -->
-    <section id="introduction">
+    <section id="introduction" header="n">
         <title>Introduction</title>
 
         <!-- Create Azure server first to allow it time to boot before being used -->
@@ -998,7 +993,7 @@
 
         <!-- =================================================================================================================== -->
         <section id="v2.x">
-            <title>Upgrading {[project]} from v2.x to v2.y</title>
+            <title>From v2.x to v2.y</title>
 
             <p>Upgrading from <proper>v2.x</proper> to <proper>v2.y</proper> is straight-forward. The repository format has not changed, so for most installations it is simply a matter of installing binaries for the new version. It is also possible to downgrade if you have not used new features that are unsupported by the older version.</p>
 
@@ -1081,29 +1076,28 @@
                 </exe-cmd>
             </execute>
 
-            <!-- Create a distribution tarball with meson dist. Fake the dist output of release.pl to save time. -->
+            <!-- Create a distribution tarball with meson dist. Fake the dist output of release.py to save time. -->
             <execute show="n">
                 <exe-cmd>
                     meson setup {[build-meson-path]} {[build-br-path-tmp]} &amp;&amp;
-                    ninja -C {[build-meson-path]} src/build-code &amp;&amp;
                     mkdir -p {[build-br-path-tmp]}/doc/output/html &amp;&amp;
                     mkdir -p {[build-br-path-tmp]}/doc/output/man &amp;&amp;
                     touch {[build-br-path-tmp]}/doc/DIST.md &amp;&amp;
-                    PYTHONWARNINGS=ignore meson dist -C {[build-meson-path]} --formats gztar &amp;&amp;
+                    PYTHONWARNINGS=ignore meson dist -C {[build-meson-path]} --formats gztar --no-tests &amp;&amp;
                     tar zx -C {[build-path]} -f {[build-meson-path]}/meson-dist/pgbackrest-{[version]}.tar.gz &amp;&amp;
                     rm -rf {[build-meson-path]}
                 </exe-cmd>
             </execute>
 
-            <!-- Remove libyaml now that we are done with it so future dependencies will cause a failure -->
+            <!-- Remove PyYAML now that we are done with it so future dependencies will cause a failure -->
             <execute if="{[os-type-is-debian]}" user="root" show="n">
                 <exe-cmd>
-                    apt-get remove -y libyaml-dev 2>&amp;1
+                    apt-get remove -y python3-yaml 2>&amp;1
                 </exe-cmd>
             </execute>
             <execute if="{[os-type-is-rhel]}" user="root" show="n">
                 <exe-cmd>
-                    yum remove -y libyaml-devel 2>&amp;1
+                    yum remove -y python3-pyyaml 2>&amp;1
                 </exe-cmd>
             </execute>
         </execute-list>
@@ -1290,7 +1284,7 @@
 
         <!-- =================================================================================================================== -->
         <section id="azure-support" if="'{[azure-all]}' eq 'y'">
-            <title>Azure-Compatible Object Store Support</title>
+            <title>Azure Support</title>
 
             <block id="azure-setup">
                 <block-variable-replace key="azure-setup-repo-id">1</block-variable-replace>
@@ -1303,7 +1297,7 @@
 
         <!-- =================================================================================================================== -->
         <section id="gcs-support" if="'{[gcs-all]}' eq 'y'">
-            <title>GCS-Compatible Object Store Support</title>
+            <title>GCS Support</title>
 
             <block id="gcs-setup">
                 <block-variable-replace key="gcs-setup-repo-id">1</block-variable-replace>
@@ -1315,7 +1309,7 @@
 
         <!-- =================================================================================================================== -->
         <section id="s3-support" if="'{[s3-all]}' eq 'y'">
-            <title>S3-Compatible Object Store Support</title>
+            <title>S3 Support</title>
 
             <block id="s3-setup">
                 <block-variable-replace key="s3-setup-repo-id">1</block-variable-replace>
@@ -1381,6 +1375,8 @@
                         end \$\$ LANGUAGE plpgsql;"</exe-cmd>
                 </execute>
             </execute-list>
+
+            <p>The <pg-option>hot_standby</pg-option> setting is enabled by default and should be left that way on every cluster. Any cluster may be restored as a standby later, e.g. a primary that is rebuilt as a standby after failover, and a standby will not accept read-only connections without it.</p>
 
             <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) to reach the <backrest/> repository, then the <backrest/> <br-option>archive-timeout</br-option> option should be increased. Note that this option is not the same as the <postgres/> <pg-option>archive_timeout</pg-option> option which is used to force a WAL segment switch; useful for databases where there are long periods of inactivity. For more information on the <postgres/> <pg-option>archive_timeout</pg-option> option, see <postgres/> <link url="https://www.postgresql.org/docs/current/static/runtime-config-wal.html">Write Ahead Log</link>.</p>
 
@@ -1868,13 +1864,7 @@
 
             <p>The <br-option>repo1-retention-full-type</br-option> determines how the option <br-option>repo1-retention-full</br-option> is interpreted; either as the count of full backups to be retained or how many days to retain full backups. New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>repo1-retention-full-type=count</br-setting> and <br-setting>repo1-retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired, or if <br-setting>repo1-retention-full-type=time</br-setting> and <br-setting>repo1-retention-full=20</br-setting> then there must be one full backup that is at least 20 days old before expiration can occur.</p>
 
-            <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
-                <title>Configure <br-option>repo1-retention-full</br-option></title>
-
-                <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
-            </backrest-config>
-
-            <p>Backup <br-setting>repo1-retention-full=2</br-setting> but currently there is only one full backup so the next full backup to run will not expire any full backups.</p>
+            <p><br-setting>repo1-retention-full=2</br-setting> was set in <link section="/quickstart/retention">Configure Retention</link> but currently there is only one full backup so the next full backup to run will not expire any full backups.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Perform a full backup</title>
@@ -2484,7 +2474,7 @@
 
     <!-- ======================================================================================================================= -->
     <section id="azure-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
-        <title>Azure-Compatible Object Store Support</title>
+        <title>Azure Support</title>
 
         <block id="azure-setup">
             <block-variable-replace key="azure-setup-repo-id">2</block-variable-replace>
@@ -2522,7 +2512,7 @@
 
     <!-- ======================================================================================================================= -->
     <section id="s3-support" if="!{[object-any-all]}" depend="/azure-support">
-        <title>S3-Compatible Object Store Support</title>
+        <title>S3 Support</title>
 
         <block id="s3-setup">
             <block-variable-replace key="s3-setup-repo-id">3</block-variable-replace>
@@ -2665,7 +2655,7 @@
     <!-- ======================================================================================================================= -->
     <!-- This section must be last of all drivers tested since there is no GCS server to make it work. -->
     <section id="gcs-support" if="!{[object-any-all]}" depend="/quickstart/configure-archiving">
-        <title>GCS-Compatible Object Store Support</title>
+        <title>GCS Support</title>
 
         <block id="gcs-setup">
             <block-variable-replace key="gcs-setup-repo-id">5</block-variable-replace>
@@ -3329,12 +3319,11 @@
                 </execute>
             </execute-list>
 
-            <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>{[host-pg2]}</host>. Otherwise, connection attempts will be refused. The rest of the configuration is in case the standby is promoted to a primary.</p>
+            <p>The configuration is in case the standby is promoted to a primary.</p>
 
             <postgres-config host="{[host-pg2]}" file="{[postgres-config-demo]}">
                 <title>Configure <postgres/></title>
 
-                <postgres-config-option key="hot_standby">on</postgres-config-option>
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
                 <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
@@ -3516,14 +3505,6 @@
             </execute-list>
 
             <admonition type="note">The <pg-setting>primary_conninfo</pg-setting> setting has been written into the <file>{[pg-recovery-file-demo]}</file> file because it was configured as a <br-option>recovery-option</br-option> in <file>{[project-exe]}.conf</file>. The <br-setting>{[dash]}-type=preserve</br-setting> option can be used with the <cmd>restore</cmd> to leave the existing <file>{[pg-recovery-file-demo]}</file> file in place if that behavior is preferred.</admonition>
-
-            <p if="{[os-type-is-rhel]}">By default {[user-guide-os]} stores the <file>postgresql.conf</file> file in the <postgres/> data directory. That means the change made to <file>postgresql.conf</file> was overwritten by the last restore and the <pg-option>hot_standby</pg-option> setting must be enabled again. Other solutions to this problem are to store the <file>postgresql.conf</file> file elsewhere or to enable the <pg-option>hot_standby</pg-option> setting on the <host>{[host-pg1]}</host> host where it will be ignored.</p>
-
-            <postgres-config host="{[host-pg2]}" if="{[os-type-is-rhel]}" file="{[postgres-config-demo]}">
-                <title>Enable <pg-option>hot_standby</pg-option></title>
-
-                <postgres-config-option key="hot_standby">on</postgres-config-option>
-            </postgres-config>
 
             <execute-list host="{[host-pg2]}">
                 <title>Start <postgres/></title>
@@ -3877,7 +3858,7 @@
                 <title>Check results in the log</title>
 
                 <execute user="postgres" show="n">
-                    <exe-cmd>sleep 5</exe-cmd>
+                    <exe-cmd>timeout 60 bash -c "until grep -sqE 'found [0-F]{24}' /var/log/pgbackrest/demo-archive-get-async.log; do sleep 0.1; done"</exe-cmd>
                 </execute>
                 <execute user="postgres" output="y">
                     <exe-cmd>cat /var/log/pgbackrest/demo-archive-get-async.log</exe-cmd>
@@ -4471,12 +4452,6 @@
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=standby restore</exe-cmd>
             </execute>
         </execute-list>
-
-        <postgres-config host="{[host-pg2]}" file="{[postgres-config-demo-upgrade]}">
-            <title>Configure <postgres/></title>
-
-            <postgres-config-option key="hot_standby">on</postgres-config-option>
-        </postgres-config>
 
         <execute-list host="{[host-pg2]}">
             <title>Start <postgres/> and check the <backrest/> configuration</title>

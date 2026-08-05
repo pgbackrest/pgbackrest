@@ -382,8 +382,9 @@ def summary_render(coverage):
     total = [0, 0, 0, 0, 0, 0]
 
     for file in coverage.file_list:
-        # Filter out anything that is not project source
-        if file.name.startswith("test/") or file.name.startswith("doc/"):
+        # The summary is of the core code, which is what the documentation reports coverage for. Naming what belongs rather than
+        # what does not keeps a library added elsewhere, e.g. the python under build/lib, from arriving here uninvited.
+        if not file.name.startswith("src/"):
             continue
 
         name = os.path.dirname(file.name)[len("src/") :]

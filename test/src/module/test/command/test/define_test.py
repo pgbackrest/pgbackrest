@@ -10,113 +10,109 @@ from command.test.define import *
 from common.error import *
 
 # A define file that exercises every shape the parser accepts. It is deliberately small since what matters here is the shapes rather
-# than the test list, which is what the real file provides.
+# than the module list, which is what the real file provides.
 DEFINE = """
 unit:
-  - name: common
+  - name: common/error
+    total: 2
 
-    test:
-      - name: error
-        total: 2
+    coverage:
+      - common/error
+      - common/errorInternal: noCode
+      - common/errorType: included
 
-        coverage:
-          - common/error
-          - common/errorInternal: noCode
-          - common/errorType: included
+  - name: common/stack-trace
+    total: 1
+    binReq: true
+    containerReq: true
+    define: -DDEBUG_TEST_TRACE
+    feature: stack-trace
+    harness: error
 
-      - name: stack-trace
-        total: 1
-        binReq: true
-        containerReq: true
-        define: -DDEBUG_TEST_TRACE
-        feature: stack-trace
-        harness: error
+    include:
+      - common/stackTrace
 
-        include:
-          - common/stackTrace
+    depend:
+      - common/error
+      - common/type/string
 
-        depend:
-          - common/error
-          - common/type/string
+  - name: common/type/string
+    total: 3
 
-      - name: type-string
-        total: 3
-        vm: [none, u22]
+    include:
+      - common/error
 
-        include:
-          - common/error
+    coverage:
+      - common/type/string
 
-        coverage:
-          - common/type/string
+    harness:
+      - name: config
+        integration: false
 
-        harness:
-          - name: config
-            integration: false
-
-            shim:
-              - common/config
-              - name: common/exec
-                function:
-                  - execOne
-                  - execTwo:
-                      inc: common/execInc
-
-  - name: test
-    lang: python
-    vm: [rh9]
-
-    test:
-      - name: common/error
-
-        coverage:
-          - test/common/error
-
-      - name: common/log
-        lang: python
-
-        coverage:
-          - test/common/log
+        shim:
+          - common/config
+          - name: common/exec
+            function:
+              - execOne
+              - execTwo:
+                  inc: common/execInc
 
 integration:
   - name: real
     db: true
 
-    test:
-      - name: all
-        total: 1
+  - name: real/all
+    total: 1
 
 performance:
-  - name: performance
+  - name: performance/type
+    total: 1
 
-    test:
-      - name: type
-        total: 1
+tool:
+  - name: test
+    vm: [rh9]
+
+  - name: test/common
+    vm: [u22]
+
+  - name: test/common/error
+
+    coverage:
+      - test/common/error
+
+  - name: test/common/log
+    vm: [none]
+
+    coverage:
+      - test/common/log
 """
 
-# A define file holding a single unit test, which is all the test error cases need
+# A define file where a path sets options for a module that was already declared, so the module would not have them
+DEFINE_OPTION_ERROR = """
+unit: []
+integration: []
+performance: []
+
+tool:
+  - name: test/config/cli
+
+    coverage:
+      - test/config/cli
+
+  - name: test
+    vm: [none]
+"""
+
+# A define file holding a single unit module, which is all the error cases need
 DEFINE_ERROR = """
 unit:
-  - name: common
-
-    test:
-      - name: error
+  - name: common/error
+    total: 1
 %s
 
 integration: []
 performance: []
-"""
-
-# A define file with a keyword that belongs to a test written at the module level instead
-DEFINE_MODULE_ERROR = """
-unit:
-  - name: common
-    total: 1
-
-    test:
-      - name: error
-
-integration: []
-performance: []
+tool: []
 """
 
 
@@ -134,28 +130,29 @@ def _def_parse(define):
 
 
 ####################################################################################################################################
-def _def_parse_error(test_line_list):
-    """Parse a define file holding a single test built from the lines given, indented to where a test declares its keys."""
+def _def_parse_error(module_line_list):
+    """Parse a define file holding a single module built from the lines given, indented to where a module declares its keys."""
 
-    return _def_parse(DEFINE_ERROR % "\n".join("        " + line for line in test_line_list))
+    return _def_parse(DEFINE_ERROR % "\n".join("    " + line for line in module_line_list))
 
 
 ####################################################################################################################################
 def test_define_module():
-    """Every test becomes a module, in the order the file declares them."""
+    """Every entry that defines a test becomes a module, in the order the file declares them."""
 
     module_list = _def_parse(DEFINE)
 
+    # An entry that defines no test is not a module, e.g. test and test/common, which only set options
     assert_equal(
         [module.name for module in module_list],
         [
             "common/error",
             "common/stack-trace",
-            "common/type-string",
-            "test/common/error",
-            "test/common/log",
+            "common/type/string",
             "real/all",
             "performance/type",
+            "test/common/error",
+            "test/common/log",
         ],
     )
 
@@ -171,34 +168,51 @@ def test_define_module():
     # A feature is upper-cased and is available to the tests after the one that introduces it
     assert_equal(module.feature, "STACK-TRACE")
     assert_equal(module.feature_list, [])
-    assert_equal(test_def_find(module_list, "common/type-string").feature_list, ["STACK-TRACE"])
+    assert_equal(test_def_find(module_list, "common/type/string").feature_list, ["STACK-TRACE"])
 
     # PostgreSQL is required only by an integration module that declares it
     assert_false(module.pg_required)
     assert_true(test_def_find(module_list, "real/all").pg_required)
 
-    # The type comes from the section the module was declared in
+    # The type comes from the section the module was declared in, and the language follows from the type
     assert_equal(test_def_find(module_list, "real/all").type, TEST_TYPE_INTEGRATION)
     assert_equal(test_def_find(module_list, "performance/type").type, TEST_TYPE_PERFORMANCE)
+    assert_equal(test_def_find(module_list, "performance/type").lang, TEST_LANG_C)
+    assert_equal(test_def_find(module_list, "test/common/log").type, TEST_TYPE_TOOL)
+    assert_equal(test_def_find(module_list, "test/common/log").lang, TEST_LANG_PYTHON)
 
 
 ####################################################################################################################################
-def test_define_lang_vm():
-    """Language and vm may be declared for a whole module and overridden by a test."""
+def test_define_file():
+    """The file a module lives in is named for the module, in the way its language names it."""
 
     module_list = _def_parse(DEFINE)
 
-    # C is the default, and no vm means every vm
-    assert_equal(test_def_find(module_list, "common/error").lang, TEST_LANG_C)
+    # A C module is named in camel case, which is how the C source is named
+    assert_equal(test_def_file(test_def_find(module_list, "common/stack-trace")), "test/src/module/common/stackTraceTest.c")
+
+    # A python module is named exactly as it is declared, since that is how it is imported
+    assert_equal(test_def_file(test_def_find(module_list, "test/common/log")), "test/src/module/test/common/log_test.py")
+
+
+####################################################################################################################################
+def test_define_option():
+    """An option is inherited from the path it was declared for, innermost first, and a module may override it."""
+
+    module_list = _def_parse(DEFINE)
+
+    # No vm means every vm, which is what a C test gets since it has no vm to declare
     assert_equal(test_def_find(module_list, "common/error").vm_list, [])
 
-    # Declared for the whole module
-    assert_equal(test_def_find(module_list, "test/common/error").lang, TEST_LANG_PYTHON)
-    assert_equal(test_def_find(module_list, "test/common/error").vm_list, ["rh9"])
+    # Declared for the path the module is under, with the innermost declaration winning
+    assert_equal(test_def_find(module_list, "test/common/error").vm_list, ["u22"])
 
-    # Declared by the test itself
-    assert_equal(test_def_find(module_list, "test/common/log").lang, TEST_LANG_PYTHON)
-    assert_equal(test_def_find(module_list, "common/type-string").vm_list, ["none", "u22"])
+    # Declared by the module itself, which wins over anything it would inherit
+    assert_equal(test_def_find(module_list, "test/common/log").vm_list, ["none"])
+
+    # Only an integration module runs against multiple PostgreSQL versions
+    assert_false(test_def_find(module_list, "common/stack-trace").pg_required)
+    assert_true(test_def_find(module_list, "real/all").pg_required)
 
 
 ####################################################################################################################################
@@ -239,7 +253,7 @@ def test_define_depend():
     assert_equal(test_def_find(module_list, "common/stack-trace").depend_list, ["common/error", "common/type/string"])
 
     # Minus what it covers or includes itself, since those are compiled into the test rather than depended on
-    assert_equal(test_def_find(module_list, "common/type-string").depend_list, [])
+    assert_equal(test_def_find(module_list, "common/type/string").depend_list, [])
 
     # A python test accumulates only python modules, since it cannot import a C one
     assert_equal(test_def_find(module_list, "test/common/error").depend_list, [])
@@ -267,7 +281,7 @@ def test_define_harness():
     assert_equal(module.shim_list, [])
 
     # A harness that shims modules includes them in the order they are listed
-    module = test_def_find(module_list, "common/type-string")
+    module = test_def_find(module_list, "common/type/string")
     harness = module.harness_list[1]
 
     assert_equal([harness.name for harness in module.harness_list], ["error", "config"])
@@ -279,7 +293,7 @@ def test_define_harness():
 def test_define_shim():
     """A shim names the functions the harness replaces, which may be defined in a module included by the shim."""
 
-    module = test_def_find(_def_parse(DEFINE), "common/type-string")
+    module = test_def_find(_def_parse(DEFINE), "common/type/string")
 
     # A shimmed module with no functions is included in the harness but has nothing to shim
     assert_is_none(module.shim_find("common/config"))
@@ -301,16 +315,22 @@ def test_define_shim():
 def test_define_error():
     """A definition the parser does not accept is an error that says what was wrong."""
 
-    # A key that belongs to a test, written at the module level where it would be silently ignored
-    with assert_raises(TestError) as error:
-        _def_parse(DEFINE_MODULE_ERROR)
+    # A path that sets options for modules that were already declared, which would otherwise not have them
+    with assert_raises(ToolError) as error:
+        _def_parse(DEFINE_OPTION_ERROR)
 
-    assert_equal(str(error.exception), "unexpected keyword 'total' in module 'common'")
+    assert_equal(str(error.exception), "options for 'test' must be declared before the modules under it")
 
-    # Everything else is declared by a test
+    # An entry with no name, which is the only key that is always required
+    with assert_raises(ToolError) as error:
+        _def_parse("unit:\n  - total: 1\n")
+
+    assert_equal(str(error.exception), "module name is required")
+
+    # Everything else is declared by a module
     for line_list, message in (
-        (["bogus: true"], "unexpected keyword 'bogus' in test 'common/error'"),
-        (["lang: rust"], "invalid lang 'rust' in test 'common/error'"),
+        (["bogus: true"], "unexpected keyword 'bogus' in module 'common/error'"),
+        (["vm: [none]"], "unexpected keyword 'vm' in module 'common/error'"),
         (["coverage:", "  - common/error: bogus"], "invalid coverage type bogus"),
         (["harness:", "  - name: config", "    bogus: true"], "invalid key 'bogus'"),
         (
@@ -319,13 +339,13 @@ def test_define_error():
         ),
         (["harness:", "  - name: config", "    shim:", "      - function:", "          - execOne"], "shim name is required"),
     ):
-        with assert_raises(TestError) as error:
+        with assert_raises(ToolError) as error:
             _def_parse_error(line_list)
 
         assert_equal(str(error.exception), message, line_list)
 
-    # A test that is not in the file
-    with assert_raises(TestError) as error:
-        test_def_find(_def_parse(DEFINE), "bogus/test")
+    # A module that is not in the file
+    with assert_raises(ToolError) as error:
+        test_def_find(_def_parse(DEFINE), "bogus/module")
 
-    assert_equal(str(error.exception), "'bogus/test' is not a valid test")
+    assert_equal(str(error.exception), "'bogus/module' is not a valid module")

@@ -22,65 +22,58 @@ from common.storage import path_list_recurse
 # The repository the build reads. Only the modules a harness shims are read as source, so those are the only ones written out.
 DEFINE = """
 unit:
-  - name: common
+  - name: common/error
+    total: 2
 
-    test:
-      - name: error
-        total: 2
+    coverage:
+      - common/error
 
-        coverage:
-          - common/error
+  - name: common/exec
+    total: 1
+    feature: exec
 
-      - name: exec
-        total: 1
-        feature: exec
+    harness:
+      - name: config
+        integration: false
 
-        harness:
-          - name: config
-            integration: false
-
-            shim:
-              - common/execOther
-              - name: common/exec
-                function:
-                  - execOne
-                  - execTwo
-                  - execThree:
-                      inc: execInc
-                  - execFour:
-                      inc: execInc
-
-        coverage:
-          - common/exec
+        shim:
           - common/execOther
+          - name: common/exec
+            function:
+              - execOne
+              - execTwo
+              - execThree:
+                  inc: execInc
+              - execFour:
+                  inc: execInc
 
-        depend:
-          - common/log
+    coverage:
+      - common/exec
+      - common/execOther
 
-      - name: after
-        total: 1
-        harness: extra
+    depend:
+      - common/log
 
-        coverage:
-          - common/after
+  - name: common/after
+    total: 1
+    harness: extra
+
+    coverage:
+      - common/after
 
 integration:
-  - name: real
-
-    test:
-      - name: all
-        total: 1
+  - name: real/all
+    total: 1
 
 performance:
-  - name: performance
+  - name: performance/type
+    total: 1
+    define: -DNDEBUG
 
-    test:
-      - name: type
-        total: 1
-        define: -DNDEBUG
+    coverage:
+      - performance/type
 
-        coverage:
-          - performance/type
+tool: []
 """
 
 MESON_OPTIONS = "option('fake', type: 'boolean', value: false)\n"
@@ -284,7 +277,6 @@ MESON_INCLUDE = (
     "        include_directories(\n"
     "            '.',\n"
     "            '../../repo/src',\n"
-    "            '../../repo/doc/src',\n"
     "            '../../repo/test/src',\n"
     "        ),\n"
     "    dependencies: [\n"
@@ -297,7 +289,6 @@ MESON_LIB = (
     "        lib_pq,\n"
     "        lib_ssh2,\n"
     "        lib_xml,\n"
-    "        lib_yaml,\n"
     "        lib_z,\n"
     "        lib_zstd,\n"
     "    ],\n"
@@ -629,7 +620,6 @@ def test_build_path():
 
     assert_equal(path_module("common/error"), "src/common/error")
     assert_equal(path_module("test/common/harnessLog"), "test/src/common/harnessLog")
-    assert_equal(path_module("doc/command/build/build"), "doc/src/command/build/build")
 
     # Up out of the base path and back down into the compare path
     assert_equal(path_relative("/test/unit-0/none", "/test/repo"), "../../repo")
@@ -637,7 +627,7 @@ def test_build_path():
     assert_equal(path_relative("/test", "/test/repo"), "repo")
 
     # A path relative to itself is nothing, which is a mistake rather than an empty path
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         path_relative("/test/repo", "/test/repo")
 
     assert_equal(str(error.exception), "base and compare paths may not be equal")
@@ -648,19 +638,19 @@ def test_build_shim_error():
     """Source the shim cannot make sense of is an error rather than a file that will not compile."""
 
     # The shim walks back to the line above the function, so a function cannot be the first thing in the file
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         build_shim("execOne(void)\n{\n}\n", ["execOne"])
 
     assert_equal(str(error.exception), "shimmed function may not be on the first line")
 
     # The shim reads to the opening brace, which a properly formatted C file always has
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         build_shim("void\nexecOne(\n    void)\n", ["execOne"])
 
     assert_equal(str(error.exception), "unable to find the end of the function signature")
 
     # A file that does not end with a linefeed would lose its last line
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         build_shim("void\nexecOne(void)\n{\n}", ["execOne"])
 
     assert_equal(str(error.exception), "shim module must end with a linefeed")

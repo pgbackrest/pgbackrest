@@ -18,31 +18,25 @@ from common.log import *
 # A define file with one C test and one python test, which is what the coverage command reads to know what should be covered
 DEFINE = """
 unit:
-  - name: common
+  - name: common/error
 
-    test:
-      - name: error
+    coverage:
+      - common/error
+      - common/errorInternal: noCode
 
-        coverage:
-          - common/error
-          - common/errorInternal: noCode
+  - name: common/stack-trace
 
-      - name: stack-trace
-
-        coverage:
-          - common/stackTrace
-
-  - name: test
-    lang: python
-
-    test:
-      - name: common/log
-
-        coverage:
-          - test/common/log
+    coverage:
+      - common/stackTrace
 
 integration: []
 performance: []
+
+tool:
+  - name: test/common/log
+
+    coverage:
+      - test/common/log
 """
 
 # Source of the C module, which the report is rendered against
@@ -54,12 +48,11 @@ SOURCE_PY = "def func(a):\n    if a:\n        return 1\n\n    return 0\n"
 
 ####################################################################################################################################
 class Config:
-    """What the coverage command reads from the command line."""
+    """What the coverage command reads from the configuration of the run it is part of."""
 
-    def __init__(self, repo_path, test_path, module, vm="none", coverage_summary=False):
+    def __init__(self, repo_path, test_path, vm="none", coverage_summary=False):
         self.repo_path = repo_path
         self.test_path = test_path
-        self.module = module
         self.vm = vm
         self.coverage_summary = coverage_summary
 
@@ -196,25 +189,25 @@ def test_coverage_merge_c_error():
         )
 
     # A different number of lines
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         merge([_line(5, 1)], merge_line_list=[_line(5, 1), _line(7, 1)])
 
     assert_equal(str(error.exception), "coverage for 'src/common/error.c' does not match the prior run")
 
     # The same number of lines but not the same lines
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         merge([_line(5, 1)], merge_line_list=[_line(7, 1)])
 
     assert_equal(str(error.exception), "coverage line mismatch in 'src/common/error.c'")
 
     # A line that has branches in one run and not the other
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         merge([_line(5, 1, [1, 0])], merge_line_list=[_line(5, 1)])
 
     assert_equal(str(error.exception), "coverage branches for 'src/common/error.c' do not match the prior run")
 
     # A function that is not in the other run
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         merge(
             [_line(5, 1)],
             function_list=[CoverageFunction("errorNew", 1, 10, 1)],
@@ -225,7 +218,7 @@ def test_coverage_merge_c_error():
     assert_equal(str(error.exception), "coverage for function 'errorNew' is missing")
 
     # A function that does not span the same lines
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         merge(
             [_line(5, 1)],
             function_list=[CoverageFunction("errorNew", 1, 10, 1)],
@@ -309,19 +302,20 @@ def test_coverage_module_file():
 
     # The harness and the documentation tool live beside their own source
     assert_equal(coverage_module_file("test/common/harnessLog"), "test/src/common/harnessLog.c")
-    assert_equal(coverage_module_file("doc/command/build/build"), "doc/src/command/build/build.c")
 
     # A module that is included rather than compiled
     assert_equal(coverage_module_file("command/backup/process.inc"), "src/command/backup/process.c.inc")
     assert_equal(coverage_module_file("common/regExp.vendor"), "src/common/regExp.vendor.c.inc")
 
-    # The python the harness is written in lives in the library rather than beside the tests
+    # The python each tool is written in lives in its library rather than beside the tests, and the same module name in another
+    # language is another file
     assert_equal(coverage_module_file("test/common/string_id", TEST_LANG_PYTHON), "test/lib/common/string_id.py")
+    assert_equal(coverage_module_file("build/common/render", TEST_LANG_PYTHON), "build/lib/common/render.py")
 
-    with assert_raises(TestError) as error:
+    with assert_raises(ToolError) as error:
         coverage_module_file("common/string_id", TEST_LANG_PYTHON)
 
-    assert_equal(str(error.exception), "python module 'common/string_id' must be under test/")
+    assert_equal(str(error.exception), "python module 'common/string_id' must be in one of these libraries: build, doc, test")
 
 
 ####################################################################################################################################
@@ -357,7 +351,7 @@ def _cmd_coverage(path, module_list, raw_map, vm="none", coverage_summary=False,
 
     try:
         with redirect_stdout(output):
-            result = cmd_coverage(Config(path_repo, path, module_list, vm, coverage_summary))
+            result = cmd_coverage(Config(path_repo, path, vm, coverage_summary), module_list)
     finally:
         log_init(INFO, True)
 
@@ -453,7 +447,7 @@ def test_coverage_command_partial():
             {
                 "test-common-error.json": _raw_c("src/common/error.c", [{"line_number": 5, "count": 1}]),
             },
-            define=DEFINE.replace("          - common/stackTrace", "          - common/error"),
+            define=DEFINE.replace("      - common/stackTrace", "      - common/error"),
         )
 
         assert_equal(result, 0)
@@ -481,7 +475,7 @@ def test_coverage_command_summary():
         assert_in("<table-cell>TOTAL</table-cell>", summary)
 
         # A summary from a run outside a vm would report code as uncovered that a vm covers
-        with assert_raises(TestError) as error:
+        with assert_raises(ToolError) as error:
             _cmd_coverage(
                 path,
                 ["common/error"],

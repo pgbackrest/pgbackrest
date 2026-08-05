@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]} Distribution" toc="n">
     <description>{[project]} distribution build and test instructions.</description>
 

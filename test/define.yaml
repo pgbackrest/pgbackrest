@@ -1,26 +1,27 @@
 # **********************************************************************************************************************************
 # Test Definition
 #
-# Contains definitions for all unit and integration tests.
+# Contains definitions for all unit, integration, performance, and tool tests.
 #
-# The definitions consist of modules and tests. Modules group together tests that are related and allow common settings for all the
-# tests. Every module and test must have a name. Tests must also have a total. If this total does not match the actual number of
-# runs in a test then an error will be thrown.
+# Each type is a list of test modules, each named for the path of the test module it defines, e.g. common/type/string is
+# test/src/module/common/type/stringTest.c. Every module must have a name and a C module must also have a total. If this total does
+# not match the actual number of tests in the module then an error will be thrown. A tool test is python and the rest are C.
 #
-# Most options can be set for modules and tests (test option will override module option if both are set):
-#     * db - determines if the test will be run against multiple db versions
+# An entry that sets only options and defines no test is not a test module but the options that every module under its path
+# inherits, e.g. the "build" entry sets the vms every module under build/ runs on. It must be declared before those modules and a
+# module may override what it inherits. An option is only valid for one type, so each is documented with the type it belongs to.
+#
+# The keys below define a test module:
 #     * define - defines for C code (will also be applied to the test harness)
 #     * binReq - is the pgbackrest binary required for this test?
 #     * containerReq - is this test required to run in a container?
-#
-# Some options are unique to tests:
 #     * coverage - a list of code modules that the test provides coverage for. A code module may be covered by multiple tests. That
-#         means you must run all the tests by providing the --run option multiple times to get full coverage on the code module. If
-#         a code module contains only data it should be marked noCode (e.g. - help/help.auto: noCode). If a code module is included
-#         in another code module it should be marked as included (e.g. - md5.vendor: included).
+#         means you must run all the tests by providing the --module option multiple times to get full coverage on the code module.
+#         If a code module contains only data it should be marked noCode (e.g. - help/help.auto: noCode). If a code module is
+#         included in another code module it should be marked as included (e.g. - md5.vendor: included).
 #     * feature - Defines a feature that is now available in the harness. For example, the "error" feature defines HRN_FEATURE_ERROR
-#         used to automatically check for errors in later tests. The common/error test is not able to access this error handling
-#         because it is used to implement the error handling, so it must do error testing in a more primitive way.
+#         used to automatically check for errors in later tests. The common/error/error test is not able to access this error
+#         handling because it is used to implement the error handling, so it must do error testing in a more primitive way.
 #     * harness - Adds a harness module that contains functions to aid in testing. For example, the "log" harness includes the
 #         harness/log module to aid in expect log testing.
 #       * shim - list of modules that are shimmed in the harness, included in the order listed. This allows the harness to access
@@ -31,8 +32,7 @@
 #         that is useful for unit testing.
 #     * depend - Source modules that this test depends on that have not already been included in prior tests via coverage. Ideally
 #         this option would never be used because it is essentially documenting cross-dependencies in the code.
-#     * total - total runs in the test
-#     * vm - VMs that the test will be run on
+#     * total - total tests in the module
 #     * include - modules to include directly into test.c (all files in coverage are automatically included)
 #           This is useful when a module's internal data needs to be manipulated for testing but no coverage is added by the test.
 # **********************************************************************************************************************************
@@ -42,1142 +42,928 @@
 # **********************************************************************************************************************************
 unit:
 
-  # ********************************************************************************************************************************
-  - name: common
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: error
-        total: 9
-        feature: error
-        harness:
-          name: error
-          shim:
-            - common/error/error
-
-        coverage:
-          - common/error/error
-          - common/error/error.auto: noCode
-
-        depend:
-          - common/stackTrace
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: stack-trace
-        total: 4
-        feature: stackTrace
-        harness:
-          name: stackTrace
-          shim:
-            - name: common/stackTrace
-              function:
-                - stackTraceBackCallback
-
-        coverage:
-          - common/stackTrace
-
-        depend:
-          - common/debug
-          - common/type/stringStatic
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: assert-off
-        total: 1
-        define: -DNDEBUG
-
-        coverage:
-          - common/assert: noCode
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: debug-off
-        total: 1
-        define: -DNDEBUG
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: assert-on
-        feature: assert
-        total: 1
-
-        coverage:
-          - common/assert: noCode
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-convert
-        total: 13
-
-        coverage:
-          - common/type/convert
-
-        depend:
-          - common/time
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: time
-        total: 3
-        harness:
-          name: time
-          shim:
-            - name: common/time
-              function:
-                - timeMSec
-
-        coverage:
-          - common/time
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: mem-context
-        total: 8
-        feature: memContext
-
-        coverage:
-          - common/memContext
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: encode
-        total: 3
-
-        coverage:
-          - common/encode
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-object
-        total: 1
-
-        coverage:
-          - common/type/object
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-blob
-        total: 1
-
-        coverage:
-          - common/type/blob
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-string
-        total: 26
-        feature: string
-
-        coverage:
-          - build/common/string
-          - common/type/string: included
-          - common/type/stringZ
-          - common/type/stringId
-          - common/type/stringList
-
-        depend:
-          - common/type/buffer
-          - common/type/keyValue
-          - common/type/list
-          - common/type/variant
-          - common/type/variantList
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: error-retry
-        total: 1
-        harness:
-          name: errorRetry
-          shim:
-            - name: common/error/retry
-              function:
-                - errRetryMessage
-
-        coverage:
-          - common/error/retry
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-list
-        total: 4
-
-        coverage:
-          - common/type/list
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-buffer
-        total: 5
-
-        coverage:
-          - common/type/buffer
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-variant
-        total: 12
-
-        coverage:
-          - common/type/variant
-          - common/type/variantList
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: reg-exp
-        total: 3
-
-        coverage:
-          - build/common/regExp
-          - common/regExp: included
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: log
-        total: 6
-        feature: log
-        harness:
-          name: log
-          shim:
-            - common/log
-
-        coverage:
-          - common/log
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: debug-on
-        total: 4
-        feature: debug
-
-        coverage:
-          - common/debug
-          - common/type/stringStatic
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: fork
-        total: 1
-
-        coverage:
-          - common/fork
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: wait
-        total: 1
-
-        coverage:
-          - common/wait
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-json
-        total: 2
-
-        coverage:
-          - build/common/json
-          - common/type/json: included
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-key-value
-        total: 2
-
-        coverage:
-          - common/type/keyValue
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-xml
-        total: 1
-
-        coverage:
-          - build/common/xml
-          - common/type/xml: included
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: stat
-        total: 1
-        feature: STAT
-
-        coverage:
-          - common/stat
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: user
-        total: 1
-
-        coverage:
-          - common/user
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: io
-        total: 6
-        feature: IO
-        harness:
-          - pack
-          - name: fd
-            shim:
-              - name: common/io/fd
-                function:
-                  - fdReady
-              - name: common/io/fdWrite
-                function:
-                  - ioFdWriteInternal
-
-        coverage:
-          - common/io/bufferRead
-          - common/io/bufferWrite
-          - common/io/fd
-          - common/io/fdRead
-          - common/io/fdWrite
-          - common/io/filter/buffer
-          - common/io/filter/filter
-          - common/io/filter/group
-          - common/io/filter/sink
-          - common/io/filter/size
-          - common/io/io
-          - common/io/limitRead
-          - common/io/read
-          - common/io/write
-
-        depend:
-          - common/type/pack
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-pack
-        total: 1
-
-        coverage:
-          - common/type/pack
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: compress
-        total: 5
-
-        coverage:
-          - common/compress/bz2/common
-          - common/compress/bz2/compress
-          - common/compress/bz2/decompress
-          - common/compress/gz/common
-          - common/compress/gz/compress
-          - common/compress/gz/decompress
-          - common/compress/lz4/common
-          - common/compress/lz4/compress
-          - common/compress/lz4/decompress
-          - common/compress/zst/common
-          - common/compress/zst/compress
-          - common/compress/zst/decompress
-          - common/compress/common
-          - common/compress/helper
-
-        depend:
-          - storage/posix/read
-          - storage/posix/storage
-          - storage/posix/write
-          - storage/iterator
-          - storage/list
-          - storage/read
-          - storage/readMulti
-          - storage/storage
-          - storage/write
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: crypto
-        total: 4
-        feature: STORAGE
-        harness:
-          name: storage
-          shim:
-            - storage/posix/storage
-
-        coverage:
-          - common/crypto/cipherBlock
-          - common/crypto/common
-          - common/crypto/hash
-          - common/crypto/md5.vendor: included
-          - common/crypto/xxhash
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: io-tls
-        total: 6
-        feature: SOCKET
-        harness:
-          - server
-          - name: socket
-            shim:
-              - name: common/io/socket/client
-                function:
-                  - sckClientOpen
-                  - sckClientOpenWait
-
-        coverage:
-          - common/io/client
-          - common/io/server
-          - common/io/session
-          - common/io/tls/client
-          - common/io/tls/common
-          - common/io/tls/server
-          - common/io/tls/session
-          - common/io/socket/address
-          - common/io/socket/client
-          - common/io/socket/common
-          - common/io/socket/server
-          - common/io/socket/session
-
-        include:
-          - common/io/fdRead
-          - common/io/read
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: io-http
-        total: 7
-
-        coverage:
-          - common/io/http/client
-          - common/io/http/common
-          - common/io/http/header
-          - common/io/http/query
-          - common/io/http/request
-          - common/io/http/response
-          - common/io/http/session
-          - common/io/http/url
-
-        include:
-          - common/io/socket/address
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: exec
-        total: 2
-
-        coverage:
-          - build/common/exec
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: ini
-        total: 2
-
-        coverage:
-          - common/ini
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: lock
-        total: 1
-        harness:
-          - name: config
-            shim:
-              - config/load
-          - name: lock
-            shim:
-              - name: common/lock
-                function:
-                  - lockInit
-          - name: storageHelper
-            shim:
-              - name: storage/helper
-                function:
-                  - storageRepoGet
-
-        coverage:
-          - common/lock
-
-        depend:
-          - command/lock
-          - config/common
-          - config/config
-          - config/parse
-          - config/exec
-          - config/load
-          - config/protocol
-          - command/command
-          - postgres/interface
-          - postgres/interface/crc32
-          - postgres/interface/page
-          - protocol/client
-          - protocol/helper
-          - protocol/server
-          - storage/helper
-          - storage/remote/read
-          - storage/remote/readMulti
-          - storage/remote/protocol
-          - storage/remote/storage
-          - storage/remote/write
-
-  # ********************************************************************************************************************************
-  - name: protocol
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: protocol
-        total: 8
-        harness:
-          name: protocol
-          shim:
-            - name: protocol/helper
-              function:
-                - protocolLocalExec
-                - protocolRemoteExec
-        containerReq: true
-        binReq: true
-
-        coverage:
-          - protocol/client
-          - protocol/helper
-          - protocol/parallel
-          - protocol/parallelJob
-          - protocol/server
-
-        include:
-          - build/common/exec
-
-  # ********************************************************************************************************************************
-  - name: config
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: parse
-        total: 6
-
-        coverage:
-          - config/common
-          - config/config
-          - config/parse
-          - config/parse.auto: noCode
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: load
-        total: 4
-
-        coverage:
-          - config/load
-
-        include:
-          - common/io/socket/common
-          - common/io/tls/common
-          - common/user
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: exec
-        total: 1
-
-        coverage:
-          - config/exec
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: protocol
-        total: 1
-
-        coverage:
-          - config/protocol
-
-  # ********************************************************************************************************************************
-  - name: storage
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: posix
-        total: 24
-
-        coverage:
-          - storage/cifs/helper
-          - storage/cifs/storage
-          - storage/posix/read
-          - storage/posix/storage
-          - storage/posix/write
-          - storage/helper
-          - storage/iterator
-          - storage/list
-          - storage/read
-          - storage/storage
-          - storage/write
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: remote
-        total: 12
-
-        coverage:
-          - storage/remote/read
-          - storage/remote/readMulti
-          - storage/remote/protocol
-          - storage/remote/storage
-          - storage/remote/write
-          - storage/helper
-          - storage/readMulti
-          - storage/storage
-
-        include:
-          - protocol/client
-          - storage/read
-          - storage/write
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: azure
-        total: 4
-
-        coverage:
-          - storage/azure/helper
-          - storage/azure/read
-          - storage/azure/storage
-          - storage/azure/write
-
-        include:
-          - storage/helper
-          - storage/readMulti
-          - storage/storage
-          - storage/write
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: gcs
-        total: 4
-
-        coverage:
-          - storage/gcs/helper
-          - storage/gcs/read
-          - storage/gcs/storage
-          - storage/gcs/write
-
-        include:
-          - storage/helper
-          - storage/readMulti
-          - storage/storage
-          - storage/write
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: s3
-        total: 3
-
-        coverage:
-          - storage/s3/helper
-          - storage/s3/read
-          - storage/s3/storage
-          - storage/s3/write
-          - storage/read
-          - storage/readMulti
-          - storage/write
-          - storage/helper
-
-        include:
-          - storage/storage
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: sftp
-        total: 14
-        harness:
-          name: libSsh2
-          integration: false
-
-        coverage:
-          - storage/sftp/helper
-          - storage/sftp/read
-          - storage/sftp/storage
-          - storage/sftp/write
-
-        include:
-          - storage/helper
-          - storage/read
-          - storage/storage
-          - storage/write
-
-  # ********************************************************************************************************************************
-  - name: postgres
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: client
-        total: 1
-        harness:
-          name: pq
-          integration: false
-
-        coverage:
-          - postgres/client
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: interface
-        total: 10
-        harness: postgres
-
-        coverage:
-          - postgres/interface
-          - postgres/interface/crc32
-          - postgres/interface/page
-
-  # ********************************************************************************************************************************
-  - name: build
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common
-        total: 2
-
-        coverage:
-          - build/common/render
-          - build/common/yaml
-
-      # ----------------------------------------------------------------------------------------------------------------------------
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/error/error
+    total: 9
+    feature: error
+    harness:
+      name: error
+      shim:
+        - common/error/error
+
+    coverage:
+      - common/error/error
+      - common/error/error.auto: noCode
+
+    depend:
+      - common/stackTrace
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/stack-trace
+    total: 4
+    feature: stackTrace
+    harness:
+      name: stackTrace
+      shim:
+        - name: common/stackTrace
+          function:
+            - stackTraceBackCallback
+
+    coverage:
+      - common/stackTrace
+
+    depend:
+      - common/debug
+      - common/type/stringStatic
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/assert/off
+    total: 1
+    define: -DNDEBUG
+
+    coverage:
+      - common/assert: noCode
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/debug/off
+    total: 1
+    define: -DNDEBUG
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/assert/on
+    feature: assert
+    total: 1
+
+    coverage:
+      - common/assert: noCode
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/convert
+    total: 13
+
+    coverage:
+      - common/type/convert
+
+    depend:
+      - common/time
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/c
+    total: 2
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/time
+    total: 3
+    harness:
+      name: time
+      shim:
+        - name: common/time
+          function:
+            - timeMSec
+
+    coverage:
+      - common/time
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/mem-context
+    total: 8
+    feature: memContext
+
+    coverage:
+      - common/memContext
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/encode
+    total: 3
+
+    coverage:
+      - common/encode
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/object
+    total: 1
+
+    coverage:
+      - common/type/object
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/blob
+    total: 1
+
+    coverage:
+      - common/type/blob
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/string
+    total: 26
+    feature: string
+
+    coverage:
+      - test/harness/string
+      - common/type/string: included
+      - common/type/stringZ
+      - common/type/stringId
+      - common/type/stringList
+
+    depend:
+      - common/type/buffer
+      - common/type/keyValue
+      - common/type/list
+      - common/type/variant
+      - common/type/variantList
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/error/retry
+    total: 1
+    harness:
+      name: errorRetry
+      shim:
+        - name: common/error/retry
+          function:
+            - errRetryMessage
+
+    coverage:
+      - common/error/retry
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/list
+    total: 4
+
+    coverage:
+      - common/type/list
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/buffer
+    total: 5
+
+    coverage:
+      - common/type/buffer
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/variant
+    total: 12
+
+    coverage:
+      - common/type/variant
+      - common/type/variantList
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/reg-exp
+    total: 3
+
+    coverage:
+      - test/harness/regExp
+      - common/regExp: included
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/log
+    total: 6
+    feature: log
+    harness:
+      name: log
+      shim:
+        - common/log
+
+    coverage:
+      - common/log
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/debug/on
+    total: 4
+    feature: debug
+
+    coverage:
+      - common/debug
+      - common/type/stringStatic
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/fork
+    total: 1
+
+    coverage:
+      - common/fork
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/wait
+    total: 1
+
+    coverage:
+      - common/wait
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/json
+    total: 2
+
+    coverage:
+      - common/type/json
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/key-value
+    total: 2
+
+    coverage:
+      - common/type/keyValue
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/xml
+    total: 1
+
+    coverage:
+      - common/type/xml
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/stat
+    total: 1
+    feature: STAT
+
+    coverage:
+      - common/stat
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/user
+    total: 1
+
+    coverage:
+      - common/user
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/io/io
+    total: 6
+    feature: IO
+    harness:
+      - pack
+      - name: fd
+        shim:
+          - name: common/io/fd
+            function:
+              - fdReady
+          - name: common/io/fdWrite
+            function:
+              - ioFdWriteInternal
+
+    coverage:
+      - common/io/bufferRead
+      - common/io/bufferWrite
+      - common/io/fd
+      - common/io/fdRead
+      - common/io/fdWrite
+      - common/io/filter/buffer
+      - common/io/filter/filter
+      - common/io/filter/group
+      - common/io/filter/sink
+      - common/io/filter/size
+      - common/io/io
+      - common/io/limitRead
+      - common/io/read
+      - common/io/write
+
+    depend:
+      - common/type/pack
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/type/pack
+    total: 1
+
+    coverage:
+      - common/type/pack
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/compress
+    total: 5
+
+    coverage:
+      - common/compress/bz2/common
+      - common/compress/bz2/compress
+      - common/compress/bz2/decompress
+      - common/compress/gz/common
+      - common/compress/gz/compress
+      - common/compress/gz/decompress
+      - common/compress/lz4/common
+      - common/compress/lz4/compress
+      - common/compress/lz4/decompress
+      - common/compress/zst/common
+      - common/compress/zst/compress
+      - common/compress/zst/decompress
+      - common/compress/common
+      - common/compress/helper
+
+    depend:
+      - storage/posix/read
+      - storage/posix/storage
+      - storage/posix/write
+      - storage/iterator
+      - storage/list
+      - storage/read
+      - storage/readMulti
+      - storage/storage
+      - storage/write
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/crypto
+    total: 4
+    feature: STORAGE
+    harness:
+      name: storage
+      shim:
+        - storage/posix/storage
+
+    coverage:
+      - common/crypto/cipherBlock
+      - common/crypto/common
+      - common/crypto/hash
+      - common/crypto/md5.vendor: included
+      - common/crypto/xxhash
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/io/tls
+    total: 6
+    feature: SOCKET
+    harness:
+      - server
+      - name: socket
+        shim:
+          - name: common/io/socket/client
+            function:
+              - sckClientOpen
+              - sckClientOpenWait
+
+    coverage:
+      - common/io/client
+      - common/io/server
+      - common/io/session
+      - common/io/tls/client
+      - common/io/tls/common
+      - common/io/tls/server
+      - common/io/tls/session
+      - common/io/socket/address
+      - common/io/socket/client
+      - common/io/socket/common
+      - common/io/socket/server
+      - common/io/socket/session
+
+    include:
+      - common/io/fdRead
+      - common/io/read
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/io/http
+    total: 7
+
+    coverage:
+      - common/io/http/client
+      - common/io/http/common
+      - common/io/http/header
+      - common/io/http/query
+      - common/io/http/request
+      - common/io/http/response
+      - common/io/http/session
+      - common/io/http/url
+
+    include:
+      - common/io/socket/address
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/exec
+    total: 2
+
+    coverage:
+      - test/harness/exec
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/ini
+    total: 2
+
+    coverage:
+      - common/ini
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/lock
+    total: 1
+    harness:
       - name: config
-        total: 1
-
-        coverage:
-          - build/config/parse
-          - build/config/render
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: error
-        total: 1
-
-        coverage:
-          - build/error/parse
-          - build/error/render
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: help
-        total: 2
-
-        coverage:
-          - build/help/parse
-          - build/help/render
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: postgres
-        total: 1
-
-        coverage:
-          - build/postgres/parse
-          - build/postgres/render
-
-  # ********************************************************************************************************************************
-  - name: info
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info
-        total: 3
-        harness: info
-
-        coverage:
-          - info/info
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info-pg
-        total: 2
-
-        coverage:
-          - info/infoPg
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info-archive
-        total: 2
-
-        coverage:
-          - info/infoArchive
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: manifest
-        total: 6
-        harness:
-          name: manifest
-          shim:
-            - info/manifest/manifest
-
-        coverage:
-          - info/manifest/manifest
-
-        depend:
-          - command/backup/common
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info-backup
-        total: 3
-
-        coverage:
-          - info/infoBackup
-
-  # ********************************************************************************************************************************
-  - name: db
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: db
-        total: 3
-        containerReq: true
-        binReq: true
-
-        coverage:
-          - db/db
-          - db/helper
-          - db/protocol
-
-  # ********************************************************************************************************************************
-  - name: command
-
-    test:
-
-      # ----------------------------------------------------------------------------------------------------------------------------
+        shim:
+          - config/load
       - name: lock
-        total: 1
+        shim:
+          - name: common/lock
+            function:
+              - lockInit
+      - name: storageHelper
+        shim:
+          - name: storage/helper
+            function:
+              - storageRepoGet
 
-        coverage:
-          - command/lock
+    coverage:
+      - common/lock
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: control
-        total: 4
+    depend:
+      - command/lock
+      - config/common
+      - config/config
+      - config/parse
+      - config/exec
+      - config/load
+      - config/protocol
+      - command/command
+      - postgres/interface
+      - postgres/interface/crc32
+      - postgres/interface/page
+      - protocol/client
+      - protocol/helper
+      - protocol/server
+      - storage/helper
+      - storage/remote/read
+      - storage/remote/readMulti
+      - storage/remote/protocol
+      - storage/remote/storage
+      - storage/remote/write
 
-        coverage:
-          - command/control/common
-          - command/control/start
-          - command/control/stop
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: protocol/protocol
+    total: 8
+    harness:
+      name: protocol
+      shim:
+        - name: protocol/helper
+          function:
+            - protocolLocalExec
+            - protocolRemoteExec
+    containerReq: true
+    binReq: true
 
-        include:
-          - command/lock
+    coverage:
+      - protocol/client
+      - protocol/helper
+      - protocol/parallel
+      - protocol/parallelJob
+      - protocol/server
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: annotate
-        total: 1
+    include:
+      - test/harness/exec
 
-        coverage:
-          - command/annotate/annotate
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: config/parse
+    total: 6
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: archive-common
-        total: 9
+    coverage:
+      - config/common
+      - config/config
+      - config/parse
+      - config/parse.auto: noCode
 
-        coverage:
-          - command/archive/common
-          - command/archive/find
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: config/load
+    total: 4
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: archive-get
-        total: 3
-        binReq: true
+    coverage:
+      - config/load
 
-        coverage:
-          - command/archive/common
-          - command/archive/get/file
-          - command/archive/get/get
-          - command/archive/get/protocol
+    include:
+      - common/io/socket/common
+      - common/io/tls/common
+      - common/user
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: archive-push
-        total: 4
-        binReq: true
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: config/exec
+    total: 1
 
-        coverage:
-          - command/archive/common
-          - command/archive/push/file
-          - command/archive/push/protocol
-          - command/archive/push/push
-          - command/command
+    coverage:
+      - config/exec
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: stanza
-        total: 4
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: config/protocol
+    total: 1
 
-        coverage:
-          - command/stanza/common
-          - command/stanza/create
-          - command/stanza/upgrade
-          - command/stanza/delete
+    coverage:
+      - config/protocol
 
-        depend:
-          - command/check/common
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: storage/posix
+    total: 24
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: check
-        total: 4
+    coverage:
+      - storage/cifs/helper
+      - storage/cifs/storage
+      - storage/posix/read
+      - storage/posix/storage
+      - storage/posix/write
+      - storage/helper
+      - storage/iterator
+      - storage/list
+      - storage/read
+      - storage/storage
+      - storage/write
 
-        coverage:
-          - command/check/common
-          - command/check/check
-          - command/check/report
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: storage/remote
+    total: 12
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: command
-        total: 1
+    coverage:
+      - storage/remote/read
+      - storage/remote/readMulti
+      - storage/remote/protocol
+      - storage/remote/storage
+      - storage/remote/write
+      - storage/helper
+      - storage/readMulti
+      - storage/storage
 
-        coverage:
-          - command/command
+    include:
+      - protocol/client
+      - storage/read
+      - storage/write
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: expire
-        total: 9
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: storage/azure
+    total: 4
 
-        coverage:
-          - command/expire/expire
+    coverage:
+      - storage/azure/helper
+      - storage/azure/read
+      - storage/azure/storage
+      - storage/azure/write
 
-        include:
-          - info/infoBackup
+    include:
+      - storage/helper
+      - storage/readMulti
+      - storage/storage
+      - storage/write
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: help
-        total: 4
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: storage/gcs
+    total: 4
 
-        coverage:
-          - command/help/help
-          - command/help/help.auto: noCode
+    coverage:
+      - storage/gcs/helper
+      - storage/gcs/read
+      - storage/gcs/storage
+      - storage/gcs/write
 
-        include:
-          - build/help/render
+    include:
+      - storage/helper
+      - storage/readMulti
+      - storage/storage
+      - storage/write
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: info
-        total: 3
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: storage/s3
+    total: 3
 
-        coverage:
-          - command/info/info
+    coverage:
+      - storage/s3/helper
+      - storage/s3/read
+      - storage/s3/storage
+      - storage/s3/write
+      - storage/read
+      - storage/readMulti
+      - storage/write
+      - storage/helper
 
-        include:
-          - command/lock
+    include:
+      - storage/storage
 
-      # ----------------------------------------------------------------------------------------------------------------------------
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: storage/sftp
+    total: 14
+    harness:
+      name: libSsh2
+      integration: false
+
+    coverage:
+      - storage/sftp/helper
+      - storage/sftp/read
+      - storage/sftp/storage
+      - storage/sftp/write
+
+    include:
+      - storage/helper
+      - storage/read
+      - storage/storage
+      - storage/write
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: postgres/client
+    total: 1
+    harness:
+      name: pq
+      integration: false
+
+    coverage:
+      - postgres/client
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: postgres/interface
+    total: 10
+    harness: postgres
+
+    coverage:
+      - postgres/interface
+      - postgres/interface/crc32
+      - postgres/interface/page
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: info/info
+    total: 3
+    harness: info
+
+    coverage:
+      - info/info
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: info/info-pg
+    total: 2
+
+    coverage:
+      - info/infoPg
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: info/info-archive
+    total: 2
+
+    coverage:
+      - info/infoArchive
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: info/manifest
+    total: 6
+    harness:
+      name: manifest
+      shim:
+        - info/manifest/manifest
+
+    coverage:
+      - info/manifest/manifest
+
+    depend:
+      - command/backup/common
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: info/info-backup
+    total: 3
+
+    coverage:
+      - info/infoBackup
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: db/db
+    total: 3
+    containerReq: true
+    binReq: true
+
+    coverage:
+      - db/db
+      - db/helper
+      - db/protocol
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/lock
+    total: 1
+
+    coverage:
+      - command/lock
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/control
+    total: 4
+
+    coverage:
+      - command/control/common
+      - command/control/start
+      - command/control/stop
+
+    include:
+      - command/lock
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/annotate
+    total: 1
+
+    coverage:
+      - command/annotate/annotate
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/archive-common
+    total: 9
+
+    coverage:
+      - command/archive/common
+      - command/archive/find
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/archive-get
+    total: 3
+    binReq: true
+
+    coverage:
+      - command/archive/common
+      - command/archive/get/file
+      - command/archive/get/get
+      - command/archive/get/protocol
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/archive-push
+    total: 4
+    binReq: true
+
+    coverage:
+      - command/archive/common
+      - command/archive/push/file
+      - command/archive/push/protocol
+      - command/archive/push/push
+      - command/command
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/stanza
+    total: 4
+
+    coverage:
+      - command/stanza/common
+      - command/stanza/create
+      - command/stanza/upgrade
+      - command/stanza/delete
+
+    depend:
+      - command/check/common
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/check
+    total: 4
+
+    coverage:
+      - command/check/common
+      - command/check/check
+      - command/check/report
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/command
+    total: 1
+
+    coverage:
+      - command/command
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/expire
+    total: 9
+
+    coverage:
+      - command/expire/expire
+
+    include:
+      - info/infoBackup
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/help
+    total: 4
+
+    coverage:
+      - command/help/help
+      - command/help/help.auto: noCode
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/info
+    total: 3
+
+    coverage:
+      - command/info/info
+
+    include:
+      - command/lock
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/backup
+    total: 12
+    harness:
       - name: backup
-        total: 12
-        harness:
-          - name: backup
-            integration: false
-            shim:
-              - name: command/backup/backup
-                function:
-                  - backupProcess:
-                      inc: process
-          - name: blockIncr
-            shim:
-              - command/restore/blockDelta
-
-        coverage:
-          - command/backup/backup
-          - command/backup/blockIncr
-          - command/backup/blockMap
-          - command/backup/common
-          - command/backup/complete.inc: included
-          - command/backup/db.inc: included
-          - command/backup/file.inc: included
-          - command/backup/incr.inc: included
-          - command/backup/label.inc: included
-          - command/backup/option.inc: included
-          - command/backup/pageChecksum
-          - command/backup/process.inc: included
-          - command/backup/protocol
+        integration: false
+        shim:
+          - name: command/backup/backup
+            function:
+              - backupProcess:
+                  inc: process
+      - name: blockIncr
+        shim:
           - command/restore/blockDelta
 
-        include:
-          - info/info
-          - info/manifest/manifest
-          - storage/storage
+    coverage:
+      - command/backup/backup
+      - command/backup/blockIncr
+      - command/backup/blockMap
+      - command/backup/common
+      - command/backup/complete.inc: included
+      - command/backup/db.inc: included
+      - command/backup/file.inc: included
+      - command/backup/incr.inc: included
+      - command/backup/label.inc: included
+      - command/backup/option.inc: included
+      - command/backup/pageChecksum
+      - command/backup/process.inc: included
+      - command/backup/protocol
+      - command/restore/blockDelta
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: restore
-        total: 16
+    include:
+      - info/info
+      - info/manifest/manifest
+      - storage/storage
 
-        harness: restore
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/restore
+    total: 16
 
-        coverage:
-          - command/restore/blockChecksum
-          - command/restore/blockDelta
-          - command/restore/clean.inc: included
-          - command/restore/config.inc: included
-          - command/restore/file.inc: included
-          - command/restore/process.inc: included
-          - command/restore/protocol
-          - command/restore/remap.inc: included
-          - command/restore/restore
-          - command/restore/select.inc: included
-          - command/restore/timeline
-          - command/restore/validate.inc: included
+    harness: restore
 
-        include:
-          - common/user
-          - info/infoBackup
-          - info/manifest/manifest
+    coverage:
+      - command/restore/blockChecksum
+      - command/restore/blockDelta
+      - command/restore/clean.inc: included
+      - command/restore/config.inc: included
+      - command/restore/file.inc: included
+      - command/restore/process.inc: included
+      - command/restore/protocol
+      - command/restore/remap.inc: included
+      - command/restore/restore
+      - command/restore/select.inc: included
+      - command/restore/timeline
+      - command/restore/validate.inc: included
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: manifest
-        total: 1
+    include:
+      - common/user
+      - info/infoBackup
+      - info/manifest/manifest
 
-        include:
-          - command/manifest/manifest
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/manifest
+    total: 1
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: repo
-        total: 3
+    include:
+      - command/manifest/manifest
 
-        coverage:
-          - command/repo/common
-          - command/repo/get
-          - command/repo/ls
-          - command/repo/put
-          - command/repo/rm
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/repo
+    total: 3
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: verify
-        total: 14
+    coverage:
+      - command/repo/common
+      - command/repo/get
+      - command/repo/ls
+      - command/repo/put
+      - command/repo/rm
 
-        coverage:
-          - command/verify/file
-          - command/verify/protocol
-          - command/verify/verify
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/verify
+    total: 14
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: local
-        total: 1
+    coverage:
+      - command/verify/file
+      - command/verify/protocol
+      - command/verify/verify
 
-        coverage:
-          - command/local/local
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/local
+    total: 1
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: remote
-        total: 1
+    coverage:
+      - command/local/local
 
-        coverage:
-          - command/remote/remote
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/remote
+    total: 1
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: exit
-        total: 3
+    coverage:
+      - command/remote/remote
 
-        coverage:
-          - command/exit
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/exit
+    total: 3
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: server
-        total: 2
-        harness: systemd
+    coverage:
+      - command/exit
 
-        coverage:
-          - command/server/ping
-          - command/server/server
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: command/server
+    total: 2
+    harness: systemd
 
-  # ********************************************************************************************************************************
-  - name: doc
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: build
-        total: 2
-
-        coverage:
-          - doc/command/build/build
-          - doc/command/build/eval
-          - doc/command/build/man
-          - doc/command/build/pre
-          - doc/command/build/reference
-          - doc/command/build/varStore
-
-  # ********************************************************************************************************************************
-  # Tests for the test harness itself. These are python so they are run directly rather than built, which means no total is needed
-  # since there are no runs to select. The harness is the same everywhere so there is nothing to gain from running these on every vm.
-  #
-  # This group is last so that nothing it declares can affect the modules compiled into any other test.
-  # ********************************************************************************************************************************
-  - name: test
-    lang: python
-    vm: [none, u24, rh9]
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common/error
-
-        coverage:
-          - test/common/error
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common/exec
-
-        coverage:
-          - test/common/exec
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common/log
-
-        coverage:
-          - test/common/log
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common/storage
-
-        coverage:
-          - test/common/storage
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common/string
-
-        coverage:
-          - test/common/string_id
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: common/render
-
-        coverage:
-          - test/common/render
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: config/cli
-
-        coverage:
-          - test/config/cli
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: config/config
-
-        coverage:
-          - test/config/config
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: command/test/define
-
-        coverage:
-          - test/command/test/define
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: command/lint/lint
-
-        coverage:
-          - test/command/lint/ascii
-          - test/command/lint/string_id
-          - test/command/lint/lint
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: command/test/python
-
-        coverage:
-          - test/command/test/python
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: command/coverage/report
-
-        coverage:
-          - test/command/coverage/report
-
-        # The report renders the coverage model, which is defined with the command that builds it
-        depend:
-          - test/command/coverage/coverage
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: command/coverage/filter_py
-
-        coverage:
-          - test/command/coverage/filter_py
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: command/coverage/filter_c
-
-        coverage:
-          - test/command/coverage/filter_c
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: command/coverage/coverage
-
-        coverage:
-          - test/command/coverage/coverage
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: command/test/build
-
-        coverage:
-          - test/command/test/build
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: command/test/unit
-
-        coverage:
-          - test/command/test/unit
+    coverage:
+      - command/server/ping
+      - command/server/server
 
 # **********************************************************************************************************************************
 # Integration tests
 #
 # Integration tests are not run in a container. They are expected to create their own containers since most integration runs will
 # create more than one. For this reason each run is executed individually.
+#
+# Only an integration test may set this option:
+#     * db - determines if the test will be run against multiple db versions
 # **********************************************************************************************************************************
 integration:
 
-  # ********************************************************************************************************************************
-  - name: integration
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: integration/all
     db: true
-
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: all
-        total: 1
-        harness: host
+    total: 1
+    harness: host
 
 # **********************************************************************************************************************************
 # Performance tests
@@ -1187,17 +973,375 @@ integration:
 # **********************************************************************************************************************************
 performance:
 
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: performance/type
+    total: 6
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: performance/storage
+    total: 2
+
+    include:
+      - storage/helper
+
+# **********************************************************************************************************************************
+# Tool tests
+#
+# Tests for the build, documentation, and test tools. These are python so they are run directly rather than built, which means no
+# total is needed since there are no tests to select.
+#
+# Only a tool may set this option, since the tools are the same everywhere while a C test is exercising the platform it runs on:
+#     * vm - VMs that the test will be run on
+#
+# This type is last so that nothing it declares can affect the modules compiled into any other test.
+# **********************************************************************************************************************************
+tool:
+
   # ********************************************************************************************************************************
-  - name: performance
+  # The build library, which every tool is built on. It is declared before the doc and test libraries so that those inherit it,
+  # which is the same direction the import hierarchy runs in.
+  # ********************************************************************************************************************************
+  - name: build
+    vm: [none, u24, rh9]
 
-    test:
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type
-        total: 6
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/common/error
 
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: storage
-        total: 2
+    coverage:
+      - build/common/error
 
-        include:
-          - storage/helper
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/common/log
+
+    coverage:
+      - build/common/log
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/common/storage
+
+    coverage:
+      - build/common/storage
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/common/string
+
+    coverage:
+      - build/common/string_id
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/common/render
+
+    coverage:
+      - build/common/render
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/common/yaml
+
+    coverage:
+      - build/common/yaml
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/common/pack
+
+    coverage:
+      - build/common/pack
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/common/xml
+
+    coverage:
+      - build/common/xml
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/config/common
+
+    coverage:
+      - build/config/common
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/config/parse
+
+    coverage:
+      - build/config/parse
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/config/render
+
+    coverage:
+      - build/config/render
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/error/parse
+
+    coverage:
+      - build/error/parse
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/error/render
+
+    coverage:
+      - build/error/render
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/postgres/parse
+
+    coverage:
+      - build/postgres/parse
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/postgres/render
+
+    coverage:
+      - build/postgres/render
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/help/parse
+
+    coverage:
+      - build/help/parse
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/help/render
+
+    coverage:
+      - build/help/render
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: build/command/main
+
+    coverage:
+      - build/command/main
+
+  # ********************************************************************************************************************************
+  # The doc library, which sits on top of the build library.
+  # ********************************************************************************************************************************
+  - name: doc
+    vm: [none, u24, rh9]
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/common/exec
+
+    coverage:
+      - doc/common/exec
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/common/user
+
+    coverage:
+      - doc/common/user
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/config/project
+
+    coverage:
+      - doc/config/project
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/common/var_store
+
+    coverage:
+      - doc/common/var_store
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/common/eval
+
+    coverage:
+      - doc/common/eval
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/common/date
+
+    coverage:
+      - doc/common/date
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/build/pre
+
+    coverage:
+      - doc/command/build/pre
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/build/reference
+
+    coverage:
+      - doc/command/build/reference
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/build/man
+
+    coverage:
+      - doc/command/build/man
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/build/news
+
+    coverage:
+      - doc/command/build/news
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/common/ini
+
+    coverage:
+      - doc/common/ini
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/render/host
+
+    coverage:
+      - doc/command/render/host
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/render/render
+
+    coverage:
+      - doc/command/render/render
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/render/manifest
+
+    coverage:
+      - doc/command/render/manifest
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/render/release
+
+    coverage:
+      - doc/command/render/release
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/render/execute
+
+    coverage:
+      - doc/command/render/execute
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/render/html
+
+    coverage:
+      - doc/command/render/html
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/render/markdown
+
+    coverage:
+      - doc/command/render/markdown
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: doc/command/doc
+
+    coverage:
+      - doc/command/doc
+
+  # ********************************************************************************************************************************
+  # The test library, which sits on top of the doc library. It is the harness that runs everything here, so it is declared last.
+  # ********************************************************************************************************************************
+  - name: test
+    vm: [none, u24, rh9]
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/common/vm
+
+    coverage:
+      - test/common/vm
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/config/cli
+
+    coverage:
+      - test/config/cli
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/config/config
+
+    coverage:
+      - test/config/config
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/test/define
+
+    coverage:
+      - test/command/test/define
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/lint/lint
+
+    coverage:
+      - test/command/lint/ascii
+      - test/command/lint/string_id
+      - test/command/lint/lint
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/code/format
+
+    coverage:
+      - test/command/code/format
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/test/python
+
+    coverage:
+      - test/command/test/python
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/test/list
+
+    coverage:
+      - test/command/test/list
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/vm/build
+
+    coverage:
+      - test/command/vm/build
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/test/job
+
+    coverage:
+      - test/command/test/job
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/coverage/report
+
+    coverage:
+      - test/command/coverage/report
+
+    # The report renders the coverage model, which is defined with the command that builds it
+    depend:
+      - test/command/coverage/coverage
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/coverage/filter_py
+
+    coverage:
+      - test/command/coverage/filter_py
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/coverage/filter_c
+
+    coverage:
+      - test/command/coverage/filter_c
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/coverage/coverage
+
+    coverage:
+      - test/command/coverage/coverage
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/test/test
+
+    coverage:
+      - test/command/test/test
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/test/build
+
+    coverage:
+      - test/command/test/build
+
+  # --------------------------------------------------------------------------------------------------------------------------------
+  - name: test/command/test/unit
+
+    coverage:
+      - test/command/test/unit

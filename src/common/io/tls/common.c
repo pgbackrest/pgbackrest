@@ -185,31 +185,31 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-tlsInit(const String *const tlsCipher12, const String *const tlsCipher13)
+tlsInit(const String *const tlsCipher12, const String *const tlsCipher13)                                           // {vm_covered}
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, tlsCipher12);
-        FUNCTION_TEST_PARAM(STRING, tlsCipher13);
-    FUNCTION_TEST_END();
+    FUNCTION_TEST_BEGIN();                                                                                          // {vm_covered}
+        FUNCTION_TEST_PARAM(STRING, tlsCipher12);                                                                   // {vm_covered}
+        FUNCTION_TEST_PARAM(STRING, tlsCipher13);                                                                   // {vm_covered}
+    FUNCTION_TEST_END();                                                                                            // {vm_covered}
 
     // Free old mem context (if any)
-    if (tlsCommonLocal.memContext != NULL)
-        memContextFree(tlsCommonLocal.memContext);
+    if (tlsCommonLocal.memContext != NULL)                                                                          // {vm_covered}
+        memContextFree(tlsCommonLocal.memContext);                                                                  // {vm_covered}
 
     // Initialize mem context
-    MEM_CONTEXT_BEGIN(memContextTop())
+    MEM_CONTEXT_BEGIN(memContextTop())                                                                              // {vm_covered}
     {
-        MEM_CONTEXT_NEW_BEGIN(TlsCommon, .childQty = MEM_CONTEXT_QTY_MAX)
+        MEM_CONTEXT_NEW_BEGIN(TlsCommon, .childQty = MEM_CONTEXT_QTY_MAX)                                           // {vm_covered}
         {
-            tlsCommonLocal.memContext = MEM_CONTEXT_NEW();
-            tlsCommonLocal.tlsCipher12 = strDup(tlsCipher12);
-            tlsCommonLocal.tlsCipher13 = strDup(tlsCipher13);
+            tlsCommonLocal.memContext = MEM_CONTEXT_NEW();                                                          // {vm_covered}
+            tlsCommonLocal.tlsCipher12 = strDup(tlsCipher12);                                                       // {vm_covered}
+            tlsCommonLocal.tlsCipher13 = strDup(tlsCipher13);                                                       // {vm_covered}
         }
-        MEM_CONTEXT_NEW_END();
+        MEM_CONTEXT_NEW_END();                                                                                      // {vm_covered}
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_END();                                                                                              // {vm_covered}
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_TEST_RETURN_VOID();                                                                                    // {vm_covered}
 }
 
 /**********************************************************************************************************************************/
@@ -242,12 +242,20 @@ tlsContext(const bool verifyPeer)
         cryptoError(SSL_CTX_set_min_proto_version(result, TLS1_2_VERSION) != 1, "unable to set minumum TLS version to 1.2");
 
         // Set allowed ciphers for TLSv1.2 when configured
-        if (tlsCommonLocal.tlsCipher12 != NULL)
-            cryptoError(SSL_CTX_set_cipher_list(result, strZ(tlsCommonLocal.tlsCipher12)) != 1, "unable to set TLSv1.2 ciphers");
+        if (tlsCommonLocal.tlsCipher12 != NULL)                                                                     // {vm_covered}
+        {
+            cryptoError(                                                                                            // {vm_covered}
+                SSL_CTX_set_cipher_list(result, strZ(tlsCommonLocal.tlsCipher12)) != 1,                             // {vm_covered}
+                "unable to set TLSv1.2 ciphers");
+        }
 
         // Set allowed ciphers for TLSv1.3 when configured
-        if (tlsCommonLocal.tlsCipher13 != NULL)
-            cryptoError(SSL_CTX_set_ciphersuites(result, strZ(tlsCommonLocal.tlsCipher13)) != 1, "unable to set TLSv1.3 ciphers");
+        if (tlsCommonLocal.tlsCipher13 != NULL)                                                                     // {vm_covered}
+        {
+            cryptoError(                                                                                            // {vm_covered}
+                SSL_CTX_set_ciphersuites(result, strZ(tlsCommonLocal.tlsCipher13)) != 1,                            // {vm_covered}
+                "unable to set TLSv1.3 ciphers");
+        }
     }
 
     FUNCTION_TEST_RETURN_TYPE_P(SSL_CTX, result);

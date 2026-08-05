@@ -2,28 +2,65 @@
 
 Keys are looked up by name so only the sequences carry order, which is what YAML guarantees.
 
-Definitions accumulate as the file is read: a test inherits the coverage, harnesses, shims, and features declared by every test
-before it, which is why the module list is built in a single pass over unit, integration, and then performance."""
+Definitions accumulate as the file is read: a test module inherits the coverage, harnesses, shims, and features declared by every
+module before it, which is why the module list is built in a single pass over the types in the order they are declared."""
 
 ####################################################################################################################################
 import os
 
 import yaml
 
-from common.error import TestError, check
+from common.error import ToolError, check
+from common.render import bld_enum
+
+# Path the test modules live in, relative to the repository. Everything in it is a test module, which is what lets the linter
+# report a module that was never declared here.
+TEST_MODULE_PATH = "test/src/module/"
 
 # Test types, in the order they are declared in define.yaml and accumulated
 TEST_TYPE_UNIT = "unit"
 TEST_TYPE_INTEGRATION = "integration"
 TEST_TYPE_PERFORMANCE = "performance"
+TEST_TYPE_TOOL = "tool"
 
-TEST_TYPE_LIST = (TEST_TYPE_UNIT, TEST_TYPE_INTEGRATION, TEST_TYPE_PERFORMANCE)
+TEST_TYPE_LIST = (TEST_TYPE_UNIT, TEST_TYPE_INTEGRATION, TEST_TYPE_PERFORMANCE, TEST_TYPE_TOOL)
 
-# Language a test module is written in. A C test is generated and compiled into a binary while a python test is run directly.
+# Language a test module is written in, which follows from its type since a tool is python and everything else is C. A C test is
+# generated and compiled into a binary while a python test is run directly.
 TEST_LANG_C = "c"
 TEST_LANG_PYTHON = "python"
 
 TEST_LANG_LIST = (TEST_LANG_C, TEST_LANG_PYTHON)
+
+# Libraries a python module may import from, keyed by the library it lives in, which is the first component of its module name. A
+# tool sees its own library and the ones below it in the hierarchy, listed in search order, which is what include_directories does
+# for the C.
+TEST_LIB_LIST = {
+    "build": ("build",),
+    "doc": ("doc", "build"),
+    "test": ("test", "doc", "build"),
+}
+
+
+####################################################################################################################################
+def test_lib_split(name):
+    """Split a python module name into the library it lives in and the module within it.
+
+    For example "build/common/render" becomes ("build", "common/render"), where the module is imported as common.render from the
+    build library."""
+
+    lib, _, module = name.partition("/")
+
+    check(lib in TEST_LIB_LIST, "python module '%s' must be in one of these libraries: %s" % (name, ", ".join(TEST_LIB_LIST)))
+
+    return lib, module
+
+
+####################################################################################################################################
+def test_lib_path(lib):
+    """Path of a library relative to the repository, e.g. "build" becomes "build/lib"."""
+
+    return "%s/lib" % lib
 
 
 ####################################################################################################################################
@@ -194,71 +231,70 @@ def _parse_coverage(coverage_list_raw):
 
 ####################################################################################################################################
 # Parse a single test module
-# Keys a module may define. Language and vm are set here when they apply to every test in the module.
-_GROUP_KEY_LIST = ("db", "lang", "name", "test", "vm")
+# Options that may be set for a path, which every module under it inherits and may override, by the type they are valid for. Only
+# an integration module runs against multiple PostgreSQL versions, and only a tool is limited to certain vms since it is the same
+# everywhere while a C test is exercising the platform it runs on.
+_OPTION_KEY_LIST = {TEST_TYPE_INTEGRATION: ("db",), TEST_TYPE_TOOL: ("vm",)}
 
-# Keys a test may define. Coverage is applied before depend so the depend list is built in a fixed order no matter how the keys are
-# written, since a mapping does not carry order.
-_MODULE_KEY_LIST = (
-    "binReq",
-    "containerReq",
-    "coverage",
-    "define",
-    "depend",
-    "feature",
-    "harness",
-    "include",
-    "lang",
-    "name",
-    "total",
-    "vm",
-)
+# Keys that define a test. An entry that has none of them sets options for the path it names rather than defining a module.
+_TEST_KEY_LIST = ("binReq", "containerReq", "coverage", "define", "depend", "feature", "harness", "include", "total")
+
+# Keys a module may define. Coverage is applied before depend so the depend list is built in a fixed order no matter how the keys
+# are written, since a mapping does not carry order.
+_MODULE_KEY_LIST = ("name",) + _TEST_KEY_LIST
 
 
 ####################################################################################################################################
-def _parse_module(test, module, type, state):
+def _option_get(option_list, module, key, default):
+    """Value of an option for a module.
+
+    What the module sets wins, else the innermost path that sets it, which is the last one declared since a path is declared before
+    everything under it."""
+
+    if key in module:
+        return module[key]
+
+    for option in reversed(option_list):
+        if module["name"].startswith(option["name"] + "/") and key in option:
+            return option[key]
+
+    return default
+
+
+####################################################################################################################################
+def _parse_module(module, type, option_list, state):
     """Parse a single test module."""
 
-    module_name = module["name"]
+    result = TestDefModule(module["name"], type)
 
-    for key in test:
-        check(key in _MODULE_KEY_LIST, "unexpected keyword '%s' in test '%s/%s'" % (key, module_name, test.get("name")))
+    # A tool is written in python and runs on the vms it declares, everything else is C and runs on all of them
+    result.lang = TEST_LANG_PYTHON if type == TEST_TYPE_TOOL else TEST_LANG_C
+    result.vm_list = list(_option_get(option_list, module, "vm", []))
+    result.pg_required = _option_get(option_list, module, "db", False)
+    result.total = module.get("total", 0)
+    result.bin_required = module.get("binReq", False)
+    result.container_required = module.get("containerReq", False)
+    result.flag = module.get("define")
+    result.feature = module.get("feature")
+    result.include_list = list(module.get("include", []))
 
-    result = TestDefModule("%s/%s" % (module_name, test["name"]), type)
-
-    # Language and vm may be set for the whole module and overridden by a test
-    result.lang = test.get("lang", module.get("lang", TEST_LANG_C))
-
-    check(result.lang in TEST_LANG_LIST, "invalid lang '%s' in test '%s'" % (result.lang, result.name))
-
-    result.vm_list = list(test.get("vm", module.get("vm", [])))
-
-    # Integration tests declare at the module level whether they run against multiple PostgreSQL versions
-    result.pg_required = module.get("db", False) if type == TEST_TYPE_INTEGRATION else False
-    result.total = test.get("total", 0)
-    result.bin_required = test.get("binReq", False)
-    result.container_required = test.get("containerReq", False)
-    result.flag = test.get("define")
-    result.feature = test.get("feature")
-    result.include_list = list(test.get("include", []))
-
-    # Each language accumulates its own dependencies. A test may use what it declares plus everything covered by the tests before
-    # it, which is what makes the module order in this file a documented hierarchy rather than a formality.
+    # Each language accumulates its own dependencies. A module may use what it declares plus everything covered by the modules
+    # before it, which is what makes the module order in this file a documented hierarchy rather than a formality.
     depend_state = state["depend"][result.lang]
 
-    if "coverage" in test:
-        result.coverage_list = _parse_coverage(test["coverage"])
+    if "coverage" in module:
+        result.coverage_list = _parse_coverage(module["coverage"])
 
         for coverage in result.coverage_list:
             if coverage.coverable and not coverage.included and coverage.name not in depend_state:
                 depend_state.append(coverage.name)
 
-    for depend in test.get("depend", []):
+    for depend in module.get("depend", []):
         if depend not in depend_state:
             depend_state.append(depend)
 
-    if "harness" in test:
-        harness = test["harness"]
+    if "harness" in module:
+        harness = module["harness"]
 
         # Harness may be a single entry (bare name or map) or a sequence of entries
         for entry in harness if isinstance(harness, list) else [harness]:
@@ -269,7 +305,7 @@ def _parse_module(test, module, type, state):
         depend for depend in depend_state if result.coverage_find(depend) is None and depend not in result.include_list
     ]
 
-    # Harnesses and shims accumulate across tests, so this test gets everything declared so far
+    # Harnesses and shims accumulate across modules, so this module gets everything declared so far
     result.harness_list = [TestDefHarness(h.name, h.integration, list(h.include_list)) for h in state["harness"]]
     result.shim_list = [TestDefShim(s.name, s.integration, list(s.function_list)) for s in state["shim"]]
     result.feature_list = list(state["feature"])
@@ -292,19 +328,56 @@ def test_def_parse(path_repo):
 
     result = []
 
-    # Lists that accumulate across every test in the file, in declaration order. Dependencies accumulate per language since a C
+    # Lists that accumulate across every module in the file, in declaration order. Dependencies accumulate per language since a C
     # test cannot compile a python module and a python test cannot import a C one.
     state = {"depend": {lang: [] for lang in TEST_LANG_LIST}, "feature": [], "harness": [], "shim": []}
 
     for type in TEST_TYPE_LIST:
-        for module in define[type]:
-            for key in module:
-                check(key in _GROUP_KEY_LIST, "unexpected keyword '%s' in module '%s'" % (key, module.get("name")))
+        # Options declared for a path, which only apply to the type they are declared in
+        option_list = []
 
-            for test in module["test"]:
-                result.append(_parse_module(test, module, type, state))
+        # Everything named so far in this type, which is what the options are checked against
+        name_list = []
+
+        # Keys valid in this type, which is every module key plus the options the type has
+        key_list = _MODULE_KEY_LIST + _OPTION_KEY_LIST.get(type, ())
+
+        for module in define[type]:
+            name = module.get("name")
+
+            check(name is not None, "module name is required")
+
+            for key in module:
+                check(key in key_list, "unexpected keyword '%s' in module '%s'" % (key, name))
+
+            # An entry that defines no test sets options for everything under it. Requiring it to come first means the options a
+            # module has are always the ones above it in the file.
+            if not any(key in module for key in _TEST_KEY_LIST):
+                check(
+                    not any(prior == name or prior.startswith(name + "/") for prior in name_list),
+                    "options for '%s' must be declared before the modules under it" % name,
+                )
+
+                option_list.append(module)
+            else:
+                result.append(_parse_module(module, type, option_list, state))
+
+            name_list.append(name)
 
     return result
+
+
+####################################################################################################################################
+def test_def_file(module):
+    """File a test module lives in, relative to the repository.
+
+    A C module is named in camel case, e.g. common/stack-trace is test/src/module/common/stackTraceTest.c, while a python module is
+    named exactly as it is declared, e.g. test/common/vm is test/src/module/test/common/vm_test.py."""
+
+    if module.lang == TEST_LANG_PYTHON:
+        return "%s%s_test.py" % (TEST_MODULE_PATH, module.name)
+
+    return "%s%sTest.c" % (TEST_MODULE_PATH, bld_enum(None, module.name))
 
 
 ####################################################################################################################################
@@ -315,4 +388,4 @@ def test_def_find(module_list, name):
         if module.name == name:
             return module
 
-    raise TestError("'%s' is not a valid test" % name)
+    raise ToolError("'%s' is not a valid module" % name)

@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]}" subtitle="News" toc="n">
     <description>News</description>
 
     <!-- ======================================================================================================================= -->
-    <section id="distribution-tarball">
+    <section id="distribution-tarball" date="2026-07-20">
         <title>New Distribution Tarball</title>
-
-        <p><b>July 20, 2026</b></p>
 
         <p>Starting with <backrest/> 2.59.0, every release includes a distribution tarball that makes building from source simpler. Unlike a checkout of the git repository, the tarball ships the generated source and the rendered documentation pre-built, so <backrest/> builds and installs without the code generation or documentation tooling that a repository checkout requires.</p>
 
@@ -19,10 +16,8 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="release-2-59-0">
+    <section id="release-2-59-0" date="2026-07-20">
         <title><backrest/> 2.59.0 Released</title>
-
-        <p><b>July 20, 2026</b></p>
 
         <p>The <backrest/> community is pleased to announce the release of <link url="{[backrest-url-base]}">{[project]}</link> 2.59.0, the latest version of the reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads.</p>
 
@@ -80,10 +75,8 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="will-continue">
+    <section id="will-continue" date="2026-05-18">
         <title><backrest/> Will Continue!</title>
-
-        <p><b>May 18, 2026</b></p>
 
         <p>I am pleased to announce that <backrest/> will continue! Over the last few weeks, a coalition of sponsors has come together to fund ongoing development. Their support means the project is no longer reliant on a single sponsor, giving <backrest/> the stability it needs for the long term.</p>
 
@@ -107,10 +100,8 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="maintenance-update">
+    <section id="maintenance-update" date="2026-05-04">
         <title>Maintenance Update</title>
-
-        <p><b>May 4, 2026</b></p>
 
         <p>After I announced that I am no longer maintaining <backrest/> my inbox blew up. It took a while to sort through the messages &amp;mdash; many of them were well wishes and thank-yous for my work over the years.</p>
 
@@ -124,10 +115,8 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="no-longer-maintained">
+    <section id="no-longer-maintained" date="2026-04-27">
         <title><backrest/> Is No Longer Being Maintained</title>
-
-        <p><b>April 27, 2026</b></p>
 
         <p>TL;DR: <backrest/> is no longer being maintained. If you fork <backrest/>, please select a new name for your project.</p>
 
