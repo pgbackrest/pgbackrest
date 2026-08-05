@@ -152,7 +152,7 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
     do
     {
         // Resize part buffer. This must be done in the loop because part size grows as parts are written.
-        storageWriteChunkBufferResize(buffer, this->partBuffer, this->partSize);
+        storageWriteChunkBufferResize(buffer, bytesTotal, this->partBuffer, this->partSize);
 
         // Copy as many bytes as possible into the part buffer
         const size_t bytesNext =

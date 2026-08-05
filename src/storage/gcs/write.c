@@ -217,7 +217,7 @@ storageWriteGcs(THIS_VOID, const Buffer *const buffer)
     do
     {
         // Resize chunk buffer. This must be done in the loop because chunk size grows as chunks are written.
-        storageWriteChunkBufferResize(buffer, this->chunkBuffer, this->chunkSize);
+        storageWriteChunkBufferResize(buffer, bytesTotal, this->chunkBuffer, this->chunkSize);
 
         // Copy as many bytes as possible into the chunk buffer
         const size_t bytesNext =

@@ -252,22 +252,24 @@ storageWriteChunkSize(
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-storageWriteChunkBufferResize(const Buffer *const input, Buffer *const chunk, const size_t chunkSizeMax)
+storageWriteChunkBufferResize(const Buffer *const input, const size_t inputOffset, Buffer *const chunk, const size_t chunkSizeMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, input);
+        FUNCTION_TEST_PARAM(SIZE, inputOffset);
         FUNCTION_TEST_PARAM(BUFFER, chunk);
         FUNCTION_TEST_PARAM(SIZE, chunkSizeMax);
     FUNCTION_TEST_END();
 
     ASSERT(input != NULL);
+    ASSERT(inputOffset <= bufUsed(input));
     ASSERT(chunk != NULL);
     ASSERT(chunkSizeMax > 0);
 
-    // Size required for the chunk buffer to hold all the input
-    const size_t chunkSizeRequired = bufUsed(chunk) + bufUsed(input);
+    // Size required for the chunk buffer to hold the input that has not been copied yet
+    const size_t chunkSizeRequired = bufUsed(chunk) + (bufUsed(input) - inputOffset);
 
-    // Resize chunk buffer if it cannot hold all the input and is less than max chunk size
+    // Resize chunk buffer if it cannot hold the remaining input and is less than max chunk size
     if (chunkSizeRequired > bufSize(chunk) && bufSize(chunk) < chunkSizeMax)
     {
         size_t chunkSize;
@@ -285,7 +287,7 @@ storageWriteChunkBufferResize(const Buffer *const input, Buffer *const chunk, co
             else
                 chunkSize = bufSize(chunk) * 2;
 
-            // Chunk size must be large enough to hold all the input
+            // Chunk size must be large enough to hold the remaining input
             if (chunkSize < chunkSizeRequired)
                 chunkSize = chunkSizeRequired;
         }
