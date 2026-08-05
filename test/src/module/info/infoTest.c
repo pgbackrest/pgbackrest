@@ -137,7 +137,7 @@ testRun(void)
         IoRead *read = ioBufferReadNew(contentLoad);
         ioFilterGroupAdd(
             ioReadFilterGroup(read),
-            cipherBlockNewP(cipherModeDecrypt, cipherInfoNew(cipherTypeAes256Cbc, hashTypeSha1, BUFSTRDEF("X"))));
+            cipherBlockNewP(cipherModeDecrypt, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("X"))));
 
         TEST_ERROR(
             infoNewLoad(read, harnessInfoLoadNewCallback, callbackContent), CryptoError,
