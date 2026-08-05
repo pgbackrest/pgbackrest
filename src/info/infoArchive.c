@@ -207,8 +207,7 @@ typedef struct InfoArchiveLoadFileData
     MemContext *memContext;                                         // Mem context
     const Storage *storage;                                         // Storage to load from
     const String *fileName;                                         // Base filename
-    CipherType cipherType;                                          // Cipher type
-    const String *cipherPass;                                       // Cipher passphrase
+    const CipherInfo *cipherInfo;                                   // Cipher info
     InfoArchive *infoArchive;                                       // Loaded infoArchive object
 } InfoArchiveLoadFileData;
 
@@ -234,7 +233,8 @@ infoArchiveLoadFileCallback(void *const data, const unsigned int try)
 
             // Attempt to load the file
             IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-            cipherBlockFilterGroupAdd(ioReadFilterGroup(read), loadData->cipherType, cipherModeDecrypt, loadData->cipherPass);
+            cipherBlockFilterGroupAdd(
+                ioReadFilterGroup(read), cipherModeDecrypt, loadData->cipherInfo);
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
@@ -251,26 +251,24 @@ infoArchiveLoadFileCallback(void *const data, const unsigned int try)
 
 FN_EXTERN InfoArchive *
 infoArchiveLoadFile(
-    const Storage *const storage, const String *const fileName, const CipherType cipherType, const String *const cipherPass)
+    const Storage *const storage, const String *const fileName, const CipherInfo *const cipherInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
-    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+    ASSERT(cipherInfo != NULL);
 
     InfoArchiveLoadFileData data =
     {
         .memContext = memContextCurrent(),
         .storage = storage,
         .fileName = fileName,
-        .cipherType = cipherType,
-        .cipherPass = cipherPass,
+        .cipherInfo = cipherInfo,
     };
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -304,28 +302,26 @@ infoArchiveLoadFile(
 /**********************************************************************************************************************************/
 FN_EXTERN void
 infoArchiveSaveFile(
-    InfoArchive *const infoArchive, const Storage *const storage, const String *const fileName, const CipherType cipherType,
-    const String *const cipherPass)
+    InfoArchive *const infoArchive, const Storage *const storage, const String *const fileName, const CipherInfo *const cipherInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_ARCHIVE, infoArchive);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
     FUNCTION_LOG_END();
 
     ASSERT(infoArchive != NULL);
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
-    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+    ASSERT(cipherInfo != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write output into a buffer since it needs to be saved to storage twice
         Buffer *const buffer = bufNew(ioBufferSize());
         IoWrite *const write = ioBufferWriteNew(buffer);
-        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
+        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherInfo);
         infoArchiveSave(infoArchive, write);
 
         // Save the file and make a copy

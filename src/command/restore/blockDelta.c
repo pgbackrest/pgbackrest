@@ -32,8 +32,7 @@ struct BlockDelta
     BlockDeltaPub pub;                                              // Publicly accessible variables
     size_t blockSize;                                               // Block size
     size_t checksumSize;                                            // Checksum size
-    CipherType cipherType;                                          // Cipher type
-    String *cipherPass;                                             // Cipher passphrase
+    const CipherInfo *cipherInfo;                                   // Cipher info
     CompressType compressType;                                      // Compress type
 
     const BlockDeltaSuperBlock *superBlockData;                     // Current super block data
@@ -57,21 +56,20 @@ typedef struct BlockDeltaReference
 FN_EXTERN BlockDelta *
 blockDeltaNew(
     const BlockMap *const blockMap, const size_t blockSize, const size_t checksumSize, const Buffer *const blockChecksum,
-    const CipherType cipherType, const String *const cipherPass, const CompressType compressType)
+    const CipherInfo *const cipherInfo, const CompressType compressType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BLOCK_MAP, blockMap);
         FUNCTION_TEST_PARAM(SIZE, blockSize);
         FUNCTION_TEST_PARAM(SIZE, checksumSize);
         FUNCTION_TEST_PARAM(BUFFER, blockChecksum);
-        FUNCTION_TEST_PARAM(STRING_ID, cipherType);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_TEST_PARAM(CIPHER_INFO, cipherInfo);
         FUNCTION_TEST_PARAM(ENUM, compressType);
     FUNCTION_TEST_END();
 
     ASSERT(blockMap != NULL);
     ASSERT(blockSize > 0);
-    ASSERT(cipherType == cipherTypeNone || cipherPass != NULL);
+    ASSERT(cipherInfo != NULL);
 
     OBJ_NEW_BEGIN(BlockDelta, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -83,8 +81,7 @@ blockDeltaNew(
             },
             .blockSize = blockSize,
             .checksumSize = checksumSize,
-            .cipherType = cipherType,
-            .cipherPass = strDup(cipherPass),
+            .cipherInfo = cipherInfoDup(cipherInfo),
             .compressType = compressType,
             .write =
             {
@@ -237,11 +234,11 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             }
             MEM_CONTEXT_OBJ_END();
 
-            if (this->cipherType != cipherTypeNone)
+            if (cipherInfoType(this->cipherInfo) != cipherTypeNone)
             {
                 ioFilterGroupAdd(
                     ioReadFilterGroup(this->limitRead),
-                    cipherBlockNewP(cipherModeDecrypt, this->cipherType, BUFSTR(this->cipherPass), .raw = true));
+                    cipherBlockNewP(cipherModeDecrypt, this->cipherInfo, .raw = true));
             }
 
             if (this->compressType != compressTypeNone)

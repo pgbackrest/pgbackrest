@@ -14,6 +14,7 @@ Repository Get Command
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "config/load.h"
 #include "storage/helper.h"
 
 #include "info/infoArchive.h"
@@ -97,7 +98,7 @@ storageGetProcess(IoWrite *const destination)
                             {
                                 const InfoArchive *const info = infoArchiveLoadFile(
                                     storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
-                                    repoCipherType, cipherPass);
+                                    cfgCipherInfoSub(cipherPass));
                                 cipherPass = infoArchiveCipherPass(info);
                             }
                         }
@@ -112,7 +113,7 @@ storageGetProcess(IoWrite *const destination)
                                 // Find the backup passphrase
                                 const InfoBackup *const info = infoBackupLoadFile(
                                     storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
-                                    repoCipherType, cipherPass);
+                                    cfgCipherInfoSub(cipherPass));
                                 cipherPass = infoBackupCipherPass(info);
 
                                 // Find the manifest passphrase
@@ -124,8 +125,7 @@ storageGetProcess(IoWrite *const destination)
                                         storageRepo(),
                                         strNewFmt(
                                             STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza), strZ(strLstGet(filePathSplitLst, 2)),
-                                            BACKUP_MANIFEST_FILE),
-                                        repoCipherType, cipherPass);
+                                            BACKUP_MANIFEST_FILE), cfgCipherInfoSub(cipherPass));
                                     cipherPass = manifestCipherSubPass(manifest);
                                 }
                             }
@@ -138,7 +138,8 @@ storageGetProcess(IoWrite *const destination)
                     THROW_FMT(OptionInvalidValueError, "unable to determine cipher passphrase for '%s'", strZ(file));
 
                 // Add encryption filter
-                cipherBlockFilterGroupAdd(ioReadFilterGroup(source), repoCipherType, cipherModeDecrypt, cipherPass);
+                cipherBlockFilterGroupAdd(
+                    ioReadFilterGroup(source), cipherModeDecrypt, cipherInfoNewP(repoCipherType, BUFSTR(cipherPass)));
             }
         }
 

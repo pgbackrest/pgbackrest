@@ -135,7 +135,9 @@ testRun(void)
             "backrest-version=\"2.17\"\n");
 
         IoRead *read = ioBufferReadNew(contentLoad);
-        ioFilterGroupAdd(ioReadFilterGroup(read), cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTRDEF("X")));
+        ioFilterGroupAdd(
+            ioReadFilterGroup(read),
+            cipherBlockNewP(cipherModeDecrypt, cipherInfoNew(cipherTypeAes256Cbc, hashTypeSha1, BUFSTRDEF("X"))));
 
         TEST_ERROR(
             infoNewLoad(read, harnessInfoLoadNewCallback, callbackContent), CryptoError,

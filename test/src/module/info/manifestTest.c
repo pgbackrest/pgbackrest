@@ -1970,7 +1970,7 @@ testRun(void)
         Manifest *manifest = NULL;
 
         TEST_ERROR(
-            manifestLoadFile(storageTest, BACKUP_MANIFEST_FILE_STR, cipherTypeNone, NULL), FileMissingError,
+            manifestLoadFile(storageTest, BACKUP_MANIFEST_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)), FileMissingError,
             "unable to load backup manifest file '" TEST_PATH "/backup.manifest' or '" TEST_PATH "/backup.manifest.copy':\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/backup.manifest' for read\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/backup.manifest.copy' for read");
@@ -2034,14 +2034,18 @@ testRun(void)
             "user=\"user1\"\n"
 
         HRN_INFO_PUT(storageTest, BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_MANIFEST_CONTENT, .comment = "write manifest copy");
-        TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
+        TEST_ASSIGN(
+            manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherInfoNewStore(cipherTypeNone, NULL)),
+            "load copy");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check file loaded");
         TEST_RESULT_STR_Z(manifestData(manifest)->backrestVersion, PROJECT_VERSION, "check backrest version");
 
         HRN_STORAGE_REMOVE(storageTest, BACKUP_MANIFEST_FILE INFO_COPY_EXT, .errorOnMissing = true);
 
         HRN_INFO_PUT(storageTest, BACKUP_MANIFEST_FILE, TEST_MANIFEST_CONTENT, .comment = "write main manifest");
-        TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load main");
+        TEST_ASSIGN(
+            manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherInfoNewStore(cipherTypeNone, NULL)),
+            "load main");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check file loaded");
 
         TEST_RESULT_VOID(manifestFree(manifest), "free manifest");

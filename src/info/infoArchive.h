@@ -9,7 +9,7 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct InfoArchive InfoArchive;
 
-#include "common/crypto/common.h"
+#include "common/crypto/info.h"
 #include "common/type/object.h"
 #include "common/type/string.h"
 #include "info/infoPg.h"
@@ -93,12 +93,11 @@ infoArchiveFree(InfoArchive *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // Load archive info
-FN_EXTERN InfoArchive *infoArchiveLoadFile(
-    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+FN_EXTERN InfoArchive *infoArchiveLoadFile(const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
 
 // Save archive info
 FN_EXTERN void infoArchiveSaveFile(
-    InfoArchive *infoArchive, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+    InfoArchive *infoArchive, const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
 
 /***********************************************************************************************************************************
 Macros for function logging

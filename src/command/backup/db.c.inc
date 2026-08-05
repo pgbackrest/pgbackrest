@@ -225,8 +225,7 @@ backupFilePut(
             {
                 ioFilterGroupAdd(
                     ioWriteFilterGroup(storageWriteIo(write)),
-                    cipherBlockNewP(
-                        cipherModeEncrypt, cfgOptionStrId(cfgOptRepoCipherType), BUFSTR(manifestCipherSubPass(manifest))));
+                    cipherBlockNewP(cipherModeEncrypt, cfgCipherInfoSub(manifestCipherSubPass(manifest))));
 
                 repoChecksum = true;
             }

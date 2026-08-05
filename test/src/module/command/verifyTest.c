@@ -265,7 +265,8 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherInfoNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg version mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -300,7 +301,8 @@ testRun(void)
             .comment = "manifest copy - invalid system-id");
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherInfoNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg system-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -334,7 +336,8 @@ testRun(void)
             .comment = "manifest copy - invalid db-id");
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherInfoNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg db-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -352,7 +355,8 @@ testRun(void)
             storageRepoWrite(), TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE
             INFO_COPY_EXT, TEST_INVALID_BACKREST_INFO, .comment = "invalid manifest copy");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherInfoNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
@@ -366,7 +370,8 @@ testRun(void)
             storageRepoWrite(), TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE,
             TEST_INVALID_BACKREST_INFO, .comment = "invalid manifest");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherInfoNewNone(), true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -392,7 +397,8 @@ testRun(void)
             .comment = "valid manifest");
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherInfoNewNone(), true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
         TEST_RESULT_UINT(backupResult.status, backupValid, "manifest usable");
         TEST_RESULT_LOG("P00 DETAIL: backup '20181119-152138F' manifest.copy does not match manifest");
@@ -871,20 +877,23 @@ testRun(void)
         String *filePathName = strNewZ(STORAGE_REPO_ARCHIVE "/testfile");
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), strZ(filePathName));
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeNone, HASH_TYPE_SHA1_ZERO_BUF, 0, NULL), verifyOk, "file ok");
+            verifyFile(filePathName, 0, NULL, compressTypeNone, HASH_TYPE_SHA1_ZERO_BUF, 0, cipherInfoNewNone()),
+            verifyOk, "file ok");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file size invalid in archive");
 
         HRN_STORAGE_PUT_Z(storageRepoWrite(), strZ(filePathName), fileContents);
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeNone, fileChecksum, 0, NULL), verifySizeInvalid, "file size invalid");
+            verifyFile(filePathName, 0, NULL, compressTypeNone, fileChecksum, 0, cipherInfoNewNone()),
+            verifySizeInvalid, "file size invalid");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file missing in archive");
 
         TEST_RESULT_UINT(
-            verifyFile(strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), 0, NULL, compressTypeNone, fileChecksum, 0, NULL),
+            verifyFile(
+                strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), 0, NULL, compressTypeNone, fileChecksum, 0, cipherInfoNewNone()),
             verifyFileMissing, "file missing");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -898,10 +907,14 @@ testRun(void)
 
         strCatZ(filePathName, ".gz");
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeGz, fileChecksum, fileSize, STRDEF("pass")),
+            verifyFile(
+                filePathName, 0, NULL, compressTypeGz, fileChecksum, fileSize,
+                cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF("pass"))),
             verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeGz, bufNewDecode(encodingHex, STRDEF("aa")), fileSize, STRDEF("pass")),
+            verifyFile(
+                filePathName, 0, NULL, compressTypeGz, bufNewDecode(encodingHex, STRDEF("aa")), fileSize,
+                cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF("pass"))),
             verifyChecksumMismatch, "file encrypted compressed checksum mismatch");
     }
 

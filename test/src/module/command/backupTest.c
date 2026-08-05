@@ -93,7 +93,7 @@ testBackupValidateFile(
         {
             ioFilterGroupAdd(
                 ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+                cipherBlockNewP(cipherModeDecrypt, cipherInfoNewStore(cipherType, cipherPass), .raw = true));
         }
 
         ioReadOpen(storageReadIo(read));
@@ -129,7 +129,7 @@ testBackupValidateFile(
         bufUsedSet(fileBuffer, bufSize(fileBuffer));
 
         BlockDelta *const blockDelta = blockDeltaNew(
-            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherType, cipherPass,
+            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherInfoNewStore(cipherType, cipherPass),
             manifestData->backupOptionCompressType);
 
         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
@@ -174,7 +174,7 @@ testBackupValidateFile(
         {
             ioFilterGroupAdd(
                 ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = raw));
+                cipherBlockNewP(cipherModeDecrypt, cipherInfoNewStore(cipherType, cipherPass), .raw = raw));
         }
 
         if (manifestData->backupOptionCompressType != compressTypeNone)
@@ -429,11 +429,15 @@ testBackupValidate(const Storage *const storage, const String *const path, const
         // Build a list of files in the backup path and verify against the manifest
         // -------------------------------------------------------------------------------------------------------------------------
         const InfoBackup *const infoBackup = infoBackupLoadFile(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR, param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-            param.cipherPass == NULL ? NULL : STR(param.cipherPass));
+            storageRepo(), INFO_BACKUP_PATH_FILE_STR,
+            cipherInfoNewStore(
+                param.cipherType == 0 ? cipherTypeNone : param.cipherType,
+                param.cipherPass == NULL ? NULL : STR(param.cipherPass)));
         Manifest *manifest = manifestLoadFile(
-            storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-            param.cipherPass == NULL ? NULL : infoBackupCipherPass(infoBackup));
+            storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)),
+            cipherInfoNewStore(
+                param.cipherType == 0 ? cipherTypeNone : param.cipherType,
+                param.cipherPass == NULL ? NULL : infoBackupCipherPass(infoBackup)));
 
         // Build list of files in the manifest
         StringList *const manifestFileList = strLstNew();
@@ -1323,7 +1327,8 @@ testRun(void)
                 ioFilterParamList(
                     blockIncrNew(
                         3, 3, 8, 2, 4, 5, NULL, compressFilterP(compressTypeGz, 1, .raw = true),
-                        cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), .raw = true)))),
+                        cipherBlockNewP(
+                            cipherModeEncrypt, cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)), .raw = true)))),
             "block incr pack");
     }
 

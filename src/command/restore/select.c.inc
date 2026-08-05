@@ -4,8 +4,7 @@ Get the backup set to restore
 typedef struct RestoreBackupData
 {
     unsigned int repoIdx;                                           // Internal repo index
-    CipherType repoCipherType;                                      // Repo encryption type (0 = none)
-    const String *backupCipherPass;                                 // Passphrase of backup files if repo is encrypted (else NULL)
+    const CipherInfo *cipherInfo;                                   // Cipher info of backup files if repo is encrypted (else NULL)
     const String *backupSet;                                        // Backup set to restore
 } RestoreBackupData;
 
@@ -26,8 +25,7 @@ restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, c
     {
         restoreBackup.backupSet = strDup(backupLabel);
         restoreBackup.repoIdx = repoIdx;
-        restoreBackup.repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
-        restoreBackup.backupCipherPass = strDup(backupCipherPass);
+        restoreBackup.cipherInfo = cfgCipherInfoSubIdx(repoIdx, backupCipherPass);
     }
     MEM_CONTEXT_PRIOR_END();
 
@@ -103,9 +101,7 @@ restoreBackupSet(void)
             // Attempt to load backup.info
             TRY_BEGIN()
             {
-                infoBackup = infoBackupLoadFile(
-                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                infoBackup = infoBackupLoadFile(storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherInfoIdx(repoIdx));
             }
             CATCH_ANY()
             {

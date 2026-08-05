@@ -167,9 +167,7 @@ backupInit(const InfoBackup *const infoBackup)
     // Get archive info
     if (cfgOptionBool(cfgOptArchiveCheck))
     {
-        result->archiveInfo = infoArchiveLoadFile(
-            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
+        result->archiveInfo = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherInfo());
         result->archiveId = infoArchiveId(result->archiveInfo);
     }
 
@@ -209,8 +207,7 @@ cmdBackup(void)
         storageRepo();
 
         // Load backup.info
-        InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType), cfgOptionStrNull(cfgOptRepoCipherPass));
+        InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherInfo());
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
         const String *const cipherPassBackup = infoPgCipherPass(infoBackupPg(infoBackup));
 

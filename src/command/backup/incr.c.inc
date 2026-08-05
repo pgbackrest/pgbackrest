@@ -46,7 +46,7 @@ backupBuildIncrPrior(const InfoBackup *const infoBackup)
             {
                 result = manifestLoadFile(
                     storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabelPrior)),
-                    cfgOptionStrId(cfgOptRepoCipherType), infoPgCipherPass(infoBackupPg(infoBackup)));
+                    cfgCipherInfoSub(infoPgCipherPass(infoBackupPg(infoBackup))));
                 const ManifestData *const manifestPriorData = manifestData(result);
 
                 LOG_INFO_FMT(

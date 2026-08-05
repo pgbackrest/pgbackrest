@@ -21,6 +21,7 @@ typedef enum
     backupTypeIncr = STRID5("incr", 0x90dc90),
 } BackupType;
 
+#include "common/crypto/info.h"
 #include "common/type/object.h"
 #include "common/type/string.h"
 #include "common/type/stringList.h"
@@ -173,16 +174,15 @@ infoBackupFree(InfoBackup *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // Load backup info
-FN_EXTERN InfoBackup *infoBackupLoadFile(
-    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+FN_EXTERN InfoBackup *infoBackupLoadFile(const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
 
 // Load backup info and update it by adding valid backups from the repo or removing backups no longer in the repo
 FN_EXTERN InfoBackup *infoBackupLoadFileReconstruct(
-    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+    const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
 
 // Save backup info
 FN_EXTERN void infoBackupSaveFile(
-    InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+    InfoBackup *infoBackup, const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
 
 /***********************************************************************************************************************************
 Macros for function logging

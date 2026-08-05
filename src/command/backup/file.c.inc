@@ -56,8 +56,8 @@ typedef struct BackupFileResult
 static List *
 backupFile(
     const String *const repoFile, const uint64_t bundleId, const bool bundleRaw, const unsigned int blockIncrReference,
-    const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherType cipherType,
-    const String *const cipherPass, const String *const pgVersionForce, const PgPageSize pageSize, const List *const fileList)
+    const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherInfo *const cipherInfo,
+    const String *const pgVersionForce, const PgPageSize pageSize, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
@@ -66,15 +66,14 @@ backupFile(
         FUNCTION_LOG_PARAM(UINT, blockIncrReference);               // Block incremental reference to use in map
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
-        FUNCTION_LOG_PARAM(STRING_ID, cipherType);                  // Encryption type
-        FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
+        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);                // Encryption info
         FUNCTION_LOG_PARAM(ENUM, pageSize);                         // Page size
         FUNCTION_LOG_PARAM(STRING, pgVersionForce);                 // Force pg version
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to backup
     FUNCTION_LOG_END();
 
     ASSERT(repoFile != NULL);
-    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+    ASSERT(cipherInfo != NULL);
     ASSERT(fileList != NULL && !lstEmpty(fileList));
     ASSERT(pgPageSizeValid(pageSize));
 
@@ -194,7 +193,7 @@ backupFile(
         }
 
         // Are the files compressible during the copy?
-        const bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
+        const bool compressible = repoFileCompressType == compressTypeNone && cipherInfoType(cipherInfo) == cipherTypeNone;
 
         // Copy files that need to be copied
         StorageWrite *write = NULL;
@@ -249,9 +248,9 @@ backupFile(
 
                     // Encrypt filter
                     IoFilter *const encrypt =
-                        cipherType != cipherTypeNone ?
+                        cipherInfoType(cipherInfo) != cipherTypeNone ?
                             cipherBlockNewP(
-                                cipherModeEncrypt, cipherType, BUFSTR(cipherPass), .raw = bundleRaw || file->blockIncrSize != 0) :
+                                cipherModeEncrypt, cipherInfo, .raw = bundleRaw || file->blockIncrSize != 0) :
                             NULL;
 
                     // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
@@ -267,11 +266,11 @@ backupFile(
                                 storageRepo(), file->blockIncrMapPriorFile, .offset = file->blockIncrMapPriorOffset,
                                 .limit = VARUINT64(file->blockIncrMapPriorSize));
 
-                            if (cipherType != cipherTypeNone)
+                            if (cipherInfoType(cipherInfo) != cipherTypeNone)
                             {
                                 ioFilterGroupAdd(
                                     ioReadFilterGroup(storageReadIo(blockMapRead)),
-                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+                                    cipherBlockNewP(cipherModeDecrypt, cipherInfo, .raw = true));
                             }
 
                             blockMap = storageGetP(blockMapRead);

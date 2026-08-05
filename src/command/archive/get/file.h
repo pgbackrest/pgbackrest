@@ -4,7 +4,7 @@ Archive Get File
 #ifndef COMMAND_ARCHIVE_GET_FILE_H
 #define COMMAND_ARCHIVE_GET_FILE_H
 
-#include "common/crypto/common.h"
+#include "common/crypto/info.h"
 #include "common/type/string.h"
 #include "storage/storage.h"
 
@@ -17,8 +17,7 @@ typedef struct ArchiveGetFile
     const String *file;                                             // File in the repo (with path, checksum, ext, etc.)
     unsigned int repoIdx;                                           // Repo idx
     const String *archiveId;                                        // Repo archive id
-    CipherType cipherType;                                          // Repo cipher type
-    const String *cipherPassArchive;                                // Repo archive cipher pass
+    const CipherInfo *cipherInfo;                                   // Repo archive cipher info
 } ArchiveGetFile;
 
 typedef struct ArchiveGetFileResult

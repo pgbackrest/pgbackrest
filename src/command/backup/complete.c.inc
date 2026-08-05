@@ -25,8 +25,7 @@ backupManifestSaveCopy(Manifest *const manifest, const String *const cipherPassB
                         STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestData(manifest)->backupLabel))));
 
             // Add encryption filter if required
-            cipherBlockFilterGroupAdd(
-                ioWriteFilterGroup(write), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, cipherPassBackup);
+            cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cfgCipherInfoSub(cipherPassBackup));
 
             // Save file
             manifestSave(manifest, write);
@@ -103,8 +102,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
                         // Decrypt with archive key if encrypted
                         cipherBlockFilterGroupAdd(
-                            filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt,
-                            infoArchiveCipherPass(backupData->archiveInfo));
+                            filterGroup, cipherModeDecrypt, cfgCipherInfoSub(infoArchiveCipherPass(backupData->archiveInfo)));
 
                         // Compress/decompress if archive and backup do not have the same compression settings
                         if (archiveCompressType != backupCompressType)
@@ -121,7 +119,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
                         // Encrypt with backup key if encrypted
                         cipherBlockFilterGroupAdd(
-                            filterGroup, cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt, manifestCipherSubPass(manifest));
+                            filterGroup, cipherModeEncrypt, cfgCipherInfoSub(manifestCipherSubPass(manifest)));
 
                         // Add size filter last to calculate repo size
                         ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -204,8 +202,8 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)));
 
         cipherBlockFilterGroupAdd(
-            ioReadFilterGroup(storageReadIo(manifestRead)), cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt,
-            infoPgCipherPass(infoBackupPg(infoBackup)));
+            ioReadFilterGroup(storageReadIo(manifestRead)), cipherModeDecrypt,
+            cfgCipherInfoSub(infoPgCipherPass(infoBackupPg(infoBackup))));
 
         StorageWrite *const manifestWrite = storageNewWriteP(
             storageRepoWrite(),
@@ -216,8 +214,8 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilterP(compressTypeGz, 9));
 
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cfgOptionStrId(cfgOptRepoCipherType), cipherModeEncrypt,
-            infoPgCipherPass(infoBackupPg(infoBackup)));
+            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherModeEncrypt,
+            cfgCipherInfoSub(infoPgCipherPass(infoBackupPg(infoBackup))));
 
         storageCopyP(manifestRead, manifestWrite);
 
@@ -233,19 +231,13 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         // Add manifest and save backup.info (infoBackupSaveFile() is responsible for proper syncing)
         // -------------------------------------------------------------------------------------------------------------------------
         infoBackupDataAdd(infoBackup, manifest);
-
-        infoBackupSaveFile(
-            infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
+        infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherInfo());
 
         // Save archive.info/copy so the timestamps will be updated to prevent lifecycle settings from removing the files early
         // -------------------------------------------------------------------------------------------------------------------------
         infoArchiveSaveFile(
-            infoArchiveLoadFile(
-                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
-                cfgOptionStrNull(cfgOptRepoCipherPass)),
-            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
+            infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherInfo()), storageRepoWrite(),
+            INFO_ARCHIVE_PATH_FILE_STR, cfgCipherInfo());
     }
     MEM_CONTEXT_TEMP_END();
 

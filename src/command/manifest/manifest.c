@@ -235,8 +235,7 @@ cmdManifestBlockDeltaRender(const Manifest *const manifest, const ManifestFile *
             {
                 ioFilterGroupAdd(
                     ioReadFilterGroup(storageReadIo(read)),
-                    cipherBlockNewP(
-                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(manifestCipherSubPass(manifest)), .raw = true));
+                    cipherBlockNewP(cipherModeDecrypt, cfgCipherInfoSub(manifestCipherSubPass(manifest)), .raw = true));
             }
 
             ioReadOpen(storageReadIo(read));
@@ -438,16 +437,12 @@ cmdManifestRender(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Load backup.info and cipher
-        const InfoBackup *const infoBackup = infoBackupLoadFile(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
-        const String *const cipherPass = infoPgCipherPass(infoBackupPg(infoBackup));
-        const CipherType cipherType = cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc;
+        const InfoBackup *const infoBackup = infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherInfo());
 
         // Load manifest
         const Manifest *const manifest = manifestLoadFile(
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(cfgOptionStr(cfgOptSet))),
-            cipherType, cipherPass);
+            cfgCipherInfoSub(infoPgCipherPass(infoBackupPg(infoBackup))));
 
         // Manifest info
         const ManifestData *const data = manifestData(manifest);

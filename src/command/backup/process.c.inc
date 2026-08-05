@@ -334,7 +334,7 @@ typedef struct BackupJobData
     const bool backupStandby;                                       // Backup from standby
     RegExp *standbyExp;                                             // Identify files that may be copied from the standby
     const CipherType cipherType;                                    // Cipher type
-    const String *const cipherSubPass;                              // Passphrase used to encrypt files in the backup
+    const CipherInfo *const cipherInfo;                             // Cipher info used to encrypt files in the backup
     const PgPageSize pageSize;                                      // Page size
     const CompressType compressType;                                // Backup compression type
     const int compressLevel;                                        // Compress level if backup is compressed
@@ -640,8 +640,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
 
                     pckWriteU32P(param, jobData->compressType);
                     pckWriteI32P(param, jobData->compressLevel);
-                    pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
-                    pckWriteStrP(param, jobData->cipherSubPass);
+                    cipherInfoPack(param, jobData->cipherInfo);
                     pckWriteU32P(param, jobData->pageSize);
                     pckWriteStrP(param, cfgOptionStrNull(cfgOptPgVersionForce));
                 }
@@ -755,7 +754,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
             .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
-            .cipherSubPass = manifestCipherSubPass(manifest),
+            .cipherInfo = cfgCipherInfoSub(manifestCipherSubPass(manifest)),
             .pageSize = backupData->pageSize,
             .delta = cfgOptionBool(cfgOptDelta),
             .bundle = cfgOptionBool(cfgOptRepoBundle),

@@ -7,6 +7,7 @@ sets the command and options and determines which options are valid for a comman
 #ifndef CONFIG_CONFIG_H
 #define CONFIG_CONFIG_H
 
+#include "common/crypto/info.h"
 #include "common/log.h"
 #include "common/type/stringId.h"
 #include "common/type/stringList.h"
@@ -237,6 +238,38 @@ FN_EXTERN bool cfgOptionValid(ConfigOption optionId);
 // Is the option valid for the command and also has a value?
 FN_EXTERN bool cfgOptionTest(ConfigOption optionId);
 FN_EXTERN bool cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx);
+
+// Free objects cached from the current configuration. This must be called whenever the configuration is reloaded since the cached
+// objects are built from options that the reload may change.
+FN_EXTERN void cfgLoadFree(void);
+
+/***********************************************************************************************************************************
+Cipher Functions
+
+!!!
+***********************************************************************************************************************************/
+// Get cipher info for main cipher type/passphrase
+FN_EXTERN const CipherInfo *cfgCipherInfoIdx(unsigned int repoIdx);
+
+FN_INLINE_ALWAYS const CipherInfo *
+cfgCipherInfo(void)
+{
+    return cfgCipherInfoIdx(cfgOptionIdxDefault(cfgOptRepoCipherType));
+}
+
+// Get cipher info for cipher type/subpassphrase
+FN_INLINE_ALWAYS CipherInfo *
+cfgCipherInfoSubIdx(const unsigned int repoIdx, const String *const cipherPassSub)
+{
+    return cipherInfoNewP(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), BUFSTR(cipherPassSub));
+}
+
+FN_INLINE_ALWAYS CipherInfo *
+cfgCipherInfoSub(const String *const cipherPassSub)
+{
+    return cipherInfoNewP(
+        cfgOptionIdxStrId(cfgOptRepoCipherType, cfgOptionIdxDefault(cfgOptRepoCipherType)), BUFSTR(cipherPassSub));
+}
 
 /***********************************************************************************************************************************
 Option Source Enum

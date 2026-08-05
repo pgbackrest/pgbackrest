@@ -1078,3 +1078,37 @@ cfgOptionInvalidate(const ConfigOption optionId)
 
     FUNCTION_TEST_RETURN_VOID();
 }
+
+/**********************************************************************************************************************************/
+FN_EXTERN const CipherInfo *
+cfgCipherInfoIdx(const unsigned int repoIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+    FUNCTION_TEST_END();
+
+    // Allocate a slot per repo. Each repo has its own cipher type and passphrase so cipher info cannot be shared between them.
+    if (configLocal->cipherInfo == NULL)
+    {
+        MEM_CONTEXT_BEGIN(configLocal->memContext)
+        {
+            configLocal->cipherInfo = memNewPtrArray(cfgOptionGroupIdxTotal(cfgOptGrpRepo));
+        }
+        MEM_CONTEXT_END();
+    }
+
+    // Get cipher info if it doesn't exist
+    if (configLocal->cipherInfo[repoIdx] == NULL)
+    {
+        MEM_CONTEXT_BEGIN(configLocal->memContext)
+        {
+            const CipherType cipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
+
+            configLocal->cipherInfo[repoIdx] = cipherInfoNewP(
+                cipherType, cipherType == cipherTypeNone ? NULL : BUFSTR(cfgOptionIdxStr(cfgOptRepoCipherPass, repoIdx)));
+        }
+        MEM_CONTEXT_END();
+    }
+
+    FUNCTION_TEST_RETURN_CONST(CIPHER_INFO, configLocal->cipherInfo[repoIdx]);
+}

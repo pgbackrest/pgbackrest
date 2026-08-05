@@ -217,8 +217,7 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
                         {
                             TRY_BEGIN()
                             {
-                                manifestResume = manifestLoadFile(
-                                    storageRepo(), manifestFile, cfgOptionStrId(cfgOptRepoCipherType), cipherPassBackup);
+                                manifestResume = manifestLoadFile(storageRepo(), manifestFile, cfgCipherInfoSub(cipherPassBackup));
                             }
                             CATCH_ANY()
                             {

@@ -109,6 +109,7 @@ src_pgbackrest = [
     'common/compress/zst/decompress.c',
     'common/crypto/cipherBlock.c',
     'common/crypto/common.c',
+    'common/crypto/info.c',
     'common/crypto/hash.c',
     'common/crypto/xxhash.c',
     'common/debug.c',

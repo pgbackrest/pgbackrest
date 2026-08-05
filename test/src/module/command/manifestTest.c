@@ -134,7 +134,7 @@ testRun(void)
             // Munge the pg_control checksum since it will vary by architecture
             Manifest *manifest = manifestLoadFile(
                 storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191002-070640F_20191003-105320D/" BACKUP_MANIFEST_FILE),
-                cipherTypeNone, NULL);
+                cipherInfoNewStore(cipherTypeNone, NULL));
 
             ManifestFile file = manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
             file.checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));

@@ -80,9 +80,7 @@ cmdStanzaCreate(void)
                 // Create and save archive info
                 infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherPassSub);
 
-                infoArchiveSaveFile(
-                    infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR,
-                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherInfoIdx(repoIdx));
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent backup files
                 cipherPassSub = cipherPassGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
@@ -90,18 +88,14 @@ cmdStanzaCreate(void)
                 // Create and save backup info
                 infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, pgControl.catalogVersion, cipherPassSub);
 
-                infoBackupSaveFile(
-                    infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR,
-                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                infoBackupSaveFile(infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherInfoIdx(repoIdx));
             }
             // Else if at least one archive and one backup info file exists, then ensure both are valid
             else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
             {
                 // Error if there is a mismatch between the archive and backup info files or the database version/system Id matches
                 // current database
-                checkStanzaInfoPg(
-                    storageRepoReadStanza, pgControl.version, pgControl.systemId,
-                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                checkStanzaInfoPg(storageRepoReadStanza, pgControl.version, pgControl.systemId, cfgCipherInfoIdx(repoIdx));
 
                 // The files are valid - upgrade
                 const String *sourceFile = NULL;

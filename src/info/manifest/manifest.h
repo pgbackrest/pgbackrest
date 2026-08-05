@@ -37,8 +37,8 @@ typedef struct Manifest Manifest;
 
 #include "command/backup/common.h"
 #include "common/compress/helper.h"
-#include "common/crypto/common.h"
 #include "common/crypto/hash.h"
+#include "common/crypto/info.h"
 #include "common/type/object.h"
 #include "common/type/variant.h"
 #include "info/info.h"
@@ -507,8 +507,7 @@ manifestFree(Manifest *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // Load backup manifest
-FN_EXTERN Manifest *manifestLoadFile(
-    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+FN_EXTERN Manifest *manifestLoadFile(const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
 
 /***********************************************************************************************************************************
 Macros for function logging

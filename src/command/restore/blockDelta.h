@@ -9,7 +9,7 @@ optional because the file to restore may not exist so all the blocks will need t
 
 #include "command/backup/blockMap.h"
 #include "common/compress/helper.h"
-#include "common/crypto/common.h"
+#include "common/crypto/info.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -37,8 +37,8 @@ typedef struct BlockDeltaWrite
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN BlockDelta *blockDeltaNew(
-    const BlockMap *blockMap, size_t blockSize, size_t checksumSize, const Buffer *blockChecksum, CipherType cipherType,
-    const String *cipherPass, const CompressType compressType);
+    const BlockMap *blockMap, size_t blockSize, size_t checksumSize, const Buffer *blockChecksum, const CipherInfo *cipherInfo,
+    const CompressType compressType);
 
 /***********************************************************************************************************************************
 Functions
