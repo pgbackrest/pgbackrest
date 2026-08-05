@@ -31,6 +31,10 @@ the prior block maps be read from the repo in one combined, in-order pass (see S
 each one separately, and it keeps files in the same relative order from backup to backup so the same read pattern benefits future
 backups and restore. Whole files sort by size so the smallest sit nearest the block incremental data and benefit from read over.
 The rationale for each ordering step is in the inline comments below.
+
+This is the counterpart to backupProcessQueueComparator(), which applies the same prior-backup locality across the processing queues
+before jobs are assembled. The two sort different structs (BackupFile vs ManifestFile) at different stages and cannot share code, so
+a change to one ordering rule should be checked against the other.
 ***********************************************************************************************************************************/
 static int
 backupFileComparator(const void *const item1, const void *const item2)

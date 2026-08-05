@@ -369,6 +369,9 @@ backupProcessFilePrimary(RegExp *const standbyExp, const String *const name)
 // longest copies start early and processes are less likely to stall at the end of the backup. Bundled files follow, ordered to
 // mirror the layout of the prior backups they reference so files keep the same relative order from one backup to the next. That
 // lets block incremental map reads (and reads of whole files in prior bundles) run in sequence rather than seeking back and forth.
+//
+// This is the counterpart to backupFileComparator(), which applies the same prior-backup locality within a bundle once the files
+// reach the remote process. See that comparator's header for the full rationale.
 static const Manifest *backupProcessQueueComparatorManifest = NULL;
 static bool backupProcessQueueComparatorBundle;
 static uint64_t backupProcessQueueComparatorBundleLimit;
