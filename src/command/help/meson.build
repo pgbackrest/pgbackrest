@@ -7,13 +7,13 @@ if not dist
         'help.auto.c.inc',
         output: 'help.auto.c.inc',
         depend_files: [
-            '../../build/config/config.yaml',
-            '../../build/help/help.xml',
+            '../../../build/config.yaml',
+            '../../../doc/xml/reference.xml',
         ],
         command: [
             build_code,
             'help',
-            '@CURRENT_SOURCE_DIR@/../../..',
+            '--repo-path=@CURRENT_SOURCE_DIR@/../../..',
         ],
     )
 else

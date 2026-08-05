@@ -163,8 +163,8 @@ add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/sr
 
 ####################################################################################################################################
 # Detect a distribution tarball, which is marked by the dist file written into the tarball root by meson dist. A distribution
-# tarball ships the generated files, so the code generation tooling (build-code, the doc and test tools, libyaml) is not built. A
-# normal source tree such as a git checkout has no marker and generates the files.
+# tarball ships the generated files, so the code generation tooling (build.py, the doc and test tools) is not used. A normal source
+# tree such as a git checkout has no marker and generates the files.
 ####################################################################################################################################
 dist = run_command(
     [
@@ -217,11 +217,6 @@ lib_pq = dependency('libpq')
 
 # Find required xml library
 lib_xml = dependency('libxml-2.0')
-
-# Find yaml library (only used by the code generation tooling, which is not built from a distribution tarball)
-if not dist
-    lib_yaml = dependency('yaml-0.1')
-endif
 
 # Find required gz library
 lib_z = dependency('zlib')
@@ -287,11 +282,8 @@ subdir('src')
 # out all subdirs, which excludes the smoke test from them.
 subdir('test')
 
-# The doc and test tools generate code and are not built from a distribution tarball
+# A distribution tarball ships the generated files, so it neither generates them nor bakes them in
 if not dist
-    subdir('doc/src')
-    subdir('test/src')
-
     # Bake the generated files and the dist marker into the tarball so it builds without the code generation tooling
-    meson.add_dist_script('src/build/dist.sh')
+    meson.add_dist_script('build/dist.sh')
 endif

@@ -37,10 +37,10 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // Create help data
-    const BldCfg bldCfg = bldCfgParse(storagePosixNewP(HRN_PATH_REPO_STR));
-    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(
-        bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg, false));
+    // Create help data by running the generator against the current declarations, since the help.auto.c.inc that the build
+    // compiles into the binary may not have been generated when this test runs
+    HRN_SYSTEM_FMT("%s/build/build.py help-data --repo-path=%s --build-path=" TEST_PATH, HRN_PATH_REPO, HRN_PATH_REPO);
+    const Buffer *const helpData = storageGetP(storageNewReadP(storagePosixNewP(TEST_PATH_STR), STRDEF("help.dat")));
 
     // Program name a version are used multiple times
     const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;

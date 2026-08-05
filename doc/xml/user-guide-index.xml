@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]}" subtitle="User Guides" toc="n">
     <description>List of available {[project]} user guides.</description>
 
     <!-- ======================================================================================================================= -->
     <section id="index">
-        <title>Available User Guides</title>
+        <title>User Guides</title>
 
         <list>
             <list-item><link url="user-guide.html">{[os-debian-title]}</link></list-item>

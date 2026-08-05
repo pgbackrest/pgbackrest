@@ -3,7 +3,6 @@ Host Harness
 ***********************************************************************************************************************************/
 #include <build.h>
 
-#include "build/common/exec.h"
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/error/retry.h"
@@ -11,6 +10,7 @@ Host Harness
 #include "common/type/json.h"
 #include "common/wait.h"
 #include "config/config.h"
+#include "harness/exec.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/azure/storage.intern.h"
@@ -157,7 +157,7 @@ hrnHostNew(const StringId id, const String *const container, const String *const
             lstAdd(hrnHostLocal.hostList, &this);
 
             // Remove prior container with same name if it exists
-            execOneExpectP(strNewFmt("docker rm -f %s", strZ(hrnHostContainer(this))));
+            hrnExecOneExpectP(strNewFmt("docker rm -f %s", strZ(hrnHostContainer(this))));
 
             // Run container
             String *const command = strCatFmt(
@@ -184,11 +184,11 @@ hrnHostNew(const StringId id, const String *const container, const String *const
                 strCatFmt(command, " %s", strZ(param.param));
 
             // Allow extra time since the image may need to be pulled on first use (some object store images are large)
-            execOneExpectP(command, .timeout = 600000);
+            hrnExecOneExpectP(command, .timeout = 600000);
 
             // Get IP address
             const String *const ip = strTrim(
-                execOneExpectP(
+                hrnExecOneExpectP(
                     strNewFmt(
                         "docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' %s",
                         strZ(hrnHostContainer(this)))));
@@ -254,7 +254,7 @@ hrnHostExec(HrnHost *const this, const String *const command, const HrnHostExecP
     {
         strCat(
             result,
-            execOneExpectP(
+            hrnExecOneExpectP(
                 command,
                 .shell = strNewFmt(
                     "docker exec -u %s %s sh -c", param.user == NULL ? strZ(hrnHostUser(this)) : strZ(param.user),
