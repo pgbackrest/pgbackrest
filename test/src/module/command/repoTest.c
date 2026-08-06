@@ -352,7 +352,8 @@ testRun(void)
             "1={\"db-id\":6846378200844646865,\"db-version\":\"12\"}\n"
             "\n"
             "[backrest]\n"
-            "backrest-checksum=\"85c2460341ddc2af8bdc0e07437965e3f1f64ea2\"\n");
+            "backrest-checksum=\"9d37594e0e77ff16024abd2224b75dfc0323c864\"\n"
+            "backrest-format=5\n");
 
         const Buffer *backupInfoFileBuffer = BUFSTRDEF(
             "[cipher]\n"
@@ -369,7 +370,8 @@ testRun(void)
             "1={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6846378200844646865,\"db-version\":\"12\"}\n"
             "\n"
             "[backrest]\n"
-            "backrest-checksum=\"089f3f0c862691ff083cd5db66d0cea3f5830b37\"\n");
+            "backrest-checksum=\"8e22e1574dbec45405c5ddca389e3ae6c6dd6e3c\"\n"
+            "backrest-format=5\n");
 
         const Buffer *manifestFileBuffer = BUFSTRDEF(
             "[cipher]\n"
