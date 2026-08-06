@@ -256,12 +256,6 @@ endif
 # Enable debug code
 if get_option('debug')
     configuration.set('DEBUG', true, description: 'Enable debug code')
-
-    # Enable Valgrind memcheck client requests when the header is available so allocators that retain freed memory for reuse keep
-    # use-after-free and uninitialized-read detection accurate under Valgrind. The requests are no-ops when not run under Valgrind.
-    if cc.has_header('valgrind/memcheck.h')
-        add_project_arguments('-DWITH_VALGRIND', language: 'c')
-    endif
 endif
 
 # Set configuration path

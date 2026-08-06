@@ -14,10 +14,19 @@ Memory Context Manager
 Valgrind memcheck client requests keep leak, use-after-free, and uninitialized-read detection accurate when large freed
 allocations are retained for reuse rather than returned to the allocator (see the free list below). Without Valgrind support they
 compile to nothing.
+
+The header is detected here rather than in meson so that only this file depends on whether it is installed. A project-wide define
+would change the compile command of every file and so invalidate the entire compile cache when a build that has the header meets
+one that does not.
 ***********************************************************************************************************************************/
-#ifdef WITH_VALGRIND
+#if defined(DEBUG) && defined(__has_include)
+#if __has_include(<valgrind/memcheck.h>)
 #include <valgrind/memcheck.h>
-#else
+#define WITH_VALGRIND
+#endif
+#endif
+
+#ifndef WITH_VALGRIND
 #define VALGRIND_MAKE_MEM_NOACCESS(addr, size)                      ((void)0)
 #define VALGRIND_MAKE_MEM_UNDEFINED(addr, size)                     ((void)0)
 #endif
