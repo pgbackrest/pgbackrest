@@ -36,6 +36,17 @@
 
                 <p>Reuse large freed allocations from a memory context free list.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2822"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Remove the <cmd>repo-put</cmd> command and the <setting>cipher-pass</setting> option.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
