@@ -239,10 +239,6 @@ FN_EXTERN bool cfgOptionValid(ConfigOption optionId);
 FN_EXTERN bool cfgOptionTest(ConfigOption optionId);
 FN_EXTERN bool cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx);
 
-// Free objects cached from the current configuration. This must be called whenever the configuration is reloaded since the cached
-// objects are built from options that the reload may change.
-FN_EXTERN void cfgLoadFree(void);
-
 /***********************************************************************************************************************************
 Cipher Functions
 
