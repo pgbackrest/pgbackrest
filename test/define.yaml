@@ -833,7 +833,7 @@ unit:
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: command/backup
-    total: 12
+    total: 13
     harness:
       - name: backup
         integration: false
@@ -842,6 +842,9 @@ unit:
             function:
               - backupProcess:
                   inc: process
+          - name: command/backup/protocol
+            function:
+              - backupFileComparator
       - name: blockIncr
         shim:
           - command/restore/blockDelta
