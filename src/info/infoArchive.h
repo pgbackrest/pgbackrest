@@ -29,10 +29,10 @@ STRING_DECLARE(INFO_ARCHIVE_PATH_FILE_COPY_STR);
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const Buffer *cipherPassSub);
+FN_EXTERN InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const CipherInfo *cipherInfoSub);
 
 // Create new object and load contents from IoRead
-FN_EXTERN InfoArchive *infoArchiveNewLoad(IoRead *read);
+FN_EXTERN InfoArchive *infoArchiveNewLoad(IoRead *read, const CipherInfo *cipherInfo);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -59,11 +59,11 @@ infoArchiveId(const InfoArchive *const this)
     return infoPgArchiveId(infoArchivePg(this), infoPgDataCurrentId(infoArchivePg(this)));
 }
 
-// Cipher passphrase
-FN_INLINE_ALWAYS const Buffer *
-infoArchiveCipherPass(const InfoArchive *const this)
+// Cipher info for dependent files
+FN_INLINE_ALWAYS const CipherInfo *
+infoArchiveCipherInfo(const InfoArchive *const this)
 {
-    return infoPgCipherPass(infoArchivePg(this));
+    return infoPgCipherInfo(infoArchivePg(this));
 }
 
 /***********************************************************************************************************************************

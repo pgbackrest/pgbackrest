@@ -156,7 +156,7 @@ testRun(void)
 
         // Create backup.info
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase), cipherInfoNewNone()), "get backup.info");
 
         // Load Parameters
         StringList *argList = strLstDup(argListAvoidWarn);
@@ -190,7 +190,7 @@ testRun(void)
     {
         // Create backup.info
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase), cipherInfoNewNone()), "get backup.info");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full not set - nothing expired");
@@ -251,7 +251,7 @@ testRun(void)
     {
         // Create backup.info
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase), cipherInfoNewNone()), "get backup.info");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-diff not set - nothing expired");
@@ -334,7 +334,7 @@ testRun(void)
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
             ",\"db-version\":\"9.4\"}");
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent), cipherInfoNewNone()), "get backup.info");
 
         // Load parameters
         argList = strLstDup(argListAvoidWarn);
@@ -430,7 +430,7 @@ testRun(void)
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
             ",\"db-version\":\"9.4\"}");
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent), cipherInfoNewNone()), "get backup.info");
 
         TEST_RESULT_VOID(removeExpiredBackup(infoBackup, NULL, 0), "remove backups - backup.info current empty");
 
@@ -539,7 +539,7 @@ testRun(void)
             ",\"db-version\":\"9.4\"}");
 
         InfoBackup *infoBackup = NULL;
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent)), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoContent), cipherInfoNewNone()), "get backup.info");
 
         TEST_RESULT_VOID(removeExpiredArchive(infoBackup, false, 0), "archive retention not set");
         TEST_RESULT_LOG(
@@ -2539,7 +2539,7 @@ testRun(void)
                         "\n"
                         "[db:history]\n"
                         "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
-                        ",\"db-version\":\"9.4\"}"))),
+                        ",\"db-version\":\"9.4\"}")), cipherInfoNewNone()),
             "empty backup.info");
 
         TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (40 * SEC_PER_DAY)), 0), 0, "no backups to expire");
@@ -2578,7 +2578,7 @@ testRun(void)
         // Set the log level to detail so archive expiration messages are seen
         harnessLogLevelSet(logLevelDetail);
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase)), "get backup.info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(backupInfoBase), cipherInfoNewNone()), "get backup.info");
         TEST_RESULT_VOID(cmdExpire(), "repo-retention-full not set for time-based");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo1-retention-full' is not set for 'repo1-retention-full-type=time', the repository may run out"

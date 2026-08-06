@@ -1829,10 +1829,6 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(cipherInfoPass(cipherInfo)), "xxx-cipher", "repo1 cipher info pass");
         TEST_RESULT_PTR(cfgCipherInfoIdx(0), cipherInfo, "repo1 cipher info is cached");
 
-        // Sub cipher info is built per call since the sub pass varies by file
-        TEST_RESULT_UINT(
-            cipherInfoType(cfgCipherInfoSub(BUFSTRDEF("sub-pass"))), cipherTypeAes256Cbc, "repo1 sub cipher info type");
-
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
@@ -1856,7 +1852,6 @@ testRun(void)
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/global/stanza", "default pg-path");
         TEST_RESULT_UINT(cipherInfoType(cfgCipherInfoIdx(0)), cipherTypeNone, "no cipher info when repo is not encrypted");
-        TEST_RESULT_UINT(cipherInfoType(cfgCipherInfoSub(NULL)), cipherTypeNone, "no sub cipher info when repo is not encrypted");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warnings for environment variables, command-line and config file options");

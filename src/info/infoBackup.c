@@ -66,13 +66,14 @@ infoBackupNewInternal(void)
 /**********************************************************************************************************************************/
 FN_EXTERN InfoBackup *
 infoBackupNew(
-    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion, const Buffer *const cipherPassSub)
+    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion,
+    const CipherInfo *const cipherInfoSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
-        FUNCTION_LOG_PARAM(BUFFER, cipherPassSub);                  // Contents are not logged
+        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfoSub);
     FUNCTION_LOG_END();
 
     ASSERT(pgVersion > 0 && pgSystemId > 0 && pgCatalogVersion > 0);
@@ -84,7 +85,7 @@ infoBackupNew(
         this = infoBackupNewInternal();
 
         // Initialize the pg data
-        this->pub.infoPg = infoPgNew(infoPgBackup, cipherPassSub);
+        this->pub.infoPg = infoPgNew(infoPgBackup, cipherInfoSub);
         infoBackupPgSet(this, pgVersion, pgSystemId, pgCatalogVersion);
     }
     OBJ_NEW_END();
@@ -233,10 +234,11 @@ infoBackupLoadCallback(void *const data, const String *const section, const Stri
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoBackup *
-infoBackupNewLoad(IoRead *const read)
+infoBackupNewLoad(IoRead *const read, const CipherInfo *const cipherInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
+        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
     FUNCTION_LOG_END();
 
     ASSERT(read != NULL);
@@ -246,7 +248,7 @@ infoBackupNewLoad(IoRead *const read)
     OBJ_NEW_BASE_BEGIN(InfoBackup, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoBackupNewInternal();
-        this->pub.infoPg = infoPgNewLoad(read, infoPgBackup, infoBackupLoadCallback, this);
+        this->pub.infoPg = infoPgNewLoad(read, infoPgBackup, cipherInfo, infoBackupLoadCallback, this);
         this->pub.updated = false;
     }
     OBJ_NEW_END();
@@ -701,7 +703,7 @@ infoBackupLoadFileCallback(void *const data, const unsigned int try)
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
-                loadData->infoBackup = infoBackupNewLoad(read);
+                loadData->infoBackup = infoBackupNewLoad(read, loadData->cipherInfo);
                 result = true;
             }
             MEM_CONTEXT_END();
@@ -832,7 +834,7 @@ infoBackupLoadFileReconstruct(
                     bool found = false;
                     const Manifest *const manifest = manifestLoadFile(
                         storage, manifestFileName,
-                        cipherInfoNewP(cipherInfoType(cipherInfo), infoPgCipherPass(infoBackupPg(infoBackup))));
+                        infoBackupCipherInfo(infoBackup));
                     const ManifestData *const manData = manifestData(manifest);
 
                     // If the pg data for the manifest exists in the history, then add it to current, but if something doesn't match

@@ -1508,7 +1508,7 @@ infoUpdateStanza(
                     {
                         stanzaRepo->repoList[repoIdx].manifest = manifestLoadFile(
                             storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
-                            cfgCipherInfoSubIdx(repoIdx, infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo))));
+                            infoBackupCipherInfo(stanzaRepo->repoList[repoIdx].backupInfo));
                     }
                 }
             }

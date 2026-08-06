@@ -235,7 +235,7 @@ testRun(void)
     // Build/load/save a larger manifest to test performance and memory usage. The default sizing is for a "typical" large cluster
     // but this can be scaled to test larger cluster sizes.
     // *****************************************************************************************************************************
-    if (testBegin("manifestNewBuild()/manifestNewLoad()/manifestSave()"))
+    if (testBegin("manifestNewBuild()/manifestNewLoad(, cipherInfoNewNone())/manifestSave()"))
     {
         ASSERT(TEST_SCALE <= 1000000);
 
@@ -302,7 +302,7 @@ testRun(void)
 
         MEM_CONTEXT_BEGIN(testContext)
         {
-            manifest = manifestNewLoad(ioBufferReadNew(contentSave));
+            manifest = manifestNewLoad(ioBufferReadNew(contentSave), cipherInfoNewNone());
         }
         MEM_CONTEXT_END();
 

@@ -770,12 +770,12 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
 Process the backup manifest
 ***********************************************************************************************************************************/
 static void
-backupProcess(const BackupData *const backupData, Manifest *const manifest, const Buffer *const cipherPassBackup)
+backupProcess(const BackupData *const backupData, Manifest *const manifest, const CipherInfo *const cipherInfoBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(BUFFER, cipherPassBackup);               // Contents are not logged
+        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfoBackup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -799,7 +799,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
             .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
-            .cipherInfo = cfgCipherInfoSub(manifestCipherSubPass(manifest)),
+            .cipherInfo = manifestCipherInfoSub(manifest),
             .pageSize = backupData->pageSize,
             .delta = cfgOptionBool(cfgOptDelta),
             .bundle = cfgOptionBool(cfgOptRepoBundle),
@@ -928,7 +928,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
                 // Save the manifest periodically to preserve checksums for resume
                 if (sizeProgress - manifestSaveLast >= manifestSaveSize)
                 {
-                    backupManifestSaveCopy(manifest, cipherPassBackup, false);
+                    backupManifestSaveCopy(manifest, cipherInfoBackup, false);
                     manifestSaveLast = sizeProgress;
                 }
 

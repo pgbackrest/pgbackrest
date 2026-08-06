@@ -172,7 +172,7 @@ verifyFileLoad(const String *const pathFileName, const CipherInfo *const cipherI
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, pathFileName);                  // Fully qualified path/file name
-        FUNCTION_TEST_PARAM(CIPHER_INFO, cipherInfo);               // Cipher info to open file if encrypted
+        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);                // Cipher info to open file if encrypted
     FUNCTION_TEST_END();
 
     ASSERT(pathFileName != NULL);
@@ -221,11 +221,11 @@ verifyInfoFile(const String *const pathFileName, const bool keepFile, const Ciph
             if (keepFile)
             {
                 if (strBeginsWith(pathFileName, INFO_BACKUP_PATH_FILE_STR))
-                    result.backup = infoBackupMove(infoBackupNewLoad(infoRead), memContextPrior());
+                    result.backup = infoBackupMove(infoBackupNewLoad(infoRead, cipherInfo), memContextPrior());
                 else if (strBeginsWith(pathFileName, INFO_ARCHIVE_PATH_FILE_STR))
-                    result.archive = infoArchiveMove(infoArchiveNewLoad(infoRead), memContextPrior());
+                    result.archive = infoArchiveMove(infoArchiveNewLoad(infoRead, cipherInfo), memContextPrior());
                 else
-                    result.manifest = manifestMove(manifestNewLoad(infoRead), memContextPrior());
+                    result.manifest = manifestMove(manifestNewLoad(infoRead, cipherInfo), memContextPrior());
             }
             else
                 ioReadDrain(infoRead);
@@ -986,9 +986,8 @@ verifyBackup(VerifyJobData *const jobData)
                     // Initialize the jobData
                     MEM_CONTEXT_BEGIN(jobData->memContext)
                     {
-                        // Get the cipher subpass used to decrypt files in the backup and initialize the file list index
-                        // The sub pass is encrypted the same way the manifest that holds it is
-                        jobData->backupCipherInfo = cfgCipherInfoSub(manifestCipherSubPass(jobData->manifest));
+                        // Get the cipher info used to decrypt files in the backup and initialize the file list index
+                        jobData->backupCipherInfo = manifestCipherInfoSub(jobData->manifest);
                         jobData->manifestFileIdx = 0;
                     }
                     MEM_CONTEXT_END();
@@ -1633,8 +1632,8 @@ verifyProcess(const bool verboseText)
                 .walPathList = NULL,
                 .walFileList = strLstNew(),
                 .pgHistory = infoArchivePg(archiveInfo),
-                .manifestCipherInfo = cfgCipherInfoSub(infoPgCipherPass(infoBackupPg(backupInfo))),
-                .walCipherInfo = cfgCipherInfoSub(infoPgCipherPass(infoArchivePg(archiveInfo))),
+                .manifestCipherInfo = infoBackupCipherInfo(backupInfo),
+                .walCipherInfo = infoArchiveCipherInfo(archiveInfo),
                 .archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator = archiveIdComparator),
                 .backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr),
             };

@@ -1043,7 +1043,7 @@ manifestLoadFileCallback(void *const data, const unsigned int try)
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
-                loadData->manifest = manifestNewLoad(read);
+                loadData->manifest = manifestNewLoad(read, loadData->cipherInfo);
                 result = true;
             }
             MEM_CONTEXT_END();

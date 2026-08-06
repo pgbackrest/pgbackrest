@@ -3,11 +3,11 @@ Save a copy of the backup manifest during processing to preserve checksums for a
 resume is disabled since an incremental copy will not be used in a future backup unless resume is enabled beforehand.
 ***********************************************************************************************************************************/
 static void
-backupManifestSaveCopy(Manifest *const manifest, const Buffer *const cipherPassBackup, const bool final)
+backupManifestSaveCopy(Manifest *const manifest, const CipherInfo *const cipherInfoBackup, const bool final)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(BUFFER, cipherPassBackup);               // Contents are not logged
+        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfoBackup);
         FUNCTION_LOG_PARAM(BOOL, final);
     FUNCTION_LOG_END();
 
@@ -25,7 +25,7 @@ backupManifestSaveCopy(Manifest *const manifest, const Buffer *const cipherPassB
                         STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestData(manifest)->backupLabel))));
 
             // Add encryption filter if required
-            cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cfgCipherInfoSub(cipherPassBackup));
+            cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherInfoBackup);
 
             // Save file
             manifestSave(manifest, write);
@@ -40,12 +40,12 @@ backupManifestSaveCopy(Manifest *const manifest, const Buffer *const cipherPassB
 Check and copy WAL segments required to make the backup consistent
 ***********************************************************************************************************************************/
 static void
-backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manifest, const Buffer *const cipherPassBackup)
+backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manifest, const CipherInfo *const cipherInfoBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(BUFFER, cipherPassBackup);               // Contents are not logged
+        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfoBackup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -66,7 +66,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                 strZ(pgLsnToWalSegment(backupData->timeline, lsnStop, backupData->walSegmentSize)));
 
             // Save the backup manifest before getting archive logs in case of failure
-            backupManifestSaveCopy(manifest, cipherPassBackup, false);
+            backupManifestSaveCopy(manifest, cipherInfoBackup, false);
 
             // Use base path to set ownership and mode
             const ManifestPath *const basePath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);
@@ -102,7 +102,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
                         // Decrypt with archive key if encrypted
                         cipherBlockFilterGroupAdd(
-                            filterGroup, cipherModeDecrypt, cfgCipherInfoSub(infoArchiveCipherPass(backupData->archiveInfo)));
+                            filterGroup, cipherModeDecrypt, infoArchiveCipherInfo(backupData->archiveInfo));
 
                         // Compress/decompress if archive and backup do not have the same compression settings
                         if (archiveCompressType != backupCompressType)
@@ -119,7 +119,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
                         // Encrypt with backup key if encrypted
                         cipherBlockFilterGroupAdd(
-                            filterGroup, cipherModeEncrypt, cfgCipherInfoSub(manifestCipherSubPass(manifest)));
+                            filterGroup, cipherModeEncrypt, manifestCipherInfoSub(manifest));
 
                         // Add size filter last to calculate repo size
                         ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -186,7 +186,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         // -------------------------------------------------------------------------------------------------------------------------
         manifestValidate(manifest, true);
 
-        backupManifestSaveCopy(manifest, infoPgCipherPass(infoBackupPg(infoBackup)), true);
+        backupManifestSaveCopy(manifest, infoBackupCipherInfo(infoBackup), true);
 
         storageCopy(
             storageNewReadP(
@@ -203,7 +203,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         cipherBlockFilterGroupAdd(
             ioReadFilterGroup(storageReadIo(manifestRead)), cipherModeDecrypt,
-            cfgCipherInfoSub(infoPgCipherPass(infoBackupPg(infoBackup))));
+            infoBackupCipherInfo(infoBackup));
 
         StorageWrite *const manifestWrite = storageNewWriteP(
             storageRepoWrite(),
@@ -215,7 +215,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherModeEncrypt,
-            cfgCipherInfoSub(infoPgCipherPass(infoBackupPg(infoBackup))));
+            infoBackupCipherInfo(infoBackup));
 
         storageCopyP(manifestRead, manifestWrite);
 

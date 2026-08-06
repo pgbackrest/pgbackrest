@@ -231,11 +231,11 @@ cmdManifestBlockDeltaRender(const Manifest *const manifest, const ManifestFile *
                 .offset = file->bundleOffset + file->sizeRepo - file->blockIncrMapSize,
                 .limit = VARUINT64(file->blockIncrMapSize));
 
-            if (manifestCipherSubPass(manifest) != NULL)
+            if (cipherInfoType(manifestCipherInfoSub(manifest)) != cipherTypeNone)
             {
                 ioFilterGroupAdd(
                     ioReadFilterGroup(storageReadIo(read)),
-                    cipherBlockNewP(cipherModeDecrypt, cfgCipherInfoSub(manifestCipherSubPass(manifest)), .raw = true));
+                    cipherBlockNewP(cipherModeDecrypt, manifestCipherInfoSub(manifest), .raw = true));
             }
 
             ioReadOpen(storageReadIo(read));
@@ -442,7 +442,7 @@ cmdManifestRender(void)
         // Load manifest
         const Manifest *const manifest = manifestLoadFile(
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(cfgOptionStr(cfgOptSet))),
-            cfgCipherInfoSub(infoPgCipherPass(infoBackupPg(infoBackup))));
+            infoBackupCipherInfo(infoBackup));
 
         // Manifest info
         const ManifestData *const data = manifestData(manifest);

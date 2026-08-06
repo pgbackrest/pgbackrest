@@ -75,18 +75,18 @@ cmdStanzaCreate(void)
                 }
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent archive files
-                const Buffer *cipherPassSub = cipherPassGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
+                const CipherInfo *cipherInfoSub = cipherInfoGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save archive info
-                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherPassSub);
+                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherInfoSub);
 
                 infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherInfoIdx(repoIdx));
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent backup files
-                cipherPassSub = cipherPassGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
+                cipherInfoSub = cipherInfoGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save backup info
-                infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, pgControl.catalogVersion, cipherPassSub);
+                infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, pgControl.catalogVersion, cipherInfoSub);
 
                 infoBackupSaveFile(infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherInfoIdx(repoIdx));
             }

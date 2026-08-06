@@ -15,7 +15,7 @@ typedef struct RestoreBackupData
 
 // Helper function for restoreBackupSet
 static RestoreBackupData
-restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, const Buffer *const backupCipherPass)
+restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, const CipherInfo *const backupCipherInfo)
 {
     ASSERT(backupLabel != NULL);
 
@@ -25,7 +25,7 @@ restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, c
     {
         restoreBackup.backupSet = strDup(backupLabel);
         restoreBackup.repoIdx = repoIdx;
-        restoreBackup.cipherInfo = cfgCipherInfoSubIdx(repoIdx, backupCipherPass);
+        restoreBackup.cipherInfo = cipherInfoDup(backupCipherInfo);
     }
     MEM_CONTEXT_PRIOR_END();
 
@@ -156,7 +156,7 @@ restoreBackupSet(void)
                         {
                             found = true;
 
-                            result = restoreBackupData(backupData.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
+                            result = restoreBackupData(backupData.backupLabel, repoIdx, infoBackupCipherInfo(infoBackup));
                             break;
                         }
                     }
@@ -183,7 +183,7 @@ restoreBackupSet(void)
                             strZ(latestBackup.backupLabel));
                     }
 
-                    result = restoreBackupData(latestBackup.backupLabel, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
+                    result = restoreBackupData(latestBackup.backupLabel, repoIdx, infoBackupCipherInfo(infoBackup));
                     break;
                 }
             }
@@ -194,7 +194,7 @@ restoreBackupSet(void)
                 {
                     if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, backupSetRequested))
                     {
-                        result = restoreBackupData(backupSetRequested, repoIdx, infoPgCipherPass(infoBackupPg(infoBackup)));
+                        result = restoreBackupData(backupSetRequested, repoIdx, infoBackupCipherInfo(infoBackup));
                         break;
                     }
                 }

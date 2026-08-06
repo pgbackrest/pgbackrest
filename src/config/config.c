@@ -1112,14 +1112,3 @@ cfgCipherInfoIdx(const unsigned int repoIdx)
 
     FUNCTION_TEST_RETURN_CONST(CIPHER_INFO, configLocal->cipherInfo[repoIdx]);
 }
-
-CipherInfo *
-cfgCipherInfoSubIdx(const unsigned int repoIdx, const Buffer *const cipherPassSub)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, repoIdx);
-        FUNCTION_TEST_PARAM(BUFFER, cipherPassSub);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(CIPHER_INFO, cipherInfoNewP(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cipherPassSub));
-}

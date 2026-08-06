@@ -57,12 +57,12 @@ infoArchiveNewInternal(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoArchive *
-infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const Buffer *const cipherPassSub)
+infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const CipherInfo *const cipherInfoSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(BUFFER, cipherPassSub);                  // Contents are not logged
+        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfoSub);
     FUNCTION_LOG_END();
 
     ASSERT(pgVersion > 0 && pgSystemId > 0);
@@ -74,7 +74,7 @@ infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const Bu
         this = infoArchiveNewInternal();
 
         // Initialize the pg data
-        this->pub.infoPg = infoPgNew(infoPgArchive, cipherPassSub);
+        this->pub.infoPg = infoPgNew(infoPgArchive, cipherInfoSub);
         infoArchivePgSet(this, pgVersion, pgSystemId);
     }
     OBJ_NEW_END();
@@ -84,10 +84,11 @@ infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const Bu
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoArchive *
-infoArchiveNewLoad(IoRead *const read)
+infoArchiveNewLoad(IoRead *const read, const CipherInfo *const cipherInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
+        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
     FUNCTION_LOG_END();
 
     ASSERT(read != NULL);
@@ -97,7 +98,7 @@ infoArchiveNewLoad(IoRead *const read)
     OBJ_NEW_BASE_BEGIN(InfoArchive, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoArchiveNewInternal();
-        this->pub.infoPg = infoPgNewLoad(read, infoPgArchive, NULL, NULL);
+        this->pub.infoPg = infoPgNewLoad(read, infoPgArchive, cipherInfo, NULL, NULL);
     }
     OBJ_NEW_END();
 
@@ -238,7 +239,7 @@ infoArchiveLoadFileCallback(void *const data, const unsigned int try)
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
-                loadData->infoArchive = infoArchiveNewLoad(read);
+                loadData->infoArchive = infoArchiveNewLoad(read, loadData->cipherInfo);
                 result = true;
             }
             MEM_CONTEXT_END();

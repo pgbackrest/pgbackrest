@@ -238,7 +238,8 @@ testRun(void)
 
         InfoPg *infoPg = NULL;
         TEST_ASSIGN(
-            infoPg, infoArchivePg(infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_ARCHIVE_INFO_BASE)))),
+            infoPg,
+            infoArchivePg(infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_ARCHIVE_INFO_BASE)), cipherInfoNewNone())),
             "infoPg from archive.info");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -491,7 +492,8 @@ testRun(void)
         // Create backup.info
         InfoBackup *backupInfo = NULL;
         TEST_ASSIGN(
-            backupInfo, infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_BACKUP_INFO_MULTI_HISTORY_BASE))),
+            backupInfo,
+            infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_BACKUP_INFO_MULTI_HISTORY_BASE)), cipherInfoNewNone()),
             "backup.info multi-history");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -510,7 +512,7 @@ testRun(void)
                         "db-version=\"11\"\n"
                         "\n"
                         "[db:history]\n"
-                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}")), cipherInfoNewNone()),
             "archive.info missing history");
 
         TEST_ERROR(
@@ -532,7 +534,7 @@ testRun(void)
                         "\n"
                         "[db:history]\n"
                         "1={\"db-id\":6625592122879095777,\"db-version\":\"9.6\"}\n"
-                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}")), cipherInfoNewNone()),
             "archive.info history system id mismatch");
 
         TEST_ERROR(
@@ -554,7 +556,7 @@ testRun(void)
                         "\n"
                         "[db:history]\n"
                         "1={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"18\"}\n"
-                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}")), cipherInfoNewNone()),
             "archive.info history version mismatch");
 
         TEST_ERROR(
@@ -576,7 +578,7 @@ testRun(void)
                         "\n"
                         "[db:history]\n"
                         "3={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"10\"}\n"
-                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}")), cipherInfoNewNone()),
             "archive.info history id mismatch");
 
         TEST_ERROR(
@@ -593,10 +595,12 @@ testRun(void)
         InfoBackup *backupInfo = NULL;
         InfoArchive *archiveInfo = NULL;
         TEST_ASSIGN(
-            backupInfo, infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_BACKUP_INFO_MULTI_HISTORY_BASE))),
+            backupInfo,
+            infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_BACKUP_INFO_MULTI_HISTORY_BASE)), cipherInfoNewNone()),
             "backup.info multi-history");
         TEST_ASSIGN(
-            archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE))),
+            archiveInfo,
+            infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE)), cipherInfoNewNone()),
             "archive.info multi-history");
         InfoPg *pgHistory = infoArchivePg(archiveInfo);
 

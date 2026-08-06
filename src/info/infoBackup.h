@@ -78,10 +78,10 @@ typedef struct InfoBackupData
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN InfoBackup *infoBackupNew(
-    unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const Buffer *cipherPassSub);
+    unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const CipherInfo *cipherInfoSub);
 
 // Create new object and load contents from IoRead
-FN_EXTERN InfoBackup *infoBackupNewLoad(IoRead *read);
+FN_EXTERN InfoBackup *infoBackupNewLoad(IoRead *read, const CipherInfo *cipherInfo);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -103,11 +103,11 @@ infoBackupPg(const InfoBackup *const this)
 
 FN_EXTERN InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
 
-// Cipher passphrase
-FN_INLINE_ALWAYS const Buffer *
-infoBackupCipherPass(const InfoBackup *const this)
+// Cipher info for dependent files
+FN_INLINE_ALWAYS const CipherInfo *
+infoBackupCipherInfo(const InfoBackup *const this)
 {
-    return infoPgCipherPass(infoBackupPg(this));
+    return infoPgCipherInfo(infoBackupPg(this));
 }
 
 // Return a structure of the backup data from a specific index

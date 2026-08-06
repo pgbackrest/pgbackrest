@@ -246,7 +246,9 @@ FN_EXTERN void cfgLoadFree(void);
 /***********************************************************************************************************************************
 Cipher Functions
 
-!!!
+Cipher info for a repository, built from the cipher options and cached per repo since the options cannot change while a command
+runs. This is the top of the chain. The info files are read with it and each of those carries the cipher info for the files that
+depend on it, so nothing further down needs to consult the options again.
 ***********************************************************************************************************************************/
 // Get cipher info for main cipher type/passphrase
 FN_EXTERN const CipherInfo *cfgCipherInfoIdx(unsigned int repoIdx);
@@ -255,15 +257,6 @@ FN_INLINE_ALWAYS const CipherInfo *
 cfgCipherInfo(void)
 {
     return cfgCipherInfoIdx(cfgOptionIdxDefault(cfgOptRepoCipherType));
-}
-
-// Get cipher info for cipher type/subpassphrase
-CipherInfo *cfgCipherInfoSubIdx(unsigned int repoIdx, const Buffer *cipherPassSub);
-
-FN_INLINE_ALWAYS CipherInfo *
-cfgCipherInfoSub(const Buffer *const cipherPassSub)
-{
-    return cfgCipherInfoSubIdx(cfgOptionIdxDefault(cfgOptRepoCipherType), cipherPassSub);
 }
 
 /***********************************************************************************************************************************

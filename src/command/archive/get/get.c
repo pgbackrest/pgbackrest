@@ -417,7 +417,7 @@ archiveGetCheck(const StringList *const archiveRequestList)
                 // Build cipher info in the result list context once rather than rebuilding it per candidate file later
                 MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
                 {
-                    cacheRepo.cipherInfo = cfgCipherInfoSubIdx(repoIdx, infoArchiveCipherPass(info));
+                    cacheRepo.cipherInfo = cipherInfoDup(infoArchiveCipherInfo(info));
                 }
                 MEM_CONTEXT_END();
 

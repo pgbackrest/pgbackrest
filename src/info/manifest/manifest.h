@@ -218,7 +218,7 @@ FN_EXTERN Manifest *manifestNewBuild(
     const Pack *tablespaceList);
 
 // Load a manifest from IO
-FN_EXTERN Manifest *manifestNewLoad(IoRead *read);
+FN_EXTERN Manifest *manifestNewLoad(IoRead *read, const CipherInfo *cipherInfo);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -236,17 +236,17 @@ typedef struct ManifestPub
     StringList *referenceList;                                      // List of file references
 } ManifestPub;
 
-// Get/set the cipher subpassphrase
-FN_INLINE_ALWAYS const Buffer *
-manifestCipherSubPass(const Manifest *const this)
+// Get cipher info for the files this manifest describes, set the pass they are encrypted with
+FN_INLINE_ALWAYS const CipherInfo *
+manifestCipherInfoSub(const Manifest *const this)
 {
-    return infoCipherPass(THIS_PUB(Manifest)->info);
+    return infoCipherInfo(THIS_PUB(Manifest)->info);
 }
 
 FN_INLINE_ALWAYS void
-manifestCipherSubPassSet(Manifest *const this, const Buffer *const cipherSubPass)
+manifestCipherInfoSubSet(Manifest *const this, const CipherInfo *const cipherInfoSub)
 {
-    infoCipherPassSet(THIS_PUB(Manifest)->info, cipherSubPass);
+    infoCipherInfoSet(THIS_PUB(Manifest)->info, cipherInfoSub);
 }
 
 // Get manifest configuration and options

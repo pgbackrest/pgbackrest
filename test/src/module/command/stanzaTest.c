@@ -136,7 +136,7 @@ testRun(void)
             infoArchiveLoadFile(
                 storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
             "load archive info from encrypted repo2");
-        TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "cipher sub set");
+        TEST_RESULT_UINT(cipherInfoType(infoArchiveCipherInfo(infoArchive)), cipherTypeAes256Cbc, "cipher sub set");
 
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(
@@ -144,10 +144,10 @@ testRun(void)
             infoBackupLoadFile(
                 storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
             "load backup info from encrypted repo2");
-        TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "cipher sub set");
+        TEST_RESULT_UINT(cipherInfoType(infoBackupCipherInfo(infoBackup)), cipherTypeAes256Cbc, "cipher sub set");
 
         TEST_RESULT_BOOL(
-            bufEq(infoArchiveCipherPass(infoArchive), infoBackupCipherPass(infoBackup)), false,
+            bufEq(cipherInfoPass(infoArchiveCipherInfo(infoArchive)), cipherInfoPass(infoBackupCipherInfo(infoBackup))), false,
             "cipher sub different for archive and backup");
 
         // Confirm non-encrypted repo created successfully
@@ -155,12 +155,16 @@ testRun(void)
             infoArchive,
             infoArchiveLoadFile(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cipherInfoNewNone()),
             "load archive info from repo3");
-        TEST_RESULT_PTR(infoArchiveCipherPass(infoArchive), NULL, "archive cipher sub not set on non-encrypted repo");
+        TEST_RESULT_UINT(
+            cipherInfoType(infoArchiveCipherInfo(infoArchive)), cipherTypeNone,
+            "archive cipher sub not set on non-encrypted repo");
 
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFile(storageRepoIdx(2), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "load backup info from repo3");
-        TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "backup cipher sub not set on non-encrypted repo");
+        TEST_RESULT_UINT(
+            cipherInfoType(infoBackupCipherInfo(infoBackup)), cipherTypeNone,
+            "backup cipher sub not set on non-encrypted repo");
 
         // Confirm other repo encrypted with different password
         TEST_ASSIGN(
@@ -168,14 +172,14 @@ testRun(void)
             infoArchiveLoadFile(
                 storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load archive info from encrypted repo4");
-        TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "cipher sub set");
+        TEST_RESULT_UINT(cipherInfoType(infoArchiveCipherInfo(infoArchive)), cipherTypeAes256Cbc, "cipher sub set");
 
         TEST_ASSIGN(
             infoBackup,
             infoBackupLoadFile(
                 storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load backup info from encrypted repo4");
-        TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "cipher sub set");
+        TEST_RESULT_UINT(cipherInfoType(infoBackupCipherInfo(infoBackup)), cipherTypeAes256Cbc, "cipher sub set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cmdStanzaCreate missing files - multi-repo and encryption");
