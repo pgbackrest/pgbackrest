@@ -1475,7 +1475,9 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(contentLoad)), "load manifest");
+            TEST_ASSIGN(
+                manifest, manifestNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
+                "load manifest");
             TEST_RESULT_VOID(manifestMove(manifest, memContextPrior()), "move manifest");
         }
         MEM_CONTEXT_TEMP_END();
@@ -1487,7 +1489,7 @@ testRun(void)
             manifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
         TEST_RESULT_STR_Z(manifestData(manifest)->backupLabel, "20190808-163540F", "check manifest data");
 
-        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "somepass", "check cipher subpass");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpecSub(manifest))), "somepass", "check cipher subpass");
 
         TEST_RESULT_VOID(
             manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "update target no change");
@@ -1677,7 +1679,7 @@ testRun(void)
                         TEST_MANIFEST_LINK
                         TEST_MANIFEST_LINK_DEFAULT
                         TEST_MANIFEST_PATH
-                        TEST_MANIFEST_PATH_DEFAULT))),
+                        TEST_MANIFEST_PATH_DEFAULT)), cipherSpecNewNone()),
             "load manifest");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1774,9 +1776,11 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
 
-        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), NULL, "check cipher subpass");
-        TEST_RESULT_VOID(manifestCipherSubPassSet(manifest, STRDEF("supersecret")), "cipher subpass set");
-        TEST_RESULT_STR_Z(manifestCipherSubPass(manifest), "supersecret", "check cipher subpass");
+        TEST_RESULT_UINT(cipherSpecType(manifestCipherSpecSub(manifest)), cipherTypeNone, "check cipher subpass");
+        TEST_RESULT_VOID(
+            manifestCipherSpecSubSet(manifest, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("supersecret"))),
+            "cipher subpass set");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpecSub(manifest))), "supersecret", "check cipher subpass");
 
         // Absolute target paths
         TEST_RESULT_STR_Z(manifestTargetPath(manifest, manifestTargetBase(manifest)), "/pg/base", "base target path");
@@ -1963,11 +1967,11 @@ testRun(void)
         TEST_TITLE("load validation errors");
 
         TEST_ERROR(
-            manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={\"size\":0}"))), FormatError,
-            "missing timestamp for file 'pg_data/bogus'");
+            manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={\"size\":0}")), cipherSpecNewNone()),
+            FormatError, "missing timestamp for file 'pg_data/bogus'");
         TEST_ERROR(
-            manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={\"timestamp\":0}"))), FormatError,
-            "missing size for file 'pg_data/bogus'");
+            manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={\"timestamp\":0}")), cipherSpecNewNone()),
+            FormatError, "missing size for file 'pg_data/bogus'");
     }
 
     // *****************************************************************************************************************************
@@ -1976,7 +1980,7 @@ testRun(void)
         Manifest *manifest = NULL;
 
         TEST_ERROR(
-            manifestLoadFile(storageTest, BACKUP_MANIFEST_FILE_STR, cipherTypeNone, NULL), FileMissingError,
+            manifestLoadFile(storageTest, BACKUP_MANIFEST_FILE_STR, cipherSpecNewNone()), FileMissingError,
             "unable to load backup manifest file '" TEST_PATH "/backup.manifest' or '" TEST_PATH "/backup.manifest.copy':\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/backup.manifest' for read\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/backup.manifest.copy' for read");
@@ -2040,14 +2044,18 @@ testRun(void)
             "user=\"user1\"\n"
 
         HRN_INFO_PUT(storageTest, BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_MANIFEST_CONTENT, .comment = "write manifest copy");
-        TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load copy");
+        TEST_ASSIGN(
+            manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherSpecNewNone()),
+            "load copy");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check file loaded");
         TEST_RESULT_STR_Z(manifestData(manifest)->backrestVersion, PROJECT_VERSION, "check backrest version");
 
         HRN_STORAGE_REMOVE(storageTest, BACKUP_MANIFEST_FILE INFO_COPY_EXT, .errorOnMissing = true);
 
         HRN_INFO_PUT(storageTest, BACKUP_MANIFEST_FILE, TEST_MANIFEST_CONTENT, .comment = "write main manifest");
-        TEST_ASSIGN(manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherTypeNone, NULL), "load main");
+        TEST_ASSIGN(
+            manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherSpecNewNone()),
+            "load main");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check file loaded");
 
         TEST_RESULT_VOID(manifestFree(manifest), "free manifest");

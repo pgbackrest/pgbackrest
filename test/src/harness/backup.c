@@ -34,6 +34,7 @@ Local variables
 static struct HrnBackupLocal
 {
     MemContext *memContext;                                         // Script mem context
+    bool backupFileComparatorShim;                                  // Shim backupFileComparatorShim?
 
     // Script that defines how shim functions operate
     HrnBackupScript script[1024];
@@ -94,12 +95,12 @@ hrnBackupScriptSet(const HrnBackupScript *const script, const unsigned int scrip
 
 /**********************************************************************************************************************************/
 static void
-backupProcess(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
+backupProcess(const BackupData *const backupData, Manifest *const manifest, const CipherSpec *const cipherSpecBackup)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(BACKUP_DATA, backupData);
         FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
-        FUNCTION_HARNESS_PARAM(STRING, cipherPassBackup);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpecBackup);
     FUNCTION_HARNESS_END();
 
     // If any file changes are scripted then make them
@@ -140,7 +141,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
         hrnBackupLocal.scriptSize = 0;
     }
 
-    backupProcess_SHIMMED(backupData, manifest, cipherPassBackup);
+    backupProcess_SHIMMED(backupData, manifest, cipherSpecBackup);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -214,8 +215,10 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         if (!param.noPriorWal)
         {
             InfoArchive *infoArchive = infoArchiveLoadFile(
-                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-                param.cipherPass == NULL ? NULL : STR(param.cipherPass));
+                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR,
+                cipherSpecNewP(
+                    param.cipherType == 0 ? cipherTypeNone : param.cipherType,
+                    param.cipherPass == NULL ? NULL : BUFSTRZ(param.cipherPass)));
             const String *archiveId = infoArchiveId(infoArchive);
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
                 param.timeline, lsnStart - pgControl.walSegmentSize, param.noWal ? lsnStart - pgControl.walSegmentSize : lsnStop,
@@ -352,4 +355,41 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         }
     }
     MEM_CONTEXT_TEMP_END();
+}
+
+/**********************************************************************************************************************************/
+static int
+backupFileComparator(const void *const item1, const void *const item2)
+{
+    if (hrnBackupLocal.backupFileComparatorShim)
+    {
+        const BackupFile *const file1 = item1;
+        const BackupFile *const file2 = item2;
+
+        // Order global/pg_control at the end of the bundle. This is required for reproducibility since the contents of pg_control
+        // vary by architecture so may compress differently and change bundle offsets. pg_control must not be block incremental
+        // here: relocating a block incremental file out of prior map offset order would break the requirement that reads of the
+        // same prior map file be added to the multi-read in ascending offset order, and leaving it in place would let its
+        // architecture-dependent size shift bundle offsets again. pg_control is 8KiB so this only happens when the size map file
+        // size floor is set below 8KiB, in which case error rather than let offsets silently vary by architecture.
+        if (strEqZ(file1->pgFile, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))
+        {
+            CHECK(AssertError, file1->blockIncrSize == 0, "pg_control cannot be block incremental with the comparator shim");
+            return 1;
+        }
+        else if (strEqZ(file2->pgFile, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))
+        {
+            CHECK(AssertError, file2->blockIncrSize == 0, "pg_control cannot be block incremental with the comparator shim");
+            return -1;
+        }
+    }
+
+    // Otherwise use the original comparator
+    return backupFileComparator_SHIMMED(item1, item2);
+}
+
+void
+hrnBackupFileComparatorShim(void)
+{
+    hrnBackupLocal.backupFileComparatorShim = true;
 }

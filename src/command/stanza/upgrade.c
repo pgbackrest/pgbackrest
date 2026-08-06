@@ -51,13 +51,11 @@ cmdStanzaUpgrade(void)
 
             // Load the info files (errors if missing)
             InfoArchive *const infoArchive = infoArchiveLoadFile(
-                storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
             InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
             InfoBackup *const infoBackup = infoBackupLoadFile(
-                storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
             InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
             // Determine if the repository format should be updated. The format is only updated when it is explicitly requested,
@@ -119,19 +117,11 @@ cmdStanzaUpgrade(void)
 
             // Save archive info
             if (infoArchiveUpgrade)
-            {
-                infoArchiveSaveFile(
-                    infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR,
-                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
-            }
+                infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
 
             // Save backup info
             if (infoBackupUpgrade)
-            {
-                infoBackupSaveFile(
-                    infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
-                    cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
-            }
+                infoBackupSaveFile(infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
 
             if (!(infoArchiveUpgrade || infoBackupUpgrade))
             {

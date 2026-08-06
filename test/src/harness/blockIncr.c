@@ -27,7 +27,7 @@ hrnBlockDeltaRender(const BlockMap *const blockMap, const size_t blockSize, cons
     ASSERT(blockSize > 0);
 
     String *const result = strNew();
-    BlockDelta *const blockDelta = blockDeltaNew(blockMap, blockSize, checksumSize, NULL, cipherTypeNone, NULL, compressTypeNone);
+    BlockDelta *const blockDelta = blockDeltaNew(blockMap, blockSize, checksumSize, NULL, cipherSpecNewNone(), compressTypeNone);
 
     for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
     {

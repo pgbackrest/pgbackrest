@@ -27,8 +27,7 @@ Get a list of all files in the backup and a redacted version of the manifest tha
 static String *
 testBackupValidateFile(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const CipherType cipherType,
-    const String *const cipherPass)
+    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const CipherSpec *const cipherSpec)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -38,8 +37,7 @@ testBackupValidateFile(
         FUNCTION_HARNESS_PARAM(STRING, fileName);
         FUNCTION_HARNESS_PARAM(UINT64, fileSize);
         FUNCTION_HARNESS_PARAM_P(VOID, filePack);
-        FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
-        FUNCTION_HARNESS_PARAM(STRING, cipherPass);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_HARNESS_END();
 
     String *const result = strNew();
@@ -89,11 +87,11 @@ testBackupValidateFile(
             .offset = file.bundleOffset + file.sizeRepo - file.blockIncrMapSize,
             .limit = VARUINT64(file.blockIncrMapSize));
 
-        if (cipherType != cipherTypeNone)
+        if (cipherSpecType(cipherSpec) != cipherTypeNone)
         {
             ioFilterGroupAdd(
                 ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+                cipherBlockNewP(cipherModeDecrypt, cipherSpec, .raw = true));
         }
 
         ioReadOpen(storageReadIo(read));
@@ -129,7 +127,7 @@ testBackupValidateFile(
         bufUsedSet(fileBuffer, bufSize(fileBuffer));
 
         BlockDelta *const blockDelta = blockDeltaNew(
-            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherType, cipherPass,
+            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherSpec,
             manifestData->backupOptionCompressType);
 
         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
@@ -170,11 +168,11 @@ testBackupValidateFile(
             .limit = VARUINT64(file.sizeRepo));
         const bool raw = file.bundleId != 0 && manifest->pub.data.bundleRaw;
 
-        if (cipherType != cipherTypeNone)
+        if (cipherSpecType(cipherSpec) != cipherTypeNone)
         {
             ioFilterGroupAdd(
                 ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = raw));
+                cipherBlockNewP(cipherModeDecrypt, cipherSpec, .raw = raw));
         }
 
         if (manifestData->backupOptionCompressType != compressTypeNone)
@@ -255,7 +253,7 @@ testBackupValidateFile(
 static String *
 testBackupValidateList(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    StringList *const manifestFileList, const CipherType cipherType, const String *const cipherPass, String *const result)
+    StringList *const manifestFileList, const CipherSpec *const cipherSpec, String *const result)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -263,8 +261,7 @@ testBackupValidateList(
         FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
         FUNCTION_HARNESS_PARAM_P(VOID, manifestData);
         FUNCTION_HARNESS_PARAM(STRING_LIST, manifestFileList);
-        FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
-        FUNCTION_HARNESS_PARAM(STRING, cipherPass);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_HARNESS_PARAM(STRING, result);
     FUNCTION_HARNESS_END();
 
@@ -356,7 +353,7 @@ testBackupValidateList(
                     strCat(
                         result,
                         testBackupValidateFile(
-                            storage, path, manifest, manifestData, info.name, info.size, filePack, cipherType, cipherPass));
+                            storage, path, manifest, manifestData, info.name, info.size, filePack, cipherSpec));
                 }
 
                 break;
@@ -429,11 +426,12 @@ testBackupValidate(const Storage *const storage, const String *const path, const
         // Build a list of files in the backup path and verify against the manifest
         // -------------------------------------------------------------------------------------------------------------------------
         const InfoBackup *const infoBackup = infoBackupLoadFile(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR, param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-            param.cipherPass == NULL ? NULL : STR(param.cipherPass));
+            storageRepo(), INFO_BACKUP_PATH_FILE_STR,
+            cipherSpecNewP(
+                param.cipherType == 0 ? cipherTypeNone : param.cipherType,
+                param.cipherPass == NULL ? NULL : BUFSTRZ(param.cipherPass)));
         Manifest *manifest = manifestLoadFile(
-            storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-            param.cipherPass == NULL ? NULL : infoBackupCipherPass(infoBackup));
+            storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), infoBackupCipherSpec(infoBackup));
 
         // Build list of files in the manifest
         StringList *const manifestFileList = strLstNew();
@@ -442,10 +440,9 @@ testBackupValidate(const Storage *const storage, const String *const path, const
             strLstAdd(manifestFileList, manifestFileUnpack(manifest, manifestFilePackGet(manifest, fileIdx)).name);
 
         // Validate files on disk against the manifest
-        const CipherType cipherType = param.cipherType == 0 ? cipherTypeNone : param.cipherType;
-        const String *const cipherPass = param.cipherPass == NULL ? NULL : manifestCipherSubPass(manifest);
+        const CipherSpec *const cipherSpec = manifestCipherSpecSub(manifest);
 
-        testBackupValidateList(storage, path, manifest, manifestData(manifest), manifestFileList, cipherType, cipherPass, result);
+        testBackupValidateList(storage, path, manifest, manifestData(manifest), manifestFileList, cipherSpec, result);
 
         // Check remaining files in the manifest -- these should all be references
         for (unsigned int manifestFileIdx = 0; manifestFileIdx < strLstSize(manifestFileList); manifestFileIdx++)
@@ -473,7 +470,7 @@ testBackupValidate(const Storage *const storage, const String *const path, const
                             .compressType = manifestData(manifest)->backupOptionCompressType,
                             .blockIncr = file.blockIncrMapSize != 0),
                         sizeof(STORAGE_REPO_BACKUP)),
-                    file.sizeRepo, filePack, cipherType, cipherPass));
+                    file.sizeRepo, filePack, cipherSpec));
         }
 
         // Make sure both backup.manifest files exist since we skipped them in the callback above
@@ -563,6 +560,9 @@ static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Shim backupFileComparator to place pg_control at end of bundle
+    hrnBackupFileComparatorShim();
 
     // Install local command handler shim
     static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_BACKUP_LIST};
@@ -1323,7 +1323,8 @@ testRun(void)
                 ioFilterParamList(
                     blockIncrNew(
                         3, 3, 8, 2, 4, 5, NULL, compressFilterP(compressTypeGz, 1, .raw = true),
-                        cipherBlockNewP(cipherModeEncrypt, cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS), .raw = true)))),
+                        cipherBlockNewP(
+                            cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)), .raw = true)))),
             "block incr pack");
     }
 
@@ -1697,7 +1698,7 @@ testRun(void)
 
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F");
 
-        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, NULL), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed: partially deleted by prior resume or invalid");
@@ -1711,7 +1712,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
 
-        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, NULL), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG("P00   INFO: backup '20191003-105320F' cannot be resumed: resume is disabled");
 
@@ -1734,7 +1735,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, "X");
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed: unable to read"
@@ -1766,7 +1767,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -1788,7 +1789,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -1810,7 +1811,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -1831,7 +1832,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, NULL), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -1900,6 +1901,28 @@ testRun(void)
         TEST_RESULT_VOID(cmdLockReleaseP(), "release backup lock");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100.00%)");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("backupFileComparator()"))
+    {
+        // Files sharing a prior map file always reach the comparator pre-sorted ascending by prior map offset (the process queue
+        // orders bundled files by ascending prior bundle offset), so whether the comparator is ever asked to order such a pair in
+        // descending order depends on the sort algorithm. The qsort our tests run against never compares pre-sorted input that way
+        // so a backup cannot cover the descending case, but a different sort algorithm in the field could, so exercise it directly.
+        const BackupFile file1 =
+        {
+            .pgFile = STRDEF("base/1/1"), .blockIncrSize = 1, .blockIncrMapPriorFile = STRDEF("bundle/1"),
+            .blockIncrMapPriorOffset = 100,
+        };
+        const BackupFile file2 =
+        {
+            .pgFile = STRDEF("base/1/2"), .blockIncrSize = 1, .blockIncrMapPriorFile = STRDEF("bundle/1"),
+            .blockIncrMapPriorOffset = 50,
+        };
+
+        TEST_RESULT_INT(backupFileComparator(&file1, &file2), 1, "larger prior map offset sorts after");
+        TEST_RESULT_INT(backupFileComparator(&file2, &file1), -1, "smaller prior map offset sorts before");
     }
 
     // Offline tests should only be used to test offline functionality and errors easily tested in offline mode
@@ -2383,9 +2406,9 @@ testRun(void)
                 " backup (zero size)\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/time-mismatch (4B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/size-mismatch (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/not-in-resume (4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/size-mismatch (4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/time-mismatch (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/zero-size (0B, [PCT])\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
@@ -2520,18 +2543,18 @@ testRun(void)
                 " backup\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (11B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
-                "P00   WARN: resumed backup file pg_data/time-mismatch2 did not have expected checksum"
-                " 984816fd329622876e14907634264e6f332e9fb3. The file was recopied and backup will continue but this may be an issue"
-                " unless the resumed backup path in the repository is known to be corrupted.\n"
-                "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/content-mismatch (4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: skip file removed by database " TEST_PATH "/pg1/removed-during\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/repo-size-mismatch (4B, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: resumed backup file pg_data/repo-size-mismatch did not have expected checksum"
                 " 984816fd329622876e14907634264e6f332e9fb3. The file was recopied and backup will continue but this may be an issue"
                 " unless the resumed backup path in the repository is known to be corrupted.\n"
                 "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
-                "P01 DETAIL: skip file removed by database " TEST_PATH "/pg1/removed-during\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/content-mismatch (4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/time-mismatch2 (4B, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: resumed backup file pg_data/time-mismatch2 did not have expected checksum"
+                " 984816fd329622876e14907634264e6f332e9fb3. The file was recopied and backup will continue but this may be an issue"
+                " unless the resumed backup path in the repository is known to be corrupted.\n"
+                "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105D9759000000000, lsn = 5d97590/800000\n"
@@ -2894,7 +2917,7 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DAFC3000000000, lsn = 5dafc30/0\n"
                 "P00   INFO: check archive for prior segment 0000000105DAFC2F000000FF\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/4 (bundle 1/0, 40KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (bundle 1/8234, 40KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (bundle 1/8237, 40KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16476, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191020-193320F\n"
                 "P00 DETAIL: reference pg_data/postgresql.conf to 20191020-193320F\n"
@@ -3298,11 +3321,11 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (8KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: page misalignment in file " TEST_PATH "/pg1/base/1/1: file size 8207 is not divisible by page size"
                 " 8192\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/stuff.conf (bundle 1/0, 12B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.auto.conf (bundle 1/32, 12B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.auto.conf (bundle 1/0, 12B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/stuff.conf (bundle 1/32, 12B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/bigish.dat (bundle 1/64, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (bundle 2/0, 11B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 2/31, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 2/0, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (bundle 2/22, 11B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 2/53, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DB8EB000000001, lsn = 5db8eb0/180000\n"
@@ -3382,8 +3405,8 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DBBF8000000000, lsn = 5dbbf80/0\n"
                 "P00   INFO: check archive for segment 0000000105DBBF8000000000\n"
                 "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/zero\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191030-014640F\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBBF8000000001, lsn = 5dbbf80/300000\n"
@@ -3472,8 +3495,8 @@ testRun(void)
                 "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
                 "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]");
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]");
 
             HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 0, .walSegmentSize = 2 * 1024 * 1024);
 
@@ -3486,10 +3509,10 @@ testRun(void)
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
                 "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
                 "P00   INFO: backup '20191103-165320F' cannot be resumed: partially deleted by prior resume or invalid\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/8192, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/2, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -3595,20 +3618,20 @@ testRun(void)
                 "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191103-165320F/bundle' from resumed backup\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/backup_label' from resumed"
                 " backup (missing in manifest)\n"
+                "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: resumed backup file pg_data/block-incr-no-resume did not have expected checksum"
                 " ebdd38b69cd5b9f2d00d273c981e16960fbbb4f7. The file was recopied and backup will continue but this may be an issue"
                 " unless the resumed backup path in the repository is known to be corrupted.\n"
                 "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
-                "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/normal-same (bundle 1/2, 4B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/6, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16389, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/24581, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/40987, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/57393, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/73807, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/16403, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/32809, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/49215, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/65629, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/normal-same (bundle 1/65631, 4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/65635, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/82018, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC08C000000001, lsn = 5dc08c0/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -3646,7 +3669,8 @@ testRun(void)
         {
             // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
             const String *manifestPriorFile = STRDEF(STORAGE_REPO_BACKUP "/20191103-165320F/" BACKUP_MANIFEST_FILE);
-            Manifest *manifestPrior = manifestNewLoad(storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)));
+            Manifest *manifestPrior = manifestNewLoad(
+                storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)), cipherSpecNewNone());
             manifestPrior->pub.data.backupOptionChecksumPage = NULL;
             manifestSave(manifestPrior, storageWriteIo(storageNewWriteP(storageRepoWrite(), manifestPriorFile)));
 
@@ -3732,14 +3756,14 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000000105DC213000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (1.4MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (128KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: store truncated file " TEST_PATH "/pg1/truncate-to-zero (4B->0B, [PCT])\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/normal-same (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16411, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/24603, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/24620, 8B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/24628, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-same (16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/16411, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/16428, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/normal-same (4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: store truncated file " TEST_PATH "/pg1/truncate-to-zero (4B->0B, [PCT])\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/24654, 8B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/24662, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
                 "P00 DETAIL: reference pg_data/block-incr-same to 20191103-165320F\n"
                 "P00 DETAIL: reference pg_data/normal-same to 20191103-165320F\n"
@@ -3844,8 +3868,8 @@ testRun(void)
                 "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC520000000000, lsn = 5dc5200/0\n"
                 "P00   INFO: check archive for segment 0000000105DC520000000000\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/24, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
@@ -3929,8 +3953,8 @@ testRun(void)
                 "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191108-080000F/bundle' from resumed backup\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191108-080000F/pg_data/backup_label.gz' from resumed"
                 " backup (missing in manifest)\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-wayback (16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/24, 8KB, [PCT]) checksum [SHA1]\n"
@@ -4024,12 +4048,12 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000000105DC82D000000000\n"
                 "P00   WARN: file 'block-incr-grow' has same timestamp (1573200000) as prior but different size (prior 24576,"
                 " current 49152), enabling delta checksum\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/0, 48KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-multiplier (bundle 1/0, 32KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (bundle 1/128, 48KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-wayback (16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-to-zero (bundle 1/128, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-multiplier (bundle 1/184, 32KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/312, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/PG_VERSION (2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-age-to-zero (bundle 1/272, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/328, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191108-080000F\n"
                 "P00 DETAIL: reference pg_data/block-incr-wayback to 20191108-080000F\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
@@ -4084,7 +4108,8 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191108-080000F_20191110-153320D, version = " PROJECT_VERSION "\n"
-                "P00   WARN: incr backup cannot alter compress-type option to 'bz2', reset to value in 20191108-080000F_20191110-153320D\n"
+                "P00   WARN: incr backup cannot alter compress-type option to 'bz2', reset to value in"
+                " 20191108-080000F_20191110-153320D\n"
                 "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC8F1000000000, lsn = 5dc8f10/0\n"
                 "P00   INFO: check archive for prior segment 0000000105DC8F0F000007FF\n"
@@ -4182,8 +4207,8 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/2 (16KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/global/2 at page 3\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/1 (12KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/8224, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/32, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC9B4000000001, lsn = 5dc9b40/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"

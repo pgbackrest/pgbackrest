@@ -37,8 +37,8 @@ typedef struct Manifest Manifest;
 
 #include "command/backup/common.h"
 #include "common/compress/helper.h"
-#include "common/crypto/common.h"
 #include "common/crypto/hash.h"
+#include "common/crypto/spec.h"
 #include "common/type/object.h"
 #include "common/type/variant.h"
 #include "info/info.h"
@@ -218,7 +218,7 @@ FN_EXTERN Manifest *manifestNewBuild(
     const StringList *excludeList, const Pack *tablespaceList);
 
 // Load a manifest from IO
-FN_EXTERN Manifest *manifestNewLoad(IoRead *read);
+FN_EXTERN Manifest *manifestNewLoad(IoRead *read, const CipherSpec *cipherSpec);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -250,17 +250,17 @@ manifestFormat(const Manifest *const this)
     return infoFormat(manifestInfo(this));
 }
 
-// Get/set the cipher subpassphrase
-FN_INLINE_ALWAYS const String *
-manifestCipherSubPass(const Manifest *const this)
+// Get cipher spec for the files this manifest describes, set the pass they are encrypted with
+FN_INLINE_ALWAYS const CipherSpec *
+manifestCipherSpecSub(const Manifest *const this)
 {
-    return infoCipherPass(THIS_PUB(Manifest)->info);
+    return infoCipherSpec(THIS_PUB(Manifest)->info);
 }
 
 FN_INLINE_ALWAYS void
-manifestCipherSubPassSet(Manifest *const this, const String *const cipherSubPass)
+manifestCipherSpecSubSet(Manifest *const this, const CipherSpec *const cipherSpecSub)
 {
-    infoCipherPassSet(THIS_PUB(Manifest)->info, cipherSubPass);
+    infoCipherSpecSet(THIS_PUB(Manifest)->info, cipherSpecSub);
 }
 
 // Get manifest configuration and options
@@ -521,8 +521,7 @@ manifestFree(Manifest *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // Load backup manifest
-FN_EXTERN Manifest *manifestLoadFile(
-    const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass);
+FN_EXTERN Manifest *manifestLoadFile(const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
 /***********************************************************************************************************************************
 Macros for function logging

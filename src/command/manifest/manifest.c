@@ -231,12 +231,11 @@ cmdManifestBlockDeltaRender(const Manifest *const manifest, const ManifestFile *
                 .offset = file->bundleOffset + file->sizeRepo - file->blockIncrMapSize,
                 .limit = VARUINT64(file->blockIncrMapSize));
 
-            if (manifestCipherSubPass(manifest) != NULL)
+            if (cipherSpecType(manifestCipherSpecSub(manifest)) != cipherTypeNone)
             {
                 ioFilterGroupAdd(
                     ioReadFilterGroup(storageReadIo(read)),
-                    cipherBlockNewP(
-                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(manifestCipherSubPass(manifest)), .raw = true));
+                    cipherBlockNewP(cipherModeDecrypt, manifestCipherSpecSub(manifest), .raw = true));
             }
 
             ioReadOpen(storageReadIo(read));
@@ -397,7 +396,8 @@ cmdManifestFileRender(const Manifest *const manifest, const ManifestFile *const 
 
             strCatFmt(
                 result, "      size: %s, repo %s\n", strZ(strSizeFormat(file->size)), strZ(strSizeFormat(file->sizeRepo)));
-            strCatFmt(result, "      checksum: %s\n", strZ(strNewEncode(encodingHex, BUF(file->checksumSha1, HASH_TYPE_SHA1_SIZE))));
+            strCatFmt(
+                result, "      checksum: %s\n", strZ(strNewEncode(encodingHex, BUF(file->checksumSha1, HASH_TYPE_SHA1_SIZE))));
 
             if (file->bundleId != 0)
                 strCatFmt(result, "      bundle: %" PRIu64 "\n", file->bundleId);
@@ -438,16 +438,12 @@ cmdManifestRender(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Load backup.info and cipher
-        const InfoBackup *const infoBackup = infoBackupLoadFile(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
-        const String *const cipherPass = infoPgCipherPass(infoBackupPg(infoBackup));
-        const CipherType cipherType = cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc;
+        const InfoBackup *const infoBackup = infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpec());
 
         // Load manifest
         const Manifest *const manifest = manifestLoadFile(
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(cfgOptionStr(cfgOptSet))),
-            cipherType, cipherPass);
+            infoBackupCipherSpec(infoBackup));
 
         // Manifest info
         const ManifestData *const data = manifestData(manifest);

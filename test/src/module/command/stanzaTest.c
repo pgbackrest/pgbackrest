@@ -134,52 +134,63 @@ testRun(void)
         InfoArchive *infoArchive = NULL;
         TEST_ASSIGN(
             infoArchive,
-            infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeAes256Cbc, STRDEF("12345678")),
+            infoArchiveLoadFile(
+                storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
             "load archive info from encrypted repo2");
-        TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "cipher sub set");
+        TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(infoArchive)), cipherTypeAes256Cbc, "cipher sub set");
 
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherTypeAes256Cbc, STRDEF("12345678")),
+            infoBackup,
+            infoBackupLoadFile(
+                storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
             "load backup info from encrypted repo2");
-        TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "cipher sub set");
+        TEST_RESULT_UINT(cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeAes256Cbc, "cipher sub set");
 
         TEST_RESULT_BOOL(
-            strEq(infoArchiveCipherPass(infoArchive), infoBackupCipherPass(infoBackup)), false,
+            bufEq(cipherSpecPass(infoArchiveCipherSpec(infoArchive)), cipherSpecPass(infoBackupCipherSpec(infoBackup))), false,
             "cipher sub different for archive and backup");
 
         // Confirm non-encrypted repo created successfully. This repo was created with an explicit format so also confirm that the
         // requested format was stored rather than the default.
         TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL),
+            infoArchive,
+            infoArchiveLoadFile(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone()),
             "load archive info from repo3");
-        TEST_RESULT_PTR(infoArchiveCipherPass(infoArchive), NULL, "archive cipher sub not set on non-encrypted repo");
+        TEST_RESULT_UINT(
+            cipherSpecType(infoArchiveCipherSpec(infoArchive)), cipherTypeNone,
+            "archive cipher sub not set on non-encrypted repo");
         TEST_RESULT_UINT(infoArchiveFormat(infoArchive), REPOSITORY_FORMAT_6, "archive info at requested format");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepoIdx(2), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
+            infoBackup, infoBackupLoadFile(storageRepoIdx(2), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
             "load backup info from repo3");
-        TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "backup cipher sub not set on non-encrypted repo");
+        TEST_RESULT_UINT(
+            cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeNone,
+            "backup cipher sub not set on non-encrypted repo");
         TEST_RESULT_UINT(infoBackupFormat(infoBackup), REPOSITORY_FORMAT_6, "backup info at requested format");
 
         // Repos created without the option are at the default format
         TEST_RESULT_UINT(infoArchiveFormat(infoArchive) != REPOSITORY_FORMAT_DEFAULT, true, "requested format is not the default");
         TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL),
+            infoArchive, infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone()),
             "load archive info from repo1");
         TEST_RESULT_UINT(infoArchiveFormat(infoArchive), REPOSITORY_FORMAT_DEFAULT, "archive info at default format");
 
         // Confirm other repo encrypted with different password
         TEST_ASSIGN(
             infoArchive,
-            infoArchiveLoadFile(storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeAes256Cbc, STRDEF("87654321")),
+            infoArchiveLoadFile(
+                storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load archive info from encrypted repo4");
-        TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "cipher sub set");
+        TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(infoArchive)), cipherTypeAes256Cbc, "cipher sub set");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherTypeAes256Cbc, STRDEF("87654321")),
+            infoBackup,
+            infoBackupLoadFile(
+                storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load backup info from encrypted repo4");
-        TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "cipher sub set");
+        TEST_RESULT_UINT(cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeAes256Cbc, "cipher sub set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cmdStanzaCreate missing files - multi-repo and encryption");
@@ -1006,7 +1017,7 @@ testRun(void)
             "P00   INFO: stanza 'db' on repo1 is already up to date");
 
         TEST_RESULT_UINT(
-            infoArchiveFormat(infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL)),
+            infoArchiveFormat(infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone())),
             REPOSITORY_FORMAT_DEFAULT, "archive info still at default format");
 
         // Upgrade the format
@@ -1017,10 +1028,10 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
 
         TEST_RESULT_UINT(
-            infoArchiveFormat(infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL)),
+            infoArchiveFormat(infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone())),
             REPOSITORY_FORMAT_6, "archive info at format 6");
         TEST_RESULT_UINT(
-            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL)),
+            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone())),
             REPOSITORY_FORMAT_6, "backup info at format 6");
 
         // Requesting the format the repository is already at does nothing
@@ -1048,17 +1059,17 @@ testRun(void)
             .comment = "put backup info at prior format to simulate an interrupted upgrade");
 
         TEST_RESULT_UINT(
-            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL)),
+            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone())),
             REPOSITORY_FORMAT_DEFAULT, "backup info back at default format");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format mismatch between info files");
         TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
 
         TEST_RESULT_UINT(
-            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL)),
+            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone())),
             REPOSITORY_FORMAT_6, "backup info brought forward to format 6");
         TEST_RESULT_UINT(
-            infoArchiveFormat(infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL)),
+            infoArchiveFormat(infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone())),
             REPOSITORY_FORMAT_6, "archive info still at format 6");
 
         // The format cannot be downgraded

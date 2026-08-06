@@ -167,9 +167,7 @@ backupInit(const InfoBackup *const infoBackup)
     // Get archive info
     if (cfgOptionBool(cfgOptArchiveCheck))
     {
-        result->archiveInfo = infoArchiveLoadFile(
-            storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType),
-            cfgOptionStrNull(cfgOptRepoCipherPass));
+        result->archiveInfo = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpec());
         result->archiveId = infoArchiveId(result->archiveInfo);
     }
 
@@ -209,10 +207,9 @@ cmdBackup(void)
         storageRepo();
 
         // Load backup.info
-        InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgOptionStrId(cfgOptRepoCipherType), cfgOptionStrNull(cfgOptRepoCipherPass));
+        InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpec());
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-        const String *const cipherPassBackup = infoPgCipherPass(infoBackupPg(infoBackup));
+        const CipherSpec *const cipherSpecBackup = infoBackupCipherSpec(infoBackup);
 
         // Get pg storage and database objects
         BackupData *const backupData = backupInit(infoBackup);
@@ -242,14 +239,14 @@ cmdBackup(void)
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
-            manifestCipherSubPassSet(manifest, cipherPassGen(cfgOptionStrId(cfgOptRepoCipherType)));
+            manifestCipherSpecSubSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType)));
 
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
             cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
         // Resume a backup when possible
-        if (!backupResume(manifest, cipherPassBackup))
+        if (!backupResume(manifest, cipherSpecBackup))
         {
             manifestBackupLabelSet(
                 manifest,
@@ -258,10 +255,10 @@ cmdBackup(void)
         }
 
         // Save the manifest before processing starts
-        backupManifestSaveCopy(manifest, cipherPassBackup, false);
+        backupManifestSaveCopy(manifest, cipherSpecBackup, false);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, cipherPassBackup);
+        backupProcess(backupData, manifest, cipherSpecBackup);
 
         // Check that the clusters are alive and correctly configured after the backup
         backupDbPing(backupData, true);
@@ -289,7 +286,7 @@ cmdBackup(void)
         dbFree(backupData->dbPrimary);
 
         // Check and copy WAL segments required to make the backup consistent
-        backupArchiveCheckCopy(backupData, manifest, cipherPassBackup);
+        backupArchiveCheckCopy(backupData, manifest, cipherSpecBackup);
 
         // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy() so
         // the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further access to

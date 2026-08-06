@@ -56,8 +56,8 @@ typedef struct BackupFileResult
 static List *
 backupFile(
     const String *const repoFile, const uint64_t bundleId, const bool bundleRaw, const unsigned int blockIncrReference,
-    const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherType cipherType,
-    const String *const cipherPass, const String *const pgVersionForce, const PgPageSize pageSize, const List *const fileList)
+    const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherSpec *const cipherSpec,
+    const String *const pgVersionForce, const PgPageSize pageSize, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
@@ -66,15 +66,14 @@ backupFile(
         FUNCTION_LOG_PARAM(UINT, blockIncrReference);               // Block incremental reference to use in map
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
-        FUNCTION_LOG_PARAM(STRING_ID, cipherType);                  // Encryption type
-        FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Password to access the repo file if encrypted
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);                // Cipher spec to encrypt the repo file
         FUNCTION_LOG_PARAM(ENUM, pageSize);                         // Page size
         FUNCTION_LOG_PARAM(STRING, pgVersionForce);                 // Force pg version
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to backup
     FUNCTION_LOG_END();
 
     ASSERT(repoFile != NULL);
-    ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
+    ASSERT(cipherSpec != NULL);
     ASSERT(fileList != NULL && !lstEmpty(fileList));
     ASSERT(pgPageSizeValid(pageSize));
 
@@ -83,6 +82,10 @@ backupFile(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Multi-read for prior block incremental maps. Created lazily on first use to avoid an open (and a round trip to the repo
+        // host) for jobs that have no maps to read, e.g. full backups or jobs with only whole files.
+        StorageReadMulti *biMapRead = NULL;
+
         // Check files to determine which ones need to be copied
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
@@ -189,16 +192,39 @@ backupFile(
                             fileResult->repoInvalid = true;
                     }
                 }
+
+                // If block incremental file will be copied add block map to the read
+                if (fileResult->backupCopyResult == backupCopyResultCopy && file->blockIncrSize != 0 &&
+                    file->blockIncrMapPriorFile != NULL)
+                {
+                    // Create the multi-read on first use in the outer context so it survives the per-file context
+                    if (biMapRead == NULL)
+                    {
+                        MEM_CONTEXT_PRIOR_BEGIN()
+                        {
+                            biMapRead = storageNewReadMultiP(storageRepo());
+                        }
+                        MEM_CONTEXT_PRIOR_END();
+                    }
+
+                    storageReadMultiAddP(
+                        biMapRead, file->blockIncrMapPriorFile, .offset = file->blockIncrMapPriorOffset,
+                        .limit = VARUINT64(file->blockIncrMapPriorSize));
+                }
             }
             MEM_CONTEXT_TEMP_END();
         }
 
         // Are the files compressible during the copy?
-        const bool compressible = repoFileCompressType == compressTypeNone && cipherType == cipherTypeNone;
+        const bool compressible = repoFileCompressType == compressTypeNone && cipherSpecType(cipherSpec) == cipherTypeNone;
 
         // Copy files that need to be copied
         StorageWrite *write = NULL;
         uint64_t bundleOffset = 0;
+
+        // Open the multi-read if any block incremental maps were added
+        if (biMapRead != NULL)
+            ioReadOpen(storageReadMultiIo(biMapRead));
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
@@ -249,9 +275,9 @@ backupFile(
 
                     // Encrypt filter
                     IoFilter *const encrypt =
-                        cipherType != cipherTypeNone ?
+                        cipherSpecType(cipherSpec) != cipherTypeNone ?
                             cipherBlockNewP(
-                                cipherModeEncrypt, cipherType, BUFSTR(cipherPass), .raw = bundleRaw || file->blockIncrSize != 0) :
+                                cipherModeEncrypt, cipherSpec, .raw = bundleRaw || file->blockIncrSize != 0) :
                             NULL;
 
                     // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
@@ -259,22 +285,23 @@ backupFile(
                     if (file->blockIncrSize != 0)
                     {
                         // Read prior block map
-                        const Buffer *blockMap = NULL;
+                        Buffer *blockMap = NULL;
 
                         if (file->blockIncrMapPriorFile != NULL)
                         {
-                            StorageRead *const blockMapRead = storageNewReadP(
-                                storageRepo(), file->blockIncrMapPriorFile, .offset = file->blockIncrMapPriorOffset,
-                                .limit = VARUINT64(file->blockIncrMapPriorSize));
+                            blockMap = bufNew(0);
+                            IoWrite *const blockMapWrite = ioBufferWriteNew(blockMap);
 
-                            if (cipherType != cipherTypeNone)
+                            if (cipherSpecType(cipherSpec) != cipherTypeNone)
                             {
                                 ioFilterGroupAdd(
-                                    ioReadFilterGroup(storageReadIo(blockMapRead)),
-                                    cipherBlockNewP(cipherModeDecrypt, cipherType, BUFSTR(cipherPass), .raw = true));
+                                    ioWriteFilterGroup(blockMapWrite), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .raw = true));
                             }
 
-                            blockMap = storageGetP(blockMapRead);
+                            ioWriteOpen(blockMapWrite);
+                            ioCopyP(storageReadMultiIo(biMapRead), blockMapWrite, .limit = VARUINT64(file->blockIncrMapPriorSize));
+                            ioWriteClose(blockMapWrite);
+                            ioWriteFree(blockMapWrite);
                         }
 
                         // Add block incremental filter

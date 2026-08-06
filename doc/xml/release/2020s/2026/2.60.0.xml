@@ -11,6 +11,31 @@
 
                 <p>Prefetch multi-file/range reads from object stores.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2816"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="andrew.pogrebnoi"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Combine prior block incremental map reads during backup.</p>
+            </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2817"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="andrew.pogrebnoi"/>
+                </release-item-contributor-list>
+
+                <p>Reuse large freed allocations from a memory context free list.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 </release>

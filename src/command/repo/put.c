@@ -48,16 +48,13 @@ storagePutProcess(IoRead *source)
 
             if (repoCipherType != cipherTypeNone)
             {
-                // Check for a passphrase parameter
-                const String *cipherPass = cfgOptionStrNull(cfgOptCipherPass);
-
-                // If not passed as a parameter use the repo passphrase
-                if (cipherPass == NULL)
-                    cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
+                // Check for a passphrase parameter, otherwise use the repo cipher spec
+                const String *const cipherPassParam = cfgOptionStrNull(cfgOptCipherPass);
+                const CipherSpec *const cipherSpec =
+                    cipherPassParam == NULL ? cfgCipherSpec() : cipherSpecNewP(repoCipherType, BUFSTR(cipherPassParam));
 
                 // Add encryption filter
-                cipherBlockFilterGroupAdd(
-                    ioWriteFilterGroup(storageWriteIo(destination)), repoCipherType, cipherModeEncrypt, cipherPass);
+                cipherBlockFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), cipherModeEncrypt, cipherSpec);
             }
         }
 
