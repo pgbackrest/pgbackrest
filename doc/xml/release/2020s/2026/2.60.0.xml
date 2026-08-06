@@ -38,4 +38,44 @@
             </release-item>
         </release-development-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <commit subject="Modernize the website."/>
+                <commit subject="Show a card rather than the logo where a link is posted."/>
+                <commit subject="Remove the contents from the releases page and close up the date."/>
+                <commit subject="Link rather than repeat the options in the command reference."/>
+                <commit subject="Clarify the command titles in the command reference."/>
+                <commit subject="Mark the lines a section changes in a config file."/>
+                <commit subject="Mark the output of a command the way a config file is marked."/>
+                <commit subject="Copy a command as well as a config file."/>
+                <commit subject="Error when a config section changes nothing the reader can see."/>
+                <commit subject="Make the site logo a link home."/>
+                <commit subject="Stop setting hot_standby in the user guide."/>
+                <commit subject="Speed up the documentation build."/>
+                <commit subject="List the most recent news items on the index automatically."/>
+                <commit subject="Render option type examples as code blocks in the reference."/>
+                <commit subject="Scroll the menu sideways rather than wrapping it out of view."/>
+                <commit subject="Highlight the current page in the menu rather than leaving it out."/>
+                <commit subject="Version the style and script links so stale caches are refetched."/>
+                <commit subject="Jump straight to a section rather than gliding to it."/>
+                <commit subject="Fade an end the menu carries on past rather than cutting it flat."/>
+                <commit subject="Put the bar of a section2 header under the title rather than beside it."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="jan.wieremjewicz"/>
+                    <release-item-reviewer id="steve.atkins"/>
+                    <release-item-reviewer id="kai.wagner"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="nikolaos.stamatopoulos"/>
+                    <release-item-reviewer id="matt.hudson"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Modernize the website. Special thanks to Jan for the insightful (and hilarious) logo.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
 </release>
