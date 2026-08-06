@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]}" subtitle="Coding Standards" toc="y">
     <description>{[project]} Coding Standard.</description>
 
@@ -7,11 +6,13 @@
     <section id="uncrustify">
         <title>Formatting with <proper>uncrustify</proper></title>
 
-        <p><backrest/> uses <proper>uncrustify</proper> to check/update the code formatting. If the <id>code-format</id> test fails in CI then reformat the code:</p>
+        <p><backrest/> uses <proper>uncrustify</proper> for <proper>C</proper> and <proper>black</proper> for <proper>Python</proper> to check/update the code formatting. If the <id>code-format</id> test fails in CI then reformat the code:</p>
 
         <code-block>
-            pgbackrest/test/test.pl --code-format
+            pgbackrest/test/test.py code-format
         </code-block>
+
+        <p><file>test/uncrustify.cfg</file> requires <proper>uncrustify</proper> 0.78 which is what CI runs the check on. Older versions reject the options that were added after they were released.</p>
 
         <p>Also review the standards in the following sections below. Some standards require further explanation and others are not enforced by <proper>uncrustify</proper>.</p>
 

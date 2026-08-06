@@ -74,16 +74,16 @@ addrInfoSort(AddressInfo *const this)
         // If a preferred address is in the list then move it to the first position and update family
         const AddressInfoPreference *const addrPref = lstFind(addressInfoLocal.prefList, &this->pub.host);
 
-        if (addrPref != NULL)
+        if (addrPref != NULL)                                                                                       // {vm_covered}
         {
             AddressInfoItem *const addrFindItem = lstFind(this->pub.list, &addrPref->address);
 
-            if (addrFindItem != NULL)
+            if (addrFindItem != NULL)                                                                               // {vm_covered}
             {
                 // Swap with first address if the address is not already first
                 AddressInfoItem *const addrFirstItem = lstGet(this->pub.list, 0);
 
-                if (addrFirstItem != addrFindItem)
+                if (addrFirstItem != addrFindItem)                                                                  // {vm_covered}
                 {
                     const AddressInfoItem addrCopyItem = *addrFirstItem;
                     *addrFirstItem = *addrFindItem;
@@ -91,7 +91,7 @@ addrInfoSort(AddressInfo *const this)
                 }
 
                 // Set family and skip first address
-                family = addrFirstItem->info->ai_family == AF_INET6 ? AF_INET : AF_INET6;
+                family = addrFirstItem->info->ai_family == AF_INET6 ? AF_INET : AF_INET6;                           // {vm_covered}
                 addrIdx++;
             }
         }
@@ -102,33 +102,33 @@ addrInfoSort(AddressInfo *const this)
             AddressInfoItem *const addrItem = lstGet(this->pub.list, addrIdx);
 
             // If not the family we expect, search for one
-            if (addrItem->info->ai_family != family)
+            if (addrItem->info->ai_family != family)                                                                // {vm_covered}
             {
-                unsigned int addrFindIdx = addrIdx + 1;
+                unsigned int addrFindIdx = addrIdx + 1;                                                             // {vm_covered}
 
-                for (; addrFindIdx < lstSize(this->pub.list); addrFindIdx++)
+                for (; addrFindIdx < lstSize(this->pub.list); addrFindIdx++)                                        // {vm_covered}
                 {
-                    AddressInfoItem *const addrFindItem = lstGet(this->pub.list, addrFindIdx);
+                    AddressInfoItem *const addrFindItem = lstGet(this->pub.list, addrFindIdx);                      // {vm_covered}
 
-                    if (addrFindItem->info->ai_family == family)
+                    if (addrFindItem->info->ai_family == family)                                                    // {vm_covered}
                     {
                         // Swap addresses
-                        const AddressInfoItem addrCopyItem = *addrItem;
-                        *addrItem = *addrFindItem;
-                        *addrFindItem = addrCopyItem;
+                        const AddressInfoItem addrCopyItem = *addrItem;                                             // {vm_covered}
+                        *addrItem = *addrFindItem;                                                                  // {vm_covered}
+                        *addrFindItem = addrCopyItem;                                                               // {vm_covered}
 
                         // Move on to next address
-                        break;
+                        break;                                                                                      // {vm_covered}
                     }
                 }
 
                 // Address of the required family not found so sorting is done
-                if (addrFindIdx == lstSize(this->pub.list))
-                    break;
+                if (addrFindIdx == lstSize(this->pub.list))                                                         // {vm_covered}
+                    break;                                                                                          // {vm_covered}
             }
 
             // Switch family
-            family = family == AF_INET6 ? AF_INET : AF_INET6;
+            family = family == AF_INET6 ? AF_INET : AF_INET6;                                                       // {vm_covered}
         }
     }
 
@@ -274,8 +274,11 @@ addrInfoToZ(const struct addrinfo *const addrInfo, char *const address, const si
     ASSERT(address != NULL);
     ASSERT(addressSize >= sizeof(ADDR_INFO_STR_INVALID));
 
-    if (getnameinfo(addrInfo->ai_addr, addrInfo->ai_addrlen, address, (socklen_t)addressSize, 0, 0, NI_NUMERICHOST) != 0)
-        memcpy(address, ADDR_INFO_STR_INVALID, sizeof(ADDR_INFO_STR_INVALID));
+    if (getnameinfo(                                                                                                // {vm_covered}
+            addrInfo->ai_addr, addrInfo->ai_addrlen, address, (socklen_t)addressSize, 0, 0, NI_NUMERICHOST) != 0)
+    {
+        memcpy(address, ADDR_INFO_STR_INVALID, sizeof(ADDR_INFO_STR_INVALID));                                      // {vm_covered}
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }

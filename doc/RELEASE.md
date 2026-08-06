@@ -36,7 +36,7 @@ Add new sponsors and move to past sponsors when sponsorship has lapsed.
 
 ## Build release documentation
 ```
-pgbackrest/doc/release.pl --build
+pgbackrest/doc/release.py --build
 ```
 
 ## Commit release branch and push to CI for testing
@@ -77,7 +77,7 @@ Check issues at https://scan.coverity.com/projects/pgbackrest-pgbackrest then fi
 
 - Build the documentation with stress testing enabled:
 ```
-pgbackrest/doc/doc.pl --out=html --include=user-guide --require=/stress --var=stress=y --var=stress-scale-table=100 --var=stress-scale-data=1000 --pre --no-cache
+pgbackrest/doc/doc.py --out=html --include=user-guide --require=/stress --var=stress=y --var=stress-scale-table=100 --var=stress-scale-data=1000 --pre --no-cache
 ```
 
 During data load the archive-push and archive-get processes can be monitored with:
@@ -115,7 +115,7 @@ git clone git@github.com:pgbackrest/website.git site
 
 ## Deploy web documentation to `doc/site`
 ```
-pgbackrest/doc/release.pl --deploy
+pgbackrest/doc/release.py --deploy
 ```
 
 ## Final commit of release to integration
@@ -312,7 +312,7 @@ to:
 
 Run deploy to generate git history (ctrl-c as soon as the file is generated):
 ```
-pgbackrest/doc/release.pl --build
+pgbackrest/doc/release.py --build
 ```
 
 Commit and push to integration:

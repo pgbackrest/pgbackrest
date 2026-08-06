@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE doc SYSTEM "doc.dtd">
 <doc title="{[project]}" subtitle="Frequently Asked Questions" toc="y">
     <description>{[project]} Frequently Asked Questions (FAQ).</description>
 
     <!-- ======================================================================================================================= -->
-    <section id="introduction">
+    <!-- The header is left off the page because the title of the page already introduces it -->
+    <section id="introduction" header="n">
         <title>Introduction</title>
 
         <p>Frequently Asked Questions are intended to provide details for specific questions that may or may not be covered in the User Guide, Configuration, or Command reference. If you are unable to find details for your specific issue here, remember that the <backrest/> <link url="https://github.com/pgbackrest/pgbackrest/issues">Issues List in GitHub</link> is also a valuable resource.</p>
@@ -73,6 +73,8 @@ process-max=1
         <title>Can I use dots (periods) in my S3 bucket name?</title>
 
         <p><proper>RFC-2818</proper> does not allow wildcards to match on a dot (.) so s3 bucket names must not contain dots. If there are dots in the S3 bucket name then an error such as <quote>unable to find hostname 'my.backup.bucket.s3.amazonaws.com' in certificate common name or subject alternative names</quote> will occur.</p>
+
+        <p>The exception is <br-option>repo-s3-uri-style=path</br-option>, which prepends the bucket to the URI instead of the host. Since the bucket is not part of the host name, the certificate is matched against the endpoint alone and dots in the bucket name are not a problem. Note that path-style URIs are not supported by all S3-compatible object stores.</p>
     </section>
 
     <!-- ======================================================================================================================= -->

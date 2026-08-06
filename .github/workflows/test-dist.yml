@@ -27,13 +27,12 @@ jobs:
         with:
           path: pgbackrest
 
-      # The build environment for the code generator and the documentation C helper, plus libxml-checker-perl, which the
-      # documentation tooling requires (XML::Checker::Parser). The runner already provides perl, git, and python3.
+      # The build environment for the binary the documentation runs. The runner already provides git and python3.
       - name: Install
         run: |
           sudo apt-get update
           DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y meson gcc pkg-config \
-            libssl-dev libxml2-dev libpq-dev libyaml-dev liblz4-dev libzstd-dev libbz2-dev zlib1g-dev libxml-checker-perl
+            libssl-dev libxml2-dev libpq-dev liblz4-dev libzstd-dev libbz2-dev zlib1g-dev
 
       - name: Build Tarball
         run: |
@@ -43,13 +42,12 @@ jobs:
           # gitignored so the tree stays clean for meson dist. --no-exe skips executing the commands embedded in the documentation,
           # which would require containers and a great deal of time; it still produces all the files, which are shipped in the
           # tarball but not used by the build or the smoke test.
-          pgbackrest/doc/release.pl --dist --no-exe
+          pgbackrest/doc/release.py --dist --no-exe
 
-          # Configure the build and build the code generator, which meson dist runs to produce the shipped generated files
+          # Configure the build, which meson dist runs the code generator from to produce the shipped generated files
           meson setup build pgbackrest
-          ninja -C build src/build-code
 
-          # Build the tarball. meson dist runs src/build/dist.sh to bake in the generated files, documentation, and dist marker.
+          # Build the tarball. meson dist runs build/dist.sh to bake in the generated files, documentation, and dist marker.
           # --no-tests skips building and testing the extracted tarball here since that is exactly what the build jobs below do,
           # each on its own distribution.
           meson dist -C build --formats gztar --no-tests
@@ -78,10 +76,12 @@ jobs:
           doc/html/command.html
           doc/html/configuration.html
           doc/html/default.css
+          doc/html/default.js
           doc/html/faq.html
           doc/html/index.html
           doc/html/logo.svg
           doc/html/release.html
+          doc/html/slogo.svg
           doc/html/user-guide-index.html
           doc/html/user-guide-rhel.html
           doc/html/user-guide.html
@@ -151,6 +151,12 @@ jobs:
               apt-get install -y --no-install-recommends meson gcc pkg-config libpq-dev libssl-dev libxml2-dev \
                   liblz4-dev libzstd-dev libbz2-dev zlib1g-dev postgresql
           elif command -v dnf >/dev/null; then
+              # Tune dnf to fail over from a slow mirror. By default a mirror is only abandoned when it delivers less than 1000
+              # bytes per second for 30 seconds, so a mirror that has not failed but is crawling is retried rather than dropped.
+              # Raise the rate floor well above that, shorten the timeout, sort mirrors by latency, and fetch in parallel.
+              { echo minrate=50k; echo timeout=20; echo retries=5; echo max_parallel_downloads=10; \
+                echo fastestmirror=True; } >> /etc/dnf/dnf.conf
+
               # RHEL-family (Rocky) needs EPEL and the CodeReady Builder repo for meson and the -devel packages; Fedora has them in
               # the main repo and has neither.
               case "${{ matrix.image }}" in

@@ -110,7 +110,9 @@ main(int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         if (commandRole == cfgCmdRoleMain || commandRole == cfgCmdRoleAsync)
         {
-            switch (cfgCommandHelp() ? cfgCmdHelp : cfgCommand())
+            const ConfigCommand command = cfgCommandHelp() ? cfgCmdHelp : cfgCommand();
+
+            switch (command)
             {
                 // Annotate command
                 // -----------------------------------------------------------------------------------------------------------------

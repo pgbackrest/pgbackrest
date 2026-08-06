@@ -1,0 +1,214 @@
+"""Test Test List.
+
+The modules are built here rather than read from define.yaml so the selection can be checked against definitions that do not exist
+yet, e.g. a test that only runs on one vm."""
+
+####################################################################################################################################
+from harness.test import *
+
+from command.test.define import TEST_LANG_PYTHON, TEST_TYPE_INTEGRATION, TEST_TYPE_PERFORMANCE, TEST_TYPE_TOOL
+from command.test.define import TEST_TYPE_UNIT, TestDefModule
+from command.test.list import *
+from common.error import ToolError
+from common.vm import *
+
+
+####################################################################################################################################
+class _Config:
+    """The options the selection reads, with the defaults a run with no options would have."""
+
+    def __init__(self, **option):
+        self.vm = VM_NONE
+        self.module = []
+        self.test = []
+        self.pg_version = "minimal"
+        self.c_only = False
+        self.container_only = False
+        self.coverage_only = False
+        self.performance = True
+
+        self.__dict__.update(option)
+
+
+####################################################################################################################################
+def _module(name, type=TEST_TYPE_UNIT, **field):
+    """Build a test module definition."""
+
+    result = TestDefModule(name, type)
+
+    for key, value in field.items():
+        setattr(result, key, value)
+
+    return result
+
+
+####################################################################################################################################
+def _name_list(test_list):
+    """The name of each selected test, which is what most of the selection rules decide."""
+
+    return [run.module.name for run in test_list]
+
+
+# Modules that cover every kind of test the selection has a rule for
+MODULE_LIST = [
+    _module("common/error/error", coverage_list=["common/error"]),
+    _module("common/exec"),
+    _module("common/socket", container_required=True),
+    _module("doc/build", vm_list=["u24"]),
+    _module("test/common/log", type=TEST_TYPE_TOOL, lang=TEST_LANG_PYTHON, coverage_list=["test/common/log"]),
+    _module("integration/all", type=TEST_TYPE_INTEGRATION, total=3, pg_required=True),
+    _module("performance/type", type=TEST_TYPE_PERFORMANCE, total=2),
+]
+
+
+####################################################################################################################################
+def test_list_all():
+    """Everything that can run on a vm is selected when nothing is asked for."""
+
+    # Integration tests need a container so none of them run without one, and neither does a test that requires one
+    assert_equal(
+        _name_list(test_list_get(MODULE_LIST, _Config())),
+        ["common/error/error", "common/exec", "test/common/log", "performance/type"],
+    )
+
+    # A vm with a container runs everything, and the integration test runs once per sub-test and PostgreSQL version
+    test_list = test_list_get(MODULE_LIST, _Config(vm="u24"))
+
+    assert_equal(
+        _name_list(test_list),
+        ["common/error/error", "common/exec", "common/socket", "doc/build", "test/common/log"]
+        + ["integration/all"] * 3 * len(vm_get("u24").db_test_list)
+        + ["performance/type"],
+    )
+
+    # A test that only runs on one vm is left out of the others
+    assert_true("doc/build" not in _name_list(test_list_get(MODULE_LIST, _Config(vm="d12"))))
+
+    # Every default vm runs its own copy of the list
+    assert_equal(len(set(run.vm for run in test_list_get(MODULE_LIST, _Config(vm=VM_ALL)))), len(VM_LIST))
+
+
+####################################################################################################################################
+def test_list_select():
+    """A module is selected by name, or by the path of a group of them, ignoring case."""
+
+    # A path selects every module under it, however deep
+    assert_equal(_name_list(test_list_get(MODULE_LIST, _Config(module=["common"]))), ["common/error/error", "common/exec"])
+    assert_equal(_name_list(test_list_get(MODULE_LIST, _Config(module=["common/error"]))), ["common/error/error"])
+
+    # A name selects the one module it names
+    assert_equal(_name_list(test_list_get(MODULE_LIST, _Config(module=["COMMON/Error/Error"]))), ["common/error/error"])
+
+    # More than one name may be given, which is how modules in different paths are run together
+    assert_equal(
+        _name_list(test_list_get(MODULE_LIST, _Config(module=["common/exec", "test"]))), ["common/exec", "test/common/log"]
+    )
+
+    # A name that matches nothing is a typo rather than a selection of nothing, since the rest would run as if all was well
+    with assert_raises(ToolError) as error:
+        test_list_get(MODULE_LIST, _Config(module=["common/exec", "bogus"]))
+
+    assert_equal(str(error.exception), "'bogus' does not match a test module")
+
+    # Only a whole path component matches, so a name that stops in the middle of one is a typo as well
+    with assert_raises(ToolError) as error:
+        test_list_get(MODULE_LIST, _Config(module=["common/err"]))
+
+    assert_equal(str(error.exception), "'common/err' does not match a test module")
+
+
+####################################################################################################################################
+def test_list_filter():
+    """The filters leave out the kinds of test they name."""
+
+    # Integration tests run the binary rather than a unit test, so they are what --c-only leaves out
+    assert_true("integration/all" not in _name_list(test_list_get(MODULE_LIST, _Config(vm="u24", c_only=True))))
+
+    # Only tests that must have a container, which includes every integration test
+    assert_equal(
+        _name_list(test_list_get(MODULE_LIST, _Config(vm="u24", container_only=True))),
+        ["common/socket"] + ["integration/all"] * 3 * len(vm_get("u24").db_test_list),
+    )
+
+    # Only tests that provide coverage, which is what the documentation summary is built from
+    assert_equal(_name_list(test_list_get(MODULE_LIST, _Config(coverage_only=True))), ["common/error/error", "test/common/log"])
+
+    # Performance tests are timed so they are left out of a run that is only checking behavior
+    assert_true("performance/type" not in _name_list(test_list_get(MODULE_LIST, _Config(performance=False))))
+
+
+####################################################################################################################################
+def test_list_pg_version():
+    """An integration test runs against the PostgreSQL versions the vm tests, most recent first.
+
+    A version named on the command line runs wherever it is installed, whether or not the vm tests it by default."""
+
+    vm = vm_get("u24")
+
+    assert_equal(
+        [run.pg_version for run in test_list_get(MODULE_LIST, _Config(vm="u24", module=["integration"]))],
+        [version for version in reversed(vm.db_test_list) for _ in range(3)],
+    )
+
+    # A single version can be selected, which is how a version specific problem is chased down. Any version the vm installs may be
+    # named, not just the ones it tests by default, since a development vm installs every version.
+    version = next(version for version in vm.db_list if version not in vm.db_test_list)
+
+    assert_equal(
+        [run.pg_version for run in test_list_get(MODULE_LIST, _Config(vm="u24", module=["integration"], pg_version=version))],
+        [version] * 3,
+    )
+
+    # Every version the vm installs can be selected at once
+    assert_equal(
+        [
+            run.pg_version
+            for run in test_list_get(MODULE_LIST, _Config(vm="u24", module=["integration"], pg_version=PG_VERSION_ALL))
+        ],
+        [version for version in reversed(vm.db_list) for _ in range(3)],
+    )
+
+    # A version the vm does not install selects nothing, since another vm in the same run may well install it
+    assert_equal(test_list_get(MODULE_LIST, _Config(vm="d12", module=["integration"], pg_version="9.6")), [])
+
+    # A version the project does not support is a typo rather than a selection of nothing
+    with assert_raises(ToolError) as error:
+        test_list_get(MODULE_LIST, _Config(vm="u24", module=["integration"], pg_version="8.0"))
+
+    assert_equal(str(error.exception), "'8.0' does not match a supported PostgreSQL version")
+
+
+####################################################################################################################################
+def test_list_run():
+    """Each sub-test of an integration test is a run of its own, since each one needs its own containers."""
+
+    test_list = test_list_get(MODULE_LIST, _Config(vm="u24", module=["integration"], pg_version="12"))
+
+    assert_equal([run.test_list for run in test_list], [[1], [2], [3]])
+    assert_equal(test_list[0].coverage_name, "integration-all")
+    assert_true(test_list[0].integration)
+    assert_false(test_list[0].performance)
+
+    # A run can be selected, which is the only way to get one container out of an integration test
+    config = _Config(vm="u24", module=["integration/all"], pg_version="12", test=[2])
+
+    assert_equal([run.test_list for run in test_list_get(MODULE_LIST, config)], [[2]])
+
+    # Every other kind of test runs all of its sub-tests at once, so the selection is passed on for the test itself to apply
+    test_list = test_list_get(MODULE_LIST, _Config(module=["performance"]))
+
+    assert_equal([run.test_list for run in test_list], [None])
+    assert_true(test_list[0].performance)
+    assert_false(test_list[0].integration)
+
+    assert_equal([run.test_list for run in test_list_get(MODULE_LIST, _Config(module=["performance/type"], test=[2]))], [[2]])
+
+    # A run has nothing to apply to unless a single module was named, since a path may select any number of them
+    for module in ([], ["performance"], ["common/exec", "performance/type"]):
+        with assert_raises(ToolError) as error:
+            test_list_get(MODULE_LIST, _Config(module=module, test=[2]))
+
+        assert_equal(str(error.exception), "--test requires a single --module naming a test module", module)
+
+    # A python test name contains a path separator, which is flattened for the coverage file since they share a path
+    assert_equal(test_list_get(MODULE_LIST, _Config(module=["test"]))[0].coverage_name, "test-common-log")

@@ -26,10 +26,10 @@ jobs:
       matrix:
         include:
           # Debian/Ubuntu documentation
-          - vm: u22
+          - distro: debian
 
           # RHEL documentation
-          - vm: rh9
+          - distro: rhel
 
     steps:
       - name: Checkout Code
@@ -44,4 +44,4 @@ jobs:
         run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
 
       - name: Build Documentation
-        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl doc --vm=${{matrix.vm}}
+        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.py doc --distro=${{matrix.distro}}

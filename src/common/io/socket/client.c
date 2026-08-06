@@ -92,7 +92,7 @@ sckClientOpenWait(SckClientOpenData *const openData, const TimeMSec timeout)
     bool result = true;
 
     // The connection has started but since we are in non-blocking mode it has not completed yet
-    if (openData->errNo == EINPROGRESS || openData->errNo == EINTR)
+    if (openData->errNo == EINPROGRESS || openData->errNo == EINTR)                                                 // {vm_covered}
     {
         // Wait for write-ready
         if (fdReadyWrite(openData->fd, timeout))
@@ -165,8 +165,8 @@ sckClientOpen(THIS_VOID)
                         openData = openDataWait;
 
                         // Check if the connection has completed without waiting
-                        if (sckClientOpenWait(openData, 0))
-                            break;
+                        if (sckClientOpenWait(openData, 0))                                                         // {vm_covered}
+                            break;                                                                                  // {vm_covered}
 
                         // Reset to NULL if the connection is still waiting so another connection can be attempted
                         openData = NULL;
@@ -174,7 +174,7 @@ sckClientOpen(THIS_VOID)
                 }
 
                 // Try or retry a connection since none of the waiting connections completed
-                if (openData == NULL)
+                if (openData == NULL)                                                                               // {vm_covered}
                 {
                     // If connection does not exist yet then create it
                     if (addrInfoIdx == lstSize(openDataList))
