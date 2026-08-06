@@ -723,7 +723,7 @@ testRun(void)
             "upgrade db");
         TEST_RESULT_BOOL(infoBackup->pub.updated, true, "info updated");
         TEST_RESULT_VOID(
-            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "save backup info");
         TEST_RESULT_BOOL(infoBackup->pub.updated, false, "info not updated");
 
@@ -732,7 +732,7 @@ testRun(void)
         HRN_STORAGE_TIME(storageRepo(), INFO_BACKUP_PATH_FILE, timeBeforeSave);
 
         TEST_RESULT_VOID(
-            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "save backup again");
 
         // Check that timestamp was not updated
@@ -742,14 +742,14 @@ testRun(void)
         // Reload infoBackup to be sure it was updated
         infoBackup = NULL;
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get saved backup info");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 2, "backup list contains backups to be removed");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 2, "multiple DB history");
 
         TEST_ASSIGN(
             infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "reconstruct");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 1, "backup list contains 1 backup");
         TEST_ASSIGN(backupData, infoBackupData(infoBackup, 0), "get the backup");
@@ -773,7 +773,7 @@ testRun(void)
             .comment = "remove dependent backup from disk");
         TEST_ASSIGN(
             infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "reconstruct does not attempt to add back dependent backup");
         TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
@@ -833,13 +833,13 @@ testRun(void)
             .comment = "write manifest for dependent backup to be added to full already in backup.info");
 
         TEST_RESULT_VOID(
-            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "save updated backup info");
 
         infoBackup = NULL;
         TEST_ASSIGN(
             infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "reconstruct");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL),
@@ -860,7 +860,7 @@ testRun(void)
         TEST_TITLE("load backup info file - error");
 
         TEST_ERROR(
-            infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewStore(cipherTypeNone, NULL)), FileMissingError,
+            infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewNone()), FileMissingError,
             "unable to load info file '" TEST_PATH "/backup.info' or '" TEST_PATH "/backup.info.copy':\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/backup.info' for read\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/backup.info.copy' for read\n"
@@ -873,16 +873,16 @@ testRun(void)
         InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), NULL);
         TEST_RESULT_VOID(
             infoBackupSaveFile(
-                infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewStore(cipherTypeNone, NULL)), "save backup info");
+                infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewNone()), "save backup info");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewNone()),
             "load main");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
 
         HRN_STORAGE_REMOVE(storageTest, INFO_BACKUP_FILE, .errorOnMissing = true, .comment = "remove main so only copy exists");
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewNone()),
             "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
     }

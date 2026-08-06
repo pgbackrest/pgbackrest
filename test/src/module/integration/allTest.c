@@ -201,7 +201,7 @@ testRun(void)
             // Check backups before the backup so we know how many will exist after
             const InfoBackup *infoBackup = infoBackupLoadFile(
                 hrnHostRepo1Storage(repo), STRDEF("backup/" HRN_STANZA "/backup.info"),
-                cipherInfoNewStore(hrnHostCipherType(), hrnHostCipherPass()));
+                cipherInfoNewP(hrnHostCipherType(), hrnHostCipherPass()));
             TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 1, "backup total = 1");
 
             TEST_HOST_BR(repo, CFGCMD_BACKUP, .option = "--type=full --backup-standby --repo1-retention-full=1 --no-expire-auto");
@@ -209,7 +209,7 @@ testRun(void)
             // Expire was disabled so the backup total has increased
             infoBackup = infoBackupLoadFile(
                 hrnHostRepo1Storage(repo), STRDEF("backup/" HRN_STANZA "/backup.info"),
-                cipherInfoNewStore(hrnHostCipherType(), hrnHostCipherPass()));
+                cipherInfoNewP(hrnHostCipherType(), hrnHostCipherPass()));
             TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup total = 2");
 
             // Now force an expire
@@ -218,7 +218,7 @@ testRun(void)
             // Backup has been expired
             infoBackup = infoBackupLoadFile(
                 hrnHostRepo1Storage(repo), STRDEF("backup/" HRN_STANZA "/backup.info"),
-                cipherInfoNewStore(hrnHostCipherType(), hrnHostCipherPass()));
+                cipherInfoNewP(hrnHostCipherType(), hrnHostCipherPass()));
             TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 1, "backup total = 1");
 
             // Stop the standby since restores to primary will break it

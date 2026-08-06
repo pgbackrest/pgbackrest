@@ -437,7 +437,7 @@ Helper functions
 CipherType hrnHostCipherType(void);
 
 // Cipher Passphrase
-const String *hrnHostCipherPass(void);
+const Buffer *hrnHostCipherPass(void);
 
 // Compress Type
 CompressType hrnHostCompressType(void);

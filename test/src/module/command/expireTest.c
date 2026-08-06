@@ -386,7 +386,7 @@ testRun(void)
 
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get backup.info");
 
         // Put some files in the backup directories
@@ -478,7 +478,7 @@ testRun(void)
             ",\"db-version\":\"9.4\"}");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get backup.info");
 
         // Committed backup (in backup.info) and an older orphan backup that is not in backup.info and has no manifest copy
@@ -646,7 +646,7 @@ testRun(void)
             ",\"db-version\":\"10\"}\n");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get backup.info");
 
         HRN_INFO_PUT(
@@ -888,13 +888,13 @@ testRun(void)
             "archive sub path repo1 not removed");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get backup.info repo2");
         TEST_RESULT_BOOL(
             strLstExists(infoBackupDataLabelList(infoBackup, NULL), STRDEF("20181119-152138F")), false,
             "backup removed from repo2");
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get backup.info repo1");
         TEST_RESULT_BOOL(
             strLstExists(infoBackupDataLabelList(infoBackup, NULL), STRDEF("20181119-152138F")), true, "backup exists repo1");
@@ -1128,7 +1128,7 @@ testRun(void)
             "P00   INFO: repo2: 10-2 no archive to remove");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "repo1: get backup.info");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "repo1: backup.info updated on disk");
         TEST_RESULT_STRLST_Z(
@@ -1136,7 +1136,7 @@ testRun(void)
             "20181119-152900F\n20181119-152900F_20181119-152500I\n", "repo1: remaining current backups correct");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "repo2: get backup.info");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 4, "repo2: backup.info updated on disk");
         TEST_RESULT_STRLST_Z(
@@ -1259,7 +1259,7 @@ testRun(void)
             ",\"db-version\":\"10\"}\n");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get backup.info");
 
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 5, "9.4-1", "0000000100000000");
@@ -1342,7 +1342,7 @@ testRun(void)
             ",\"db-version\":\"10\"}\n");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get backup.info");
 
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BACKUP_MANIFEST_FILE);
@@ -1606,7 +1606,7 @@ testRun(void)
             ",\"db-version\":\"10\"}\n");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get backup.info");
 
         HRN_INFO_PUT(
@@ -1675,7 +1675,7 @@ testRun(void)
             ",\"db-version\":\"10\"}\n");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get backup.info");
 
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "9.4-1", "0000000100000000");
@@ -2071,7 +2071,7 @@ testRun(void)
 
         InfoBackup *infoBackup = NULL;
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get backup.info");
 
         // Create "latest" symlink
@@ -2310,7 +2310,7 @@ testRun(void)
 
         // Load the backup info. Do not store a manifest file for the adhoc backup for code coverage
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "get backup.info");
 
         HRN_STORAGE_PATH_CREATE(
@@ -2721,7 +2721,7 @@ testRun(void)
         // Expire oldest from backup.info only, leaving the backup and archives on disk then save backup.info without oldest backup
         TEST_RESULT_UINT(expireTimeBasedBackup(infoBackup, (time_t)(timeNow - (25 * SEC_PER_DAY)), 0), 1, "expire oldest backup");
         TEST_RESULT_VOID(
-            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "save backup.info without oldest");
         TEST_RESULT_LOG("P00   INFO: repo1: expire time-based backup 20181119-152138F");
         TEST_RESULT_VOID(cmdExpire(), "only oldest backup expired");

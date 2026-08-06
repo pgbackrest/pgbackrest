@@ -912,12 +912,12 @@ testRun(void)
         TEST_RESULT_UINT(
             verifyFile(
                 filePathName, 0, NULL, compressTypeGz, fileChecksum, fileSize,
-                cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF("pass"))),
+                cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("pass"))),
             verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
             verifyFile(
                 filePathName, 0, NULL, compressTypeGz, bufNewDecode(encodingHex, STRDEF("aa")), fileSize,
-                cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF("pass"))),
+                cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("pass"))),
             verifyChecksumMismatch, "file encrypted compressed checksum mismatch");
     }
 

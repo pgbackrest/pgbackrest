@@ -1970,7 +1970,7 @@ testRun(void)
         Manifest *manifest = NULL;
 
         TEST_ERROR(
-            manifestLoadFile(storageTest, BACKUP_MANIFEST_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)), FileMissingError,
+            manifestLoadFile(storageTest, BACKUP_MANIFEST_FILE_STR, cipherInfoNewNone()), FileMissingError,
             "unable to load backup manifest file '" TEST_PATH "/backup.manifest' or '" TEST_PATH "/backup.manifest.copy':\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/backup.manifest' for read\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/backup.manifest.copy' for read");
@@ -2035,7 +2035,7 @@ testRun(void)
 
         HRN_INFO_PUT(storageTest, BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_MANIFEST_CONTENT, .comment = "write manifest copy");
         TEST_ASSIGN(
-            manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherInfoNewStore(cipherTypeNone, NULL)),
+            manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherInfoNewNone()),
             "load copy");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check file loaded");
         TEST_RESULT_STR_Z(manifestData(manifest)->backrestVersion, PROJECT_VERSION, "check backrest version");
@@ -2044,7 +2044,7 @@ testRun(void)
 
         HRN_INFO_PUT(storageTest, BACKUP_MANIFEST_FILE, TEST_MANIFEST_CONTENT, .comment = "write main manifest");
         TEST_ASSIGN(
-            manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherInfoNewStore(cipherTypeNone, NULL)),
+            manifest, manifestLoadFile(storageTest, STRDEF(BACKUP_MANIFEST_FILE), cipherInfoNewNone()),
             "load main");
         TEST_RESULT_UINT(manifestData(manifest)->pgSystemId, 1000000000000000094, "check file loaded");
 

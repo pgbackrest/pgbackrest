@@ -311,7 +311,7 @@ testRun(void)
         TEST_ERROR(
             restoreFile(
                 strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, compressTypeGz,
-                0, false, false, false, cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF("badpass")), NULL, fileList),
+                0, false, false, false, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("badpass")), NULL, fileList),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
             " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -2308,7 +2308,7 @@ testRun(void)
         // Read the manifest, set a cipher passphrase and store it to the encrypted repo
         Manifest *manifestEncrypted = manifestLoadFile(
             storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE),
-            cipherInfoNewStore(cipherTypeNone, NULL));
+            cipherInfoNewNone());
         manifestCipherSubPassSet(manifestEncrypted, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE));
 
         // Open file for write
@@ -2321,7 +2321,7 @@ testRun(void)
         #define TEST_CIPHER_PASS_MANIFEST "backpass"
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(write), cipherModeEncrypt,
-            cipherInfoNewStore(cfgOptionIdxStrId(cfgOptRepoCipherType, 1), STRDEF(TEST_CIPHER_PASS_MANIFEST)));
+            cipherInfoNewP(cfgOptionIdxStrId(cfgOptRepoCipherType, 1), BUFSTRDEF(TEST_CIPHER_PASS_MANIFEST)));
         manifestSave(manifestEncrypted, write);
 
         // Write backup.info to the encrypted repo
@@ -2333,7 +2333,7 @@ testRun(void)
         InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_11, 6569239123849665679, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE));
         infoArchiveSaveFile(
             infoArchive, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR,
-            cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)));
+            cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)));
 
         TEST_RESULT_VOID(hrnCmdRestore(), "successful restore");
 
@@ -2379,7 +2379,7 @@ testRun(void)
         // Store archive.info to repo1 - repo1 will be selected because of the priority order
         infoArchive = infoArchiveNew(PG_VERSION_11, 6569239123849665679, NULL);
         infoArchiveSaveFile(
-            infoArchive, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL));
+            infoArchive, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherInfoNewNone());
 
         hrnCfgArgRawZ(argList, cfgOptTargetTimeline, "0xff");
         HRN_CFG_LOAD(cfgCmdRestore, argList);

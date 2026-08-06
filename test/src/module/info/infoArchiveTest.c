@@ -144,7 +144,7 @@ testRun(void)
         TEST_TITLE("load archive info file - error");
 
         TEST_ERROR(
-            infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherInfoNewStore(cipherTypeNone, NULL)), FileMissingError,
+            infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherInfoNewNone()), FileMissingError,
             "unable to load info file '" TEST_PATH "/archive.info' or '" TEST_PATH "/archive.info.copy':\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/archive.info' for read\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/archive.info.copy' for read\n"
@@ -158,17 +158,17 @@ testRun(void)
 
         InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_10, 6569239123849665999, NULL);
         TEST_RESULT_VOID(
-            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherInfoNewNone()),
             "save archive info");
 
         TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherInfoNewNone()),
             "load main");
         TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
 
         HRN_STORAGE_REMOVE(storageTest, INFO_ARCHIVE_FILE, .errorOnMissing = true, .comment = "remove main so only copy exists");
         TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherInfoNewNone()),
             "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
     }

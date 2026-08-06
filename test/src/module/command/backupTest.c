@@ -430,9 +430,9 @@ testBackupValidate(const Storage *const storage, const String *const path, const
         // -------------------------------------------------------------------------------------------------------------------------
         const InfoBackup *const infoBackup = infoBackupLoadFile(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR,
-            cipherInfoNewStore(
+            cipherInfoNewP(
                 param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-                param.cipherPass == NULL ? NULL : STR(param.cipherPass)));
+                param.cipherPass == NULL ? NULL : BUFSTRZ(param.cipherPass)));
         Manifest *manifest = manifestLoadFile(
             storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)),
             cipherInfoNewP(
@@ -1331,7 +1331,7 @@ testRun(void)
                     blockIncrNew(
                         3, 3, 8, 2, 4, 5, NULL, compressFilterP(compressTypeGz, 1, .raw = true),
                         cipherBlockNewP(
-                            cipherModeEncrypt, cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS)), .raw = true)))),
+                            cipherModeEncrypt, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)), .raw = true)))),
             "block incr pack");
     }
 

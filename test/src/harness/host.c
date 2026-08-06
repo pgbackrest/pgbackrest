@@ -83,7 +83,7 @@ static struct HrnHostLocal
     StringId storage;                                               // Storage type
     CompressType compressType;                                      // Compress type
     CipherType cipherType;                                          // Cipher type
-    const String *cipherPass;                                       // Cipher passphrase
+    const Buffer *cipherPass;                                       // Cipher passphrase
     unsigned int repoTotal;                                         // Repository total
     unsigned int restoreTotal;                                      // Restore counter used to name spool path
     bool tls;                                                       // Use TLS instead of SSH?
@@ -708,7 +708,7 @@ hrnHostConfig(HrnHost *const this)
             if (hrnHostLocal.cipherType != cipherTypeNone)
             {
                 strCatFmt(config, "repo1-cipher-type=%s\n", zNewStrId(hrnHostLocal.cipherType));
-                strCatFmt(config, "repo1-cipher-pass=%s\n", strZ(hrnHostLocal.cipherPass));
+                strCatFmt(config, "repo1-cipher-pass=%s\n", strZ(strNewBuf(hrnHostLocal.cipherPass)));
             }
 
             if (hrnHostLocal.bundle)
@@ -1037,11 +1037,11 @@ hrnHostCipherType(void)
     FUNCTION_HARNESS_RETURN(STRING_ID, hrnHostLocal.cipherType);
 }
 
-const String *
+const Buffer *
 hrnHostCipherPass(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RETURN(UINT, hrnHostLocal.cipherPass);
+    FUNCTION_HARNESS_RETURN(BUFFER, hrnHostLocal.cipherPass);
 }
 
 CompressType
@@ -1236,7 +1236,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         hrnHostLocal.storage = strIdFromZ(testDef->stg);
         hrnHostLocal.compressType = compressTypeEnum(strIdFromZ(testDef->cmp));
         hrnHostLocal.cipherType = testDef->enc ? cipherTypeAes256Cbc : cipherTypeNone;
-        hrnHostLocal.cipherPass = testDef->enc ? strNewZ(HRN_CIPHER_PASSPHRASE) : NULL;
+        hrnHostLocal.cipherPass = testDef->enc ? bufDup(BUFSTRZ(HRN_CIPHER_PASSPHRASE)) : NULL;
         hrnHostLocal.repoTotal = testDef->rt;
         hrnHostLocal.tls = testDef->tls;
         hrnHostLocal.bundle = testDef->bnd;

@@ -86,7 +86,7 @@ testRun(void)
         // Build from a duplicate to show the copy carries the type, digest, and pass of the original
         TEST_RESULT_UINT(cipherInfoType(cipherInfoDup(cipherInfoNewNone())), cipherTypeNone, "dup of none");
 
-        const CipherInfo *const cipherInfo = cipherInfoDup(cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF(TEST_PASS)));
+        const CipherInfo *const cipherInfo = cipherInfoDup(cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_PASS)));
 
         TEST_RESULT_UINT(cipherInfoDigest(cipherInfo), hashTypeSha1, "dup digest");
 
@@ -311,12 +311,12 @@ testRun(void)
 
         TEST_RESULT_PTR(
             cipherBlockFilterGroupAdd(
-                filterGroup, cipherModeEncrypt, cipherInfoNewStore(cipherTypeNone, NULL)), filterGroup, "   no filter add");
+                filterGroup, cipherModeEncrypt, cipherInfoNewNone()), filterGroup, "   no filter add");
         TEST_RESULT_UINT(ioFilterGroupSize(filterGroup), 0, "    check no filter add");
 
         TEST_RESULT_VOID(
             cipherBlockFilterGroupAdd(
-                filterGroup, cipherModeEncrypt, cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF("X"))), "   filter add");
+                filterGroup, cipherModeEncrypt, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("X"))), "   filter add");
         TEST_RESULT_UINT(ioFilterGroupSize(filterGroup), 1, "    check filter add");
     }
 

@@ -5,7 +5,6 @@ Cipher Info
 
 #include "common/crypto/info.h"
 #include "common/debug.h"
-#include "common/encode.h"
 #include "common/log.h"
 
 /***********************************************************************************************************************************
@@ -45,27 +44,6 @@ cipherInfoNew(const CipherType type, const Buffer *const pass, const CipherInfoN
     OBJ_NEW_END();
 
     FUNCTION_TEST_RETURN(CIPHER_INFO, this);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN CipherInfo *
-cipherInfoNewStore(const CipherType type, const String *const pass)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_ID, type);
-        FUNCTION_TEST_PARAM(STRING, pass);                          // Use FUNCTION_TEST so pass is not logged
-    FUNCTION_TEST_END();
-
-    ASSERT((type == cipherTypeNone && pass == NULL) || (type != cipherTypeNone && pass != NULL));
-
-    CipherInfo *result;
-
-    if (type == cipherTypeNone)
-        result = cipherInfoNewNone();
-    else
-        result = cipherInfoNewP(type, BUFSTR(pass));
-
-    FUNCTION_TEST_RETURN(CIPHER_INFO, result);
 }
 
 /**********************************************************************************************************************************/

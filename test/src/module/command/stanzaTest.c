@@ -134,7 +134,7 @@ testRun(void)
         TEST_ASSIGN(
             infoArchive,
             infoArchiveLoadFile(
-                storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF("12345678"))),
+                storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
             "load archive info from encrypted repo2");
         TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "cipher sub set");
 
@@ -142,7 +142,7 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupLoadFile(
-                storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF("12345678"))),
+                storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
             "load backup info from encrypted repo2");
         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "cipher sub set");
 
@@ -153,12 +153,12 @@ testRun(void)
         // Confirm non-encrypted repo created successfully
         TEST_ASSIGN(
             infoArchive,
-            infoArchiveLoadFile(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoArchiveLoadFile(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cipherInfoNewNone()),
             "load archive info from repo3");
         TEST_RESULT_PTR(infoArchiveCipherPass(infoArchive), NULL, "archive cipher sub not set on non-encrypted repo");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepoIdx(2), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeNone, NULL)),
+            infoBackup, infoBackupLoadFile(storageRepoIdx(2), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
             "load backup info from repo3");
         TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "backup cipher sub not set on non-encrypted repo");
 
@@ -166,14 +166,14 @@ testRun(void)
         TEST_ASSIGN(
             infoArchive,
             infoArchiveLoadFile(
-                storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF("87654321"))),
+                storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load archive info from encrypted repo4");
         TEST_RESULT_PTR_NE(infoArchiveCipherPass(infoArchive), NULL, "cipher sub set");
 
         TEST_ASSIGN(
             infoBackup,
             infoBackupLoadFile(
-                storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF("87654321"))),
+                storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load backup info from encrypted repo4");
         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "cipher sub set");
 
