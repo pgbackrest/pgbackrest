@@ -9,6 +9,7 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct HrnHost HrnHost;
 
+#include "common/crypto/info.h"
 #include "common/type/object.h"
 #include "common/type/string.h"
 #include "postgres/client.h"
@@ -433,11 +434,8 @@ hrnHostSqlCommit(HrnHost *const this)
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
-// Cipher Type
-CipherType hrnHostCipherType(void);
-
-// Cipher Passphrase
-const Buffer *hrnHostCipherPass(void);
+// Cipher Info
+const CipherInfo *hrnHostCipherInfo(void);
 
 // Compress Type
 CompressType hrnHostCompressType(void);
