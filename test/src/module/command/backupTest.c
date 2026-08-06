@@ -4092,7 +4092,8 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   INFO: last backup label = 20191108-080000F_20191110-153320D, version = " PROJECT_VERSION "\n"
-                "P00   WARN: incr backup cannot alter compress-type option to 'bz2', reset to value in 20191108-080000F_20191110-153320D\n"
+                "P00   WARN: incr backup cannot alter compress-type option to 'bz2', reset to value in"
+                " 20191108-080000F_20191110-153320D\n"
                 "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC8F1000000000, lsn = 5dc8f10/0\n"
                 "P00   INFO: check archive for prior segment 0000000105DC8F0F000007FF\n"

@@ -229,7 +229,7 @@ manifestNewBuild(
             // Remove unlogged relations from the manifest. This can't be done during the initial build because of the requirement
             // to check for _init files which will sort after the vast majority of the relation files. We could check storage for
             // each _init file but that would be expensive.
-            // -------------------------------------------------------------------------------------------------------------------------
+            // ---------------------------------------------------------------------------------------------------------------------
             RegExp *relationExp = regExpNew(strNewFmt("^" DB_PATH_EXP "/" RELATION_EXP "$", strZ(buildData.tablespaceId)));
             unsigned int fileIdx = 0;
             char lastRelationFileId[21] = "";                   // Large enough for a 64-bit unsigned integer
