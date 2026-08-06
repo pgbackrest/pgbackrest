@@ -90,13 +90,17 @@ testRun(void)
                 cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
             "infoArchiveNew() - cipher sub");
 
+        const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
+
         contentSave = bufNew(0);
 
-        TEST_RESULT_VOID(infoArchiveSave(info, ioBufferWriteNew(contentSave)), "save new with cipher");
+        TEST_RESULT_VOID(
+            infoArchiveSave(info, infoWriteNew(contentSave, REPOSITORY_FORMAT_DEFAULT, cipherSpec)), "save new with cipher");
+        TEST_RESULT_BOOL(
+            strBeginsWithZ(strNewBuf(contentSave), "PGBR"), false, "no header before the format that added it");
 
         TEST_ASSIGN(
-            info, infoArchiveNewLoad(ioBufferReadNew(contentSave), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
-            "load encrypted archive info");
+            info, infoArchiveNewLoad(ioBufferReadNew(contentSave), cipherSpec), "load encrypted archive info");
         TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), infoArchivePg(info), "infoPg set");
         TEST_RESULT_STR_Z(

@@ -1037,9 +1037,9 @@ manifestLoadFileCallback(void *const data, const unsigned int try)
             // Construct filename based on try
             const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
 
-            // Attempt to load the file
+            // Attempt to load the file. Decryption is added during the load so that everything an info file is read with is in one
+            // place, even though a manifest carries no header.
             IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-            cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, loadData->cipherSpec);
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {

@@ -11,7 +11,8 @@ Stanza Commands Handler
 Functions
 ***********************************************************************************************************************************/
 // Generate cipher spec with a new pass, none when the type is none
-FN_EXTERN CipherSpec *cipherSpecGen(CipherType cipherType);
+// Generate a sub pass for a file at this format, which sets the digest since that is what will derive it when it is read back
+FN_EXTERN CipherSpec *cipherSpecGen(CipherType cipherType, unsigned int format);
 
 // Validate and return database information
 FN_EXTERN PgControl pgValidate(void);

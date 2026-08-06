@@ -88,7 +88,10 @@ testRun(void)
 
         const CipherSpec *const cipherSpec = cipherSpecDup(cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_PASS)));
 
-        TEST_RESULT_UINT(cipherSpecDigest(cipherSpec), hashTypeSha1, "dup digest");
+        TEST_RESULT_UINT(cipherSpecDigest(cipherSpec), hashTypeSha256, "dup default digest");
+        TEST_RESULT_UINT(
+            cipherSpecDigest(cipherSpecDup(cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_PASS), .digest = hashTypeSha1))),
+            hashTypeSha1, "dup digest");
 
         // A pack carries nothing but the type when there is no cipher
         PackWrite *const packWrite = pckWriteNewP();

@@ -239,7 +239,7 @@ cmdBackup(void)
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
-            manifestCipherSpecSubSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType)));
+            manifestCipherSpecSubSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType), manifestFormat(manifest)));
 
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))

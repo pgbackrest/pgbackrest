@@ -34,7 +34,7 @@ cipherSpecNew(const CipherType type, const Buffer *const pass, const CipherSpecN
         if (this->pub.type != cipherTypeNone)
         {
             if (param.digest == 0)
-                this->pub.digest = hashTypeSha1;
+                this->pub.digest = hashTypeSha256;
             else
                 this->pub.digest = param.digest;
 
@@ -88,7 +88,7 @@ cipherSpecDup(const CipherSpec *const this)
     if (cipherSpecType(this) == cipherTypeNone)
         result = cipherSpecNewNone();
     else
-        result = cipherSpecNewP(cipherSpecType(this), cipherSpecPass(this));
+        result = cipherSpecNewP(cipherSpecType(this), cipherSpecPass(this), .digest = cipherSpecDigest(this));
 
     FUNCTION_TEST_RETURN(CIPHER_SPEC, result);
 }

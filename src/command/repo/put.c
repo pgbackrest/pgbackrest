@@ -14,6 +14,7 @@ Repository Put Command
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "info/info.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -50,8 +51,12 @@ storagePutProcess(IoRead *source)
             {
                 // Check for a passphrase parameter, otherwise use the repo cipher spec
                 const String *const cipherPassParam = cfgOptionStrNull(cfgOptCipherPass);
-                const CipherSpec *const cipherSpec =
-                    cipherPassParam == NULL ? cfgCipherSpec() : cipherSpecNewP(repoCipherType, BUFSTR(cipherPassParam));
+                // Derive as a file with no header is derived, since that is what this command writes. An info file at format 6
+                // or above carries a header that says otherwise and is not written here.
+                const CipherSpec *const cipherSpec = cipherSpecNewP(
+                    repoCipherType,
+                    cipherPassParam == NULL ? cipherSpecPass(cfgCipherSpec()) : BUFSTR(cipherPassParam),
+                    .digest = infoFormatDigest(REPOSITORY_FORMAT_5));
 
                 // Add encryption filter
                 cipherBlockFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), cipherModeEncrypt, cipherSpec);

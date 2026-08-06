@@ -25,4 +25,7 @@ Buffer *harnessInfoChecksum(const String *info);
 Buffer *harnessInfoChecksumFormat(unsigned int format, const String *info);
 Buffer *harnessInfoChecksumZ(const char *info);
 
+// Encrypt content the way a file that carries no header is stored, e.g. a manifest
+Buffer *harnessInfoEncrypt(const Buffer *content, const CipherSpec *cipherSpec);
+
 void harnessInfoLoadNewCallback(void *callbackData, const String *section, const String *key, JsonRead *json);

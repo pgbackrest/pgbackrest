@@ -13,6 +13,14 @@ Filter type constant
 #define CIPHER_BLOCK_FILTER_TYPE                                   STRID5("cipher-blk", 0x16c16e45441230)
 
 /***********************************************************************************************************************************
+Magic constant for salted encrypt, written before the salt unless the cipher is raw. Only salted encrypt is done here, but this
+constant is required for compatibility with the openssl command-line tool. It is exposed so that whatever puts something of its own
+in front of the salt can tell the two apart and report a file that has neither the way this filter would.
+***********************************************************************************************************************************/
+#define CIPHER_BLOCK_MAGIC                                          "Salted__"
+#define CIPHER_BLOCK_MAGIC_SIZE                                     (sizeof(CIPHER_BLOCK_MAGIC) - 1)
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 typedef struct CipherBlockNewParam

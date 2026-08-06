@@ -17,6 +17,7 @@ Repository Get Command
 #include "config/load.h"
 #include "storage/helper.h"
 
+#include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 
@@ -44,9 +45,8 @@ storageGetProcess(IoWrite *const destination)
         // Is path valid for repo?
         file = repoPathIsValid(file);
 
-        // Create new file read
-        IoRead *const source = storageReadIo(
-            storageNewReadP(storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing)));
+        const CipherSpec *cipherSpecFile = NULL;                    // Cipher spec the file is encrypted with
+        unsigned int formatInfo = 0;                                // Format when the file is an info file, else zero
 
         // Add decryption if needed
         if (!cfgOptionBool(cfgOptRaw))
@@ -55,10 +55,14 @@ storageGetProcess(IoWrite *const destination)
 
             if (repoCipherType != cipherTypeNone)
             {
-                // Check for a passphrase parameter
+                // Check for a passphrase parameter. Derive it as a file with no header is derived, since a file put here with a
+                // passphrase of its own was written the same way.
                 const String *const cipherPassParam = cfgOptionStrNull(cfgOptCipherPass);
                 const CipherSpec *cipherSpec =
-                    cipherPassParam == NULL ? NULL : cipherSpecNewP(repoCipherType, BUFSTR(cipherPassParam));
+                    cipherPassParam == NULL ?
+                        NULL :
+                        cipherSpecNewP(
+                            repoCipherType, BUFSTR(cipherPassParam), .digest = infoFormatDigest(REPOSITORY_FORMAT_5));
 
                 // If not passed as a parameter then determine the passphrase using the following pattern:
                 //
@@ -103,6 +107,9 @@ storageGetProcess(IoWrite *const destination)
                                     cipherSpec);
                                 cipherSpec = infoArchiveCipherSpec(info);
                             }
+                            // Else the file is the archive info, which is loaded to find the format it was written at
+                            else
+                                formatInfo = infoArchiveFormat(infoArchiveLoadFile(storageRepo(), file, cipherSpec));
                         }
 
                         // Backup path
@@ -131,6 +138,9 @@ storageGetProcess(IoWrite *const destination)
                                     cipherSpec = manifestCipherSpecSub(manifest);
                                 }
                             }
+                            // Else the file is the backup info, which is loaded to find the format it was written at
+                            else
+                                formatInfo = infoBackupFormat(infoBackupLoadFile(storageRepo(), file, cipherSpec));
                         }
                     }
                 }
@@ -139,9 +149,29 @@ storageGetProcess(IoWrite *const destination)
                 if (cipherSpec == NULL)
                     THROW_FMT(OptionInvalidValueError, "unable to determine cipher passphrase for '%s'", strZ(file));
 
-                // Add encryption filter
-                cipherBlockFilterGroupAdd(ioReadFilterGroup(source), cipherModeDecrypt, cipherSpec);
+                // An info file is read from behind the eight bytes in front of its salt, which are the header when it has one and
+                // the magic the cipher writes when it does not. The format the load found says what the pass derives with.
+                if (formatInfo != 0)
+                {
+                    cipherSpec = cipherSpecNewP(
+                        cipherSpecType(cipherSpec), cipherSpecPass(cipherSpec), .digest = infoFormatDigest(formatInfo));
+                }
+
+                cipherSpecFile = cipherSpec;
             }
+        }
+
+        // Create new file read, starting past the header when the file is an info file
+        IoRead *const source = storageReadIo(
+            storageNewReadP(
+                storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing),
+                .offset = formatInfo != 0 ? CIPHER_BLOCK_MAGIC_SIZE : 0));
+
+        // Add decryption filter
+        if (cipherSpecFile != NULL)
+        {
+            ioFilterGroupAdd(
+                ioReadFilterGroup(source), cipherBlockNewP(cipherModeDecrypt, cipherSpecFile, .raw = formatInfo != 0));
         }
 
         // Open source

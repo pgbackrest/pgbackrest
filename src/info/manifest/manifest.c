@@ -705,7 +705,7 @@ manifestNewLoad(IoRead *const read, const CipherSpec *const cipherSpec)
         }
         MEM_CONTEXT_END();
 
-        this->pub.info = infoNewLoad(read, cipherSpec, manifestLoadCallback, &loadData);
+        this->pub.info = infoNewLoadP(read, cipherSpec, manifestLoadCallback, &loadData);
         this->pub.data.backrestVersion = infoBackrestVersion(this->pub.info);
 
         // Add the label to the reference list in case the manifest was created before 2.42 when the explicit reference list was

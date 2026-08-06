@@ -12,6 +12,10 @@ than an error.
 The pass is a buffer rather than a string so an absent pass is simply NULL, which saves callers from guarding a conversion that
 cannot represent one. It is copied into the object, so the caller is free to release whatever it was read from.
 
+The digest defaults to SHA-256, so a caller that has no reason to choose gets the digest new work should use. Deriving with SHA-1
+is what every repository did before repository format 6 and is now specified explicitly, which also marks the places that are
+waiting on a way to tell an old pass from a new one.
+
 There is no digest or pass when the type is none, and the pass is never logged.
 ***********************************************************************************************************************************/
 #ifndef COMMON_CRYPTO_SPEC_H
@@ -34,7 +38,7 @@ Constructors
 typedef struct CipherSpecNewParam
 {
     VAR_PARAM_HEADER;
-    HashType digest;                                                // Digest to derive the key with instead of the default
+    HashType digest;                                                // Digest to derive the key with instead of SHA-256
 } CipherSpecNewParam;
 
 #define cipherSpecNewP(type, pass, ...)                                                                                            \

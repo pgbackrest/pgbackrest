@@ -16,10 +16,11 @@ Stanza Commands Handler
 
 /**********************************************************************************************************************************/
 FN_EXTERN CipherSpec *
-cipherSpecGen(const CipherType cipherType)
+cipherSpecGen(const CipherType cipherType, const unsigned int format)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_ID, cipherType);
+        FUNCTION_TEST_PARAM(UINT, format);
     FUNCTION_TEST_END();
 
     CipherSpec *result;
@@ -33,8 +34,11 @@ cipherSpecGen(const CipherType cipherType)
             uint8_t buffer[48];                                     // 48 is the amount of entropy needed to get a 64 base key
             cryptoRandomBytes(buffer, sizeof(buffer));
 
-            // The pass is the encoded text rather than the bytes it encodes, so it is stored and derived from as that text
-            result = cipherSpecNewP(cipherType, BUFSTR(strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)))));
+            // The pass is the encoded text rather than the bytes it encodes, so it is stored and derived from as that text. The
+            // digest is the one the file it will be stored in is read with, since that is what will derive it later.
+            result = cipherSpecNewP(
+                cipherType, BUFSTR(strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)))),
+                .digest = infoFormatDigest(format));
             cipherSpecMove(result, memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();

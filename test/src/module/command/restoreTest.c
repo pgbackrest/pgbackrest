@@ -311,7 +311,8 @@ testRun(void)
         TEST_ERROR(
             restoreFile(
                 strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, compressTypeGz,
-                0, false, false, false, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("badpass")), NULL, fileList),
+                0, false, false, false, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("badpass"), .digest = hashTypeSha1), NULL,
+                fileList),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
             " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -2321,7 +2322,8 @@ testRun(void)
         #define TEST_CIPHER_PASS_MANIFEST "backpass"
         cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(write), cipherModeEncrypt,
-            cipherSpecNewP(cfgOptionIdxStrId(cfgOptRepoCipherType, 1), BUFSTRDEF(TEST_CIPHER_PASS_MANIFEST)));
+            cipherSpecNewP(
+                cfgOptionIdxStrId(cfgOptRepoCipherType, 1), BUFSTRDEF(TEST_CIPHER_PASS_MANIFEST), .digest = hashTypeSha1));
         manifestSave(manifestEncrypted, write);
 
         // Write backup.info to the encrypted repo

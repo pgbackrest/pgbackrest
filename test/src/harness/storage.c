@@ -73,8 +73,12 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
         if (param.cipherPass == NULL)
             param.cipherPass = TEST_CIPHER_PASS;
 
+        // Derive with SHA-1 since the harness reads and writes files the way a repository at the format these tests build stores
+        // them, which is the format that had no header to say anything else
         ioFilterGroupAdd(
-            filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(param.cipherType, BUFSTRZ(param.cipherPass))));
+            filterGroup,
+            cipherBlockNewP(
+                cipherModeDecrypt, cipherSpecNewP(param.cipherType, BUFSTRZ(param.cipherPass), .digest = hashTypeSha1)));
 
         strCatFmt(filter, "enc[%s,%s] ", zNewStrId(param.cipherType), param.cipherPass);
     }
@@ -402,7 +406,9 @@ hrnStoragePut(
             param.cipherPass = TEST_CIPHER_PASS;
 
         ioFilterGroupAdd(
-            filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(param.cipherType, BUFSTRZ(param.cipherPass))));
+            filterGroup,
+            cipherBlockNewP(
+                cipherModeEncrypt, cipherSpecNewP(param.cipherType, BUFSTRZ(param.cipherPass), .digest = hashTypeSha1)));
     }
 
     // Add file name

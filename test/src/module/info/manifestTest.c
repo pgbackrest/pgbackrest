@@ -1476,7 +1476,10 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(
-                manifest, manifestNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
+                manifest,
+                manifestNewLoad(
+                    ioBufferReadNew(harnessInfoEncrypt(contentLoad, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")))),
+                    cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
                 "load manifest");
             TEST_RESULT_VOID(manifestMove(manifest, memContextPrior()), "move manifest");
         }

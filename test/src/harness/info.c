@@ -6,8 +6,10 @@ Harness for Loading Test Configurations
 #include <string.h>
 
 #include "common/assert.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 #include "common/io/filter/filter.h"
 #include "common/type/json.h"
 #include "info/info.h"
@@ -114,6 +116,29 @@ harnessInfoChecksum(const String *const info)
     ASSERT(info != NULL);
 
     FUNCTION_HARNESS_RETURN(BUFFER, harnessInfoChecksumFormat(REPOSITORY_FORMAT_DEFAULT, info));
+}
+
+/**********************************************************************************************************************************/
+Buffer *
+harnessInfoEncrypt(const Buffer *const content, const CipherSpec *const cipherSpec)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(BUFFER, content);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpec);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(content != NULL);
+    ASSERT(cipherSpec != NULL);
+
+    Buffer *const result = bufNew(0);
+    IoWrite *const write = ioBufferWriteNew(result);
+    ioFilterGroupAdd(ioWriteFilterGroup(write), cipherBlockNewP(cipherModeEncrypt, cipherSpec));
+
+    ioWriteOpen(write);
+    ioWrite(write, content);
+    ioWriteClose(write);
+
+    FUNCTION_HARNESS_RETURN(BUFFER, result);
 }
 
 /***********************************************************************************************************************************
