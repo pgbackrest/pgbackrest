@@ -238,6 +238,14 @@ backupResumeFind(const Manifest *const manifest, const CipherSpec *const cipherS
                                         "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
                                         strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
                                 }
+                                // Check repository format. The format applies to an entire backup, so files written at another
+                                // format cannot be reused no matter how little else has changed.
+                                else if (manifestFormat(manifestResume) != manifestFormat(manifest))
+                                {
+                                    reason = zNewFmt(
+                                        "new repository format %u does not match resumable repository format %u",
+                                        manifestFormat(manifest), manifestFormat(manifestResume));
+                                }
                                 // Check backup type because new backup label must be the same type as resume backup label
                                 else if (manifestResumeData->backupType != cfgOptionStrId(cfgOptType))
                                 {

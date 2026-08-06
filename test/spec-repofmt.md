@@ -30,7 +30,9 @@
 
 - **Readers trust the per-file stored format.** Every manifest and info file already records `backrest-format`; the value is stored on load and written back out on save rather than compared against a constant (`src/info/info.c:209`).
 - **The info file format is the write target.** `backup.info` / `archive.info` format determines the format of new WAL and of new backup sets. Individual backups within a stanza may be older formats until they expire.
-- **Backups adopt a new format only at a full backup.** Diff/incr backups inherit the format of their set from the prior manifest (`src/command/backup/incr.c.inc:151`), parallel to the sub-passphrase inheritance beside it, so a backup set is never mixed-format. The full backup is the single adoption boundary for the backup domain.
+- **Backups adopt a new format only at a full backup.** A prior backup is a candidate for diff/incr only if it is at the format new backups are written with (`src/command/backup/incr.c.inc:42`), alongside the existing checks that a diff's prior must be full and that the prior must come from the same cluster. After an upgrade no prior matches, so the backup is changed to full at the new format by the path that already handles having no prior at all. The full backup is the single adoption boundary for the backup domain.
+- **A backup set is never mixed-format, and a backup never references a file at another format.** Refusing the diff/incr rather than continuing the set at its original format is the stricter of the two options, and deliberately so. Backup is complex enough that a format applying to some files in a manifest and not others would have to be reasoned about at every point that touches a file, in backup and again in restore, verify, and expire. Refusing keeps format a property of a whole backup set that downstream code can read once. The cost is one extra full backup per stanza at migration, paid once.
+- **A resumable backup at another format is not resumable** (`src/command/backup/resume.c.inc:243`). Its files were written at the format the aborted backup ran at, so reusing them would mix formats within the new backup by the same route the diff/incr rule closes. This joins the version, type, prior label, and compression checks already there, and like them it discards the resumable backup with a warning rather than failing.
 - A backup's entry in `backup:current` records the format its manifest was written with rather than the running binary's format (`src/info/infoBackup.c:475`).
 - Consequence: once the info files are format 6, binaries that only support format 5 cannot read the stanza at all, including its remaining format 5 backups. This is accepted; the info files gate everything.
 
@@ -41,6 +43,7 @@
 - **Downgrade is refused** (`src/command/stanza/upgrade.c:78`). The info files are what stop a version that does not support a format from reading a stanza at all; lowering them would let that version past the gate and into backups and archives it cannot read.
 - The two info files are saved separately, so an upgrade interrupted between them leaves them at different formats. Re-running the upgrade brings the lagging file forward, which is what the version and system id it also carries have always done.
 - Old backup sets remain format 5 until expired; old archive-ids remain format 5 until expired.
+- The first backup after an upgrade is full even when diff or incr was requested, since no prior backup is at the new format. It warns and converts by the same path a stanza with no backups at all takes, so the extra cost of migrating is one full backup per stanza.
 
 ## Errors
 

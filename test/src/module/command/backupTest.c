@@ -1728,6 +1728,7 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
+            manifest->pub.info = infoNew(REPOSITORY_FORMAT_DEFAULT, NULL);
             manifest->pub.data.backupType = backupTypeFull;
             manifest->pub.data.backrestVersion = strNewZ("BOGUS");
         }
@@ -1776,6 +1777,27 @@ testRun(void)
         TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifest->pub.data.backrestVersion = STRDEF(PROJECT_VERSION);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cannot resume when repository format has changed");
+
+        infoFormatSet(manifestResume->pub.info, REPOSITORY_FORMAT_6);
+
+        manifestSave(
+            manifestResume,
+            storageWriteIo(
+                storageNewWriteP(
+                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
+
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20191003-105320F' cannot be resumed:"
+            " new repository format 5 does not match resumable repository format 6");
+
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
+
+        infoFormatSet(manifestResume->pub.info, REPOSITORY_FORMAT_DEFAULT);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when backup labels do not match (resumable is null)");
@@ -2158,6 +2180,30 @@ testRun(void)
         TEST_RESULT_UINT(
             strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1"))), backupCount + 1,
             "new backup repo2");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("diff changed to full when no prior backup is at the repository format");
+
+        // Set log level to warn so only the conversion is logged
+        harnessLogLevelSet(logLevelWarn);
+
+        // Upgrade the format of the repo, which leaves every backup in it at the prior format
+        InfoBackup *infoBackup = infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(1));
+        infoBackupFormatSet(infoBackup, REPOSITORY_FORMAT_6);
+        infoBackupSaveFile(infoBackup, storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(1));
+
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR3");
+
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+        TEST_RESULT_LOG("P00   WARN: no prior backup exists, diff backup has been changed to full");
+
+        // The new full backup adopts the upgraded format
+        infoBackup = infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(1));
+
+        TEST_RESULT_UINT(
+            infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backrestFormat, REPOSITORY_FORMAT_6,
+            "new backup at upgraded format");
 
         // Cleanup
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);

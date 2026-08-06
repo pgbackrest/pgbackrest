@@ -36,6 +36,12 @@ backupBuildIncrPrior(const InfoBackup *const infoBackup)
                 if (infoPg.id != backupPrior.backupPgId)
                     continue;
 
+                // The prior backup must be at the format new backups are written with so that a backup set is never mixed-format.
+                // After the repository format has been upgraded no prior will match and the backup will be changed to full below,
+                // which is the only point where a backup set adopts a new format.
+                if (backupPrior.backrestFormat != infoBackupFormat(infoBackup))
+                    continue;
+
                 // This backup is a candidate for prior
                 backupLabelPrior = strDup(backupPrior.backupLabel);
                 break;
@@ -145,10 +151,6 @@ backupBuildIncr(
 
             // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
             manifestCipherSpecSubSet(manifest, manifestCipherSpecSub(manifestPrior));
-
-            // Set the format from the prior manifest since the entire backup set must be a single format. This means a backup set
-            // continues at the format it started with even after the repository format has been upgraded.
-            infoFormatSet(manifestInfo(manifest), manifestFormat(manifestPrior));
 
             // Incremental was built
             result = true;

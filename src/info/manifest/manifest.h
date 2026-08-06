@@ -236,18 +236,11 @@ typedef struct ManifestPub
     StringList *referenceList;                                      // List of file references
 } ManifestPub;
 
-// Base info
-FN_INLINE_ALWAYS Info *
-manifestInfo(const Manifest *const this)
-{
-    return THIS_PUB(Manifest)->info;
-}
-
 // Repository format
 FN_INLINE_ALWAYS unsigned int
 manifestFormat(const Manifest *const this)
 {
-    return infoFormat(manifestInfo(this));
+    return infoFormat(THIS_PUB(Manifest)->info);
 }
 
 // Get cipher spec for the files this manifest describes, set the pass they are encrypted with
