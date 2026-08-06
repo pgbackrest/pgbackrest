@@ -301,6 +301,94 @@ testRun(void)
 
         TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
         TEST_RESULT_VOID(memContextFree(memContext), "context free");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("large allocations are recycled through the free list");
+
+        // Bucket 0 is always reserved; reserve it for a fixed size, as main() does for ioBufferSize()
+        TEST_RESULT_UINT(memFreeList.bucket[0].size, 0, "first bucket initially unreserved");
+        TEST_RESULT_VOID(memContextFreeListReserve(64 * 1024), "reserve first bucket");
+        TEST_RESULT_UINT(memFreeList.bucket[0].size, sizeof(MemContextAlloc) + 64 * 1024, "reserved bucket size");
+
+        TEST_ASSIGN(memContext, memContextNewP("test-free-list", .allocQty = MEM_CONTEXT_QTY_MAX), "new");
+        memContextKeep();
+        memContextSwitch(memContext);
+
+        // The reserved-size allocation misses the empty reserved bucket, then freeing it retains the block in that bucket
+        uint8_t *const large = memNew(64 * 1024);
+        TEST_RESULT_VOID(memFree(large), "free retains large allocation in reserved bucket");
+        TEST_RESULT_UINT(memFreeList.bucketListSize, 1, "still one bucket");
+
+        // Allocating the same size reuses the retained block
+        TEST_RESULT_PTR(memNew(64 * 1024), large, "reuse retained block of same size");
+
+        // The same size again finds the now-empty bucket and allocates fresh
+        TEST_RESULT_BOOL(memNew(64 * 1024) == large, false, "empty bucket allocates fresh");
+
+        // Each reuse is counted up to a limit so a bucket that stops being reused cannot resist eviction indefinitely
+        for (unsigned int reuseIdx = 0; reuseIdx <= MEM_FREE_LIST_REUSE_MAX; reuseIdx++)
+            memFree(memNew(64 * 1024));
+
+        TEST_RESULT_UINT(memFreeList.bucket[0].reuse, MEM_FREE_LIST_REUSE_MAX, "reuse limited");
+
+        // A different large size does not match the existing bucket and creates a second bucket when freed
+        uint8_t *const largeOther = memNew(128 * 1024);
+        TEST_RESULT_BOOL(largeOther == large, false, "different size allocated fresh");
+        TEST_RESULT_VOID(memFree(largeOther), "free different size");
+        TEST_RESULT_UINT(memFreeList.bucketListSize, 2, "second bucket created");
+
+        // Freeing more same-size blocks than the per-bucket limit returns the extra to the allocator
+        void *fill[MEM_FREE_LIST_BLOCK_MAX + 1];
+
+        for (unsigned int fillIdx = 0; fillIdx <= MEM_FREE_LIST_BLOCK_MAX; fillIdx++)
+            fill[fillIdx] = memNew(96 * 1024);
+
+        for (unsigned int fillIdx = 0; fillIdx <= MEM_FREE_LIST_BLOCK_MAX; fillIdx++)
+            memFree(fill[fillIdx]);
+
+        TEST_RESULT_UINT(memFreeList.bucket[2].blockListSize, MEM_FREE_LIST_BLOCK_MAX, "bucket holds at most the per-bucket limit");
+
+        // Freeing blocks past the retained-memory limit returns them to the allocator
+        void *big[5];
+
+        for (unsigned int bigIdx = 0; bigIdx < 5; bigIdx++)
+            big[bigIdx] = memNew(16 * 1024 * 1024);
+
+        for (unsigned int bigIdx = 0; bigIdx < 5; bigIdx++)
+            memFree(big[bigIdx]);
+
+        TEST_RESULT_BOOL(memFreeList.size <= MEM_FREE_LIST_BYTE_MAX, true, "retained memory within limit");
+
+        // Fill all the bucket slots so a new size must evict a bucket
+        for (unsigned int sizeIdx = 0; memFreeList.bucketListSize < MEM_FREE_LIST_SIZE_MAX; sizeIdx++)
+            memFree(memNew((100 + sizeIdx) * 1024));
+
+        TEST_RESULT_UINT(memFreeList.bucketListSize, MEM_FREE_LIST_SIZE_MAX, "all bucket slots used");
+
+        // No bucket has been reused so all reuses are equal and the first is evicted. The evicted bucket still holds a retained
+        // block, which is returned to the allocator. The reuse of every remaining bucket is decremented.
+        TEST_RESULT_BOOL(memFreeList.bucket[1].blockListSize > 0, true, "bucket to evict has a retained block");
+
+        TEST_RESULT_VOID(memFree(memNew(1024 * 1024)), "new size evicts a bucket");
+        TEST_RESULT_UINT(memFreeList.bucket[1].size, sizeof(MemContextAlloc) + 1024 * 1024, "evicted slot reused for new size");
+        TEST_RESULT_UINT(memFreeList.bucketListSize, MEM_FREE_LIST_SIZE_MAX, "bucket count unchanged");
+        TEST_RESULT_UINT(memFreeList.bucket[2].reuse, 0, "reuse of remaining bucket decremented");
+
+        // The bucket that was just cached has a higher count than the eroded buckets so the next new size evicts a different
+        // bucket rather than stealing the slot back, which would leave the two sizes trading the same slot and never settling
+        TEST_RESULT_VOID(memFree(memNew(2 * 1024 * 1024)), "another new size evicts a different bucket");
+        TEST_RESULT_UINT(memFreeList.bucket[1].size, sizeof(MemContextAlloc) + 1024 * 1024, "just cached bucket survives");
+        TEST_RESULT_UINT(
+            memFreeList.bucket[2].size, sizeof(MemContextAlloc) + 2 * 1024 * 1024, "next slot reused for new size");
+
+        // The reserved size still recycles even when all bucket slots are used
+        uint8_t *const reserved = memNew(64 * 1024);
+        memFree(reserved);
+        TEST_RESULT_PTR(memNew(64 * 1024), reserved, "reserved size recycled even when all buckets full");
+
+        // Freeing the context recycles its remaining live large allocations through the free list
+        TEST_RESULT_VOID(memContextSwitch(memContextTop()), "switch to top");
+        TEST_RESULT_VOID(memContextFree(memContext), "context free recycles large allocations");
     }
 
     // *****************************************************************************************************************************
