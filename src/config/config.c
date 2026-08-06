@@ -1080,35 +1080,35 @@ cfgOptionInvalidate(const ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN const CipherInfo *
-cfgCipherInfoIdx(const unsigned int repoIdx)
+FN_EXTERN const CipherSpec *
+cfgCipherSpecIdx(const unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, repoIdx);
     FUNCTION_TEST_END();
 
-    // Allocate a slot per repo. Each repo has its own cipher type and passphrase so cipher info cannot be shared between them.
-    if (configLocal->cipherInfo == NULL)
+    // Allocate a slot per repo. Each repo has its own cipher type and passphrase so cipher spec cannot be shared between them.
+    if (configLocal->cipherSpec == NULL)
     {
         MEM_CONTEXT_BEGIN(configLocal->memContext)
         {
-            configLocal->cipherInfo = memNewPtrArray(cfgOptionGroupIdxTotal(cfgOptGrpRepo));
+            configLocal->cipherSpec = memNewPtrArray(cfgOptionGroupIdxTotal(cfgOptGrpRepo));
         }
         MEM_CONTEXT_END();
     }
 
-    // Get cipher info if it doesn't exist
-    if (configLocal->cipherInfo[repoIdx] == NULL)
+    // Get cipher spec if it doesn't exist
+    if (configLocal->cipherSpec[repoIdx] == NULL)
     {
         MEM_CONTEXT_BEGIN(configLocal->memContext)
         {
             const CipherType cipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
 
-            configLocal->cipherInfo[repoIdx] = cipherInfoNewP(
+            configLocal->cipherSpec[repoIdx] = cipherSpecNewP(
                 cipherType, cipherType == cipherTypeNone ? NULL : BUFSTR(cfgOptionIdxStr(cfgOptRepoCipherPass, repoIdx)));
         }
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_TEST_RETURN_CONST(CIPHER_INFO, configLocal->cipherInfo[repoIdx]);
+    FUNCTION_TEST_RETURN_CONST(CIPHER_SPEC, configLocal->cipherSpec[repoIdx]);
 }

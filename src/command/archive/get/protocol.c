@@ -38,7 +38,7 @@ archiveGetFileProtocol(PackRead *const param)
             ArchiveGetFile actual = {.file = pckReadStrP(param)};
             actual.repoIdx = pckReadU32P(param);
             actual.archiveId = pckReadStrP(param);
-            actual.cipherInfo = cipherInfoNewPack(param);
+            actual.cipherSpec = cipherSpecNewPack(param);
 
             lstAdd(actualList, &actual);
         }

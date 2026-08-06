@@ -232,7 +232,7 @@ archivePushCheck(const bool pgPathSet)
 
                 // Attempt to load the archive info file
                 const InfoArchive *const info = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherInfoIdx(repoIdx));
+                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
 
                 // Get archive id for the most recent version -- archive-push will only operate against the most recent version
                 const String *const archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
@@ -264,7 +264,7 @@ archivePushCheck(const bool pgPathSet)
                     {
                         .repoIdx = repoIdx,
                         .archiveId = strDup(archiveId),
-                        .cipherInfo = cipherInfoDup(infoArchiveCipherInfo(info)),
+                        .cipherSpec = cipherSpecDup(infoArchiveCipherSpec(info)),
                     };
 
                     lstAdd(result.repoList, &archivePushFileRepoData);
@@ -488,7 +488,7 @@ archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
                 pckWriteObjBeginP(param);
                 pckWriteU32P(param, data->repoIdx);
                 pckWriteStrP(param, data->archiveId);
-                cipherInfoPack(param, data->cipherInfo);
+                cipherSpecPack(param, data->cipherSpec);
                 pckWriteObjEndP(param);
             }
 

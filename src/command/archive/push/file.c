@@ -266,11 +266,11 @@ archivePushFile(
                         .compressible = compressible);
 
                     // If there is a cipher then add the encrypt filter
-                    if (cipherInfoType(repoData->cipherInfo) != cipherTypeNone)
+                    if (cipherSpecType(repoData->cipherSpec) != cipherTypeNone)
                     {
                         ioFilterGroupAdd(
                             ioWriteFilterGroup(storageWriteIo(destination[repoListIdx])),
-                            cipherBlockNewP(cipherModeEncrypt, repoData->cipherInfo));
+                            cipherBlockNewP(cipherModeEncrypt, repoData->cipherSpec));
                     }
                 }
             }

@@ -18,7 +18,7 @@ Verify File
 FN_EXTERN VerifyResult
 verifyFile(
     const String *const filePathName, const uint64_t offset, const Variant *const limit, const CompressType compressType,
-    const Buffer *const fileChecksum, const uint64_t fileSize, const CipherInfo *const cipherInfo)
+    const Buffer *const fileChecksum, const uint64_t fileSize, const CipherSpec *const cipherSpec)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, filePathName);                   // Fully qualified file name
@@ -27,7 +27,7 @@ verifyFile(
         FUNCTION_LOG_PARAM(ENUM, compressType);                     // Compression type
         FUNCTION_LOG_PARAM(BUFFER, fileChecksum);                   // Checksum for the file
         FUNCTION_LOG_PARAM(UINT64, fileSize);                       // Size of file
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);                // Info to access the repo file if encrypted
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);                // Cipher spec to access the repo file if encrypted
     FUNCTION_LOG_END();
 
     ASSERT(filePathName != NULL);
@@ -45,8 +45,8 @@ verifyFile(
         IoFilterGroup *const filterGroup = ioReadFilterGroup(read);
 
         // Add decryption filter
-        if (cipherInfoType(cipherInfo) != cipherTypeNone)
-            ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherInfo));
+        if (cipherSpecType(cipherSpec) != cipherTypeNone)
+            ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpec));
 
         // Add decompression filter
         if (compressType != compressTypeNone)

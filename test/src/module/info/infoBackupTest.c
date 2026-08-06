@@ -46,7 +46,7 @@ testRun(void)
         // Load and test move function then make sure ignore-section is ignored
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad), cipherInfoNewNone()), "new backup info");
+            TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone()), "new backup info");
             TEST_RESULT_VOID(infoBackupMove(infoBackup, memContextPrior()), "move info");
         }
         MEM_CONTEXT_TEMP_END();
@@ -68,9 +68,9 @@ testRun(void)
         TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentCompare)), "save backup info from new");
         TEST_RESULT_STR(strNewBuf(contentCompare), strNewBuf(contentSave), "check save");
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentCompare), cipherInfoNewNone()), "load backup info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentCompare), cipherSpecNewNone()), "load backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->pub.infoPg, "infoPg set");
-        TEST_RESULT_UINT(cipherInfoType(infoBackupCipherInfo(infoBackup)), cipherTypeNone, "cipher sub not set");
+        TEST_RESULT_UINT(cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeNone, "cipher sub not set");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 0, "infoBackupDataTotal returns 0");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ testRun(void)
             infoBackup,
             infoBackupNew(
                 PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10),
-                cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
             "infoBackupNew() - cipher sub");
 
         contentSave = bufNew(0);
@@ -89,11 +89,11 @@ testRun(void)
 
         infoBackup = NULL;
         TEST_ASSIGN(
-            infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave), cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
+            infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
             "load backup info with cipher sub");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackupPg(infoBackup), "infoPg set");
         TEST_RESULT_STR_Z(
-            strNewBuf(cipherInfoPass(infoBackupCipherInfo(infoBackup))),
+            strNewBuf(cipherSpecPass(infoBackupCipherSpec(infoBackup))),
             "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 1, "history set");
 
@@ -157,7 +157,7 @@ testRun(void)
             "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
             ",\"db-version\":\"9.6\"}\n");
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad), cipherInfoNewNone()), "new backup info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone()), "new backup info");
 
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 3, "backup list contains backups");
 
@@ -328,7 +328,7 @@ testRun(void)
             "pg_data={}\n"
             TEST_MANIFEST_PATH_DEFAULT);
 
-        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(manifestContent), cipherInfoNewNone()), "load manifest");
+        TEST_ASSIGN(manifest, manifestNewLoad(ioBufferReadNew(manifestContent), cipherSpecNewNone()), "load manifest");
         TEST_RESULT_VOID(infoBackupDataAdd(infoBackup, manifest), "add a backup");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 1, "backup added to current");
         TEST_ASSIGN(backupData, infoBackupData(infoBackup, 0), "get added backup");
@@ -437,7 +437,7 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT
 
         TEST_ASSIGN(
-            manifest, manifestNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_MANIFEST_INCR)), cipherInfoNewNone()),
+            manifest, manifestNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_MANIFEST_INCR)), cipherSpecNewNone()),
             "load manifest");
         TEST_RESULT_VOID(infoBackupDataAdd(infoBackup, manifest), "add a backup");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup added to current");
@@ -727,7 +727,7 @@ testRun(void)
             "upgrade db");
         TEST_RESULT_BOOL(infoBackup->pub.updated, true, "info updated");
         TEST_RESULT_VOID(
-            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
+            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
             "save backup info");
         TEST_RESULT_BOOL(infoBackup->pub.updated, false, "info not updated");
 
@@ -736,7 +736,7 @@ testRun(void)
         HRN_STORAGE_TIME(storageRepo(), INFO_BACKUP_PATH_FILE, timeBeforeSave);
 
         TEST_RESULT_VOID(
-            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
+            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
             "save backup again");
 
         // Check that timestamp was not updated
@@ -746,14 +746,14 @@ testRun(void)
         // Reload infoBackup to be sure it was updated
         infoBackup = NULL;
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
             "get saved backup info");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 2, "backup list contains backups to be removed");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 2, "multiple DB history");
 
         TEST_ASSIGN(
             infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
+            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
             "reconstruct");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 1, "backup list contains 1 backup");
         TEST_ASSIGN(backupData, infoBackupData(infoBackup, 0), "get the backup");
@@ -777,7 +777,7 @@ testRun(void)
             .comment = "remove dependent backup from disk");
         TEST_ASSIGN(
             infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
+            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
             "reconstruct does not attempt to add back dependent backup");
         TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
@@ -837,13 +837,13 @@ testRun(void)
             .comment = "write manifest for dependent backup to be added to full already in backup.info");
 
         TEST_RESULT_VOID(
-            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
+            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
             "save updated backup info");
 
         infoBackup = NULL;
         TEST_ASSIGN(
             infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherInfoNewNone()),
+            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
             "reconstruct");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL),
@@ -864,7 +864,7 @@ testRun(void)
         TEST_TITLE("load backup info file - error");
 
         TEST_ERROR(
-            infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewNone()), FileMissingError,
+            infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()), FileMissingError,
             "unable to load info file '" TEST_PATH "/backup.info' or '" TEST_PATH "/backup.info.copy':\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/backup.info' for read\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/backup.info.copy' for read\n"
@@ -877,16 +877,16 @@ testRun(void)
         InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), NULL);
         TEST_RESULT_VOID(
             infoBackupSaveFile(
-                infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewNone()), "save backup info");
+                infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()), "save backup info");
 
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewNone()),
+            infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()),
             "load main");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
 
         HRN_STORAGE_REMOVE(storageTest, INFO_BACKUP_FILE, .errorOnMissing = true, .comment = "remove main so only copy exists");
         TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherInfoNewNone()),
+            infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()),
             "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
     }
@@ -971,7 +971,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check dependency lists");
 
-        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad), cipherInfoNewNone()), "new backup info");
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone()), "new backup info");
 
         TEST_ASSIGN(dependencyList, infoBackupDataDependentList(infoBackup, STRDEF("20200317-181625F")), "full");
         TEST_RESULT_STRLST_Z(

@@ -27,7 +27,7 @@ Get a list of all files in the backup and a redacted version of the manifest tha
 static String *
 testBackupValidateFile(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const CipherInfo *const cipherInfo)
+    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const CipherSpec *const cipherSpec)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -37,7 +37,7 @@ testBackupValidateFile(
         FUNCTION_HARNESS_PARAM(STRING, fileName);
         FUNCTION_HARNESS_PARAM(UINT64, fileSize);
         FUNCTION_HARNESS_PARAM_P(VOID, filePack);
-        FUNCTION_HARNESS_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_HARNESS_END();
 
     String *const result = strNew();
@@ -87,11 +87,11 @@ testBackupValidateFile(
             .offset = file.bundleOffset + file.sizeRepo - file.blockIncrMapSize,
             .limit = VARUINT64(file.blockIncrMapSize));
 
-        if (cipherInfoType(cipherInfo) != cipherTypeNone)
+        if (cipherSpecType(cipherSpec) != cipherTypeNone)
         {
             ioFilterGroupAdd(
                 ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherInfo, .raw = true));
+                cipherBlockNewP(cipherModeDecrypt, cipherSpec, .raw = true));
         }
 
         ioReadOpen(storageReadIo(read));
@@ -127,7 +127,7 @@ testBackupValidateFile(
         bufUsedSet(fileBuffer, bufSize(fileBuffer));
 
         BlockDelta *const blockDelta = blockDeltaNew(
-            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherInfo,
+            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherSpec,
             manifestData->backupOptionCompressType);
 
         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
@@ -168,11 +168,11 @@ testBackupValidateFile(
             .limit = VARUINT64(file.sizeRepo));
         const bool raw = file.bundleId != 0 && manifest->pub.data.bundleRaw;
 
-        if (cipherInfoType(cipherInfo) != cipherTypeNone)
+        if (cipherSpecType(cipherSpec) != cipherTypeNone)
         {
             ioFilterGroupAdd(
                 ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherInfo, .raw = raw));
+                cipherBlockNewP(cipherModeDecrypt, cipherSpec, .raw = raw));
         }
 
         if (manifestData->backupOptionCompressType != compressTypeNone)
@@ -253,7 +253,7 @@ testBackupValidateFile(
 static String *
 testBackupValidateList(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    StringList *const manifestFileList, const CipherInfo *const cipherInfo, String *const result)
+    StringList *const manifestFileList, const CipherSpec *const cipherSpec, String *const result)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -261,7 +261,7 @@ testBackupValidateList(
         FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
         FUNCTION_HARNESS_PARAM_P(VOID, manifestData);
         FUNCTION_HARNESS_PARAM(STRING_LIST, manifestFileList);
-        FUNCTION_HARNESS_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_HARNESS_PARAM(STRING, result);
     FUNCTION_HARNESS_END();
 
@@ -353,7 +353,7 @@ testBackupValidateList(
                     strCat(
                         result,
                         testBackupValidateFile(
-                            storage, path, manifest, manifestData, info.name, info.size, filePack, cipherInfo));
+                            storage, path, manifest, manifestData, info.name, info.size, filePack, cipherSpec));
                 }
 
                 break;
@@ -427,11 +427,11 @@ testBackupValidate(const Storage *const storage, const String *const path, const
         // -------------------------------------------------------------------------------------------------------------------------
         const InfoBackup *const infoBackup = infoBackupLoadFile(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR,
-            cipherInfoNewP(
+            cipherSpecNewP(
                 param.cipherType == 0 ? cipherTypeNone : param.cipherType,
                 param.cipherPass == NULL ? NULL : BUFSTRZ(param.cipherPass)));
         Manifest *manifest = manifestLoadFile(
-            storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), infoBackupCipherInfo(infoBackup));
+            storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), infoBackupCipherSpec(infoBackup));
 
         // Build list of files in the manifest
         StringList *const manifestFileList = strLstNew();
@@ -440,9 +440,9 @@ testBackupValidate(const Storage *const storage, const String *const path, const
             strLstAdd(manifestFileList, manifestFileUnpack(manifest, manifestFilePackGet(manifest, fileIdx)).name);
 
         // Validate files on disk against the manifest
-        const CipherInfo *const cipherInfo = manifestCipherInfoSub(manifest);
+        const CipherSpec *const cipherSpec = manifestCipherSpecSub(manifest);
 
-        testBackupValidateList(storage, path, manifest, manifestData(manifest), manifestFileList, cipherInfo, result);
+        testBackupValidateList(storage, path, manifest, manifestData(manifest), manifestFileList, cipherSpec, result);
 
         // Check remaining files in the manifest -- these should all be references
         for (unsigned int manifestFileIdx = 0; manifestFileIdx < strLstSize(manifestFileList); manifestFileIdx++)
@@ -470,7 +470,7 @@ testBackupValidate(const Storage *const storage, const String *const path, const
                             .compressType = manifestData(manifest)->backupOptionCompressType,
                             .blockIncr = file.blockIncrMapSize != 0),
                         sizeof(STORAGE_REPO_BACKUP)),
-                    file.sizeRepo, filePack, cipherInfo));
+                    file.sizeRepo, filePack, cipherSpec));
         }
 
         // Make sure both backup.manifest files exist since we skipped them in the callback above
@@ -1324,7 +1324,7 @@ testRun(void)
                     blockIncrNew(
                         3, 3, 8, 2, 4, 5, NULL, compressFilterP(compressTypeGz, 1, .raw = true),
                         cipherBlockNewP(
-                            cipherModeEncrypt, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)), .raw = true)))),
+                            cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)), .raw = true)))),
             "block incr pack");
     }
 
@@ -1682,7 +1682,7 @@ testRun(void)
 
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F");
 
-        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, cipherInfoNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed: partially deleted by prior resume or invalid");
@@ -1696,7 +1696,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
 
-        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, cipherInfoNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG("P00   INFO: backup '20191003-105320F' cannot be resumed: resume is disabled");
 
@@ -1719,7 +1719,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, "X");
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, cipherInfoNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed: unable to read"
@@ -1751,7 +1751,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, cipherInfoNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -1773,7 +1773,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, cipherInfoNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -1795,7 +1795,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, cipherInfoNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -1816,7 +1816,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, cipherInfoNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -3654,7 +3654,7 @@ testRun(void)
             // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
             const String *manifestPriorFile = STRDEF(STORAGE_REPO_BACKUP "/20191103-165320F/" BACKUP_MANIFEST_FILE);
             Manifest *manifestPrior = manifestNewLoad(
-                storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)), cipherInfoNewNone());
+                storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)), cipherSpecNewNone());
             manifestPrior->pub.data.backupOptionChecksumPage = NULL;
             manifestSave(manifestPrior, storageWriteIo(storageNewWriteP(storageRepoWrite(), manifestPriorFile)));
 

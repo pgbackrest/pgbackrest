@@ -94,10 +94,10 @@ BUFFER_STRDEF_STATIC(INFO_CHECKSUM_END_BUF, "}}");
 
 /**********************************************************************************************************************************/
 FN_EXTERN Info *
-infoNew(const CipherInfo *const cipherInfoSub)
+infoNew(const CipherSpec *const cipherSpecSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfoSub);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecSub);
     FUNCTION_LOG_END();
 
     OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
@@ -105,7 +105,7 @@ infoNew(const CipherInfo *const cipherInfoSub)
         *this = (Info){};
 
         // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
-        infoCipherInfoSet(this, cipherInfoSub);
+        infoCipherSpecSet(this, cipherSpecSub);
         this->pub.backrestVersion = STRDEF(PROJECT_VERSION);
     }
     OBJ_NEW_END();
@@ -121,12 +121,12 @@ infoNew(const CipherInfo *const cipherInfoSub)
 
 FN_EXTERN Info *
 infoNewLoad(
-    IoRead *const read, const CipherInfo *const cipherInfo, InfoLoadNewCallback *const callbackFunction,
+    IoRead *const read, const CipherSpec *const cipherSpec, InfoLoadNewCallback *const callbackFunction,
     void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
@@ -134,7 +134,7 @@ infoNewLoad(
     FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(read != NULL);
-    ASSERT(cipherInfo != NULL);
+    ASSERT(cipherSpec != NULL);
     ASSERT(callbackFunction != NULL);
     ASSERT(callbackData != NULL);
 
@@ -218,8 +218,8 @@ infoNewLoad(
                                 MEM_CONTEXT_OBJ_BEGIN(this)
                                 {
                                     // The dependent files are encrypted with the same cipher type as this one
-                                    this->pub.cipherInfo = cipherInfoNewP(
-                                        cipherInfoType(cipherInfo), BUFSTR(varStr(jsonToVar(value->value))));
+                                    this->pub.cipherSpec = cipherSpecNewP(
+                                        cipherSpecType(cipherSpec), BUFSTR(varStr(jsonToVar(value->value))));
                                 }
                                 MEM_CONTEXT_OBJ_END();
                             }
@@ -258,8 +258,8 @@ infoNewLoad(
         MEM_CONTEXT_TEMP_END();
 
         // A file with no cipher section has no encrypted dependent files
-        if (this->pub.cipherInfo == NULL)
-            infoCipherInfoSet(this, NULL);
+        if (this->pub.cipherSpec == NULL)
+            infoCipherSpecSet(this, NULL);
     }
     OBJ_NEW_END();
 
@@ -376,12 +376,12 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
         infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_VERSION, jsonFromVar(VARSTRDEF(PROJECT_VERSION)));
 
         // Add cipher passphrase if defined
-        if (cipherInfoType(infoCipherInfo(this)) != cipherTypeNone)
+        if (cipherSpecType(infoCipherSpec(this)) != cipherTypeNone)
         {
             callbackFunction(callbackData, STRDEF(INFO_SECTION_CIPHER), &data);
             infoSaveValue(
                 &data, INFO_SECTION_CIPHER, INFO_KEY_CIPHER_PASS,
-                jsonFromVar(VARSTR(strNewBuf(cipherInfoPass(infoCipherInfo(this))))));
+                jsonFromVar(VARSTR(strNewBuf(cipherSpecPass(infoCipherSpec(this))))));
         }
 
         // Flush out any additional sections
@@ -407,11 +407,11 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
 Getters/Setters
 ***********************************************************************************************************************************/
 FN_EXTERN void
-infoCipherInfoSet(Info *const this, const CipherInfo *const cipherInfo)
+infoCipherSpecSet(Info *const this, const CipherSpec *const cipherSpec)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO, this);
-        FUNCTION_TEST_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_TEST_END();
 
     FUNCTION_AUDIT_IF(memContextCurrent() != objMemContext(this));  // Do not audit calls from within the object
@@ -421,7 +421,7 @@ infoCipherInfoSet(Info *const this, const CipherInfo *const cipherInfo)
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         // Copy so the caller is free to release what was passed in, and so the getter never returns NULL
-        this->pub.cipherInfo = cipherInfo == NULL ? cipherInfoNewNone() : cipherInfoDup(cipherInfo);
+        this->pub.cipherSpec = cipherSpec == NULL ? cipherSpecNewNone() : cipherSpecDup(cipherSpec);
     }
     MEM_CONTEXT_OBJ_END();
 

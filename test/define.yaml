@@ -371,8 +371,8 @@ unit:
       - common/crypto/cipherBlock
       - common/crypto/common
       - common/crypto/hash
-      - common/crypto/info
       - common/crypto/md5.vendor: included
+      - common/crypto/spec
       - common/crypto/xxhash
 
   # --------------------------------------------------------------------------------------------------------------------------------

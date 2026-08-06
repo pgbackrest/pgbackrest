@@ -32,7 +32,7 @@ struct BlockDelta
     BlockDeltaPub pub;                                              // Publicly accessible variables
     size_t blockSize;                                               // Block size
     size_t checksumSize;                                            // Checksum size
-    const CipherInfo *cipherInfo;                                   // Cipher info
+    const CipherSpec *cipherSpec;                                   // Cipher spec
     CompressType compressType;                                      // Compress type
 
     const BlockDeltaSuperBlock *superBlockData;                     // Current super block data
@@ -56,20 +56,20 @@ typedef struct BlockDeltaReference
 FN_EXTERN BlockDelta *
 blockDeltaNew(
     const BlockMap *const blockMap, const size_t blockSize, const size_t checksumSize, const Buffer *const blockChecksum,
-    const CipherInfo *const cipherInfo, const CompressType compressType)
+    const CipherSpec *const cipherSpec, const CompressType compressType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BLOCK_MAP, blockMap);
         FUNCTION_TEST_PARAM(SIZE, blockSize);
         FUNCTION_TEST_PARAM(SIZE, checksumSize);
         FUNCTION_TEST_PARAM(BUFFER, blockChecksum);
-        FUNCTION_TEST_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_TEST_PARAM(ENUM, compressType);
     FUNCTION_TEST_END();
 
     ASSERT(blockMap != NULL);
     ASSERT(blockSize > 0);
-    ASSERT(cipherInfo != NULL);
+    ASSERT(cipherSpec != NULL);
 
     OBJ_NEW_BEGIN(BlockDelta, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -81,7 +81,7 @@ blockDeltaNew(
             },
             .blockSize = blockSize,
             .checksumSize = checksumSize,
-            .cipherInfo = cipherInfoDup(cipherInfo),
+            .cipherSpec = cipherSpecDup(cipherSpec),
             .compressType = compressType,
             .write =
             {
@@ -234,11 +234,11 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             }
             MEM_CONTEXT_OBJ_END();
 
-            if (cipherInfoType(this->cipherInfo) != cipherTypeNone)
+            if (cipherSpecType(this->cipherSpec) != cipherTypeNone)
             {
                 ioFilterGroupAdd(
                     ioReadFilterGroup(this->limitRead),
-                    cipherBlockNewP(cipherModeDecrypt, this->cipherInfo, .raw = true));
+                    cipherBlockNewP(cipherModeDecrypt, this->cipherSpec, .raw = true));
             }
 
             if (this->compressType != compressTypeNone)

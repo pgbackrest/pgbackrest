@@ -5,7 +5,7 @@ Archive Push File
 #define COMMAND_ARCHIVE_PUSH_FILE_H
 
 #include "common/compress/helper.h"
-#include "common/crypto/info.h"
+#include "common/crypto/spec.h"
 #include "common/type/string.h"
 #include "storage/storage.h"
 
@@ -17,7 +17,7 @@ typedef struct ArchivePushFileRepoData
 {
     unsigned int repoIdx;
     const String *archiveId;
-    const CipherInfo *cipherInfo;
+    const CipherSpec *cipherSpec;
 } ArchivePushFileRepoData;
 
 /***********************************************************************************************************************************

@@ -78,15 +78,15 @@ testRun(void)
     {
         Info *info = NULL;
 
-        TEST_ASSIGN(info, infoNew(cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))), "infoNew(cipher)");
-        TEST_RESULT_STR_Z(strNewBuf(cipherInfoPass(infoCipherInfo(info))), "123xyz", "    cipherPass is set");
+        TEST_ASSIGN(info, infoNew(cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))), "infoNew(cipher)");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(info))), "123xyz", "    cipherPass is set");
 
         TEST_ASSIGN(info, infoNew(NULL), "infoNew(NULL)");
-        TEST_RESULT_UINT(cipherInfoType(infoCipherInfo(info)), cipherTypeNone, "    cipher info is none");
+        TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(info)), cipherTypeNone, "    cipher spec is none");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("infoNewLoad(, cipherInfoNewNone()) and infoSave()"))
+    if (testBegin("infoNewLoad() and infoSave()"))
     {
         // Format error
         // -------------------------------------------------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ testRun(void)
         String *callbackContent = strNew();
 
         TEST_ERROR(
-            infoNewLoad(ioBufferReadNew(contentLoad), cipherInfoNewNone(), harnessInfoLoadNewCallback, callbackContent),
+            infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
             FormatError, "expected format 5 but found 4");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
@@ -108,7 +108,7 @@ testRun(void)
             "backrest-format=5\n");
 
         TEST_ERROR(
-            infoNewLoad(ioBufferReadNew(contentLoad), cipherInfoNewNone(), harnessInfoLoadNewCallback, callbackContent),
+            infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
             ChecksumError, "invalid checksum, actual 'a3765a8c2c1e5d35274a0b0ce118f4031faff0bd' but no checksum found");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
@@ -122,7 +122,7 @@ testRun(void)
             "bogus=\"BOGUS\"\n");
 
         TEST_ERROR(
-            infoNewLoad(ioBufferReadNew(contentLoad), cipherInfoNewNone(), harnessInfoLoadNewCallback, callbackContent),
+            infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
             ChecksumError, "invalid checksum, actual 'fe989a75dcf7a0261e57d210707c0db741462763' but expected 'BOGUS'");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
@@ -137,10 +137,10 @@ testRun(void)
         IoRead *read = ioBufferReadNew(contentLoad);
         ioFilterGroupAdd(
             ioReadFilterGroup(read),
-            cipherBlockNewP(cipherModeDecrypt, cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("X"))));
+            cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("X"))));
 
         TEST_ERROR(
-            infoNewLoad(read, cipherInfoNewNone(), harnessInfoLoadNewCallback, callbackContent), CryptoError,
+            infoNewLoad(read, cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent), CryptoError,
             "cipher header invalid\n"
             "HINT: is or was the repo encrypted?");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
@@ -155,10 +155,10 @@ testRun(void)
         callbackContent = strNew();
 
         TEST_ASSIGN(
-            info, infoNewLoad(ioBufferReadNew(contentLoad), cipherInfoNewNone(), harnessInfoLoadNewCallback, callbackContent),
+            info, infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
             "info with other cipher");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
-        TEST_RESULT_UINT(cipherInfoType(infoCipherInfo(info)), cipherTypeNone, "    check cipher pass not set");
+        TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(info)), cipherTypeNone, "    check cipher pass not set");
 
         // Base file with content
         // -------------------------------------------------------------------------------------------------------------------------
@@ -172,10 +172,10 @@ testRun(void)
         callbackContent = strNew();
 
         TEST_ASSIGN(
-            info, infoNewLoad(ioBufferReadNew(contentLoad), cipherInfoNewNone(), harnessInfoLoadNewCallback, callbackContent),
+            info, infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
             "info with content");
         TEST_RESULT_STR_Z(callbackContent, "[c] key=1\n[d] key=1\n", "    check callback content");
-        TEST_RESULT_UINT(cipherInfoType(infoCipherInfo(info)), cipherTypeNone, "    check cipher pass not set");
+        TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(info)), cipherTypeNone, "    check cipher pass not set");
 
         Buffer *contentSave = bufNew(0);
 
@@ -199,11 +199,11 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoNewLoad(
-                ioBufferReadNew(contentLoad), cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")), harnessInfoLoadNewCallback,
+                ioBufferReadNew(contentLoad), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")), harnessInfoLoadNewCallback,
                 callbackContent),
             "info with content and cipher");
         TEST_RESULT_STR_Z(callbackContent, "[c] key=1\n[d] key=1\n", "    check callback content");
-        TEST_RESULT_STR_Z(strNewBuf(cipherInfoPass(infoCipherInfo(info))), "somepass", "    check cipher pass set");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(info))), "somepass", "    check cipher pass set");
         TEST_RESULT_STR_Z(infoBackrestVersion(info), PROJECT_VERSION, "    check backrest version");
 
         contentSave = bufNew(0);

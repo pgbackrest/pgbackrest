@@ -384,24 +384,24 @@ cipherBlockInputSame(const THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-cipherBlockNew(const CipherMode mode, const CipherInfo *const cipherInfo, const CipherBlockNewParam param)
+cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const CipherBlockNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, mode);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_LOG_PARAM(BOOL, param.raw);
     FUNCTION_LOG_END();
 
-    ASSERT(cipherInfo != NULL);
-    ASSERT(cipherInfoType(cipherInfo) != cipherTypeNone);
-    ASSERT(cipherInfoPass(cipherInfo) != NULL && !bufEmpty(cipherInfoPass(cipherInfo)));
+    ASSERT(cipherSpec != NULL);
+    ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
+    ASSERT(cipherSpecPass(cipherSpec) != NULL && !bufEmpty(cipherSpecPass(cipherSpec)));
 
     // Init crypto subsystem
     cryptoInit();
 
     // Lookup cipher by name. This means the ciphers passed in must exactly match a name expected by OpenSSL. This is a good thing
     // since the name required by the openssl command-line tool will match what is used by pgBackRest.
-    char *const cipherTypeZ = zNewStrId(cipherInfoType(cipherInfo));
+    char *const cipherTypeZ = zNewStrId(cipherSpecType(cipherSpec));
     const EVP_CIPHER *cipher = EVP_get_cipherbyname(cipherTypeZ);
 
     if (!cipher)
@@ -411,7 +411,7 @@ cipherBlockNew(const CipherMode mode, const CipherInfo *const cipherInfo, const 
 
     // Lookup digest
     char digestZ[STRID_MAX + 1];
-    strIdToZ(cipherInfoDigest(cipherInfo), digestZ);
+    strIdToZ(cipherSpecDigest(cipherSpec), digestZ);
 
     const EVP_MD *const digest = EVP_get_digestbyname(digestZ);
 
@@ -426,7 +426,7 @@ cipherBlockNew(const CipherMode mode, const CipherInfo *const cipherInfo, const 
             .raw = param.raw,
             .cipher = cipher,
             .digest = digest,
-            .pass = bufDup(cipherInfoPass(cipherInfo)),
+            .pass = bufDup(cipherSpecPass(cipherSpec)),
         };
     }
     OBJ_NEW_END();
@@ -439,7 +439,7 @@ cipherBlockNew(const CipherMode mode, const CipherInfo *const cipherInfo, const 
         PackWrite *const packWrite = pckWriteNewP();
 
         pckWriteU64P(packWrite, mode);
-        cipherInfoPack(packWrite, cipherInfo);
+        cipherSpecPack(packWrite, cipherSpec);
         pckWriteBoolP(packWrite, param.raw);
         pckWriteEndP(packWrite);
 
@@ -463,10 +463,10 @@ cipherBlockNewPack(const Pack *const paramList)
     {
         PackRead *const paramListPack = pckReadNew(paramList);
         const CipherMode cipherMode = (CipherMode)pckReadU64P(paramListPack);
-        const CipherInfo *const cipherInfo = cipherInfoNewPack(paramListPack);
+        const CipherSpec *const cipherSpec = cipherSpecNewPack(paramListPack);
         const bool raw = pckReadBoolP(paramListPack);
 
-        result = ioFilterMove(cipherBlockNewP(cipherMode, cipherInfo, .raw = raw), memContextPrior());
+        result = ioFilterMove(cipherBlockNewP(cipherMode, cipherSpec, .raw = raw), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -475,19 +475,19 @@ cipherBlockNewPack(const Pack *const paramList)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilterGroup *
-cipherBlockFilterGroupAdd(IoFilterGroup *const filterGroup, const CipherMode mode, const CipherInfo *const cipherInfo)
+cipherBlockFilterGroupAdd(IoFilterGroup *const filterGroup, const CipherMode mode, const CipherSpec *const cipherSpec)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
         FUNCTION_LOG_PARAM(STRING_ID, mode);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_LOG_END();
 
     ASSERT(filterGroup != NULL);
-    ASSERT(cipherInfo != NULL);
+    ASSERT(cipherSpec != NULL);
 
-    if (cipherInfoType(cipherInfo) != cipherTypeNone)
-        ioFilterGroupAdd(filterGroup, cipherBlockNewP(mode, cipherInfo));
+    if (cipherSpecType(cipherSpec) != cipherTypeNone)
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(mode, cipherSpec));
 
     FUNCTION_LOG_RETURN(IO_FILTER_GROUP, filterGroup);
 }

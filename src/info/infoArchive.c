@@ -57,12 +57,12 @@ infoArchiveNewInternal(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoArchive *
-infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const CipherInfo *const cipherInfoSub)
+infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const CipherSpec *const cipherSpecSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfoSub);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecSub);
     FUNCTION_LOG_END();
 
     ASSERT(pgVersion > 0 && pgSystemId > 0);
@@ -74,7 +74,7 @@ infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const Ci
         this = infoArchiveNewInternal();
 
         // Initialize the pg data
-        this->pub.infoPg = infoPgNew(infoPgArchive, cipherInfoSub);
+        this->pub.infoPg = infoPgNew(infoPgArchive, cipherSpecSub);
         infoArchivePgSet(this, pgVersion, pgSystemId);
     }
     OBJ_NEW_END();
@@ -84,11 +84,11 @@ infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const Ci
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoArchive *
-infoArchiveNewLoad(IoRead *const read, const CipherInfo *const cipherInfo)
+infoArchiveNewLoad(IoRead *const read, const CipherSpec *const cipherSpec)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_LOG_END();
 
     ASSERT(read != NULL);
@@ -98,7 +98,7 @@ infoArchiveNewLoad(IoRead *const read, const CipherInfo *const cipherInfo)
     OBJ_NEW_BASE_BEGIN(InfoArchive, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoArchiveNewInternal();
-        this->pub.infoPg = infoPgNewLoad(read, infoPgArchive, cipherInfo, NULL, NULL);
+        this->pub.infoPg = infoPgNewLoad(read, infoPgArchive, cipherSpec, NULL, NULL);
     }
     OBJ_NEW_END();
 
@@ -208,7 +208,7 @@ typedef struct InfoArchiveLoadFileData
     MemContext *memContext;                                         // Mem context
     const Storage *storage;                                         // Storage to load from
     const String *fileName;                                         // Base filename
-    const CipherInfo *cipherInfo;                                   // Cipher info
+    const CipherSpec *cipherSpec;                                   // Cipher spec
     InfoArchive *infoArchive;                                       // Loaded infoArchive object
 } InfoArchiveLoadFileData;
 
@@ -235,11 +235,11 @@ infoArchiveLoadFileCallback(void *const data, const unsigned int try)
             // Attempt to load the file
             IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
             cipherBlockFilterGroupAdd(
-                ioReadFilterGroup(read), cipherModeDecrypt, loadData->cipherInfo);
+                ioReadFilterGroup(read), cipherModeDecrypt, loadData->cipherSpec);
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
-                loadData->infoArchive = infoArchiveNewLoad(read, loadData->cipherInfo);
+                loadData->infoArchive = infoArchiveNewLoad(read, loadData->cipherSpec);
                 result = true;
             }
             MEM_CONTEXT_END();
@@ -252,24 +252,24 @@ infoArchiveLoadFileCallback(void *const data, const unsigned int try)
 
 FN_EXTERN InfoArchive *
 infoArchiveLoadFile(
-    const Storage *const storage, const String *const fileName, const CipherInfo *const cipherInfo)
+    const Storage *const storage, const String *const fileName, const CipherSpec *const cipherSpec)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
-    ASSERT(cipherInfo != NULL);
+    ASSERT(cipherSpec != NULL);
 
     InfoArchiveLoadFileData data =
     {
         .memContext = memContextCurrent(),
         .storage = storage,
         .fileName = fileName,
-        .cipherInfo = cipherInfo,
+        .cipherSpec = cipherSpec,
     };
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -303,26 +303,26 @@ infoArchiveLoadFile(
 /**********************************************************************************************************************************/
 FN_EXTERN void
 infoArchiveSaveFile(
-    InfoArchive *const infoArchive, const Storage *const storage, const String *const fileName, const CipherInfo *const cipherInfo)
+    InfoArchive *const infoArchive, const Storage *const storage, const String *const fileName, const CipherSpec *const cipherSpec)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_ARCHIVE, infoArchive);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_LOG_END();
 
     ASSERT(infoArchive != NULL);
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
-    ASSERT(cipherInfo != NULL);
+    ASSERT(cipherSpec != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write output into a buffer since it needs to be saved to storage twice
         Buffer *const buffer = bufNew(ioBufferSize());
         IoWrite *const write = ioBufferWriteNew(buffer);
-        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherInfo);
+        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec);
         infoArchiveSave(infoArchive, write);
 
         // Save the file and make a copy

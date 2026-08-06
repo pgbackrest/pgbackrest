@@ -9,7 +9,7 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct InfoArchive InfoArchive;
 
-#include "common/crypto/info.h"
+#include "common/crypto/spec.h"
 #include "common/type/object.h"
 #include "common/type/string.h"
 #include "info/infoPg.h"
@@ -29,10 +29,10 @@ STRING_DECLARE(INFO_ARCHIVE_PATH_FILE_COPY_STR);
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const CipherInfo *cipherInfoSub);
+FN_EXTERN InfoArchive *infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const CipherSpec *cipherSpecSub);
 
 // Create new object and load contents from IoRead
-FN_EXTERN InfoArchive *infoArchiveNewLoad(IoRead *read, const CipherInfo *cipherInfo);
+FN_EXTERN InfoArchive *infoArchiveNewLoad(IoRead *read, const CipherSpec *cipherSpec);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -59,11 +59,11 @@ infoArchiveId(const InfoArchive *const this)
     return infoPgArchiveId(infoArchivePg(this), infoPgDataCurrentId(infoArchivePg(this)));
 }
 
-// Cipher info for dependent files
-FN_INLINE_ALWAYS const CipherInfo *
-infoArchiveCipherInfo(const InfoArchive *const this)
+// Cipher spec for dependent files
+FN_INLINE_ALWAYS const CipherSpec *
+infoArchiveCipherSpec(const InfoArchive *const this)
 {
-    return infoPgCipherInfo(infoArchivePg(this));
+    return infoPgCipherSpec(infoArchivePg(this));
 }
 
 /***********************************************************************************************************************************
@@ -93,11 +93,11 @@ infoArchiveFree(InfoArchive *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // Load archive info
-FN_EXTERN InfoArchive *infoArchiveLoadFile(const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
+FN_EXTERN InfoArchive *infoArchiveLoadFile(const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
 // Save archive info
 FN_EXTERN void infoArchiveSaveFile(
-    InfoArchive *infoArchive, const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
+    InfoArchive *infoArchive, const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
 /***********************************************************************************************************************************
 Macros for function logging

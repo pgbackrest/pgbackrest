@@ -221,11 +221,11 @@ backupFilePut(
             }
 
             // Add encryption filter if required
-            if (cipherInfoType(manifestCipherInfoSub(manifest)) != cipherTypeNone)
+            if (cipherSpecType(manifestCipherSpecSub(manifest)) != cipherTypeNone)
             {
                 ioFilterGroupAdd(
                     ioWriteFilterGroup(storageWriteIo(write)),
-                    cipherBlockNewP(cipherModeEncrypt, manifestCipherInfoSub(manifest)));
+                    cipherBlockNewP(cipherModeEncrypt, manifestCipherSpecSub(manifest)));
 
                 repoChecksum = true;
             }

@@ -7,7 +7,7 @@ sets the command and options and determines which options are valid for a comman
 #ifndef CONFIG_CONFIG_H
 #define CONFIG_CONFIG_H
 
-#include "common/crypto/info.h"
+#include "common/crypto/spec.h"
 #include "common/log.h"
 #include "common/type/stringId.h"
 #include "common/type/stringList.h"
@@ -246,17 +246,17 @@ FN_EXTERN void cfgLoadFree(void);
 /***********************************************************************************************************************************
 Cipher Functions
 
-Cipher info for a repository, built from the cipher options and cached per repo since the options cannot change while a command
-runs. This is the top of the chain. The info files are read with it and each of those carries the cipher info for the files that
+Cipher spec for a repository, built from the cipher options and cached per repo since the options cannot change while a command
+runs. This is the top of the chain. The info files are read with it and each of those carries the cipher spec for the files that
 depend on it, so nothing further down needs to consult the options again.
 ***********************************************************************************************************************************/
-// Get cipher info for main cipher type/passphrase
-FN_EXTERN const CipherInfo *cfgCipherInfoIdx(unsigned int repoIdx);
+// Get cipher spec for main cipher type/passphrase
+FN_EXTERN const CipherSpec *cfgCipherSpecIdx(unsigned int repoIdx);
 
-FN_INLINE_ALWAYS const CipherInfo *
-cfgCipherInfo(void)
+FN_INLINE_ALWAYS const CipherSpec *
+cfgCipherSpec(void)
 {
-    return cfgCipherInfoIdx(cfgOptionIdxDefault(cfgOptRepoCipherType));
+    return cfgCipherSpecIdx(cfgOptionIdxDefault(cfgOptRepoCipherType));
 }
 
 /***********************************************************************************************************************************

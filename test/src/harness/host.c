@@ -82,7 +82,7 @@ static struct HrnHostLocal
     StringId repoHost;                                              // Host acting as repository
     StringId storage;                                               // Storage type
     CompressType compressType;                                      // Compress type
-    const CipherInfo *cipherInfo;                                   // Cipher info for the repo
+    const CipherSpec *cipherSpec;                                   // Cipher spec for the repo
     unsigned int repoTotal;                                         // Repository total
     unsigned int restoreTotal;                                      // Restore counter used to name spool path
     bool tls;                                                       // Use TLS instead of SSH?
@@ -704,10 +704,10 @@ hrnHostConfig(HrnHost *const this)
             strCatFmt(config, "repo1-path=%s\n", strZ(hrnHostRepo1Path(this)));
             strCatZ(config, "repo1-retention-full=2\n");
 
-            if (cipherInfoType(hrnHostLocal.cipherInfo) != cipherTypeNone)
+            if (cipherSpecType(hrnHostLocal.cipherSpec) != cipherTypeNone)
             {
-                strCatFmt(config, "repo1-cipher-type=%s\n", zNewStrId(cipherInfoType(hrnHostLocal.cipherInfo)));
-                strCatFmt(config, "repo1-cipher-pass=%s\n", strZ(strNewBuf(cipherInfoPass(hrnHostLocal.cipherInfo))));
+                strCatFmt(config, "repo1-cipher-type=%s\n", zNewStrId(cipherSpecType(hrnHostLocal.cipherSpec)));
+                strCatFmt(config, "repo1-cipher-pass=%s\n", strZ(strNewBuf(cipherSpecPass(hrnHostLocal.cipherSpec))));
             }
 
             if (hrnHostLocal.bundle)
@@ -1029,11 +1029,11 @@ hrnHostGet(const StringId id)
 }
 
 /**********************************************************************************************************************************/
-const CipherInfo *
-hrnHostCipherInfo(void)
+const CipherSpec *
+hrnHostCipherSpec(void)
 {
     FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RETURN(CIPHER_INFO, hrnHostLocal.cipherInfo);
+    FUNCTION_HARNESS_RETURN(CIPHER_SPEC, hrnHostLocal.cipherSpec);
 }
 
 CompressType
@@ -1227,8 +1227,8 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         hrnHostLocal.repoHost = strIdFromZ(testDef->repo);
         hrnHostLocal.storage = strIdFromZ(testDef->stg);
         hrnHostLocal.compressType = compressTypeEnum(strIdFromZ(testDef->cmp));
-        hrnHostLocal.cipherInfo =
-            testDef->enc ? cipherInfoNewP(cipherTypeAes256Cbc, BUFSTRZ(HRN_CIPHER_PASSPHRASE)) : cipherInfoNewNone();
+        hrnHostLocal.cipherSpec =
+            testDef->enc ? cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRZ(HRN_CIPHER_PASSPHRASE)) : cipherSpecNewNone();
         hrnHostLocal.repoTotal = testDef->rt;
         hrnHostLocal.tls = testDef->tls;
         hrnHostLocal.bundle = testDef->bnd;

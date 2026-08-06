@@ -21,7 +21,7 @@ typedef enum
     backupTypeIncr = STRID5("incr", 0x90dc90),
 } BackupType;
 
-#include "common/crypto/info.h"
+#include "common/crypto/spec.h"
 #include "common/type/object.h"
 #include "common/type/string.h"
 #include "common/type/stringList.h"
@@ -78,10 +78,10 @@ typedef struct InfoBackupData
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN InfoBackup *infoBackupNew(
-    unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const CipherInfo *cipherInfoSub);
+    unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const CipherSpec *cipherSpecSub);
 
 // Create new object and load contents from IoRead
-FN_EXTERN InfoBackup *infoBackupNewLoad(IoRead *read, const CipherInfo *cipherInfo);
+FN_EXTERN InfoBackup *infoBackupNewLoad(IoRead *read, const CipherSpec *cipherSpec);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -103,11 +103,11 @@ infoBackupPg(const InfoBackup *const this)
 
 FN_EXTERN InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
 
-// Cipher info for dependent files
-FN_INLINE_ALWAYS const CipherInfo *
-infoBackupCipherInfo(const InfoBackup *const this)
+// Cipher spec for dependent files
+FN_INLINE_ALWAYS const CipherSpec *
+infoBackupCipherSpec(const InfoBackup *const this)
 {
-    return infoPgCipherInfo(infoBackupPg(this));
+    return infoPgCipherSpec(infoBackupPg(this));
 }
 
 // Return a structure of the backup data from a specific index
@@ -174,15 +174,15 @@ infoBackupFree(InfoBackup *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // Load backup info
-FN_EXTERN InfoBackup *infoBackupLoadFile(const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
+FN_EXTERN InfoBackup *infoBackupLoadFile(const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
 // Load backup info and update it by adding valid backups from the repo or removing backups no longer in the repo
 FN_EXTERN InfoBackup *infoBackupLoadFileReconstruct(
-    const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
+    const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
 // Save backup info
 FN_EXTERN void infoBackupSaveFile(
-    InfoBackup *infoBackup, const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
+    InfoBackup *infoBackup, const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
 /***********************************************************************************************************************************
 Macros for function logging

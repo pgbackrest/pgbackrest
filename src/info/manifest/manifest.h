@@ -38,7 +38,7 @@ typedef struct Manifest Manifest;
 #include "command/backup/common.h"
 #include "common/compress/helper.h"
 #include "common/crypto/hash.h"
-#include "common/crypto/info.h"
+#include "common/crypto/spec.h"
 #include "common/type/object.h"
 #include "common/type/variant.h"
 #include "info/info.h"
@@ -218,7 +218,7 @@ FN_EXTERN Manifest *manifestNewBuild(
     const Pack *tablespaceList);
 
 // Load a manifest from IO
-FN_EXTERN Manifest *manifestNewLoad(IoRead *read, const CipherInfo *cipherInfo);
+FN_EXTERN Manifest *manifestNewLoad(IoRead *read, const CipherSpec *cipherSpec);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -236,17 +236,17 @@ typedef struct ManifestPub
     StringList *referenceList;                                      // List of file references
 } ManifestPub;
 
-// Get cipher info for the files this manifest describes, set the pass they are encrypted with
-FN_INLINE_ALWAYS const CipherInfo *
-manifestCipherInfoSub(const Manifest *const this)
+// Get cipher spec for the files this manifest describes, set the pass they are encrypted with
+FN_INLINE_ALWAYS const CipherSpec *
+manifestCipherSpecSub(const Manifest *const this)
 {
-    return infoCipherInfo(THIS_PUB(Manifest)->info);
+    return infoCipherSpec(THIS_PUB(Manifest)->info);
 }
 
 FN_INLINE_ALWAYS void
-manifestCipherInfoSubSet(Manifest *const this, const CipherInfo *const cipherInfoSub)
+manifestCipherSpecSubSet(Manifest *const this, const CipherSpec *const cipherSpecSub)
 {
-    infoCipherInfoSet(THIS_PUB(Manifest)->info, cipherInfoSub);
+    infoCipherSpecSet(THIS_PUB(Manifest)->info, cipherSpecSub);
 }
 
 // Get manifest configuration and options
@@ -507,7 +507,7 @@ manifestFree(Manifest *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // Load backup manifest
-FN_EXTERN Manifest *manifestLoadFile(const Storage *storage, const String *fileName, const CipherInfo *cipherInfo);
+FN_EXTERN Manifest *manifestLoadFile(const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
 /***********************************************************************************************************************************
 Macros for function logging

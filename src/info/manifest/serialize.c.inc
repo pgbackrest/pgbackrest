@@ -1013,7 +1013,7 @@ typedef struct ManifestLoadFileData
     MemContext *memContext;                                         // Mem context
     const Storage *storage;                                         // Storage to load from
     const String *fileName;                                         // Base filename
-    const CipherInfo *cipherInfo;                                   // Cipher info
+    const CipherSpec *cipherSpec;                                   // Cipher spec
     Manifest *manifest;                                             // Loaded manifest object
 } ManifestLoadFileData;
 
@@ -1039,11 +1039,11 @@ manifestLoadFileCallback(void *const data, const unsigned int try)
 
             // Attempt to load the file
             IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-            cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, loadData->cipherInfo);
+            cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, loadData->cipherSpec);
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
-                loadData->manifest = manifestNewLoad(read, loadData->cipherInfo);
+                loadData->manifest = manifestNewLoad(read, loadData->cipherSpec);
                 result = true;
             }
             MEM_CONTEXT_END();
@@ -1056,24 +1056,24 @@ manifestLoadFileCallback(void *const data, const unsigned int try)
 
 FN_EXTERN Manifest *
 manifestLoadFile(
-    const Storage *const storage, const String *const fileName, const CipherInfo *const cipherInfo)
+    const Storage *const storage, const String *const fileName, const CipherSpec *const cipherSpec)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
-    ASSERT(cipherInfo != NULL);
+    ASSERT(cipherSpec != NULL);
 
     ManifestLoadFileData data =
     {
         .memContext = memContextCurrent(),
         .storage = storage,
         .fileName = fileName,
-        .cipherInfo = cipherInfo,
+        .cipherSpec = cipherSpec,
     };
 
     MEM_CONTEXT_TEMP_BEGIN()

@@ -59,21 +59,21 @@ cmdRestore(void)
 
         jobData.manifest = manifestLoadFile(
             storageRepoIdx(backupData.repoIdx),
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.cipherInfo);
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.cipherSpec);
 
         // Verify that the selected timeline is valid for the backup -- including current and latest timelines
         if (manifestData(jobData.manifest)->backupOptionOnline)
         {
             const ManifestData *const data = manifestData(jobData.manifest);
             const InfoArchive *const archiveInfo = infoArchiveLoadFile(
-                storageRepoIdx(backupData.repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherInfoIdx(backupData.repoIdx));
+                storageRepoIdx(backupData.repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecIdx(backupData.repoIdx));
 
             timelineVerify(
                 storageRepoIdx(backupData.repoIdx),
                 strNewFmt("%s-%u", strZ(pgVersionToStr(data->pgVersion)), data->pgId), data->pgVersion,
                 cvtZToUIntBase(strZ(strSubN(data->archiveStart, 0, 8)), 16), pgLsnFromStr(data->lsnStart),
                 cfgOptionStrNull(cfgOptTargetTimeline), cfgOptionSeq(cfgOptType),
-                infoArchiveCipherInfo(archiveInfo));
+                infoArchiveCipherSpec(archiveInfo));
         }
 
         // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
@@ -90,7 +90,7 @@ cmdRestore(void)
         manifestValidate(jobData.manifest, false);
 
         // Get the cipher subpass used to decrypt files in the backup
-        jobData.cipherInfo = manifestCipherInfoSub(jobData.manifest);
+        jobData.cipherSpec = manifestCipherSpecSub(jobData.manifest);
 
         // Validate the manifest
         restoreManifestValidate(jobData.manifest, backupData.backupSet);

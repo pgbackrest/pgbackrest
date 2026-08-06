@@ -75,27 +75,27 @@ cmdStanzaCreate(void)
                 }
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent archive files
-                const CipherInfo *cipherInfoSub = cipherInfoGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
+                const CipherSpec *cipherSpecSub = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save archive info
-                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherInfoSub);
+                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherSpecSub);
 
-                infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherInfoIdx(repoIdx));
+                infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent backup files
-                cipherInfoSub = cipherInfoGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
+                cipherSpecSub = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save backup info
-                infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, pgControl.catalogVersion, cipherInfoSub);
+                infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, pgControl.catalogVersion, cipherSpecSub);
 
-                infoBackupSaveFile(infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherInfoIdx(repoIdx));
+                infoBackupSaveFile(infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
             }
             // Else if at least one archive and one backup info file exists, then ensure both are valid
             else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
             {
                 // Error if there is a mismatch between the archive and backup info files or the database version/system Id matches
                 // current database
-                checkStanzaInfoPg(storageRepoReadStanza, pgControl.version, pgControl.systemId, cfgCipherInfoIdx(repoIdx));
+                checkStanzaInfoPg(storageRepoReadStanza, pgControl.version, pgControl.systemId, cfgCipherSpecIdx(repoIdx));
 
                 // The files are valid - upgrade
                 const String *sourceFile = NULL;

@@ -57,8 +57,8 @@ storageGetProcess(IoWrite *const destination)
             {
                 // Check for a passphrase parameter
                 const String *const cipherPassParam = cfgOptionStrNull(cfgOptCipherPass);
-                const CipherInfo *cipherInfo =
-                    cipherPassParam == NULL ? NULL : cipherInfoNewP(repoCipherType, BUFSTR(cipherPassParam));
+                const CipherSpec *cipherSpec =
+                    cipherPassParam == NULL ? NULL : cipherSpecNewP(repoCipherType, BUFSTR(cipherPassParam));
 
                 // If not passed as a parameter then determine the passphrase using the following pattern:
                 //
@@ -73,7 +73,7 @@ storageGetProcess(IoWrite *const destination)
                 // Nothing should be stored at the top level of the repo except the backup/archive paths. The backup/archive paths
                 // should contain only stanza paths.
                 // -----------------------------------------------------------------------------------------------------------------
-                if (cipherInfo == NULL)
+                if (cipherSpec == NULL)
                 {
                     const StringList *const filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
 
@@ -93,30 +93,30 @@ storageGetProcess(IoWrite *const destination)
                         // Archive path
                         if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
                         {
-                            cipherInfo = cfgCipherInfo();
+                            cipherSpec = cfgCipherSpec();
 
                             // Find the archive passphrase
                             if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
                             {
                                 const InfoArchive *const info = infoArchiveLoadFile(
                                     storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
-                                    cipherInfo);
-                                cipherInfo = infoArchiveCipherInfo(info);
+                                    cipherSpec);
+                                cipherSpec = infoArchiveCipherSpec(info);
                             }
                         }
 
                         // Backup path
                         if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
                         {
-                            cipherInfo = cfgCipherInfo();
+                            cipherSpec = cfgCipherSpec();
 
                             if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                             {
                                 // Find the backup passphrase
                                 const InfoBackup *const info = infoBackupLoadFile(
                                     storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
-                                    cipherInfo);
-                                cipherInfo = infoBackupCipherInfo(info);
+                                    cipherSpec);
+                                cipherSpec = infoBackupCipherSpec(info);
 
                                 // Find the manifest passphrase
                                 if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF(BACKUP_PATH_HISTORY)) &&
@@ -127,8 +127,8 @@ storageGetProcess(IoWrite *const destination)
                                         storageRepo(),
                                         strNewFmt(
                                             STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza), strZ(strLstGet(filePathSplitLst, 2)),
-                                            BACKUP_MANIFEST_FILE), cipherInfo);
-                                    cipherInfo = manifestCipherInfoSub(manifest);
+                                            BACKUP_MANIFEST_FILE), cipherSpec);
+                                    cipherSpec = manifestCipherSpecSub(manifest);
                                 }
                             }
                         }
@@ -136,11 +136,11 @@ storageGetProcess(IoWrite *const destination)
                 }
 
                 // Error when unable to determine cipher passphrase
-                if (cipherInfo == NULL)
+                if (cipherSpec == NULL)
                     THROW_FMT(OptionInvalidValueError, "unable to determine cipher passphrase for '%s'", strZ(file));
 
                 // Add encryption filter
-                cipherBlockFilterGroupAdd(ioReadFilterGroup(source), cipherModeDecrypt, cipherInfo);
+                cipherBlockFilterGroupAdd(ioReadFilterGroup(source), cipherModeDecrypt, cipherSpec);
             }
         }
 

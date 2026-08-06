@@ -74,7 +74,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
             param.cipherPass = TEST_CIPHER_PASS;
 
         ioFilterGroupAdd(
-            filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherInfoNewP(param.cipherType, BUFSTRZ(param.cipherPass))));
+            filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(param.cipherType, BUFSTRZ(param.cipherPass))));
 
         strCatFmt(filter, "enc[%s,%s] ", zNewStrId(param.cipherType), param.cipherPass);
     }
@@ -402,7 +402,7 @@ hrnStoragePut(
             param.cipherPass = TEST_CIPHER_PASS;
 
         ioFilterGroupAdd(
-            filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherInfoNewP(param.cipherType, BUFSTRZ(param.cipherPass))));
+            filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(param.cipherType, BUFSTRZ(param.cipherPass))));
     }
 
     // Add file name

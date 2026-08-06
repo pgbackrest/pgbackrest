@@ -95,7 +95,7 @@ typedef struct ArchiveGetFindCacheRepo
 {
     unsigned int repoIdx;
     CipherType cipherType;                                          // Repo cipher type
-    const CipherInfo *cipherInfo;                                   // Repo archive cipher info
+    const CipherSpec *cipherSpec;                                   // Repo archive cipher spec
     List *archiveList;                                              // Cached list of archiveIds and associated paths
     StringList *warnList;                                           // Track repo warnings so each is only reported once
 } ArchiveGetFindCacheRepo;
@@ -213,7 +213,7 @@ archiveGetFind(
                                         strZ(strLstGet(segmentList, segmentIdx))),
                                     .repoIdx = cacheRepo->repoIdx,
                                     .archiveId = cacheArchive->archiveId,
-                                    .cipherInfo = cacheRepo->cipherInfo,
+                                    .cipherSpec = cacheRepo->cipherSpec,
                                 };
 
                                 lstAdd(matchList, &archiveGetFile);
@@ -234,7 +234,7 @@ archiveGetFind(
                                 .file = strNewFmt("%s/%s", strZ(cacheArchive->archiveId), strZ(archiveFileRequest)),
                                 .repoIdx = cacheRepo->repoIdx,
                                 .archiveId = cacheArchive->archiveId,
-                                .cipherInfo = cacheRepo->cipherInfo,
+                                .cipherSpec = cacheRepo->cipherSpec,
                             };
 
                             lstAdd(matchList, &archiveGetFile);
@@ -412,12 +412,12 @@ archiveGetCheck(const StringList *const archiveRequestList)
 
                 // Attempt to load the archive info file
                 const InfoArchive *const info = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherInfoIdx(repoIdx));
+                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
 
-                // Build cipher info in the result list context once rather than rebuilding it per candidate file later
+                // Build cipher spec in the result list context once rather than rebuilding it per candidate file later
                 MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
                 {
-                    cacheRepo.cipherInfo = cipherInfoDup(infoArchiveCipherInfo(info));
+                    cacheRepo.cipherSpec = cipherSpecDup(infoArchiveCipherSpec(info));
                 }
                 MEM_CONTEXT_END();
 
@@ -929,7 +929,7 @@ archiveGetAsyncCallback(void *const data, const unsigned int clientIdx)
                 pckWriteStrP(param, actual->file);
                 pckWriteU32P(param, actual->repoIdx);
                 pckWriteStrP(param, actual->archiveId);
-                cipherInfoPack(param, actual->cipherInfo);
+                cipherSpecPack(param, actual->cipherSpec);
             }
 
             MEM_CONTEXT_PRIOR_BEGIN()

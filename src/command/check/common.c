@@ -124,13 +124,13 @@ checkStanzaInfo(const InfoPgData *const archiveInfo, const InfoPgData *const bac
 /**********************************************************************************************************************************/
 FN_EXTERN void
 checkStanzaInfoPg(
-    const Storage *const storage, const unsigned int pgVersion, const uint64_t pgSystemId, const CipherInfo *const cipherInfo)
+    const Storage *const storage, const unsigned int pgVersion, const uint64_t pgSystemId, const CipherSpec *const cipherSpec)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, storage);
         FUNCTION_TEST_PARAM(UINT, pgVersion);
         FUNCTION_TEST_PARAM(UINT64, pgSystemId);
-        FUNCTION_TEST_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_TEST_END();
 
     ASSERT(storage != NULL);
@@ -138,9 +138,9 @@ checkStanzaInfoPg(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Check that the backup and archive info files exist
-        const InfoArchive *const infoArchive = infoArchiveLoadFile(storage, INFO_ARCHIVE_PATH_FILE_STR, cipherInfo);
+        const InfoArchive *const infoArchive = infoArchiveLoadFile(storage, INFO_ARCHIVE_PATH_FILE_STR, cipherSpec);
         const InfoPgData archiveInfoPg = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
-        const InfoBackup *const infoBackup = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cipherInfo);
+        const InfoBackup *const infoBackup = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cipherSpec);
         const InfoPgData backupInfoPg = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
         // Check that the info files pg data match each other

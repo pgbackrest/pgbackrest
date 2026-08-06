@@ -15,17 +15,17 @@ Stanza Commands Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN CipherInfo *
-cipherInfoGen(const CipherType cipherType)
+FN_EXTERN CipherSpec *
+cipherSpecGen(const CipherType cipherType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_ID, cipherType);
     FUNCTION_TEST_END();
 
-    CipherInfo *result;
+    CipherSpec *result;
 
     if (cipherType == cipherTypeNone)
-        result = cipherInfoNewNone();
+        result = cipherSpecNewNone();
     else
     {
         MEM_CONTEXT_TEMP_BEGIN()
@@ -34,13 +34,13 @@ cipherInfoGen(const CipherType cipherType)
             cryptoRandomBytes(buffer, sizeof(buffer));
 
             // The pass is the encoded text rather than the bytes it encodes, so it is stored and derived from as that text
-            result = cipherInfoNewP(cipherType, BUFSTR(strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)))));
-            cipherInfoMove(result, memContextPrior());
+            result = cipherSpecNewP(cipherType, BUFSTR(strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)))));
+            cipherSpecMove(result, memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_TEST_RETURN(CIPHER_INFO, result);
+    FUNCTION_TEST_RETURN(CIPHER_SPEC, result);
 }
 
 /**********************************************************************************************************************************/

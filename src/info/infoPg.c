@@ -62,11 +62,11 @@ infoPgNewInternal(const InfoPgType type)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoPg *
-infoPgNew(const InfoPgType type, const CipherInfo *const cipherInfoSub)
+infoPgNew(const InfoPgType type, const CipherSpec *const cipherSpecSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, type);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfoSub);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecSub);
     FUNCTION_LOG_END();
 
     InfoPg *this;
@@ -74,7 +74,7 @@ infoPgNew(const InfoPgType type, const CipherInfo *const cipherInfoSub)
     OBJ_NEW_BASE_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoPgNewInternal(type);
-        this->pub.info = infoNew(cipherInfoSub);
+        this->pub.info = infoNew(cipherSpecSub);
     }
     OBJ_NEW_END();
 
@@ -156,7 +156,7 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
 
 FN_EXTERN InfoPg *
 infoPgNewLoad(
-    IoRead *const read, const InfoPgType type, const CipherInfo *const cipherInfo, InfoLoadNewCallback *const callbackFunction,
+    IoRead *const read, const InfoPgType type, const CipherSpec *const cipherSpec, InfoLoadNewCallback *const callbackFunction,
     void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -187,7 +187,7 @@ infoPgNewLoad(
             .infoPg = this,
         };
 
-        this->pub.info = infoNewLoad(read, cipherInfo, infoPgLoadCallback, &loadData);
+        this->pub.info = infoNewLoad(read, cipherSpec, infoPgLoadCallback, &loadData);
 
         CHECK(FormatError, !lstEmpty(this->pub.history), "history is missing");
         CHECK(FormatError, loadData.currentId > 0, "current id is missing");

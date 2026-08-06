@@ -79,13 +79,13 @@ Load history file
 static List *
 historyLoad(
     const Storage *const storageRepo, const String *const archiveId, const unsigned int timeline,
-    const CipherInfo *const cipherInfo)
+    const CipherSpec *const cipherSpec)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storageRepo);
         FUNCTION_LOG_PARAM(STRING, archiveId);
         FUNCTION_LOG_PARAM(UINT, timeline);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_LOG_END();
 
     List *result;
@@ -94,7 +94,7 @@ historyLoad(
     {
         const String *const historyFile = strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%08X.history", strZ(archiveId), timeline);
         StorageRead *const storageRead = storageNewReadP(storageRepo, historyFile);
-        cipherBlockFilterGroupAdd(ioReadFilterGroup(storageReadIo(storageRead)), cipherModeDecrypt, cipherInfo);
+        cipherBlockFilterGroupAdd(ioReadFilterGroup(storageReadIo(storageRead)), cipherModeDecrypt, cipherSpec);
         const Buffer *const history = storageGetP(storageRead);
 
         TRY_BEGIN()
@@ -158,7 +158,7 @@ FN_EXTERN void
 timelineVerify(
     const Storage *const storageRepo, const String *const archiveId, const unsigned int pgVersion,
     const unsigned int timelineBackup, const uint64_t lsnBackup, const String *timelineTargetStr, const unsigned int recoveryType,
-    const CipherInfo *const cipherInfo)
+    const CipherSpec *const cipherSpec)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storageRepo);
@@ -168,7 +168,7 @@ timelineVerify(
         FUNCTION_LOG_PARAM(UINT64, lsnBackup);
         FUNCTION_LOG_PARAM(STRING, timelineTargetStr);
         FUNCTION_LOG_PARAM(UINT, recoveryType);
-        FUNCTION_LOG_PARAM(CIPHER_INFO, cipherInfo);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_LOG_END();
 
     ASSERT(storageRepo != NULL);
@@ -221,7 +221,7 @@ timelineVerify(
             {
                 // Search through the history for the target timeline to make sure it includes the backup timeline. This follows
                 // the logic in PostgreSQL's readTimeLineHistory() and tliOfPointInHistory() but is a bit simplified for our usage.
-                const List *const historyList = historyLoad(storageRepo, archiveId, timelineTarget, cipherInfo);
+                const List *const historyList = historyLoad(storageRepo, archiveId, timelineTarget, cipherSpec);
                 unsigned int timelineFound = 0;
 
                 for (unsigned int historyIdx = 0; historyIdx < lstSize(historyList); historyIdx++)
