@@ -770,12 +770,12 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
 Process the backup manifest
 ***********************************************************************************************************************************/
 static void
-backupProcess(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
+backupProcess(const BackupData *const backupData, Manifest *const manifest, const Buffer *const cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
+        FUNCTION_LOG_PARAM(BUFFER, cipherPassBackup);               // Contents are not logged
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);

@@ -66,13 +66,13 @@ infoBackupNewInternal(void)
 /**********************************************************************************************************************************/
 FN_EXTERN InfoBackup *
 infoBackupNew(
-    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion, const String *const cipherPassSub)
+    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion, const Buffer *const cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
-        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
+        FUNCTION_LOG_PARAM(BUFFER, cipherPassSub);                  // Contents are not logged
     FUNCTION_LOG_END();
 
     ASSERT(pgVersion > 0 && pgSystemId > 0 && pgCatalogVersion > 0);
@@ -832,7 +832,7 @@ infoBackupLoadFileReconstruct(
                     bool found = false;
                     const Manifest *const manifest = manifestLoadFile(
                         storage, manifestFileName,
-                        cipherInfoNewStore(cipherInfoType(cipherInfo), infoPgCipherPass(infoBackupPg(infoBackup))));
+                        cipherInfoNewP(cipherInfoType(cipherInfo), infoPgCipherPass(infoBackupPg(infoBackup))));
                     const ManifestData *const manData = manifestData(manifest);
 
                     // If the pg data for the manifest exists in the history, then add it to current, but if something doesn't match

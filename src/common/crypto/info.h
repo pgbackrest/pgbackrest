@@ -27,9 +27,6 @@ typedef struct CipherInfo CipherInfo;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-// Create for a repository that is not encrypted
-FN_EXTERN CipherInfo *cipherInfoNewNone(void);
-
 // Create from a pass, which is the key bytes or the passphrase text rather than what either was stored as
 typedef struct CipherInfoNewParam
 {
@@ -41,6 +38,13 @@ typedef struct CipherInfoNewParam
     cipherInfoNew(type, pass, (CipherInfoNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN CipherInfo *cipherInfoNew(CipherType type, const Buffer *pass, CipherInfoNewParam param);
+
+// Create for data that is not encrypted
+FN_INLINE_ALWAYS CipherInfo *
+cipherInfoNewNone(void)
+{
+    return cipherInfoNewP(cipherTypeNone, NULL);
+}
 
 // Create from a pass as it is stored in the repository. A key carries a prefix and is decoded to the bytes it encodes, deriving
 // with SHA-256. Anything else is a passphrase used as the text it already is, deriving with SHA-1. This is the only place that

@@ -1781,6 +1781,8 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 1, " test ");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 1, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 1, "test");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 1, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, "xxx-cipher");
         strLstAddZ(argList, TEST_COMMAND_BACKUP);
         hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 1, "xxx");
         hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 1, "xxx");
@@ -1820,8 +1822,20 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceDefault, "buffer-size is source default");
         TEST_RESULT_Z(cfgOptionName(cfgOptBufferSize), "buffer-size", "buffer-size name");
 
+        // Cipher info is built once per repo and then cached
+        const CipherInfo *const cipherInfo = cfgCipherInfo();
+
+        TEST_RESULT_UINT(cipherInfoType(cipherInfo), cipherTypeAes256Cbc, "repo1 cipher info type");
+        TEST_RESULT_STR_Z(strNewBuf(cipherInfoPass(cipherInfo)), "xxx-cipher", "repo1 cipher info pass");
+        TEST_RESULT_PTR(cfgCipherInfoIdx(0), cipherInfo, "repo1 cipher info is cached");
+
+        // Sub cipher info is built per call since the sub pass varies by file
+        TEST_RESULT_UINT(
+            cipherInfoType(cfgCipherInfoSub(BUFSTRDEF("sub-pass"))), cipherTypeAes256Cbc, "repo1 sub cipher info type");
+
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("global is a valid stanza prefix");
@@ -1841,6 +1855,8 @@ testRun(void)
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "parse config");
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/global/stanza", "default pg-path");
+        TEST_RESULT_UINT(cipherInfoType(cfgCipherInfoIdx(0)), cipherTypeNone, "no cipher info when repo is not encrypted");
+        TEST_RESULT_UINT(cipherInfoType(cfgCipherInfoSub(NULL)), cipherTypeNone, "no sub cipher info when repo is not encrypted");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warnings for environment variables, command-line and config file options");

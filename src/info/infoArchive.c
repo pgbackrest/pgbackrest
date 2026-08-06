@@ -57,12 +57,12 @@ infoArchiveNewInternal(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoArchive *
-infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const String *const cipherPassSub)
+infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const Buffer *const cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
+        FUNCTION_LOG_PARAM(BUFFER, cipherPassSub);                  // Contents are not logged
     FUNCTION_LOG_END();
 
     ASSERT(pgVersion > 0 && pgSystemId > 0);

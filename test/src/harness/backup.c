@@ -95,12 +95,12 @@ hrnBackupScriptSet(const HrnBackupScript *const script, const unsigned int scrip
 
 /**********************************************************************************************************************************/
 static void
-backupProcess(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
+backupProcess(const BackupData *const backupData, Manifest *const manifest, const Buffer *const cipherPassBackup)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(BACKUP_DATA, backupData);
         FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
-        FUNCTION_HARNESS_PARAM(STRING, cipherPassBackup);
+        FUNCTION_HARNESS_PARAM(BUFFER, cipherPassBackup);
     FUNCTION_HARNESS_END();
 
     // If any file changes are scripted then make them

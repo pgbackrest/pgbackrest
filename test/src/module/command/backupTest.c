@@ -28,7 +28,7 @@ static String *
 testBackupValidateFile(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
     const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const CipherType cipherType,
-    const String *const cipherPass)
+    const Buffer *const cipherPass)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -39,7 +39,7 @@ testBackupValidateFile(
         FUNCTION_HARNESS_PARAM(UINT64, fileSize);
         FUNCTION_HARNESS_PARAM_P(VOID, filePack);
         FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
-        FUNCTION_HARNESS_PARAM(STRING, cipherPass);
+        FUNCTION_HARNESS_PARAM(BUFFER, cipherPass);
     FUNCTION_HARNESS_END();
 
     String *const result = strNew();
@@ -93,7 +93,7 @@ testBackupValidateFile(
         {
             ioFilterGroupAdd(
                 ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherInfoNewStore(cipherType, cipherPass), .raw = true));
+                cipherBlockNewP(cipherModeDecrypt, cipherInfoNewP(cipherType, cipherPass), .raw = true));
         }
 
         ioReadOpen(storageReadIo(read));
@@ -129,7 +129,7 @@ testBackupValidateFile(
         bufUsedSet(fileBuffer, bufSize(fileBuffer));
 
         BlockDelta *const blockDelta = blockDeltaNew(
-            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherInfoNewStore(cipherType, cipherPass),
+            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherInfoNewP(cipherType, cipherPass),
             manifestData->backupOptionCompressType);
 
         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
@@ -174,7 +174,7 @@ testBackupValidateFile(
         {
             ioFilterGroupAdd(
                 ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherInfoNewStore(cipherType, cipherPass), .raw = raw));
+                cipherBlockNewP(cipherModeDecrypt, cipherInfoNewP(cipherType, cipherPass), .raw = raw));
         }
 
         if (manifestData->backupOptionCompressType != compressTypeNone)
@@ -255,7 +255,7 @@ testBackupValidateFile(
 static String *
 testBackupValidateList(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    StringList *const manifestFileList, const CipherType cipherType, const String *const cipherPass, String *const result)
+    StringList *const manifestFileList, const CipherType cipherType, const Buffer *const cipherPass, String *const result)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -264,7 +264,7 @@ testBackupValidateList(
         FUNCTION_HARNESS_PARAM_P(VOID, manifestData);
         FUNCTION_HARNESS_PARAM(STRING_LIST, manifestFileList);
         FUNCTION_HARNESS_PARAM(STRING_ID, cipherType);
-        FUNCTION_HARNESS_PARAM(STRING, cipherPass);
+        FUNCTION_HARNESS_PARAM(BUFFER, cipherPass);
         FUNCTION_HARNESS_PARAM(STRING, result);
     FUNCTION_HARNESS_END();
 
@@ -435,7 +435,7 @@ testBackupValidate(const Storage *const storage, const String *const path, const
                 param.cipherPass == NULL ? NULL : STR(param.cipherPass)));
         Manifest *manifest = manifestLoadFile(
             storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)),
-            cipherInfoNewStore(
+            cipherInfoNewP(
                 param.cipherType == 0 ? cipherTypeNone : param.cipherType,
                 param.cipherPass == NULL ? NULL : infoBackupCipherPass(infoBackup)));
 
@@ -447,7 +447,7 @@ testBackupValidate(const Storage *const storage, const String *const path, const
 
         // Validate files on disk against the manifest
         const CipherType cipherType = param.cipherType == 0 ? cipherTypeNone : param.cipherType;
-        const String *const cipherPass = param.cipherPass == NULL ? NULL : manifestCipherSubPass(manifest);
+        const Buffer *const cipherPass = param.cipherPass == NULL ? NULL : manifestCipherSubPass(manifest);
 
         testBackupValidateList(storage, path, manifest, manifestData(manifest), manifestFileList, cipherType, cipherPass, result);
 

@@ -11,7 +11,7 @@ Stanza Commands Handler
 Functions
 ***********************************************************************************************************************************/
 // Generate a cipher
-FN_EXTERN String *cipherPassGen(CipherType cipherType);
+FN_EXTERN Buffer *cipherPassGen(CipherType cipherType);
 
 // Validate and return database information
 FN_EXTERN PgControl pgValidate(void);

@@ -55,8 +55,10 @@ storageGetProcess(IoWrite *const destination)
 
             if (repoCipherType != cipherTypeNone)
             {
-                // Check for a passphrase parameter
-                const String *cipherPass = cfgOptionStrNull(cfgOptCipherPass);
+                // Check for a passphrase parameter. The pass is copied because the buffers built from options must outlive the
+                // blocks they are assigned in, unlike the passes read from info files which are owned by those objects.
+                const String *const cipherPassParam = cfgOptionStrNull(cfgOptCipherPass);
+                const Buffer *cipherPass = cipherPassParam == NULL ? NULL : bufDup(BUFSTR(cipherPassParam));
 
                 // If not passed as a parameter then determine the passphrase using the following pattern:
                 //
@@ -91,7 +93,7 @@ storageGetProcess(IoWrite *const destination)
                         // Archive path
                         if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
                         {
-                            cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
+                            cipherPass = bufDup(BUFSTR(cfgOptionStr(cfgOptRepoCipherPass)));
 
                             // Find the archive passphrase
                             if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
@@ -106,7 +108,7 @@ storageGetProcess(IoWrite *const destination)
                         // Backup path
                         if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
                         {
-                            cipherPass = cfgOptionStr(cfgOptRepoCipherPass);
+                            cipherPass = bufDup(BUFSTR(cfgOptionStr(cfgOptRepoCipherPass)));
 
                             if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                             {
@@ -139,7 +141,7 @@ storageGetProcess(IoWrite *const destination)
 
                 // Add encryption filter
                 cipherBlockFilterGroupAdd(
-                    ioReadFilterGroup(source), cipherModeDecrypt, cipherInfoNewP(repoCipherType, BUFSTR(cipherPass)));
+                    ioReadFilterGroup(source), cipherModeDecrypt, cipherInfoNewP(repoCipherType, cipherPass));
             }
         }
 

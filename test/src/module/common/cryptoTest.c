@@ -83,8 +83,23 @@ testRun(void)
 
         // Initialization of object
         // -------------------------------------------------------------------------------------------------------------------------
-        CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(
-            cipherBlockNewP(cipherModeEncrypt, cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF(TEST_PASS))));
+        // Build from a duplicate to show the copy carries the type, digest, and pass of the original
+        TEST_RESULT_UINT(cipherInfoType(cipherInfoDup(cipherInfoNewNone())), cipherTypeNone, "dup of none");
+
+        const CipherInfo *const cipherInfo = cipherInfoDup(cipherInfoNewStore(cipherTypeAes256Cbc, STRDEF(TEST_PASS)));
+
+        TEST_RESULT_UINT(cipherInfoDigest(cipherInfo), hashTypeSha1, "dup digest");
+
+        // A pack carries nothing but the type when there is no cipher
+        PackWrite *const packWrite = pckWriteNewP();
+
+        cipherInfoPack(packWrite, cipherInfoNewNone());
+        pckWriteEndP(packWrite);
+
+        TEST_RESULT_UINT(
+            cipherInfoType(cipherInfoNewPack(pckReadNew(pckWriteResult(packWrite)))), cipherTypeNone, "unpack none");
+
+        CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(cipherBlockNewP(cipherModeEncrypt, cipherInfo));
         TEST_RESULT_INT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");
         TEST_RESULT_UINT(bufSize(cipherBlock->pass), strlen(TEST_PASS), "passphrase size is valid");
         TEST_RESULT_BOOL(memcmp(bufPtrConst(cipherBlock->pass), TEST_PASS, strlen(TEST_PASS)) == 0, true, "passphrase is valid");

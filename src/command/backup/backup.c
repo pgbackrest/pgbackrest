@@ -209,7 +209,7 @@ cmdBackup(void)
         // Load backup.info
         InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherInfo());
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-        const String *const cipherPassBackup = infoPgCipherPass(infoBackupPg(infoBackup));
+        const Buffer *const cipherPassBackup = infoPgCipherPass(infoBackupPg(infoBackup));
 
         // Get pg storage and database objects
         BackupData *const backupData = backupInit(infoBackup);

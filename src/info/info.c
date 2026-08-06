@@ -94,10 +94,10 @@ BUFFER_STRDEF_STATIC(INFO_CHECKSUM_END_BUF, "}}");
 
 /**********************************************************************************************************************************/
 FN_EXTERN Info *
-infoNew(const String *const cipherPass)
+infoNew(const Buffer *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);                 // Use FUNCTION_TEST so cipher is not logged
+        FUNCTION_LOG_PARAM(BUFFER, cipherPass);                     // Contents are not logged
     FUNCTION_LOG_END();
 
     OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
@@ -213,7 +213,7 @@ infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, voi
                             {
                                 MEM_CONTEXT_OBJ_BEGIN(this)
                                 {
-                                    this->pub.cipherPass = varStr(jsonToVar(value->value));
+                                    this->pub.cipherPass = bufDup(BUFSTR(varStr(jsonToVar(value->value))));
                                 }
                                 MEM_CONTEXT_OBJ_END();
                             }
@@ -369,7 +369,9 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
         if (infoCipherPass(this) != NULL)
         {
             callbackFunction(callbackData, STRDEF(INFO_SECTION_CIPHER), &data);
-            infoSaveValue(&data, INFO_SECTION_CIPHER, INFO_KEY_CIPHER_PASS, jsonFromVar(VARSTR(infoCipherPass(this))));
+            infoSaveValue(
+                &data, INFO_SECTION_CIPHER, INFO_KEY_CIPHER_PASS,
+                jsonFromVar(VARSTR(strNewBuf(infoCipherPass(this)))));
         }
 
         // Flush out any additional sections
@@ -395,11 +397,11 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
 Getters/Setters
 ***********************************************************************************************************************************/
 FN_EXTERN void
-infoCipherPassSet(Info *const this, const String *const cipherPass)
+infoCipherPassSet(Info *const this, const Buffer *const cipherPass)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO, this);
-        FUNCTION_TEST_PARAM(STRING, cipherPass);
+        FUNCTION_TEST_PARAM(BUFFER, cipherPass);
     FUNCTION_TEST_END();
 
     FUNCTION_AUDIT_IF(memContextCurrent() != objMemContext(this));  // Do not audit calls from within the object
@@ -408,7 +410,8 @@ infoCipherPassSet(Info *const this, const String *const cipherPass)
 
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        this->pub.cipherPass = strDup(cipherPass);
+        // The pass is optional and bufDup() does not accept NULL
+        this->pub.cipherPass = cipherPass == NULL ? NULL : bufDup(cipherPass);
     }
     MEM_CONTEXT_OBJ_END();
 

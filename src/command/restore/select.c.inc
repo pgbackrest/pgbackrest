@@ -15,7 +15,7 @@ typedef struct RestoreBackupData
 
 // Helper function for restoreBackupSet
 static RestoreBackupData
-restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, const String *const backupCipherPass)
+restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, const Buffer *const backupCipherPass)
 {
     ASSERT(backupLabel != NULL);
 

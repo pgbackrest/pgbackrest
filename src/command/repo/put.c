@@ -57,7 +57,7 @@ storagePutProcess(IoRead *source)
 
                 // Add encryption filter
                 cipherBlockFilterGroupAdd(
-                    ioWriteFilterGroup(storageWriteIo(destination)), cipherModeEncrypt, cfgCipherInfoSub(cipherPass));
+                    ioWriteFilterGroup(storageWriteIo(destination)), cipherModeEncrypt, cfgCipherInfoSub(BUFSTR(cipherPass)));
             }
         }
 

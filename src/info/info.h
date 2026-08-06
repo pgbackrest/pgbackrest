@@ -38,7 +38,7 @@ typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *i
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN Info *infoNew(const String *cipherPassSub);
+FN_EXTERN Info *infoNew(const Buffer *cipherPassSub);
 
 // Create new object and load contents from a file
 FN_EXTERN Info *infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData);
@@ -49,17 +49,18 @@ Getters/Setters
 typedef struct InfoPub
 {
     const String *backrestVersion;                                  // pgBackRest version
-    const String *cipherPass;                                       // Cipher passphrase if set
+    const Buffer *cipherPass;                                       // Cipher passphrase if set
 } InfoPub;
 
-// Cipher passphrase if set
-FN_INLINE_ALWAYS const String *
+// Cipher passphrase if set. This is a buffer rather than a string so it can be passed to cipher info without a copy and without
+// needing to guard against NULL, which BUFSTR() cannot do.
+FN_INLINE_ALWAYS const Buffer *
 infoCipherPass(const Info *const this)
 {
     return THIS_PUB(Info)->cipherPass;
 }
 
-FN_EXTERN void infoCipherPassSet(Info *this, const String *cipherPass);
+FN_EXTERN void infoCipherPassSet(Info *this, const Buffer *cipherPass);
 
 // pgBackRest version
 FN_INLINE_ALWAYS const String *

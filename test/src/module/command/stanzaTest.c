@@ -147,7 +147,7 @@ testRun(void)
         TEST_RESULT_PTR_NE(infoBackupCipherPass(infoBackup), NULL, "cipher sub set");
 
         TEST_RESULT_BOOL(
-            strEq(infoArchiveCipherPass(infoArchive), infoBackupCipherPass(infoBackup)), false,
+            bufEq(infoArchiveCipherPass(infoArchive), infoBackupCipherPass(infoBackup)), false,
             "cipher sub different for archive and backup");
 
         // Confirm non-encrypted repo created successfully

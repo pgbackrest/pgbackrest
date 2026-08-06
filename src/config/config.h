@@ -258,10 +258,10 @@ cfgCipherInfo(void)
 }
 
 // Get cipher info for cipher type/subpassphrase
-CipherInfo *cfgCipherInfoSubIdx(unsigned int repoIdx, const String *cipherPassSub);
+CipherInfo *cfgCipherInfoSubIdx(unsigned int repoIdx, const Buffer *cipherPassSub);
 
 FN_INLINE_ALWAYS CipherInfo *
-cfgCipherInfoSub(const String *const cipherPassSub)
+cfgCipherInfoSub(const Buffer *const cipherPassSub)
 {
     return cfgCipherInfoSubIdx(cfgOptionIdxDefault(cfgOptRepoCipherType), cipherPassSub);
 }

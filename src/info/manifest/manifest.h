@@ -237,14 +237,14 @@ typedef struct ManifestPub
 } ManifestPub;
 
 // Get/set the cipher subpassphrase
-FN_INLINE_ALWAYS const String *
+FN_INLINE_ALWAYS const Buffer *
 manifestCipherSubPass(const Manifest *const this)
 {
     return infoCipherPass(THIS_PUB(Manifest)->info);
 }
 
 FN_INLINE_ALWAYS void
-manifestCipherSubPassSet(Manifest *const this, const String *const cipherSubPass)
+manifestCipherSubPassSet(Manifest *const this, const Buffer *const cipherSubPass)
 {
     infoCipherPassSet(THIS_PUB(Manifest)->info, cipherSubPass);
 }

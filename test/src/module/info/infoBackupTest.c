@@ -70,7 +70,7 @@ testRun(void)
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentCompare)), "load backup info");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->pub.infoPg, "infoPg set");
-        TEST_RESULT_STR(infoBackupCipherPass(infoBackup), NULL, "cipher sub not set");
+        TEST_RESULT_PTR(infoBackupCipherPass(infoBackup), NULL, "cipher sub not set");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 0, "infoBackupDataTotal returns 0");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ testRun(void)
             infoBackup,
             infoBackupNew(
                 PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10),
-                STRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+                BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoBackupNew() - cipher sub");
 
         contentSave = bufNew(0);
@@ -91,7 +91,8 @@ testRun(void)
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave)), "load backup info with cipher sub");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackupPg(infoBackup), "infoPg set");
         TEST_RESULT_STR_Z(
-            infoBackupCipherPass(infoBackup), "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
+            strNewBuf(infoBackupCipherPass(infoBackup)), "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
+            "cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 1, "history set");
 
         // -------------------------------------------------------------------------------------------------------------------------

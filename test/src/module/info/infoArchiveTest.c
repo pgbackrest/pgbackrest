@@ -45,7 +45,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(infoArchiveId(info), "9.6-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
-        TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "no cipher sub");
+        TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "no cipher sub");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("infoArchive save (in memory)");
@@ -64,7 +64,7 @@ testRun(void)
             info, infoArchiveNew(PG_VERSION_96, 6569239123849665679, NULL), "infoArchiveNew() - no sub cipher");
         TEST_RESULT_STR_Z(infoArchiveId(info), "9.6-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
-        TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "no cipher sub");
+        TEST_RESULT_PTR(infoArchiveCipherPass(info), NULL, "no cipher sub");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "history set");
 
         Buffer *contentCompare = bufNew(0);
@@ -79,7 +79,8 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoArchiveNew(
-                PG_VERSION_10, 6569239123849665999, STRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+                PG_VERSION_10, 6569239123849665999,
+                BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
             "infoArchiveNew() - cipher sub");
 
         contentSave = bufNew(0);
@@ -90,7 +91,8 @@ testRun(void)
         TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), infoArchivePg(info), "infoPg set");
         TEST_RESULT_STR_Z(
-            infoArchiveCipherPass(info), "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
+            strNewBuf(infoArchiveCipherPass(info)), "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO",
+            "cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "history set");
 
         // -------------------------------------------------------------------------------------------------------------------------

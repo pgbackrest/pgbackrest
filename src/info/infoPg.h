@@ -47,7 +47,7 @@ typedef enum
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN InfoPg *infoPgNew(InfoPgType type, const String *cipherPassSub);
+FN_EXTERN InfoPg *infoPgNew(InfoPgType type, const Buffer *cipherPassSub);
 
 // Create new object and load contents from a file
 FN_EXTERN InfoPg *infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFunction, void *callbackData);
@@ -72,7 +72,7 @@ infoPgInfo(const InfoPg *const this)
 }
 
 // Return the cipher passphrase
-FN_INLINE_ALWAYS const String *
+FN_INLINE_ALWAYS const Buffer *
 infoPgCipherPass(const InfoPg *const this)
 {
     return infoCipherPass(infoPgInfo(this));

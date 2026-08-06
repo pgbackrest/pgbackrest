@@ -4,8 +4,8 @@ Cipher Info
 #include <build.h>
 
 #include "common/crypto/info.h"
-#include "common/encode.h"
 #include "common/debug.h"
+#include "common/encode.h"
 #include "common/log.h"
 
 /***********************************************************************************************************************************
@@ -15,21 +15,6 @@ struct CipherInfo
 {
     CipherInfoPub pub;                                              // Publicly accessible variables
 };
-
-/**********************************************************************************************************************************/
-FN_EXTERN CipherInfo *
-cipherInfoNewNone(void)
-{
-    FUNCTION_TEST_VOID();
-
-    OBJ_NEW_BEGIN(CipherInfo, .childQty = MEM_CONTEXT_QTY_MAX)
-    {
-        *this = (CipherInfo){.pub = {.type = cipherTypeNone}};
-    }
-    OBJ_NEW_END();
-
-    FUNCTION_TEST_RETURN(CIPHER_INFO, this);
-}
 
 /**********************************************************************************************************************************/
 FN_EXTERN CipherInfo *

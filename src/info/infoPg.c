@@ -62,11 +62,11 @@ infoPgNewInternal(const InfoPgType type)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoPg *
-infoPgNew(const InfoPgType type, const String *const cipherPassSub)
+infoPgNew(const InfoPgType type, const Buffer *const cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, type);
-        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
+        FUNCTION_LOG_PARAM(BUFFER, cipherPassSub);                  // Contents are not logged
     FUNCTION_LOG_END();
 
     InfoPg *this;

@@ -3,11 +3,11 @@ Save a copy of the backup manifest during processing to preserve checksums for a
 resume is disabled since an incremental copy will not be used in a future backup unless resume is enabled beforehand.
 ***********************************************************************************************************************************/
 static void
-backupManifestSaveCopy(Manifest *const manifest, const String *const cipherPassBackup, const bool final)
+backupManifestSaveCopy(Manifest *const manifest, const Buffer *const cipherPassBackup, const bool final)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
+        FUNCTION_LOG_PARAM(BUFFER, cipherPassBackup);               // Contents are not logged
         FUNCTION_LOG_PARAM(BOOL, final);
     FUNCTION_LOG_END();
 
@@ -40,12 +40,12 @@ backupManifestSaveCopy(Manifest *const manifest, const String *const cipherPassB
 Check and copy WAL segments required to make the backup consistent
 ***********************************************************************************************************************************/
 static void
-backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
+backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manifest, const Buffer *const cipherPassBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_TEST_PARAM(STRING, cipherPassBackup);
+        FUNCTION_LOG_PARAM(BUFFER, cipherPassBackup);               // Contents are not logged
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
