@@ -1,10 +1,10 @@
 """Test Configuration Parse.
 
-The declaration is written out here rather than read from the repository, since what needs testing is what a declaration means -- and
-in particular what it inherits -- rather than what the project happens to declare today.
+The declaration is written out here rather than read from the repository, since what needs testing is what a declaration means --
+and in particular what it inherits -- rather than what the project happens to declare today.
 
-Most tests share one declaration and check a different part of the result, so the parts that inherit from each other stay in one place
-and it is clear what each option was declared against."""
+Most tests share one declaration and check a different part of the result, so the parts that inherit from each other stay in one
+place and it is clear what each option was declared against."""
 
 ####################################################################################################################################
 import os
@@ -16,8 +16,8 @@ from common.error import *
 from common.storage import file_write
 from config.parse import *
 
-# Commands the options are declared against. Backup sets everything a command can set, help and version take no options of their own,
-# and restore takes only what a command gets by default.
+# Commands the options are declared against. Backup sets everything a command can set, help and version take no options of their
+# own, and restore takes only what a command gets by default.
 COMMAND = """command:
   backup:
     command-role:

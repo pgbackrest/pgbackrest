@@ -2159,16 +2159,6 @@
 
         <operation-general title="General Options">
             <option-list>
-                <option id="cipher-pass" name="Ad Hoc Cipher Passphrase">
-                    <summary>Cipher passphrase for current command.</summary>
-
-                    <text>
-                        <p>Specify an ad hoc cipher passphrase for the current command.</p>
-                    </text>
-
-                    <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
-                </option>
-
                 <option id="config" name="Config">
                     <summary><backrest/> configuration file.</summary>
 
@@ -2596,16 +2586,6 @@
                         <example>desc</example>
                     </option>
                 </option-list>
-            </command>
-
-            <command id="repo-put" name="Repository Put File">
-                <summary>Put a file in the repository.</summary>
-
-                <text>
-                    <p>Similar to the unix <cmd>tee</cmd> command by copying from stdin to a file but options and behavior are different. This command requires a fully qualified file name and is primarily for administration, investigation, and testing. It is not a required part of a normal <backrest/> setup.</p>
-
-                    <p>If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</p>
-                </text>
             </command>
 
             <command id="repo-rm" name="Repository Remove Paths/Files">

@@ -4,8 +4,8 @@ Holds the variables a document refers to as {[name]} and replaces them wherever 
 so replacement repeats until nothing more is replaced rather than passing over the text once.
 
 A variable may be evaluated rather than written out, which is how a document asks for a fact about the environment it is being built
-in that it has no other way to know, e.g. the name of the user running the build. What it may use is the short list below rather than
-the whole interpreter, and it is an expression rather than a program, which is what keeps the feature to a few lines."""
+in that it has no other way to know, e.g. the name of the user running the build. What it may use is the short list below rather
+than the whole interpreter, and it is an expression rather than a program, which is what keeps the feature to a few lines."""
 
 ####################################################################################################################################
 import os
@@ -43,8 +43,8 @@ class VarStore:
     def add(self, variable, value):
         """Add a variable, keeping the value it already has when it has one.
 
-        The first value wins because the command line is loaded before the document, so what the caller asked for is not overridden by
-        what the document declares."""
+        The first value wins because the command line is loaded before the document, so what the caller asked for is not overridden
+        by what the document declares."""
 
         self.var_map.setdefault("{[%s]}" % variable, value)
 
@@ -65,8 +65,8 @@ class VarStore:
     def set(self, variable, value):
         """Set a variable, replacing the value it already has.
 
-        Used for what is only known once the build is running, e.g. the address of a host that has just been started or the output of
-        a command the documentation ran."""
+        Used for what is only known once the build is running, e.g. the address of a host that has just been started or the output
+        of a command the documentation ran."""
 
         self.var_map["{[%s]}" % variable] = value
 

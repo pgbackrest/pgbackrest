@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """pgBackRest Code Builder.
 
-Generates the C that would be tedious and error prone to maintain by hand: the option parse tables, the error list, the help, and the
-PostgreSQL interfaces. Each is generated from a declaration in src/build, which is the definition of record for what it describes.
+Generates the C that would be tedious and error prone to maintain by hand: the option parse tables, the error list, the help, and
+the PostgreSQL interfaces. Each is generated from a declaration in src/build, which is the definition of record for what it
+describes.
 
 A generated file is only written when its content changes, so a run that generates nothing new leaves every timestamp alone and does
 not make the build rebuild what depends on it.

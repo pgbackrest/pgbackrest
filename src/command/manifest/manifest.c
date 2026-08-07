@@ -397,7 +397,8 @@ cmdManifestFileRender(const Manifest *const manifest, const ManifestFile *const 
 
             strCatFmt(
                 result, "      size: %s, repo %s\n", strZ(strSizeFormat(file->size)), strZ(strSizeFormat(file->sizeRepo)));
-            strCatFmt(result, "      checksum: %s\n", strZ(strNewEncode(encodingHex, BUF(file->checksumSha1, HASH_TYPE_SHA1_SIZE))));
+            strCatFmt(
+                result, "      checksum: %s\n", strZ(strNewEncode(encodingHex, BUF(file->checksumSha1, HASH_TYPE_SHA1_SIZE))));
 
             if (file->bundleId != 0)
                 strCatFmt(result, "      bundle: %" PRIu64 "\n", file->bundleId);

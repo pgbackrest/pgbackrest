@@ -1,7 +1,7 @@
 """Test Pack Writer.
 
-The bytes expected here are read the way the format documents them, i.e. a tag byte holding the type, the value, and the gap since the
-last field, so a failure says which part of the tag is wrong rather than only that a byte differs."""
+The bytes expected here are read the way the format documents them, i.e. a tag byte holding the type, the value, and the gap since
+the last field, so a failure says which part of the tag is wrong rather than only that a byte differs."""
 
 ####################################################################################################################################
 from harness.test import *

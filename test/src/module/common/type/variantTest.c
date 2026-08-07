@@ -364,7 +364,8 @@ testRun(void)
         varFree(listVarDup);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ERROR(varEq(varNewVarLst(varLstNew()), varNewVarLst(varLstNew())), AssertError, "unable to test equality for VariantList");
+        TEST_ERROR(
+            varEq(varNewVarLst(varLstNew()), varNewVarLst(varLstNew())), AssertError, "unable to test equality for VariantList");
     }
 
     // *****************************************************************************************************************************

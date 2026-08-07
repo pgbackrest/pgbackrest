@@ -122,8 +122,8 @@ def _job(config, run=None, vm_idx=0, vm_max=1, test_idx=0, test_max=1, show_outp
 def _capture(job, action, status=0, output="", error="", poll=0, fail=None):
     """Run something on a job with the commands it would run captured rather than run.
 
-    Returns what the action returned, the commands, and what was written to the log. Naming a command in fail makes it report that it
-    could not be run."""
+    Returns what the action returned, the commands, and what was written to the log. Naming a command in fail makes it report that
+    it could not be run."""
 
     command_list = []
     log_output = io.StringIO()
@@ -385,7 +385,8 @@ def test_job_end():
 def test_job_end_cleanup():
     """The test path is removed even when writing the coverage fails, since this is the last chance to remove it.
 
-    A test leaves files behind that only the user it ran as can remove, so a path left here is a path every later run fails to clean.
+    A test leaves files behind that only the user it ran as can remove, so a path left here is a path every later run fails to
+    clean.
     """
 
     with tempfile.TemporaryDirectory() as path:

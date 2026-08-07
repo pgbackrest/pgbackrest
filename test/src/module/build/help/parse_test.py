@@ -1,7 +1,7 @@
 """Test Help Parse.
 
-The help is checked against the configuration, so both are written out here. The configuration is the smallest one that has an option
-documented in each of the three places help can be: a configuration section, the command line, and a single command."""
+The help is checked against the configuration, so both are written out here. The configuration is the smallest one that has an
+option documented in each of the three places help can be: a configuration section, the command line, and a single command."""
 
 ####################################################################################################################################
 import os

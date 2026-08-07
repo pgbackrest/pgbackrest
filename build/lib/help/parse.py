@@ -1,8 +1,8 @@
 """Parse Help Xml.
 
 Reads the help text for every command and option. The configuration declaration says what exists and this says what it means, so the
-two are checked against each other here: a command or an option the user can reach must have help, and help for something that does not
-exist is a leftover.
+two are checked against each other here: a command or an option the user can reach must have help, and help for something that does
+not exist is a leftover.
 
 The help text is left as xml nodes rather than rendered, since the same nodes are rendered as console text for the help and as
 documentation for the reference."""

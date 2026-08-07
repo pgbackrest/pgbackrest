@@ -255,7 +255,8 @@ def test_build_depend():
     with assert_raises(ToolError) as raised:
         _render(
             "html",
-            "<doc><section id='one'><title>One</title></section><section id='two' depend='/missing'><title>Two</title></section></doc>",
+            "<doc><section id='one'><title>One</title></section>"
+            "<section id='two' depend='/missing'><title>Two</title></section></doc>",
         )
 
     assert_equal(str(raised.exception), "section 'two' depend '/missing' is not valid")

@@ -132,7 +132,7 @@ typedef struct BufFindParam
     const uint8_t *begin;                                           // Begin find from this address
 } BufFindParam;
 
-#define bufFindP(this, find, ...)                                                                                                     \
+#define bufFindP(this, find, ...)                                                                                                  \
     bufFind(this, find, (BufFindParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN const uint8_t *bufFind(const Buffer *this, const Buffer *find, BufFindParam param);

@@ -1,7 +1,7 @@
 """Test Config Value Parsing.
 
-These must agree with the C, which parses the same values at run time, so the expectations here are the byte and millisecond counts the
-C is known to produce rather than whatever this implementation happens to produce."""
+These must agree with the C, which parses the same values at run time, so the expectations here are the byte and millisecond counts
+the C is known to produce rather than whatever this implementation happens to produce."""
 
 ####################################################################################################################################
 from harness.test import *

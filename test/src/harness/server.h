@@ -61,7 +61,7 @@ typedef struct HrnServerRunParam
     unsigned int tlsErrorTotal;                                     // Total TLS errors to cause before success
 } HrnServerRunParam;
 
-#define hrnServerRunP(read, protocol, port, ...)                                                                                         \
+#define hrnServerRunP(read, protocol, port, ...)                                                                                   \
     hrnServerRun(read, protocol, port, (HrnServerRunParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 void hrnServerRun(IoRead *read, HrnServerProtocol protocol, unsigned int port, HrnServerRunParam param);

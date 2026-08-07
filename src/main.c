@@ -25,7 +25,6 @@ Main
 #include "command/remote/remote.h"
 #include "command/repo/get.h"
 #include "command/repo/ls.h"
-#include "command/repo/put.h"
 #include "command/repo/rm.h"
 #include "command/restore/restore.h"
 #include "command/server/ping.h"
@@ -37,6 +36,7 @@ Main
 #include "common/debug.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "common/io/io.h"
 #include "common/stat.h"
 #include "config/config.h"
 #include "config/load.h"
@@ -101,6 +101,9 @@ main(int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         cfgLoad((unsigned int)argListSize, argList);
         const ConfigCommandRole commandRole = cfgCommandRole();
+
+        // Reserve the first free list bucket for the I/O buffer size, the allocation that churns most while processing files
+        memContextFreeListReserve(ioBufferSize());
 
         // Main/async commands
         // -------------------------------------------------------------------------------------------------------------------------
@@ -199,12 +202,6 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoLs:
                     cmdStorageList();
-                    break;
-
-                // Repository put file command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdRepoPut:
-                    cmdStoragePut();
                     break;
 
                 // Repository remove paths/files command

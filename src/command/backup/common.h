@@ -33,7 +33,7 @@ typedef struct BackupFileRepoPathParam
     bool blockIncr;                                                 // Is the file a block incremental?
 } BackupFileRepoPathParam;
 
-#define backupFileRepoPathP(backupLabel, ...)                                                                                          \
+#define backupFileRepoPathP(backupLabel, ...)                                                                                      \
     backupFileRepoPath(backupLabel, (BackupFileRepoPathParam){__VA_ARGS__})
 
 FN_EXTERN String *backupFileRepoPath(const String *backupLabel, BackupFileRepoPathParam param);

@@ -84,6 +84,10 @@ FN_EXTERN void *memResize(void *buffer, size_t size);
 // Free memory allocation
 FN_EXTERN void memFree(void *buffer);
 
+// Reserve the first free list bucket for allocations of the given size so the size that churns most, e.g. buffer size, always
+// has a bucket and is checked first. Must be called at startup before allocations of this size begin.
+FN_EXTERN void memContextFreeListReserve(size_t size);
+
 /***********************************************************************************************************************************
 Ensure that the prior memory context is restored after the block executes (even on error)
 
