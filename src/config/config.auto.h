@@ -20,7 +20,6 @@ Command constants
 #define CFGCMD_MANIFEST                                             "manifest"
 #define CFGCMD_REPO_GET                                             "repo-get"
 #define CFGCMD_REPO_LS                                              "repo-ls"
-#define CFGCMD_REPO_PUT                                             "repo-put"
 #define CFGCMD_REPO_RM                                              "repo-rm"
 #define CFGCMD_RESTORE                                              "restore"
 #define CFGCMD_SERVER                                               "server"
@@ -33,7 +32,7 @@ Command constants
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           23
+#define CFG_COMMAND_TOTAL                                           22
 
 /***********************************************************************************************************************************
 Option group constants
@@ -61,7 +60,6 @@ Option constants
 #define CFGOPT_BETA                                                 "beta"
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
-#define CFGOPT_CIPHER_PASS                                          "cipher-pass"
 #define CFGOPT_CMD                                                  "cmd"
 #define CFGOPT_CMD_SSH                                              "cmd-ssh"
 #define CFGOPT_COMPRESS                                             "compress"
@@ -147,7 +145,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            200
+#define CFG_OPTION_TOTAL                                            199
 
 /***********************************************************************************************************************************
 Option value constants
@@ -455,7 +453,6 @@ typedef enum
     cfgCmdManifest,
     cfgCmdRepoGet,
     cfgCmdRepoLs,
-    cfgCmdRepoPut,
     cfgCmdRepoRm,
     cfgCmdRestore,
     cfgCmdServer,
@@ -501,7 +498,6 @@ typedef enum
     cfgOptBeta,
     cfgOptBufferSize,
     cfgOptChecksumPage,
-    cfgOptCipherPass,
     cfgOptCmd,
     cfgOptCmdSsh,
     cfgOptCompress,

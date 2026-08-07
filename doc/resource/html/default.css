@@ -5,8 +5,8 @@ Every color is a token declared once and declared again for a dark page, so ligh
 patch on the other. A rule that names a color directly steps outside that, since only the tokens are redeclared.
 
 The page header and the menu run the full width of the window while their content stays in the reading column, and the menu sticks
-to the top of the viewport so the way out of a long page is always in reach. A section is marked by a bar down the left edge that
-thins as the level drops, so depth is read down that edge rather than from the size of the type.
+to the top of the viewport so the way out of a long page is always in reach. A section is marked by a bar that thins as the level
+drops, so depth is read from the bar rather than from the size of the type.
 ***********************************************************************************************************************************/
 
 /***********************************************************************************************************************************
@@ -544,7 +544,7 @@ Section
     margin-top: 1rem;
 }
 
-/* Each level is marked by a bar that thins as the level drops, so depth is read down the left edge rather than from type size */
+/* Each level is marked by a bar that thins as the level drops, so depth is read from the bar rather than from type size */
 .section1-header
 {
     border-left: 4px solid var(--accent);
@@ -563,11 +563,15 @@ Section
     margin-top: 1.25rem;
 }
 
+/* The accent that marks the left edge of the bar above laid under the title, so the header is closed off by a rule of its own
+   rather than by an edge it shares with the level above. The rule runs the width of the title and no further, and a title too long
+   for the column wraps and takes the rule out to the full width, which is as far as it can go. */
 .section2-header
 {
-    border-left: 3px solid var(--accent);
-    padding: .05rem 0 .05rem .7rem;
-    margin-bottom: .5rem;
+    width: fit-content;
+    border-bottom: 1.5px solid var(--accent);
+    padding: 0 0 .35rem 0;
+    margin-bottom: .7rem;
     font-size: 1.3125rem;
     font-weight: 650;
     letter-spacing: -.015em;

@@ -110,14 +110,6 @@ command:
     log-level-default: DEBUG
     parameter-allowed: true
 
-  repo-put:
-    command-role:
-      remote: {}
-    internal: true
-    log-file: false
-    log-level-default: DEBUG
-    parameter-allowed: true
-
   repo-rm:
     command-role:
       remote: {}
@@ -446,9 +438,6 @@ option:
       repo-ls:
         required: false
         internal: true
-      repo-put:
-        required: false
-        internal: true
       repo-rm:
         required: false
         internal: true
@@ -618,16 +607,6 @@ option:
 
   # Command-line only storage options
   #---------------------------------------------------------------------------------------------------------------------------------
-  cipher-pass:
-    type: string
-    internal: true
-    required: false
-    command:
-      repo-get: {}
-      repo-put: {}
-    command-role:
-      main: {}
-
   filter:
     type: string
     required: false
@@ -650,7 +629,6 @@ option:
     default: false
     command:
       repo-get: {}
-      repo-put: {}
     command-role:
       main: {}
 
@@ -1673,7 +1651,6 @@ option:
       manifest: {}
       repo-get: {}
       repo-ls: {}
-      repo-put: {}
       repo-rm: {}
       restore: {}
       stanza-create:

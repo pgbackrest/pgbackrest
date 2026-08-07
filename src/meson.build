@@ -77,7 +77,6 @@ src_pgbackrest = [
     'command/repo/common.c',
     'command/repo/get.c',
     'command/repo/ls.c',
-    'command/repo/put.c',
     'command/repo/rm.c',
     'command/restore/blockChecksum.c',
     'command/restore/blockDelta.c',
