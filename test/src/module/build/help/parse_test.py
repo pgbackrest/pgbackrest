@@ -6,6 +6,7 @@ option documented in each of the three places help can be: a configuration secti
 ####################################################################################################################################
 import os
 import tempfile
+import xml.etree.ElementTree as etree
 
 from harness.test import *
 
@@ -32,6 +33,12 @@ option:
   buffer-size:
     section: global
     type: size
+    allow-list:
+      - 1MiB
+      - 32KiB
+
+  buffer-size-file:
+    inherit: buffer-size
 
   force:
     type: boolean
@@ -41,8 +48,23 @@ option:
 
   set:
     type: string
+    allow-list:
+      - latest
+      - oldest
     command:
       restore: {}
+
+  type:
+    type: string
+    allow-list:
+      - full
+      - diff
+    command:
+      restore:
+        allow-list:
+          - full
+          - diff
+          - incr
 
   process:
     type: integer
@@ -53,7 +75,8 @@ option:
 """
 
 # Help for everything the configuration declares. Buffer size is documented in a configuration section, force and stanza on the
-# command line, and set only by the command that takes it. Process has no help at all, since no user can give it.
+# command line, and set and type only by the command that takes them. File buffer size allows what buffer size allows, so it
+# inherits the list rather than describing it again. Process has no help at all, since no user can give it.
 HELP = """<doc title="Reference">
     <config title="Configuration Reference">
         <description>Configuration description.</description>
@@ -74,10 +97,25 @@ HELP = """<doc title="Reference">
 
                         <text>
                             <p>Buffer size description.</p>
+
+                            <allow-list caption="buffer sizes">
+                                <allow-item id="1MiB">One <b>MiB</b>.</allow-item>
+                                <allow-item id="32KiB">Thirty two KiB.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>1MiB</example>
                         <example>32KiB</example>
+                    </config-key>
+
+                    <config-key id="buffer-size-file" name="File Buffer Size">
+                        <summary>File buffer size.</summary>
+
+                        <text>
+                            <p>File buffer size description.</p>
+
+                            <allow-list inherit="buffer-size"/>
+                        </text>
                     </config-key>
                 </config-key-list>
             </config-section>
@@ -124,7 +162,15 @@ HELP = """<doc title="Reference">
                         <summary>Set summary.</summary>
 
                         <text>
-                            <p>Set description.</p>
+                            <p>Set description. Allowed values are <allow-list/>.</p>
+                        </text>
+                    </option>
+
+                    <option id="type" name="Type">
+                        <summary>Type summary.</summary>
+
+                        <text>
+                            <p>Type description. Allowed values are <allow-list/>.</p>
                         </text>
                     </option>
                 </option-list>
@@ -188,6 +234,13 @@ def _find(item_list, name):
 
 
 ####################################################################################################################################
+def _render(node):
+    """Render a node as the xml text of it."""
+
+    return etree.tostring(node, encoding="unicode")
+
+
+####################################################################################################################################
 def test_help_parse():
     """Help is read for every command and option, wherever it is documented."""
 
@@ -211,11 +264,11 @@ def test_help_parse():
     assert_equal(cmd.summary.tag, "summary")
 
     # An option a command documents differently is under the command rather than in the option list
-    assert_equal([opt.name for opt in cmd.opt_list], ["set"])
+    assert_equal([opt.name for opt in cmd.opt_list], ["set", "type"])
     assert_is_none(_find(bld_hlp.cmd_list, "backup").opt_list)
 
     # Options are sorted and are found wherever they were documented
-    assert_equal([opt.name for opt in bld_hlp.opt_list], ["buffer-size", "force", "stanza"])
+    assert_equal([opt.name for opt in bld_hlp.opt_list], ["buffer-size", "buffer-size-file", "force", "stanza"])
 
     # An option documented in a configuration section takes the section it is documented in
     opt = _find(bld_hlp.opt_list, "buffer-size")
@@ -268,6 +321,74 @@ def test_help_parse_detail():
 
     # It is required when it is
     assert_in("unable to find child 'text' in node 'config-section'", _error(help))
+
+
+####################################################################################################################################
+def test_help_parse_allow_list():
+    """The values an option allows are declared in the configuration, so the help describes them and they are checked against it."""
+
+    bld_hlp = _parse()
+
+    # A list that describes each value is introduced by what it is a list of and rendered as the value then what it means
+    buffer_size_list = (
+        "<p>The following buffer sizes are supported:</p>"
+        "<list><list-item><id>1MiB</id> - One <b>MiB</b>.</list-item>"
+        "<list-item><id>32KiB</id> - Thirty two KiB.</list-item></list>"
+    )
+
+    assert_in(buffer_size_list, _render(_find(bld_hlp.opt_list, "buffer-size").description))
+
+    # A list that describes no value is rendered from the declaration, in the sentence that introduces the values. An option a
+    # command documents is rendered from what the option allows, or from what the command allows when it allows something else.
+    cmd_hlp = _find(bld_hlp.cmd_list, "restore")
+
+    assert_in(
+        "<p>Set description. Allowed values are <id>latest</id> and <id>oldest</id>.</p>",
+        _render(_find(cmd_hlp.opt_list, "set").description),
+    )
+    assert_in(
+        "<p>Type description. Allowed values are <id>full</id>, <id>diff</id>, and <id>incr</id>.</p>",
+        _render(_find(cmd_hlp.opt_list, "type").description),
+    )
+
+    # An option that allows what another option allows renders the list it inherits rather than one of its own
+    assert_in(buffer_size_list, _render(_find(bld_hlp.opt_list, "buffer-size-file").description))
+
+    # A list inherited from an option that describes none
+    assert_equal(
+        _error(HELP.replace('<allow-list inherit="buffer-size"/>', '<allow-list inherit="stanza"/>')),
+        "option 'buffer-size-file' inherits the allow list of option 'stanza', which does not describe one",
+    )
+
+    # A value that is documented but not allowed
+    assert_equal(
+        _error(HELP.replace('<allow-item id="32KiB">', '<allow-item id="64KiB">')),
+        "option 'buffer-size' allow list is documented as '1MiB, 64KiB' but declared as '1MiB, 32KiB'",
+    )
+
+    # A value that is allowed but not documented
+    assert_equal(
+        _error(HELP.replace('<allow-item id="32KiB">Thirty two KiB.</allow-item>', "")),
+        "option 'buffer-size' allow list is documented as '1MiB' but declared as '1MiB, 32KiB'",
+    )
+
+    # A list that describes each value but does not say what it is a list of
+    assert_equal(
+        _error(HELP.replace('<allow-list caption="buffer sizes">', "<allow-list>")),
+        "unable to find attribute 'caption' in node 'allow-list'",
+    )
+
+    # An allow list documented for an option that does not have one
+    assert_equal(
+        _error(HELP.replace("<p>Force description.</p>", "<p>Force description.</p><allow-list/>")),
+        "option 'force' does not have an allow list",
+    )
+
+    # An allow list that is not documented at all, since a value a user cannot read about is a value they cannot use
+    assert_equal(
+        _error(HELP.replace("Allowed values are <allow-list/>.", "")),
+        "option 'set' for command 'restore' must document its allow list",
+    )
 
 
 ####################################################################################################################################
