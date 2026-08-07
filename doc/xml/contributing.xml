@@ -734,6 +734,27 @@ run 8/1 ------------- L2285 no current backups
 &lt;/option&gt;
             </code-block>
             <admonition type="important">A period (.) is required to end the <code>summary</code> section.</admonition>
+
+            <p>An option that declares an <id>allow-list</id> must document it with the <code>&lt;allow-list&gt;</code> tag, which is checked against the declaration so the two cannot drift apart. Where each value needs an explanation, describe them with <code>&lt;allow-item&gt;</code> and say what the list is a list of with <code>caption</code>, which is rendered as <quote>The following protocol types are supported:</quote>:</p>
+
+            <code-block>
+&lt;allow-list caption="protocol types"&gt;
+    &lt;allow-item id="ssh"&gt;Secure Shell.&lt;/allow-item&gt;
+    &lt;allow-item id="tls"&gt;&lt;backrest/&gt; TLS server.&lt;/allow-item&gt;
+&lt;/allow-list&gt;
+            </code-block>
+
+            <p>Where the values speak for themselves, leave the tag empty and the values will be rendered from the declaration into the sentence that introduces them:</p>
+
+            <code-block>
+&lt;p&gt;Allowed values are &lt;allow-list/&gt;.&lt;/p&gt;
+            </code-block>
+
+            <p>Where an option allows what another option allows, describe the values once and inherit them, as the declaration does with <id>inherit</id>:</p>
+
+            <code-block>
+&lt;allow-list inherit="log-level-console"/&gt;
+            </code-block>
         </section>
 
         <!-- =================================================================================================================== -->

@@ -73,6 +73,7 @@
                 <commit subject="Jump straight to a section rather than gliding to it."/>
                 <commit subject="Fade an end the menu carries on past rather than cutting it flat."/>
                 <commit subject="Put the bar of a section2 header under the title rather than beside it."/>
+                <commit subject="Center the page title beside the logo and left align it when wrapped."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
