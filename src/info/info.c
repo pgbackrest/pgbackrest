@@ -218,16 +218,8 @@ infoFormatCipherSpec(const unsigned int format, const CipherSpec *const cipherSp
         cipherSpecNewP(cipherSpecType(cipherSpec), cipherSpecPass(cipherSpec), .digest = infoFormatDigest(format)));
 }
 
-/***********************************************************************************************************************************
-Read the header of an encrypted info file and return a read of the content behind it
-
-The header has to be read before the digest is known, which means the read has been opened and an encryption filter can no longer
-be added to it. The content is therefore decrypted into a buffer here rather than as it is parsed. An info file is small enough for
-that to be reasonable, and is already built whole in a buffer when it is saved so that it can be written twice.
-
-The format the header gives is returned so that the content can be checked against it.
-***********************************************************************************************************************************/
-static IoRead *
+/**********************************************************************************************************************************/
+FN_EXTERN IoRead *
 infoContentRead(IoRead *const read, const CipherSpec *const cipherSpec, unsigned int *const format)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -241,16 +233,13 @@ infoContentRead(IoRead *const read, const CipherSpec *const cipherSpec, unsigned
     ASSERT(read != NULL);
     ASSERT(cipherSpec != NULL);
     ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
-    ASSERT(format != NULL);
 
     // Read what a header would be. A file that has none was written at format 5, where these are the magic the cipher writes, so
     // either way they are consumed and what follows begins with the salt.
-    ioReadOpen(read);
-
     Buffer *const header = bufNew(INFO_HEADER_SIZE);
     ioRead(read, header);
 
-    *format = REPOSITORY_FORMAT_5;
+    unsigned int formatHeader = REPOSITORY_FORMAT_5;
 
     if (bufUsed(header) == INFO_HEADER_SIZE && memcmp(bufPtrConst(header), INFO_HEADER_MAGIC, INFO_HEADER_MAGIC_SIZE) == 0)
     {
@@ -262,11 +251,11 @@ infoContentRead(IoRead *const read, const CipherSpec *const cipherSpec, unsigned
                 THROW(FormatError, "invalid info file header");
         }
 
-        *format = cvtZToUInt(strZ(strNewZN(headerZ + INFO_HEADER_MAGIC_SIZE, INFO_HEADER_FORMAT_SIZE)));
+        formatHeader = cvtZToUInt(strZ(strNewZN(headerZ + INFO_HEADER_MAGIC_SIZE, INFO_HEADER_FORMAT_SIZE)));
 
         // Error on a format this version cannot read before anything is decrypted, since decrypting requires knowing what the
         // format expects and this version does not know what a newer format expects
-        infoFormatValidate(*format);
+        infoFormatValidate(formatHeader);
 
         // The format is one this version knows, so the byte held back for later must be the one this version writes
         if (headerZ[INFO_HEADER_SIZE - 1] != INFO_HEADER_RESERVED)
@@ -277,6 +266,9 @@ infoContentRead(IoRead *const read, const CipherSpec *const cipherSpec, unsigned
     else if (bufUsed(header) == INFO_HEADER_SIZE && memcmp(bufPtrConst(header), CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
         THROW(CryptoError, "cipher header invalid");
 
+    if (format != NULL)
+        *format = formatHeader;
+
     // Decrypt the content into a buffer
     Buffer *const result = bufNew(ioBufferSize());
 
@@ -285,7 +277,7 @@ infoContentRead(IoRead *const read, const CipherSpec *const cipherSpec, unsigned
         IoWrite *const write = ioBufferWriteNew(result);
         ioFilterGroupAdd(
             ioWriteFilterGroup(write),
-            cipherBlockNewP(cipherModeDecrypt, infoFormatCipherSpec(*format, cipherSpec), .raw = true));
+            cipherBlockNewP(cipherModeDecrypt, infoFormatCipherSpec(formatHeader, cipherSpec), .raw = true));
         ioWriteOpen(write);
 
         Buffer *const chunk = bufNew(ioBufferSize());
@@ -350,7 +342,10 @@ infoNewLoad(
                 {
                     // A file that carries a header must be read past it before the content can be parsed
                     if (param.header)
+                    {
+                        ioReadOpen(read);
                         contentRead = infoContentRead(read, cipherSpec, &formatHeader);
+                    }
                     // Else the content is decrypted as it is parsed
                     else
                         cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, cipherSpec);

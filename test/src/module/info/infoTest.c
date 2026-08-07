@@ -305,6 +305,15 @@ testRun(void)
         TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_6, "    check format");
         TEST_RESULT_UINT(cipherSpecDigest(infoCipherSpec(info)), hashTypeSha256, "    check cipher sub digest");
 
+        // The content on its own, which is how a caller that wants the file rather than the values in it reads an info file
+        IoRead *const infoRead = ioBufferReadNew(testInfoEncrypt(contentLoad, REPOSITORY_FORMAT_6, cipherSpec));
+        ioReadOpen(infoRead);
+
+        IoRead *const contentRead = infoContentRead(infoRead, cipherSpec, NULL);
+        ioReadOpen(contentRead);
+
+        TEST_RESULT_STR(strNewBuf(ioReadBuf(contentRead)), strNewBuf(contentLoad), "info content read");
+
         // A file written before the header existed is read as the format that had none
         contentLoad = harnessInfoChecksumZ("[c]\nkey=1\n");
 
