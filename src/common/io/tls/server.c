@@ -225,8 +225,11 @@ tlsServerNew(
         // Also see https://weakdh.org and https://en.wikipedia.org/wiki/Logjam_(computer_security).
         cryptoError(SSL_CTX_set_dh_auto(this->context, 1) != 1, "unable to set auto dh parameters");
 
-        // Set the curve used to generate ephemeral Elliptic Curve DH keys
+        // Set the curve used to generate ephemeral Elliptic Curve DH keys. The OpenSSL macro casts away const on the curve list.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
         cryptoError(SSL_CTX_set1_groups_list(this->context, ECDH_CURVE) != 1, "unable to set ecdh curve " ECDH_CURVE);
+#pragma GCC diagnostic pop
 
         // Load certificate and key
         tlsCertKeyLoad(this->context, certFile, keyFile);
