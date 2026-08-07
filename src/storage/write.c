@@ -274,8 +274,8 @@ storageWriteChunkBufferResize(const Buffer *const input, const size_t inputOffse
     {
         size_t chunkSize;
 
-        // If the input buffer is full or the chunk buffer is not empty there is very likely more data so increase size of the chunk
-        // buffer aggressively
+        // If the input buffer is full or the chunk buffer is not empty there is very likely more data coming, so increase the chunk
+        // buffer size aggressively rather than resizing repeatedly as small amounts of data arrive
         if (bufFull(input) || !bufEmpty(chunk))
         {
             // If this is the first write set chunk size equal to double the input buffer size
