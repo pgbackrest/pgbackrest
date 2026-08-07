@@ -743,7 +743,7 @@ unit:
       - command/annotate/annotate
 
   # --------------------------------------------------------------------------------------------------------------------------------
-  - name: command/archive-common
+  - name: command/archive/common
     total: 9
 
     coverage:
@@ -751,7 +751,7 @@ unit:
       - command/archive/find
 
   # --------------------------------------------------------------------------------------------------------------------------------
-  - name: command/archive-get
+  - name: command/archive/get
     total: 3
     binReq: true
 
@@ -762,7 +762,7 @@ unit:
       - command/archive/get/protocol
 
   # --------------------------------------------------------------------------------------------------------------------------------
-  - name: command/archive-push
+  - name: command/archive/push
     total: 4
     binReq: true
 
