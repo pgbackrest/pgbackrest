@@ -3,6 +3,8 @@ Protocol Client
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <ctype.h>
+
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/time.h"
@@ -11,6 +13,18 @@ Protocol Client
 #include "protocol/client.h"
 #include "protocol/server.h"
 #include "version.h"
+
+/***********************************************************************************************************************************
+Maximum bytes of unexpected output (e.g. a login banner from the remote shell) searched for the greeting, maximum bytes of that
+output sampled for error reporting, and the hint added to errors caused by unexpected output
+***********************************************************************************************************************************/
+#define PROTOCOL_GREETING_SKIP_MAX                                  65536
+#define PROTOCOL_GREETING_SKIP_SAMPLE_MAX                           64
+
+#define PROTOCOL_GREETING_UNEXPECTED_OUTPUT_FMT                                                                                    \
+    "after %zu byte(s) of unexpected output beginning with '%s'"
+#define PROTOCOL_GREETING_UNEXPECTED_OUTPUT_HINT                                                                                   \
+    "HINT: is the remote shell printing output for non-interactive sessions?"
 
 /***********************************************************************************************************************************
 Client state enum
@@ -309,6 +323,30 @@ protocolClientFreeResource(THIS_VOID)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Error when the greeting cannot be found in the protocol stream
+***********************************************************************************************************************************/
+static noreturn void
+protocolClientGreetingNotFound(const char *const reason, const size_t skipSize, const String *const skipSample)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, reason);
+        FUNCTION_TEST_PARAM(SIZE, skipSize);
+        FUNCTION_TEST_PARAM(STRING, skipSample);
+    FUNCTION_TEST_END();
+
+    ASSERT(reason != NULL);
+    ASSERT(skipSample != NULL);
+
+    if (skipSize == 0)
+        THROW_FMT(ProtocolError, "greeting not found (%s)\n" PROTOCOL_GREETING_UNEXPECTED_OUTPUT_HINT, reason);
+
+    THROW_FMT(
+        ProtocolError,
+        "greeting not found (%s) " PROTOCOL_GREETING_UNEXPECTED_OUTPUT_FMT "\n" PROTOCOL_GREETING_UNEXPECTED_OUTPUT_HINT,
+        reason, skipSize, strZ(skipSample));
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolClient *
 protocolClientNew(const String *const name, const String *const service, IoRead *const read, IoWrite *const write)
@@ -340,45 +378,118 @@ protocolClientNew(const String *const name, const String *const service, IoRead 
             .sessionList = lstNewP(sizeof(ProtocolClientSession)),
         };
 
-        // Read, parse, and check the protocol greeting
+        // Read, parse, and check the protocol greeting. The greeting is a machine-generated JSON object on a single line so it
+        // always begins with { and any line that does not is unexpected output (e.g. a login banner printed by the remote shell
+        // for a non-interactive SSH session). Unexpected output is an error since more of it is likely to arrive in the middle of
+        // the protocol session, but search for the greeting first so the error can confirm that the correct remote was reached.
+        // The search is bounded so a stream that never produces a greeting errors cleanly and errors include a sample of the
+        // output to help identify the source.
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            JsonRead *const greeting = jsonReadNew(ioReadLine(this->pub.read));
+            String *const skipSample = strNew();
+            size_t skipSize = 0;
+            bool greetingFound = false;
 
-            jsonReadObjectBegin(greeting);
-
-            const struct
+            do
             {
-                const StringId key;
-                const char *const value;
-            } expected[] =
-            {
-                {.key = PROTOCOL_GREETING_NAME, .value = PROJECT_NAME},
-                {.key = PROTOCOL_GREETING_SERVICE, .value = strZ(service)},
-                {.key = PROTOCOL_GREETING_VERSION, .value = PROJECT_VERSION},
-            };
+                String *greetingLine = NULL;
 
-            for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected); expectedIdx++)
-            {
-                if (!jsonReadKeyExpectStrId(greeting, expected[expectedIdx].key))
-                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", zNewStrId(expected[expectedIdx].key));
-
-                if (jsonReadTypeNext(greeting) != jsonTypeString)
-                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", zNewStrId(expected[expectedIdx].key));
-
-                const String *const actualValue = jsonReadStr(greeting);
-
-                if (!strEqZ(actualValue, expected[expectedIdx].value))
+                TRY_BEGIN()
                 {
-                    THROW_FMT(
-                        ProtocolError,
-                        "expected value '%s' for greeting key '%s' but got '%s'\n"
-                        "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
-                        expected[expectedIdx].value, zNewStrId(expected[expectedIdx].key), strZ(actualValue));
+                    greetingLine = ioReadLine(this->pub.read);
+                }
+                CATCH(FileReadError)
+                {
+                    // The stream ended or a line was too large to buffer so the greeting is not coming
+                    protocolClientGreetingNotFound(errorMessage(), skipSize, skipSample);
+                }
+                TRY_END();
+
+                if (!strBeginsWithZ(greetingLine, "{"))
+                {
+                    // The line does not begin as a JSON object so it is unexpected output rather than a malformed greeting. Skip
+                    // it, keeping a sample of the skipped output (sanitized to printable characters) for error reporting.
+                    skipSize += strSize(greetingLine) + 1;
+
+                    if (strEmpty(skipSample))
+                    {
+                        for (size_t sampleIdx = 0;
+                             sampleIdx < strSize(greetingLine) && sampleIdx < PROTOCOL_GREETING_SKIP_SAMPLE_MAX; sampleIdx++)
+                        {
+                            const char sampleChr = strZ(greetingLine)[sampleIdx];
+
+                            strCatChr(skipSample, isprint((unsigned char)sampleChr) ? sampleChr : '.');
+                        }
+
+                        if (strSize(greetingLine) > PROTOCOL_GREETING_SKIP_SAMPLE_MAX)
+                            strCatZ(skipSample, "...");
+                    }
+
+                    if (skipSize > PROTOCOL_GREETING_SKIP_MAX)
+                        protocolClientGreetingNotFound("maximum unexpected output exceeded", skipSize, skipSample);
+
+                    strFree(greetingLine);
+                }
+                // Else the line begins as a JSON object so treat it as the greeting. Any error from parsing or validation is a
+                // real greeting mismatch (e.g. a version skew or protocol change) rather than unexpected output, so let it
+                // propagate.
+                else
+                {
+                    JsonRead *const greeting = jsonReadNew(greetingLine);
+
+                    jsonReadObjectBegin(greeting);
+
+                    const struct
+                    {
+                        const StringId key;
+                        const char *const value;
+                    } expected[] =
+                    {
+                        {.key = PROTOCOL_GREETING_NAME, .value = PROJECT_NAME},
+                        {.key = PROTOCOL_GREETING_SERVICE, .value = strZ(service)},
+                        {.key = PROTOCOL_GREETING_VERSION, .value = PROJECT_VERSION},
+                    };
+
+                    for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected); expectedIdx++)
+                    {
+                        if (!jsonReadKeyExpectStrId(greeting, expected[expectedIdx].key))
+                            THROW_FMT(ProtocolError, "unable to find greeting key '%s'", zNewStrId(expected[expectedIdx].key));
+
+                        if (jsonReadTypeNext(greeting) != jsonTypeString)
+                            THROW_FMT(ProtocolError, "greeting key '%s' must be string type", zNewStrId(expected[expectedIdx].key));
+
+                        const String *const actualValue = jsonReadStr(greeting);
+
+                        if (!strEqZ(actualValue, expected[expectedIdx].value))
+                        {
+                            THROW_FMT(
+                                ProtocolError,
+                                "expected value '%s' for greeting key '%s' but got '%s'\n"
+                                "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
+                                expected[expectedIdx].value, zNewStrId(expected[expectedIdx].key), strZ(actualValue));
+                        }
+                    }
+
+                    jsonReadObjectEnd(greeting);
+
+                    greetingFound = true;
                 }
             }
+            while (!greetingFound);
 
-            jsonReadObjectEnd(greeting);
+            // Unexpected output is an error even though the greeting was eventually found. The output source (e.g. a login shell
+            // rc file) is likely to write more output during the protocol session, which cannot be tolerated once the protocol is
+            // established, so the connection cannot be trusted until the output is disabled.
+            if (skipSize != 0)
+            {
+                THROW_FMT(
+                    ProtocolError,
+                    "greeting found " PROTOCOL_GREETING_UNEXPECTED_OUTPUT_FMT "\n"
+                    PROTOCOL_GREETING_UNEXPECTED_OUTPUT_HINT "\n"
+                    "HINT: unexpected output may interrupt the protocol at any time so the connection cannot be used until the"
+                    " output is disabled.",
+                    skipSize, strZ(skipSample));
+            }
         }
         MEM_CONTEXT_TEMP_END();
 
