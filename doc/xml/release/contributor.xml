@@ -572,6 +572,11 @@
     <contributor-id type="github">wieck</contributor-id>
 </contributor>
 
+<contributor id="jan.wieremjewicz">
+    <contributor-name-display>Jan Wieremjewicz</contributor-name-display>
+    <contributor-id type="github">janwieremjewicz</contributor-id>
+</contributor>
+
 <contributor id="janice.parkinson">
     <contributor-name-display>Janice Parkinson</contributor-name-display>
     <contributor-id type="github">jpabt</contributor-id>
@@ -720,6 +725,11 @@
     <contributor-id type="github">kaceymiri</contributor-id>
 </contributor>
 
+<contributor id="kai.wagner">
+    <contributor-name-display>Kai Wagner</contributor-name-display>
+    <contributor-id type="github">ImTheKai</contributor-id>
+</contributor>
+
 <contributor id="krmozejko">
     <contributor-name-display>krmozejko</contributor-name-display>
     <contributor-id type="github">krmozejko</contributor-id>
@@ -855,6 +865,11 @@
     <contributor-id type="github">mattbunter</contributor-id>
 </contributor>
 
+<contributor id="matt.hudson">
+    <contributor-name-display>Matt Hudson</contributor-name-display>
+    <contributor-id type="github">matthudsonatx</contributor-id>
+</contributor>
+
 <contributor id="matt.kunkel">
     <contributor-name-display>Matt Kunkel</contributor-name-display>
     <contributor-id type="github">mtkunkel</contributor-id>
@@ -973,6 +988,11 @@
 <contributor id="nikhilchandra.kulkarni">
     <contributor-name-display>Nikhilchandra Kulkarni</contributor-name-display>
     <contributor-id type="github">nikhilchandra-kulkarni</contributor-id>
+</contributor>
+
+<contributor id="nikolaos.stamatopoulos">
+    <contributor-name-display>Nikolaos Stamatopoulos</contributor-name-display>
+    <contributor-id type="github">nickstamat</contributor-id>
 </contributor>
 
 <contributor id="nj.baliyan">
@@ -1178,6 +1198,11 @@
 <contributor id="stephen.frost">
     <contributor-name-display>Stephen Frost</contributor-name-display>
     <contributor-id type="github">sfrost</contributor-id>
+</contributor>
+
+<contributor id="steve.atkins">
+    <contributor-name-display>Steve Atkins</contributor-name-display>
+    <contributor-id type="github">wttw</contributor-id>
 </contributor>
 
 <contributor id="susantha.bathige">

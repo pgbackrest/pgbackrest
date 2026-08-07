@@ -25,7 +25,6 @@ Main
 #include "command/remote/remote.h"
 #include "command/repo/get.h"
 #include "command/repo/ls.h"
-#include "command/repo/put.h"
 #include "command/repo/rm.h"
 #include "command/restore/restore.h"
 #include "command/server/ping.h"
@@ -203,12 +202,6 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoLs:
                     cmdStorageList();
-                    break;
-
-                // Repository put file command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdRepoPut:
-                    cmdStoragePut();
                     break;
 
                 // Repository remove paths/files command

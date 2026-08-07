@@ -55,12 +55,7 @@ storageGetProcess(IoWrite *const destination)
 
             if (repoCipherType != cipherTypeNone)
             {
-                // Check for a passphrase parameter
-                const String *const cipherPassParam = cfgOptionStrNull(cfgOptCipherPass);
-                const CipherSpec *cipherSpec =
-                    cipherPassParam == NULL ? NULL : cipherSpecNewP(repoCipherType, BUFSTR(cipherPassParam));
-
-                // If not passed as a parameter then determine the passphrase using the following pattern:
+                // Determine the passphrase using the following pattern:
                 //
                 // REPO / (repo passphrase)
                 //      / archive / (repo passphrase)
@@ -73,63 +68,62 @@ storageGetProcess(IoWrite *const destination)
                 // Nothing should be stored at the top level of the repo except the backup/archive paths. The backup/archive paths
                 // should contain only stanza paths.
                 // -----------------------------------------------------------------------------------------------------------------
-                if (cipherSpec == NULL)
+                const CipherSpec *cipherSpec = NULL;
+                const StringList *const filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
+
+                // At a minimum the path must contain archive/backup, a stanza, and a file
+                if (strLstSize(filePathSplitLst) > 2)
                 {
-                    const StringList *const filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
+                    const String *const stanza = strLstGet(filePathSplitLst, 1);
 
-                    // At a minimum the path must contain archive/backup, a stanza, and a file
-                    if (strLstSize(filePathSplitLst) > 2)
+                    // If stanza option is specified then it must match the given file path
+                    if (cfgOptionStrNull(cfgOptStanza) != NULL && !strEq(stanza, cfgOptionStr(cfgOptStanza)))
                     {
-                        const String *const stanza = strLstGet(filePathSplitLst, 1);
+                        THROW_FMT(
+                            OptionInvalidValueError, "stanza name '%s' given in option doesn't match the given path",
+                            strZ(cfgOptionDisplay(cfgOptStanza)));
+                    }
 
-                        // If stanza option is specified then it must match the given file path
-                        if (cfgOptionStrNull(cfgOptStanza) != NULL && !strEq(stanza, cfgOptionStr(cfgOptStanza)))
+                    // Archive path
+                    if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
+                    {
+                        cipherSpec = cfgCipherSpec();
+
+                        // Find the archive passphrase
+                        if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
                         {
-                            THROW_FMT(
-                                OptionInvalidValueError, "stanza name '%s' given in option doesn't match the given path",
-                                strZ(cfgOptionDisplay(cfgOptStanza)));
+                            const InfoArchive *const info = infoArchiveLoadFile(
+                                storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
+                                cipherSpec);
+                            cipherSpec = infoArchiveCipherSpec(info);
                         }
+                    }
 
-                        // Archive path
-                        if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
+                    // Backup path
+                    if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
+                    {
+                        cipherSpec = cfgCipherSpec();
+
+                        if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                         {
-                            cipherSpec = cfgCipherSpec();
+                            // Find the backup passphrase
+                            const InfoBackup *const info = infoBackupLoadFile(
+                                storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
+                                cipherSpec);
+                            cipherSpec = infoBackupCipherSpec(info);
 
-                            // Find the archive passphrase
-                            if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
+                            // Find the manifest passphrase
+                            if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF(BACKUP_PATH_HISTORY)) &&
+                                !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
+                                !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
                             {
-                                const InfoArchive *const info = infoArchiveLoadFile(
-                                    storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
+                                const Manifest *const manifest = manifestLoadFile(
+                                    storageRepo(),
+                                    strNewFmt(
+                                        STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza), strZ(strLstGet(filePathSplitLst, 2)),
+                                        BACKUP_MANIFEST_FILE),
                                     cipherSpec);
-                                cipherSpec = infoArchiveCipherSpec(info);
-                            }
-                        }
-
-                        // Backup path
-                        if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
-                        {
-                            cipherSpec = cfgCipherSpec();
-
-                            if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
-                            {
-                                // Find the backup passphrase
-                                const InfoBackup *const info = infoBackupLoadFile(
-                                    storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
-                                    cipherSpec);
-                                cipherSpec = infoBackupCipherSpec(info);
-
-                                // Find the manifest passphrase
-                                if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF(BACKUP_PATH_HISTORY)) &&
-                                    !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
-                                    !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
-                                {
-                                    const Manifest *const manifest = manifestLoadFile(
-                                        storageRepo(),
-                                        strNewFmt(
-                                            STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza), strZ(strLstGet(filePathSplitLst, 2)),
-                                            BACKUP_MANIFEST_FILE), cipherSpec);
-                                    cipherSpec = manifestCipherSpecSub(manifest);
-                                }
+                                cipherSpec = manifestCipherSpecSub(manifest);
                             }
                         }
                     }
