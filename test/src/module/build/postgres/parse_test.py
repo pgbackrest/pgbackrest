@@ -1,7 +1,7 @@
 """Test PostgreSQL Interface Parse.
 
-The headers written here are cut down to the shapes the scan has to recognize, since what matters is which names it finds rather than
-what any of them mean to PostgreSQL."""
+The headers written here are cut down to the shapes the scan has to recognize, since what matters is which names it finds rather
+than what any of them mean to PostgreSQL."""
 
 ####################################################################################################################################
 import os

@@ -1,10 +1,11 @@
 """Parse Configuration Yaml.
 
-Reads the command and option declarations, which are the definition of record for the pgBackRest command line and configuration file.
+Reads the command and option declarations, which are the definition of record for the pgBackRest command line and configuration
+file.
 
-Most of the work here is inheritance. An option can take another option's command list, allow list, or dependency, and a command entry
-in an option can default to what the option itself declares, so what a declaration means depends on what was declared before it. That
-is resolved here rather than at render time, so the render sees complete options.
+Most of the work here is inheritance. An option can take another option's command list, allow list, or dependency, and a command
+entry in an option can default to what the option itself declares, so what a declaration means depends on what was declared before
+it. That is resolved here rather than at render time, so the render sees complete options.
 
 The declaration order is also what the reader sees, so an option can only inherit from an option above it."""
 
@@ -635,8 +636,8 @@ def _option_list(opt_raw, cmd_list, opt_grp_list):
 def _option_resolve_list(opt_list):
     """Order the options so that every option comes after the options it depends on.
 
-    The stanza option is resolved first since an error about a missing option is confusing when the stanza it would apply to is what is
-    actually missing, so stanza must exist and may not depend on anything."""
+    The stanza option is resolved first since an error about a missing option is confusing when the stanza it would apply to is what
+    is actually missing, so stanza must exist and may not depend on anything."""
 
     opt_stanza = _find(opt_list, OPT_STANZA)
 

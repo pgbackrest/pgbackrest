@@ -4,8 +4,8 @@ Writes the compact binary format the C reads a pack with, which is how the help 
 only and must agree with the reader in src/common/type/pack.c, since what it writes is read back by the C.
 
 A field is a one byte tag, which holds the type and the value, followed by the gap since the last field when it is too wide for the
-tag. A field left null is not written at all -- the gap in the ids is what says it was there -- which is what makes the format compact
-for data that is mostly defaults."""
+tag. A field left null is not written at all -- the gap in the ids is what says it was there -- which is what makes the format
+compact for data that is mostly defaults."""
 
 ####################################################################################################################################
 from common.error import check

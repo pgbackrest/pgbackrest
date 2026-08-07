@@ -28,7 +28,9 @@ jobs:
         run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
 
       - name: Run Test
-        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.py test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
+        run: |
+          cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.py test --vm=u22 --param=c-only --param=no-coverage \
+            --param=no-back-trace
 
   # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
   # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
@@ -59,7 +61,9 @@ jobs:
       - name: Install
         run: |
           sudo apt-get update
-          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y sudo python3-yaml rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
+          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y sudo python3-yaml rsync \
+            zlib1g-dev libssl-dev libxml2-dev libpq-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd \
+            libzstd-dev bzip2 libbz2-dev
           docker run --privileged --rm tonistiigi/binfmt --install all
 
       - name: Login to GHCR
@@ -79,7 +83,10 @@ jobs:
 
       - name: Run Test
         run: |
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --module=common/type/pack --module=common/crypto --module=common/compress --module=postgres/interface --module=command/backup --module=command/restore --module=command/archive-get --module=command/archive-push --module=command/verify
+          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage \
+            --module=common/type/pack --module=common/crypto --module=common/compress --module=postgres/interface \
+            --module=command/backup --module=command/restore --module=command/archive-get --module=command/archive-push \
+            --module=command/verify
 
       # Run the smoke test against the arch build: a real PostgreSQL driven through a full backup/restore/verify cycle, which
       # exercises checksums end-to-end on big-endian. It reuses the pgbackrest binary already built for the arch above and the

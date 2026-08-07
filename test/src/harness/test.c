@@ -511,7 +511,7 @@ hrnTestResultDiff(const char *actual, const char *expected)
             AssertError,
 #endif
             "STATEMENT: %s\n\nRESULT IS:\n%s\n\nBUT EXPECTED:\n%s",
-            harnessTestLocal.result.statement, actual == NULL ? "NULL" : actual, expected == NULL ? "NULL" : expected);                                                 \
+            harnessTestLocal.result.statement, actual == NULL ? "NULL" : actual, expected == NULL ? "NULL" : expected);
     }
 }
 

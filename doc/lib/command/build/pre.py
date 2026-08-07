@@ -1,10 +1,11 @@
 """Build Preprocessor.
 
-Prepares a document for rendering by resolving everything that is written once and used many times: the variables a document declares,
-the blocks it defines and repeats with different values, the descriptions it takes from the help, and the conditions that decide which
-parts of it apply at all.
+Prepares a document for rendering by resolving everything that is written once and used many times: the variables a document
+declares, the blocks it defines and repeats with different values, the descriptions it takes from the help, and the conditions that
+decide which parts of it apply at all.
 
-Everything here happens before a renderer sees the document, so a renderer only ever deals with content that is meant to be there."""
+Everything here happens before a renderer sees the document, so a renderer only ever deals with content that is meant to be
+there."""
 
 ####################################################################################################################################
 from common.eval import eval_expression

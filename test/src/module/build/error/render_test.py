@@ -1,6 +1,7 @@
 """Test Error Render.
 
-The whole of both generated files is checked here, since they are short enough to read and what matters is the exact C that comes out."""
+The whole of both generated files is checked here, since they are short enough to read and what matters is the exact C that comes
+out."""
 
 ####################################################################################################################################
 import os

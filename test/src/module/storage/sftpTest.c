@@ -1499,7 +1499,7 @@ testRun(void)
             storageInfoP(storageTest, linkName, .followLink = false), FileReadError,
             "unable to get destination for link '" TEST_PATH "/testlink': libssh2 error [-31]: sftp error [21] link loop");
 
-        // --------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info - pipe");
 
         HRN_LIBSSH2_SCRIPT_SET(

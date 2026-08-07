@@ -769,7 +769,8 @@ def test_config_key():
         # A PostgreSQL option has no section of its own, since the file has none
         key = render.config_key(
             _doc(
-                '<postgres-config host="repo" file="/pg/x"><postgres-config-option key="a">1</postgres-config-option></postgres-config>'
+                '<postgres-config host="repo" file="/pg/x">'
+                '<postgres-config-option key="a">1</postgres-config-option></postgres-config>'
             )
         )
 
@@ -805,7 +806,8 @@ def test_host_add():
 
     document = """<doc>
         <section id="one"><title>One</title>
-            <host-add name="repo" image="pgbackrest/doc:u24" user="vagrant" mount="{[host-repo-path]}/x:/x" option="-v {[host-repo-path]}:/repo">
+            <host-add name="repo" image="pgbackrest/doc:u24" user="vagrant" mount="{[host-repo-path]}/x:/x"
+                option="-v {[host-repo-path]}:/repo">
                 <execute><exe-cmd>echo setup</exe-cmd></execute>
             </host-add>
         </section>

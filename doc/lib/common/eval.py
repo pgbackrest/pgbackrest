@@ -1,7 +1,7 @@
 """Expression Evaluation.
 
-Evaluates the expression an if attribute holds, which decides whether the node it is on stays in the document. Variables are replaced
-before the expression gets here, so it works on values rather than on names.
+Evaluates the expression an if attribute holds, which decides whether the node it is on stays in the document. Variables are
+replaced before the expression gets here, so it works on values rather than on names.
 
 The grammar is only what the documentation needs: or, and, parentheses, negation, string equality, and numeric comparison. Or binds
 loosest and is split first, so "a || b && c" is "a || (b && c)"."""
@@ -98,8 +98,8 @@ def eval_expression(expression):
     if "{[" in expression:
         raise ToolError("unreplaced variable in expression '%s'" % expression)
 
-    # Or binds loosest so it is split first, which leaves and to bind tighter than it. Each side is evaluated only when it is needed,
-    # so an expression that is decided by its left side is not held to what is on its right.
+    # Or binds loosest so it is split first, which leaves and to bind tighter than it. Each side is evaluated only when it is
+    # needed, so an expression that is decided by its left side is not held to what is on its right.
     for op in (" || ", " && "):
         idx = _find_op(expression, op)
 

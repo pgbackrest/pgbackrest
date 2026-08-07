@@ -1,7 +1,7 @@
 """Test Xml Handler.
 
-Mixed content is what most of this is about, so the checks are written as the xml that comes out rather than as the tree, since that is
-where an error in where text ended up actually shows."""
+Mixed content is what most of this is about, so the checks are written as the xml that comes out rather than as the tree, since that
+is where an error in where text ended up actually shows."""
 
 ####################################################################################################################################
 import os
@@ -333,8 +333,8 @@ def test_xml_normalize_mixed():
 
     assert_equal(str(error.exception), "text mixed with markup in node 'section'")
 
-    # A node that is text itself is where interleaving text and markup is the whole point, as is a link, which says what it points at
-    # the way the text around it would say it
+    # A node that is text itself is where interleaving text and markup is the whole point, as is a link, which says what it points
+    # at the way the text around it would say it
     xml_node_normalize(xml_parse("<p>Run <id>pgbackrest</id> now.</p>", "test.xml"))
     xml_node_normalize(xml_parse("<text>Run <id>pgbackrest</id> now.</text>", "test.xml"))
     xml_node_normalize(xml_parse("<link>Repo Path (<id>--repo-path</id>)</link>", "test.xml"))

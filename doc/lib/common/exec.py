@@ -8,8 +8,8 @@ The combined output is returned on success and carried in the error on failure, 
 wrong there rather than in its exit status.
 
 exec_result() keeps them apart instead, which is what the documentation build needs: what a command wrote is shown to a reader, and
-what it wrote to stderr is not part of that. It also knows about commands that are meant to fail, since the documentation shows those
-too, and about commands worth retrying, since a host that has just started may not be listening yet."""
+what it wrote to stderr is not part of that. It also knows about commands that are meant to fail, since the documentation shows
+those too, and about commands worth retrying, since a host that has just started may not be listening yet."""
 
 ####################################################################################################################################
 import os

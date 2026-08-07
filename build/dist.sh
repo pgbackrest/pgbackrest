@@ -4,8 +4,8 @@
 # the code files, copy the man pages and HTML documentation into doc, copy the distribution README, and write the dist marker that
 # tells the build to use the shipped generated files.
 #
-# The generator reads its inputs from the source tree and writes the generated files into the distribution, since the declarations it
-# reads are excluded from the tarball.
+# The generator reads its inputs from the source tree and writes the generated files into the distribution, since the declarations
+# it reads are excluded from the tarball.
 ####################################################################################################################################
 set -eu
 

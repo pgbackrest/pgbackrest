@@ -1,7 +1,7 @@
 """Test Build Preprocessor.
 
-The document is written out and the result checked as the xml that comes out, since what the preprocessor does is decide what is in the
-document before a renderer ever sees it."""
+The document is written out and the result checked as the xml that comes out, since what the preprocessor does is decide what is in
+the document before a renderer ever sees it."""
 
 ####################################################################################################################################
 import xml.etree.ElementTree as etree
@@ -135,7 +135,8 @@ def test_pre_block():
     # A block may use another block, since what a block holds is preprocessed the same as anything else
     document = (
         '<block-define id="inner"><p>inner {[value]}</p></block-define>'
-        '<block-define id="outer"><block id="inner"><block-variable-replace key="value">one</block-variable-replace></block></block-define>'
+        '<block-define id="outer"><block id="inner">'
+        '<block-variable-replace key="value">one</block-variable-replace></block></block-define>'
         '<block id="outer"/>'
     )
 

@@ -1,7 +1,7 @@
 """Test Build Command.
 
-Each generator has its own test, so what is checked here is that the command line reaches the right one and that it writes where it was
-told to."""
+Each generator has its own test, so what is checked here is that the command line reaches the right one and that it writes where it
+was told to."""
 
 ####################################################################################################################################
 import io

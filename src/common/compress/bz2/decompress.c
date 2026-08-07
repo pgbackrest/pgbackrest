@@ -38,9 +38,9 @@ bz2DecompressToLog(const Bz2Decompress *const this, StringStatic *const debugLog
         this->stream.avail_in);
 }
 
-#define FUNCTION_LOG_BZ2_DECOMPRESS_TYPE                                                                                            \
+#define FUNCTION_LOG_BZ2_DECOMPRESS_TYPE                                                                                           \
     Bz2Decompress *
-#define FUNCTION_LOG_BZ2_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                               \
+#define FUNCTION_LOG_BZ2_DECOMPRESS_FORMAT(value, buffer, bufferSize)                                                              \
     FUNCTION_LOG_OBJECT_FORMAT(value, bz2DecompressToLog, buffer, bufferSize)
 
 /***********************************************************************************************************************************

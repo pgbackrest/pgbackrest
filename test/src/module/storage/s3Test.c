@@ -372,7 +372,8 @@ testRun(void)
         TEST_RESULT_STR(driver->secretAccessKey, secretAccessKey, "check secret access key");
         TEST_RESULT_STR(driver->securityToken, NULL, "check security token");
 
-        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
         TEST_RESULT_Z(
             logBuf,
             zNewFmt(

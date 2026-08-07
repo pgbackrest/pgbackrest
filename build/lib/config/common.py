@@ -1,8 +1,8 @@
 """Config Value Parsing.
 
 Size and time options are written the way a person would write them, e.g. 1GiB or 30s, so the generated rules need the value they
-mean in order to sort them and to compare a value against a range. This is a port of the parsing the C does at run time and must agree
-with it, since a value the C parses differently would be checked against the wrong range.
+mean in order to sort them and to compare a value against a range. This is a port of the parsing the C does at run time and must
+agree with it, since a value the C parses differently would be checked against the wrong range.
 
 Only the parsing the generated code needs is here. The C also parses these at run time from user input, where the errors matter."""
 
