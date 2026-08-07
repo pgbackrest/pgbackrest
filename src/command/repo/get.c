@@ -168,8 +168,8 @@ storageGetProcess(IoWrite *const destination)
             // Copy data from source to destination
             ioCopyP(content, destination);
 
-            // Close the source and destination
-            ioReadClose(source);
+            // Close the source and destination. The source is already closed when the content came from an info file read.
+            ioReadClose(content);
             ioWriteClose(destination);
 
             // Source file exists

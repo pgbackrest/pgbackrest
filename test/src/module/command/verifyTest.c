@@ -868,6 +868,52 @@ testRun(void)
             "            status: error\n"
             "              No usable backup.info file");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("encrypted info files");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // The copy is a copy of the file rather than a second encryption of the same content, which is how the info files are
+        // saved, i.e. the content is built once in a buffer and that buffer is written twice
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .header = true,
+            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted backup.info");
+        HRN_STORAGE_COPY(
+            storageRepo(), INFO_BACKUP_PATH_FILE, storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT,
+            .comment = "encrypted backup.info.copy");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .header = true,
+            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted archive.info");
+        HRN_STORAGE_COPY(
+            storageRepo(), INFO_ARCHIVE_PATH_FILE, storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT,
+            .comment = "encrypted archive.info.copy");
+
+        TEST_RESULT_VOID(cmdVerify(), "usable encrypted backup and archive info files");
+        TEST_RESULT_LOG("");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("encrypted info files at format 6");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .format = REPOSITORY_FORMAT_6, .header = true,
+            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted backup.info at format 6");
+        HRN_STORAGE_COPY(
+            storageRepo(), INFO_BACKUP_PATH_FILE, storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT,
+            .comment = "encrypted backup.info.copy at format 6");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .format = REPOSITORY_FORMAT_6,
+            .header = true, .cipherType = cipherTypeAes256Cbc, .comment = "encrypted archive.info at format 6");
+        HRN_STORAGE_COPY(
+            storageRepo(), INFO_ARCHIVE_PATH_FILE, storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT,
+            .comment = "encrypted archive.info.copy at format 6");
+
+        TEST_RESULT_VOID(cmdVerify(), "usable encrypted backup and archive info files at format 6");
+        TEST_RESULT_LOG("");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
         harnessLogLevelReset();
     }
 

@@ -15,6 +15,7 @@ Harness for Loading Test Configurations
 #include "info/info.h"
 #include "version.h"
 
+#include "harness/config.h"
 #include "harness/debug.h"
 #include "harness/info.h"
 
@@ -116,6 +117,64 @@ harnessInfoChecksum(const String *const info)
     ASSERT(info != NULL);
 
     FUNCTION_HARNESS_RETURN(BUFFER, harnessInfoChecksumFormat(REPOSITORY_FORMAT_DEFAULT, info));
+}
+
+/**********************************************************************************************************************************/
+void
+hrnInfoPut(const Storage *const storage, const char *const file, const char *const info, HrnInfoPutParam param)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STORAGE, storage);
+        FUNCTION_HARNESS_PARAM(STRINGZ, file);
+        FUNCTION_HARNESS_PARAM(STRINGZ, info);
+        FUNCTION_HARNESS_PARAM(UINT, param.format);
+        FUNCTION_HARNESS_PARAM(BOOL, param.header);
+        FUNCTION_HARNESS_PARAM(STRING_ID, param.cipherType);
+        FUNCTION_HARNESS_PARAM(STRINGZ, param.cipherPass);
+        FUNCTION_HARNESS_PARAM(STRINGZ, param.comment);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(info != NULL);
+
+    // Default to the format a new repository is created at
+    if (param.format == 0)
+        param.format = REPOSITORY_FORMAT_DEFAULT;
+
+    const Buffer *content = harnessInfoChecksumFormat(param.format, STR(info));
+
+    // Encrypt the way the format stores the file. A file that carries a header gets it in place of the magic the cipher writes,
+    // and from format 6 the pass derives with SHA-256 rather than SHA-1.
+    if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
+    {
+        if (param.cipherPass == NULL)
+            param.cipherPass = TEST_CIPHER_PASS;
+
+        const bool header = param.header && param.format >= REPOSITORY_FORMAT_6;
+        Buffer *const encrypted = bufNew(0);
+
+        if (header)
+            bufCat(encrypted, BUFSTR(strNewFmt("PGBR%03u_", param.format)));
+
+        IoWrite *const write = ioBufferWriteNew(encrypted);
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write),
+            cipherBlockNewP(
+                cipherModeEncrypt,
+                cipherSpecNewP(
+                    param.cipherType, BUFSTRZ(param.cipherPass),
+                    .digest = param.format >= REPOSITORY_FORMAT_6 ? hashTypeSha256 : hashTypeSha1),
+                .raw = header));
+
+        ioWriteOpen(write);
+        ioWrite(write, content);
+        ioWriteClose(write);
+
+        content = encrypted;
+    }
+
+    hrnStoragePut(storage, file, content, "put info", (HrnStoragePutParam){VAR_PARAM_INIT, .comment = param.comment});
+
+    FUNCTION_HARNESS_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

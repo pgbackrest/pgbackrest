@@ -293,6 +293,10 @@ infoContentRead(IoRead *const read, const CipherSpec *const cipherSpec, unsigned
     }
     MEM_CONTEXT_TEMP_END();
 
+    // Close the read now that it has been consumed so that filters the caller added to it, e.g. a checksum over the file as it is
+    // stored, produce their results
+    ioReadClose(read);
+
     FUNCTION_LOG_RETURN(IO_READ, ioBufferReadNew(result));
 }
 

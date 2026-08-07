@@ -7,16 +7,27 @@ Harness for Generating Test Info Files
 #include "harness/storage.h"
 
 /***********************************************************************************************************************************
-Write info to a file and add the checksum
+Write info to a file and add the checksum, storing it the way the format stores it when it is encrypted
 ***********************************************************************************************************************************/
+typedef struct HrnInfoPutParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int format;                                            // Repository format, default format when zero
+    bool header;                                                    // Does the file carry a header, i.e. is it an info file?
+    CipherType cipherType;                                          // Cipher type when the file is encrypted
+    const char *cipherPass;                                         // Cipher pass, main test pass when NULL
+    const char *comment;                                            // Comment
+} HrnInfoPutParam;
+
 #define HRN_INFO_PUT(storage, file, info, ...)                                                                                     \
     do                                                                                                                             \
     {                                                                                                                              \
         hrnTestLogPrefix(__LINE__);                                                                                                \
-        hrnStoragePut(                                                                                                             \
-            storage, file, harnessInfoChecksumZ(info), "put info", (HrnStoragePutParam){VAR_PARAM_INIT, __VA_ARGS__});             \
+        hrnInfoPut(storage, file, info, (HrnInfoPutParam){VAR_PARAM_INIT, __VA_ARGS__});                                           \
     }                                                                                                                              \
     while (0)
+
+void hrnInfoPut(const Storage *storage, const char *file, const char *info, HrnInfoPutParam param);
 
 /***********************************************************************************************************************************
 Functions
