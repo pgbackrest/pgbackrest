@@ -1,13 +1,14 @@
 """Code Linter.
 
-Scans every file in the repository for content that could hide code from review, checks that StringId macros encode what they claim
-to, and checks that every test module is declared in define.yaml."""
+Scans every file in the repository for content that could hide code from review, checks that no line runs past the project line
+length, checks that StringId macros encode what they claim to, and checks that every test module is declared in define.yaml."""
 
 ####################################################################################################################################
 import os
 import re
 
 from command.lint.ascii import lint_ascii
+from command.lint.line import lint_line
 from command.lint.string_id import lint_str_id
 from command.test.define import TEST_MODULE_PATH, test_def_file, test_def_parse
 from common.error import ToolError
@@ -22,8 +23,34 @@ _FILE_SKIP_LIST = (
     "doc/resource/git-history.cache",  # Generated from git history, contains non-ASCII author names
 )
 
+# Paths that are exempt from the line length check, matched against the start of the name so an entry that ends in a slash exempts
+# everything under it. The check is excludes rather than includes so a file that is added is checked without anyone remembering to
+# add it, which is the way lines got long in the first place.
+_LINE_SKIP_LIST = (
+    "doc/manifest.xml",  # Documentation variables, which are a value per line
+    "doc/resource/",  # Images and caches rather than source
+    "doc/xml/",  # Documentation, which the coding standards exempt
+    "test/certificate/",  # Generated certificates and keys
+    "test/data/",  # Test fixtures
+    "test/uncrustify.cfg",  # Written by uncrustify rather than by hand
+)
+
+# Extensions that are exempt from the line length check
+_LINE_SKIP_EXT = (
+    ".md",  # Markdown, written a paragraph per line so the editor wraps it and a diff is per paragraph
+    ".vendor.h",  # Vendored source, which is kept as it came so it can be updated from upstream
+    ".vendor.c.inc",
+)
+
 # A python module in a tool library, e.g. build/lib/common/render.py
 _LIB_MODULE_EXP = re.compile(r"^([^/]+)/lib/(.+\.py)$")
+
+
+####################################################################################################################################
+def _lint_line_apply(name):
+    """Should the line length check be applied to this file?"""
+
+    return not name.startswith(_LINE_SKIP_LIST) and not name.endswith(_LINE_SKIP_EXT)
 
 
 ####################################################################################################################################
@@ -81,12 +108,17 @@ def cmd_lint(path_repo):
         if b"\x00" in data:
             log(WARN, "unexpected binary file (add to the linter skip list if intentional)")
             error_total = 1
-        # Otherwise the file must be 7-bit ASCII text, with the StringId check applied to C source
+        # Otherwise the file must be 7-bit ASCII text, with the line length check applied to everything that is not exempt and the
+        # StringId check applied to C source
         else:
             error_total = lint_ascii(data)
+            source = data.decode("utf-8", errors="replace")
+
+            if _lint_line_apply(name):
+                error_total += lint_line(source)
 
             if _lint_str_id_apply(name):
-                error_total += lint_str_id(data.decode("utf-8", errors="replace"))
+                error_total += lint_str_id(source)
 
         if error_total > 0:
             raise ToolError("%u linter error(s) in '%s' (see warnings above)" % (error_total, name))

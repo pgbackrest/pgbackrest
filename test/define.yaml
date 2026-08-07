@@ -1269,6 +1269,7 @@ tool:
 
     coverage:
       - test/command/lint/ascii
+      - test/command/lint/line
       - test/command/lint/string_id
       - test/command/lint/lint
 
