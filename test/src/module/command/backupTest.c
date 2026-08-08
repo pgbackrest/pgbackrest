@@ -1379,6 +1379,12 @@ testRun(void)
                 STORAGE_REPO_BACKUP "/backup.history/2019/%s.manifest.gz",
                 strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 1))));
 
+        // Add a full backup that sorts after the prior backup, e.g. a backup that has been removed but is still returned by the
+        // repository listing. It must not be considered when generating a diff/incr label.
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(),
+            zNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabelFormat(backupTypeFull, NULL, timestamp - 2))));
+
         TEST_RESULT_STR(
             backupLabelCreate(backupTypeDiff, olderBackupLabel, timestamp),
             backupLabelFormat(backupTypeDiff, olderBackupLabel, timestamp),
