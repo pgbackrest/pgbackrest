@@ -65,7 +65,7 @@ cryptoHashFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    EVP_MD_CTX_destroy(this->hashContext);
+    EVP_MD_CTX_free(this->hashContext);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -201,7 +201,7 @@ cryptoHashNew(const HashType type)
                 THROW_FMT(AssertError, "unable to load hash '%s'", typeZ);
 
             // Create context
-            cryptoError((this->hashContext = EVP_MD_CTX_create()) == NULL, "unable to create hash context");
+            cryptoError((this->hashContext = EVP_MD_CTX_new()) == NULL, "unable to create hash context");
 
             // Set free callback to ensure hash context is freed
             memContextCallbackSet(objMemContext(this), cryptoHashFreeResource, this);

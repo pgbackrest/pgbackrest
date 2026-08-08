@@ -36,7 +36,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cryptoError(false, "no error here"), "no error");
 
-        EVP_MD_CTX *context = EVP_MD_CTX_create();
+        EVP_MD_CTX *context = EVP_MD_CTX_new();
         TEST_ERROR(
             cryptoError(EVP_DigestInit_ex(context, NULL, NULL) != 1, "unable to initialize hash context"), CryptoError,
             "unable to initialize hash context: "
@@ -46,7 +46,7 @@ testRun(void)
             "[101187723]"
 #endif
             " no digest set");
-        EVP_MD_CTX_destroy(context);
+        EVP_MD_CTX_free(context);
 
         TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
 
