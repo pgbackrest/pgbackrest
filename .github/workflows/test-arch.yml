@@ -85,7 +85,7 @@ jobs:
         run: |
           ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage \
             --module=common/type/pack --module=common/crypto --module=common/compress --module=postgres/interface \
-            --module=command/backup --module=command/restore --module=command/archive-get --module=command/archive-push \
+            --module=command/backup --module=command/restore --module=command/archive/get --module=command/archive/push \
             --module=command/verify
 
       # Run the smoke test against the arch build: a real PostgreSQL driven through a full backup/restore/verify cycle, which
