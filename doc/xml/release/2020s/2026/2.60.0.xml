@@ -12,7 +12,6 @@
                     <release-item-reviewer id="douglas.j.hunley"/>
                 </release-item-contributor-list>
 
-
                 <p>Fix hang when the chunk buffer is smaller than the input buffer.</p>
             </release-item>
         </release-bug-list>
