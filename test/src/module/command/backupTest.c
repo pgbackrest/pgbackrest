@@ -92,8 +92,7 @@ testBackupValidateFile(
         if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
         {
             ioFilterGroupAdd(
-                ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
+                ioReadFilterGroup(storageReadIo(read)), cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
         }
 
         ioReadOpen(storageReadIo(read));
@@ -173,8 +172,7 @@ testBackupValidateFile(
         if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
         {
             ioFilterGroupAdd(
-                ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = raw));
+                ioReadFilterGroup(storageReadIo(read)), cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = raw));
         }
 
         if (manifestData->backupOptionCompressType != compressTypeNone)
@@ -351,9 +349,7 @@ testBackupValidateList(
                         manifestFileList, (String *const)*filePack, .required = true);
                     strLstRemoveIdx(manifestFileList, manifestFileIdx);
 
-                    strCat(
-                        result,
-                        testBackupValidateFile(storage, path, manifest, manifestData, info.name, info.size, filePack));
+                    strCat(result, testBackupValidateFile(storage, path, manifest, manifestData, info.name, info.size, filePack));
                 }
 
                 break;
@@ -424,8 +420,7 @@ testBackupValidate(const Storage *const storage, const String *const path, const
         // Build a list of files in the backup path and verify against the manifest
         // -------------------------------------------------------------------------------------------------------------------------
         const InfoBackup *const infoBackup = infoBackupLoadFile(
-            storageRepo(), INFO_BACKUP_PATH_FILE_STR,
-            param.cipherSpec == NULL ? cipherSpecNewNone() : param.cipherSpec);
+            storageRepo(), INFO_BACKUP_PATH_FILE_STR, param.cipherSpec == NULL ? cipherSpecNewNone() : param.cipherSpec);
         Manifest *manifest = manifestLoadFile(
             storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), infoBackupCipherSpec(infoBackup));
 
@@ -3844,8 +3839,8 @@ testRun(void)
 
             // Run backup
             hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC,
-                .walTotal = 2, .walSwitch = true);
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC, .walTotal = 2,
+                .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3922,8 +3917,8 @@ testRun(void)
 
             // Run backup
             hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC,
-                .walTotal = 2, .walSwitch = true);
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC, .walTotal = 2,
+                .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -4018,8 +4013,8 @@ testRun(void)
 
             // Run backup
             hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC,
-                .walTotal = 2, .walSwitch = true);
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC, .walTotal = 2,
+                .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -4083,8 +4078,8 @@ testRun(void)
 
             // Run backup
             hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC,
-                .walTotal = 1, .walSwitch = false);
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC, .walTotal = 1,
+                .walSwitch = false);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -4173,8 +4168,8 @@ testRun(void)
                 {.op = hrnBackupScriptOpUpdate, .file = storagePathP(storagePg(), STRDEF("global/1")),
                  .time = backupTimeStart + 1, .content = fileGrow});
             hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC,
-                .walTotal = 2, .walSwitch = true);
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC, .walTotal = 2,
+                .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Make sure that global/1 grew as expected but the extra bytes were not copied

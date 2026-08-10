@@ -264,8 +264,7 @@ restoreFile(
                         if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
                         {
                             ioFilterGroupAdd(
-                                ioReadFilterGroup(blockMapRead),
-                                cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
+                                ioReadFilterGroup(blockMapRead), cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
                         }
 
                         ioReadOpen(blockMapRead);
@@ -280,8 +279,8 @@ restoreFile(
 
                         // Apply delta to file
                         BlockDelta *const blockDelta = blockDeltaNew(
-                            blockMap, file->blockIncrSize, file->blockIncrChecksumSize, file->blockChecksum,
-                            cipherSpecBackup, repoFileCompressType);
+                            blockMap, file->blockIncrSize, file->blockIncrChecksumSize, file->blockChecksum, cipherSpecBackup,
+                            repoFileCompressType);
 
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
@@ -337,9 +336,7 @@ restoreFile(
                         // Add decryption filter
                         if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
                         {
-                            ioFilterGroupAdd(
-                                filterGroup,
-                                cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = bundleRaw));
+                            ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = bundleRaw));
                         }
 
                         // Add decompression filter

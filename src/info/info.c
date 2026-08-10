@@ -121,8 +121,7 @@ infoNew(const CipherSpec *const cipherSpecSub)
 
 FN_EXTERN Info *
 infoNewLoad(
-    IoRead *const read, const CipherSpec *const cipherSpec, InfoLoadNewCallback *const callbackFunction,
-    void *const callbackData)
+    IoRead *const read, const CipherSpec *const cipherSpec, InfoLoadNewCallback *const callbackFunction, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);

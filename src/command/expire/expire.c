@@ -896,8 +896,7 @@ removeExpiredBackup(const InfoBackup *const infoBackup, const String *const adho
                 if (adhocBackupLabel != NULL && strBeginsWith(strLstGet(backupList, 0), strSubN(adhocBackupLabel, 0, 16)))
                 {
                     const Manifest *const manifestResume = manifestLoadFile(
-                        storageRepoIdx(repoIdx), manifestFileName,
-                        infoBackupCipherSpec(infoBackup));
+                        storageRepoIdx(repoIdx), manifestFileName, infoBackupCipherSpec(infoBackup));
 
                     // If the ancestor of the resumable backup no longer exists in backup.info then it can be removed
                     if (!infoBackupLabelExists(infoBackup, manifestData(manifestResume)->backupLabelPrior))
