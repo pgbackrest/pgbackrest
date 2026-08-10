@@ -544,7 +544,7 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}",
-            .cipherType = cipherTypeAes256Cbc, .cipherPass = "badpassphrase");
+            .cipherSpec = TEST_CIPHER_SPEC_PASS("badpassphrase"));
 
         // repo3 is not encrypted
         HRN_INFO_PUT(

@@ -399,8 +399,7 @@ testBackupValidateList(
 typedef struct TestBackupValidateParam
 {
     VAR_PARAM_HEADER;
-    CipherType cipherType;                                          // Cipher type
-    const char *cipherPass;                                         // Cipher pass
+    const CipherSpec *cipherSpec;                                   // Cipher spec the repo is encrypted with
 } TestBackupValidateParam;
 
 #define testBackupValidateP(storage, path, ...)                                                                                    \
@@ -412,8 +411,7 @@ testBackupValidate(const Storage *const storage, const String *const path, const
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
         FUNCTION_HARNESS_PARAM(STRING, path);
-        FUNCTION_HARNESS_PARAM(UINT64, param.cipherType);
-        FUNCTION_HARNESS_PARAM(STRINGZ, param.cipherPass);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, param.cipherSpec);
     FUNCTION_HARNESS_END();
 
     ASSERT(storage != NULL);
@@ -427,9 +425,7 @@ testBackupValidate(const Storage *const storage, const String *const path, const
         // -------------------------------------------------------------------------------------------------------------------------
         const InfoBackup *const infoBackup = infoBackupLoadFile(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR,
-            cipherSpecNewP(
-                param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-                param.cipherPass == NULL ? NULL : BUFSTRZ(param.cipherPass)));
+            param.cipherSpec == NULL ? cipherSpecNewNone() : param.cipherSpec);
         Manifest *manifest = manifestLoadFile(
             storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), infoBackupCipherSpec(infoBackup));
 
@@ -3848,8 +3844,8 @@ testRun(void)
 
             // Run backup
             hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true);
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC,
+                .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3869,8 +3865,7 @@ testRun(void)
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
-                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherType = cipherTypeAes256Cbc,
-                    .cipherPass = TEST_CIPHER_PASS),
+                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherSpec = TEST_CIPHER_SPEC),
                 ".> {d=20191108-080000F}\n"
                 "bundle/1/pg_data/PG_VERSION {s=2, ts=-400000}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
@@ -3927,8 +3922,8 @@ testRun(void)
 
             // Run backup
             hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true);
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC,
+                .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3955,8 +3950,7 @@ testRun(void)
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
-                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherType = cipherTypeAes256Cbc,
-                    .cipherPass = TEST_CIPHER_PASS),
+                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherSpec = TEST_CIPHER_SPEC),
                 ".> {d=20191108-080000F}\n"
                 "bundle/1/pg_data/PG_VERSION {s=2, ts=-500000}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
@@ -4024,8 +4018,8 @@ testRun(void)
 
             // Run backup
             hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true);
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC,
+                .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -4053,8 +4047,7 @@ testRun(void)
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
-                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherType = cipherTypeAes256Cbc,
-                    .cipherPass = TEST_CIPHER_PASS),
+                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherSpec = TEST_CIPHER_SPEC),
                 ".> {d=20191108-080000F_20191110-153320D}\n"
                 "bundle/1/pg_data/block-age-multiplier {s=32768, m=1:{0,1}, ts=-86400}\n"
                 "bundle/1/pg_data/block-age-to-zero {s=16384, ts=-172800}\n"
@@ -4090,8 +4083,8 @@ testRun(void)
 
             // Run backup
             hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 1, .walSwitch = false);
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC,
+                .walTotal = 1, .walSwitch = false);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -4116,8 +4109,7 @@ testRun(void)
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
-                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherType = cipherTypeAes256Cbc,
-                    .cipherPass = TEST_CIPHER_PASS),
+                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherSpec = TEST_CIPHER_SPEC),
                 ".> {d=20191108-080000F_20191111-052640I}\n"
                 "pg_data/backup_label.gz {s=17, ts=+2}\n"
                 "pg_data/global/pg_control.gz {s=8192}\n"
@@ -4181,8 +4173,8 @@ testRun(void)
                 {.op = hrnBackupScriptOpUpdate, .file = storagePathP(storagePg(), STRDEF("global/1")),
                  .time = backupTimeStart + 1, .content = fileGrow});
             hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true);
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherSpec = TEST_CIPHER_SPEC,
+                .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Make sure that global/1 grew as expected but the extra bytes were not copied
@@ -4206,8 +4198,7 @@ testRun(void)
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(
-                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherType = cipherTypeAes256Cbc,
-                    .cipherPass = TEST_CIPHER_PASS),
+                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherSpec = TEST_CIPHER_SPEC),
                 ".> {d=20191111-192000F}\n"
                 "bundle/1/pg_data/PG_VERSION {s=2}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"

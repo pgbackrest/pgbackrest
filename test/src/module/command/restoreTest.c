@@ -289,7 +289,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)),
-            "acefile", .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc, .cipherPass = "badpass",
+            "acefile", .compressType = compressTypeGz, .cipherSpec = TEST_CIPHER_SPEC_PASS("badpass"),
             .comment = "create a compressed encrypted repo file");
 
         List *fileList = lstNewP(sizeof(RestoreFile));
@@ -2287,7 +2287,7 @@ testRun(void)
             // Store the file also to the encrypted repo
             HRN_STORAGE_PUT_Z(
                 storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_11_Z "\n",
-                .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
+                .cipherSpec = TEST_CIPHER_SPEC_PASS(TEST_CIPHER_PASS_ARCHIVE));
 
             // pg_tblspc
             HRN_MANIFEST_PATH_ADD(manifest, .name = MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC);
@@ -2327,7 +2327,7 @@ testRun(void)
         // Write backup.info to the encrypted repo
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n[cipher]\ncipher-pass=\""
-            TEST_CIPHER_PASS_MANIFEST "\"\n\n" TEST_RESTORE_BACKUP_INFO_DB, .cipherType = cipherTypeAes256Cbc);
+            TEST_CIPHER_PASS_MANIFEST "\"\n\n" TEST_RESTORE_BACKUP_INFO_DB, .cipherSpec = TEST_CIPHER_SPEC);
 
         // Write archive.info to the encrypted repo
         InfoArchive *infoArchive = infoArchiveNew(

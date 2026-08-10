@@ -217,9 +217,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         {
             InfoArchive *infoArchive = infoArchiveLoadFile(
                 storageRepo(), INFO_ARCHIVE_PATH_FILE_STR,
-                cipherSpecNewP(
-                    param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-                    param.cipherPass == NULL ? NULL : BUFSTRZ(param.cipherPass)));
+                param.cipherSpec == NULL ? cipherSpecNewNone() : param.cipherSpec);
             const String *archiveId = infoArchiveId(infoArchive);
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
                 param.timeline, lsnStart - pgControl.walSegmentSize, param.noWal ? lsnStart - pgControl.walSegmentSize : lsnStop,
