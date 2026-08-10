@@ -22,7 +22,8 @@ from common.storage import file_read, file_write
 from common.vm import *
 
 # Version as the project writes it, i.e. the components the generated defines are built from
-VERSION_H = """/***********************************************************************************************************************************
+VERSION_H = """\
+/***********************************************************************************************************************************
 Version Numbers and Names
 ***********************************************************************************************************************************/
 #define PROJECT_VERSION_MAJOR                                       2

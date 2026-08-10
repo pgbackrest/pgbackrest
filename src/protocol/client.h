@@ -134,7 +134,7 @@ typedef struct ProtocolClientRequestParam
     PackWrite *param;
 } ProtocolClientRequestParam;
 
-#define protocolClientRequestP(this, command, ...)                                                                                          \
+#define protocolClientRequestP(this, command, ...)                                                                                 \
     protocolClientRequest(this, command, (ProtocolClientRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN PackRead *protocolClientRequest(ProtocolClient *this, StringId command, ProtocolClientRequestParam param);

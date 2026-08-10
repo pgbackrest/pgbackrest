@@ -14,7 +14,6 @@ Repository Get Command
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
-#include "config/load.h"
 #include "storage/helper.h"
 
 #include "info/info.h"

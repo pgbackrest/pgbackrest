@@ -7,6 +7,7 @@ Harness for Creating Test Backups
 
 #include "command/backup/backup.h"
 #include "common/compress/helper.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
 #include "config/config.h"
@@ -242,6 +243,10 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
 
                     if (param.walCompressType != compressTypeNone)
                         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilterP(param.walCompressType, 1));
+
+                    // Encrypt with the archive passphrase, which is what archive-push writes WAL with
+                    cipherBlockFilterGroupAdd(
+                        ioWriteFilterGroup(storageWriteIo(write)), cipherModeEncrypt, infoArchiveCipherSpec(infoArchive));
 
                     storagePutP(write, walBuffer);
                 }

@@ -597,9 +597,11 @@ libssh2_sftp_stat_ex(
 
     // An omitted (0) uid/gid defaults to the test user/group; HRN_LIBSSH2_OWNER_ROOT selects root (0)
     attrs->uid =
-        hrnLibSsh2->uid == HRN_LIBSSH2_OWNER_ROOT ? 0 : hrnLibSsh2->uid == 0 ? (unsigned long)userId() : (unsigned long)hrnLibSsh2->uid;
+        hrnLibSsh2->uid == HRN_LIBSSH2_OWNER_ROOT ?
+            0 : hrnLibSsh2->uid == 0 ? (unsigned long)userId() : (unsigned long)hrnLibSsh2->uid;
     attrs->gid =
-        hrnLibSsh2->gid == HRN_LIBSSH2_OWNER_ROOT ? 0 : hrnLibSsh2->gid == 0 ? (unsigned long)groupId() : (unsigned long)hrnLibSsh2->gid;
+        hrnLibSsh2->gid == HRN_LIBSSH2_OWNER_ROOT ?
+            0 : hrnLibSsh2->gid == 0 ? (unsigned long)groupId() : (unsigned long)hrnLibSsh2->gid;
     attrs->filesize = hrnLibSsh2->filesize;
 
     return hrnLibSsh2->resultInt;

@@ -30,7 +30,8 @@ typedef struct StorageS3RequestAsyncParam
 #define storageS3RequestAsyncP(this, verb, path, ...)                                                                              \
     storageS3RequestAsync(this, verb, path, (StorageS3RequestAsyncParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FN_EXTERN HttpRequest *storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, StorageS3RequestAsyncParam param);
+FN_EXTERN HttpRequest *storageS3RequestAsync(
+    StorageS3 *this, const String *verb, const String *path, StorageS3RequestAsyncParam param);
 
 // Get async response
 typedef struct StorageS3ResponseParam

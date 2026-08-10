@@ -474,19 +474,19 @@ storageMove(const Storage *const this, StorageRead *const source, StorageWrite *
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If the file can't be moved it will need to be copied
-        if (!storageInterfaceMoveP(storageDriver(this), source, destination))
+        if (!storageInterfaceMoveP(storageDriver(this), source, destination))                                       // {vm_covered}
         {
             // Perform the copy
-            storageCopyP(source, destination);
+            storageCopyP(source, destination);                                                                      // {vm_covered}
 
             // Remove the source file
-            storageInterfaceRemoveP(storageDriver(this), storageReadName(source));
+            storageInterfaceRemoveP(storageDriver(this), storageReadName(source));                                  // {vm_covered}
 
             // Sync source path if the destination path was synced. We know the source and destination paths are different because
             // the move did not succeed. This will need updating when drivers other than Posix/CIFS are implemented because there's
             // no way to get coverage on it now.
-            if (storageWriteSyncPath(destination))
-                storageInterfacePathSyncP(storageDriver(this), strPath(storageReadName(source)));
+            if (storageWriteSyncPath(destination))                                                                  // {vm_covered}
+                storageInterfacePathSyncP(storageDriver(this), strPath(storageReadName(source)));                   // {vm_covered}
         }
     }
     MEM_CONTEXT_TEMP_END();

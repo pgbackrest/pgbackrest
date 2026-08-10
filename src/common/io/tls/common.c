@@ -220,9 +220,9 @@ tlsContext(const bool verifyPeer)
 
     cryptoInit();
 
-    // Select the TLS method to use. To maintain compatibility with older versions of OpenSSL we need to use an SSL method, but
-    // SSL versions will be excluded in SSL_CTX_set_options().
-    const SSL_METHOD *const method = SSLv23_method();
+    // Select the TLS method to use. This negotiates the highest version available to both sides, but SSL versions will be excluded
+    // in SSL_CTX_set_options().
+    const SSL_METHOD *const method = TLS_method();
     cryptoError(method == NULL, "unable to load TLS method");
 
     // Create TLS context

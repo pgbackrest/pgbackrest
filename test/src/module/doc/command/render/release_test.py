@@ -341,8 +341,10 @@ def test_release_render_contributor():
         _render(
             _doc(
                 RELEASE_LIST.replace(
-                    '<release-item-contributor id="other.person"/>\n                            <release-item-reviewer id="third.person"/>',
-                    '<release-item-contributor id="other.person"/>\n                            <release-item-ideator id="other.person"/>',
+                    '<release-item-contributor id="other.person"/>\n'
+                    '                            <release-item-reviewer id="third.person"/>',
+                    '<release-item-contributor id="other.person"/>\n'
+                    '                            <release-item-ideator id="other.person"/>',
                 )
             )
         )
@@ -354,8 +356,10 @@ def test_release_render_contributor():
         _render(
             _doc(
                 RELEASE_LIST.replace(
-                    'id="other.person"/>\n                        </release-item-contributor-list>\n\n                        <p>Fix a bug.',
-                    'id="nobody"/>\n                        </release-item-contributor-list>\n\n                        <p>Fix a bug.',
+                    'id="other.person"/>\n                        </release-item-contributor-list>\n\n'
+                    "                        <p>Fix a bug.",
+                    'id="nobody"/>\n                        </release-item-contributor-list>\n\n'
+                    "                        <p>Fix a bug.",
                 )
             )
         )

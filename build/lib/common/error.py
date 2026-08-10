@@ -1,10 +1,10 @@
 """Error Handling.
 
-Each tool reports failures with ToolError, which carries the exit status to return. Exit status mirrors the C: 0 is success, 1 means a
-top-level coverage check found modules missing coverage, and anything greater is an error.
+Each tool reports failures with ToolError, which carries the exit status to return. Exit status mirrors the C: 0 is success, 1 means
+a top-level coverage check found modules missing coverage, and anything greater is an error.
 
-Anything else that gets out of a tool is a bug in the tool, which error_trace() renders the way the C renders a stack trace: enough to
-find the bug without burying the message that says what it was."""
+Anything else that gets out of a tool is a bug in the tool, which error_trace() renders the way the C renders a stack trace: enough
+to find the bug without burying the message that says what it was."""
 
 ####################################################################################################################################
 import traceback

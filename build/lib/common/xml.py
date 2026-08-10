@@ -2,9 +2,10 @@
 
 Thin helpers over the standard library element tree, shaped the way the documentation reads and writes xml.
 
-Text is the awkward part. A document like the user guide is mixed content -- text and markup interleaved in one paragraph -- which the
-element tree stores as the text before a node's first child plus the text trailing each child. So adding text to a node means appending
-to whichever of those came last, and reading a node's text means gathering all of it. Both are done here so nothing else has to know.
+Text is the awkward part. A document like the user guide is mixed content -- text and markup interleaved in one paragraph -- which
+the element tree stores as the text before a node's first child plus the text trailing each child. So adding text to a node means
+appending to whichever of those came last, and reading a node's text means gathering all of it. Both are done here so nothing else
+has to know.
 
 A document may also be assembled from parts, which it declares as external entities and refers to by name. The parser does not fetch
 them so they are expanded here before it sees the document, which is what lets the release list be one file per release.
@@ -179,9 +180,9 @@ def xml_node_normalize(node):
     """Drop what a document uses to lay itself out but does not mean, and check that text and markup are not mixed where they cannot
     be.
 
-    A tab is how the xml is written rather than something to render, so it is dropped once rather than everywhere text is used. A node
-    that holds markup may not also hold text, since there is nowhere in the output for text that belongs to no tag -- except in a node
-    that is text itself, where interleaving the two is the whole point."""
+    A tab is how the xml is written rather than something to render, so it is dropped once rather than everywhere text is used. A
+    node that holds markup may not also hold text, since there is nowhere in the output for text that belongs to no tag -- except in
+    a node that is text itself, where interleaving the two is the whole point."""
 
     if node.text is not None:
         node.text = node.text.replace(_LAYOUT, "")
@@ -244,7 +245,8 @@ def xml_node_content(node):
 def xml_node_content_add(node, content):
     """Add text to the end of what a node holds.
 
-    Text is added rather than set because a title is built from text and markup in turn, e.g. "Backup Command (" then an id then ")".
+    Text is added rather than set because a title is built from text and markup in turn, e.g. "Backup Command (" then an id then
+    ")".
     """
 
     if len(node) == 0:

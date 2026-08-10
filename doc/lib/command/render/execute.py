@@ -1,15 +1,15 @@
 """Document Execution.
 
-Runs what the user guide says to run. A document is a sequence of commands against hosts, so building it is running them in order and
-keeping what they wrote, which is what a reader sees.
+Runs what the user guide says to run. A document is a sequence of commands against hosts, so building it is running them in order
+and keeping what they wrote, which is what a reader sees.
 
-Running them takes long enough that the result is cached. A cache entry is keyed by everything that decides what the command would be,
-so replaying the cache checks as it goes that the document still describes the same run. When a key no longer matches, the cache no
-longer describes the document and the whole document is built again.
+Running them takes long enough that the result is cached. A cache entry is keyed by everything that decides what the command would
+be, so replaying the cache checks as it goes that the document still describes the same run. When a key no longer matches, the cache
+no longer describes the document and the whole document is built again.
 
-Configuration is handled here rather than in a renderer because a configuration file is built up across a document: a section adds an
-option and a later section shows the file with everything added so far. That also makes this the only place that knows what the file
-looked like the last time the document showed it, so it is here that each line is marked with what the section changed."""
+Configuration is handled here rather than in a renderer because a configuration file is built up across a document: a section adds
+an option and a later section shows the file with everything added so far. That also makes this the only place that knows what the
+file looked like the last time the document showed it, so it is here that each line is marked with what the section changed."""
 
 ####################################################################################################################################
 import copy
@@ -679,6 +679,7 @@ HOST_GROUP = HostGroup()
 
 ####################################################################################################################################
 def _canonical(value):
-    """Render a cache key the one way it is written, so two keys are compared by what they hold rather than by how they were built."""
+    """Render a cache key the one way it is written, so two keys are compared by what they hold rather than by how they were
+    built."""
 
     return json.dumps(value, sort_keys=True, separators=(",", ":"))

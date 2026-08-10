@@ -257,7 +257,7 @@ def bld_hlp_render(path_build, bld_cfg, bld_hlp):
 def bld_hlp_render_data(path_build, bld_cfg, bld_hlp):
     """Write the help as raw data rather than as C.
 
-    The help unit test loads this to run the help against the current declarations, since the C literal the build compiles in may not
-    have been generated when the test runs. It goes at the root of the build path because it is not part of any source tree."""
+    The help unit test loads this to run the help against the current declarations, since the C literal the build compiles in may
+    not have been generated when the test runs. It goes at the root of the build path because it is not part of any source tree."""
 
     file_write(os.path.join(path_build, "help.dat"), _bld_hlp_data(bld_cfg, bld_hlp))

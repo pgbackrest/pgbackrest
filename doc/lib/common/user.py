@@ -1,8 +1,8 @@
 """User and Group.
 
-The user the tool runs as. A test container is built with this user so files created inside it are owned by the user on the host, and
-the generated test.c is given the same names so a test can check ownership against what it will find at runtime. The documentation
-build runs the commands it shows as this user, so what a reader sees is what they would type."""
+The user the tool runs as. A test container is built with this user so files created inside it are owned by the user on the host,
+and the generated test.c is given the same names so a test can check ownership against what it will find at runtime. The
+documentation build runs the commands it shows as this user, so what a reader sees is what they would type."""
 
 ####################################################################################################################################
 import grp

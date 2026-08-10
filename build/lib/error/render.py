@@ -1,7 +1,7 @@
 """Render Error Data.
 
-Writes the error type declarations and definitions. The definitions include the list the C indexes by code, which is why an error can
-be removed from the declaration but its code should not be reused."""
+Writes the error type declarations and definitions. The definitions include the list the C indexes by code, which is why an error
+can be removed from the declaration but its code should not be reused."""
 
 ####################################################################################################################################
 import os
