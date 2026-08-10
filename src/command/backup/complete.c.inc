@@ -202,8 +202,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)));
 
         cipherBlockFilterGroupAdd(
-            ioReadFilterGroup(storageReadIo(manifestRead)), cipherModeDecrypt,
-            infoBackupCipherSpec(infoBackup));
+            ioReadFilterGroup(storageReadIo(manifestRead)), cipherModeDecrypt, infoBackupCipherSpec(infoBackup));
 
         StorageWrite *const manifestWrite = storageNewWriteP(
             storageRepoWrite(),
@@ -214,8 +213,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilterP(compressTypeGz, 9));
 
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherModeEncrypt,
-            infoBackupCipherSpec(infoBackup));
+            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherModeEncrypt, infoBackupCipherSpec(infoBackup));
 
         storageCopyP(manifestRead, manifestWrite);
 

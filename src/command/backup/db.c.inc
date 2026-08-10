@@ -224,8 +224,7 @@ backupFilePut(
             if (cipherSpecType(manifestCipherSpecSub(manifest)) != cipherTypeNone)
             {
                 ioFilterGroupAdd(
-                    ioWriteFilterGroup(storageWriteIo(write)),
-                    cipherBlockNewP(cipherModeEncrypt, manifestCipherSpecSub(manifest)));
+                    ioWriteFilterGroup(storageWriteIo(write)), cipherBlockNewP(cipherModeEncrypt, manifestCipherSpecSub(manifest)));
 
                 repoChecksum = true;
             }
