@@ -2183,9 +2183,9 @@ testRun(void)
         harnessLogLevelSet(logLevelWarn);
 
         // Upgrade the format of the repo, which leaves every backup in it at the prior format
-        InfoBackup *infoBackup = infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(1));
+        InfoBackup *infoBackup = infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
         infoBackupFormatSet(infoBackup, REPOSITORY_FORMAT_6);
-        infoBackupSaveFile(infoBackup, storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(1));
+        infoBackupSaveFile(infoBackup, storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR3");
 
@@ -2194,7 +2194,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, diff backup has been changed to full");
 
         // The new full backup adopts the upgraded format
-        infoBackup = infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(1));
+        infoBackup = infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
 
         TEST_RESULT_UINT(
             infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backrestFormat, REPOSITORY_FORMAT_6,
