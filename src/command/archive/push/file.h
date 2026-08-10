@@ -17,7 +17,7 @@ typedef struct ArchivePushFileRepoData
 {
     unsigned int repoIdx;
     const String *archiveId;
-    const CipherSpec *cipherSpecArchive;
+    const CipherSpec *cipherSpecArchive;                            // Repo archive cipher spec
 } ArchivePushFileRepoData;
 
 /***********************************************************************************************************************************

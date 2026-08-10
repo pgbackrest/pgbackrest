@@ -66,7 +66,7 @@ cmdRestore(void)
         {
             const ManifestData *const data = manifestData(jobData.manifest);
             const InfoArchive *const archiveInfo = infoArchiveLoadFile(
-                storageRepoIdx(backupData.repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecIdx(backupData.repoIdx));
+                storageRepoIdx(backupData.repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(backupData.repoIdx));
 
             timelineVerify(
                 storageRepoIdx(backupData.repoIdx),
@@ -90,7 +90,7 @@ cmdRestore(void)
         manifestValidate(jobData.manifest, false);
 
         // Get the cipher subpass used to decrypt files in the backup
-        jobData.cipherSpecBackup = manifestCipherSpecSub(jobData.manifest);
+        jobData.cipherSpecBackup = manifestCipherSpec(jobData.manifest);
 
         // Validate the manifest
         restoreManifestValidate(jobData.manifest, backupData.backupSet);

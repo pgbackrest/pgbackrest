@@ -119,7 +119,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
                         // Encrypt with backup key if encrypted
                         cipherBlockFilterGroupAdd(
-                            filterGroup, cipherModeEncrypt, manifestCipherSpecSub(manifest));
+                            filterGroup, cipherModeEncrypt, manifestCipherSpec(manifest));
 
                         // Add size filter last to calculate repo size
                         ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -229,13 +229,13 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         // Add manifest and save backup.info (infoBackupSaveFile() is responsible for proper syncing)
         // -------------------------------------------------------------------------------------------------------------------------
         infoBackupDataAdd(infoBackup, manifest);
-        infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpec());
+        infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
 
         // Save archive.info/copy so the timestamps will be updated to prevent lifecycle settings from removing the files early
         // -------------------------------------------------------------------------------------------------------------------------
         infoArchiveSaveFile(
-            infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpec()), storageRepoWrite(),
-            INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpec());
+            infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMain()), storageRepoWrite(),
+            INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMain());
     }
     MEM_CONTEXT_TEMP_END();
 

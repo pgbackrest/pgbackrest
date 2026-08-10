@@ -799,7 +799,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
             .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
-            .cipherSpecBackup = manifestCipherSpecSub(manifest),
+            .cipherSpecBackup = manifestCipherSpec(manifest),
             .pageSize = backupData->pageSize,
             .delta = cfgOptionBool(cfgOptDelta),
             .bundle = cfgOptionBool(cfgOptRepoBundle),

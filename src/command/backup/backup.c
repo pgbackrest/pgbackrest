@@ -167,7 +167,7 @@ backupInit(const InfoBackup *const infoBackup)
     // Get archive info
     if (cfgOptionBool(cfgOptArchiveCheck))
     {
-        result->archiveInfo = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpec());
+        result->archiveInfo = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMain());
         result->archiveId = infoArchiveId(result->archiveInfo);
     }
 
@@ -207,7 +207,7 @@ cmdBackup(void)
         storageRepo();
 
         // Load backup.info
-        InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpec());
+        InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
         const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(infoBackup);
 
@@ -238,7 +238,7 @@ cmdBackup(void)
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
-            manifestCipherSpecSubSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType)));
+            manifestCipherSpecSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType)));
 
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))

@@ -144,7 +144,7 @@ backupBuildIncr(
             manifestBuildIncr(manifest, manifestPrior, (BackupType)cfgOptionStrId(cfgOptType), archiveStart);
 
             // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
-            manifestCipherSpecSubSet(manifest, manifestCipherSpecSub(manifestPrior));
+            manifestCipherSpecSet(manifest, manifestCipherSpec(manifestPrior));
 
             // Incremental was built
             result = true;

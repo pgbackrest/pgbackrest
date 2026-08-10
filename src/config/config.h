@@ -246,13 +246,12 @@ Cipher spec for a repository, built from the cipher options and cached per repo 
 runs. This is the top of the chain. The info files are read with it and each of those carries the cipher spec for the files that
 depend on it, so nothing further down needs to consult the options again.
 ***********************************************************************************************************************************/
-// Get cipher spec for main cipher type/passphrase
-FN_EXTERN const CipherSpec *cfgCipherSpecIdx(unsigned int repoIdx);
+FN_EXTERN const CipherSpec *cfgCipherSpecMainIdx(unsigned int repoIdx);
 
 FN_INLINE_ALWAYS const CipherSpec *
-cfgCipherSpec(void)
+cfgCipherSpecMain(void)
 {
-    return cfgCipherSpecIdx(cfgOptionIdxDefault(cfgOptRepoCipherType));
+    return cfgCipherSpecMainIdx(cfgOptionIdxDefault(cfgOptRepoCipherType));
 }
 
 /***********************************************************************************************************************************

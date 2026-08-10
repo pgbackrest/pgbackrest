@@ -2309,7 +2309,7 @@ testRun(void)
         Manifest *manifestEncrypted = manifestLoadFile(
             storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE),
             cipherSpecNewNone());
-        manifestCipherSpecSubSet(manifestEncrypted, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE)));
+        manifestCipherSpecSet(manifestEncrypted, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE)));
 
         // Open file for write
         IoWrite *write = storageWriteIo(

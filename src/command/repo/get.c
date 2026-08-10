@@ -86,14 +86,14 @@ storageGetProcess(IoWrite *const destination)
                     // Archive path
                     if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
                     {
-                        cipherSpec = cfgCipherSpec();
+                        cipherSpec = cfgCipherSpecMain();
 
                         // Find the archive passphrase
                         if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
                         {
                             const InfoArchive *const info = infoArchiveLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
-                                cfgCipherSpec());
+                                cfgCipherSpecMain());
                             cipherSpec = infoArchiveCipherSpec(info);
                         }
                     }
@@ -101,14 +101,14 @@ storageGetProcess(IoWrite *const destination)
                     // Backup path
                     if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
                     {
-                        cipherSpec = cfgCipherSpec();
+                        cipherSpec = cfgCipherSpecMain();
 
                         if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                         {
                             // Find the manifest passphrase
                             const InfoBackup *const info = infoBackupLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
-                                cfgCipherSpec());
+                                cfgCipherSpecMain());
                             const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(info);
                             cipherSpec = cipherSpecManifest;
 
@@ -123,7 +123,7 @@ storageGetProcess(IoWrite *const destination)
                                         STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza), strZ(strLstGet(filePathSplitLst, 2)),
                                         BACKUP_MANIFEST_FILE),
                                     cipherSpecManifest);
-                                cipherSpec = manifestCipherSpecSub(manifest);
+                                cipherSpec = manifestCipherSpec(manifest);
                             }
                         }
                     }

@@ -269,7 +269,7 @@ verifyArchiveInfoFile(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the main info file
-        const VerifyInfoFile verifyArchiveInfo = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_STR, true, cfgCipherSpec());
+        const VerifyInfoFile verifyArchiveInfo = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_STR, true, cfgCipherSpecMain());
 
         // If the main file did not error, then report on the copy's status and check checksums
         if (verifyArchiveInfo.errorCode == 0)
@@ -278,7 +278,8 @@ verifyArchiveInfoFile(void)
             infoArchiveMove(result, memContextPrior());
 
             // Attempt to load the copy and report on it's status but don't keep it in memory
-            const VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_COPY_STR, false, cfgCipherSpec());
+            const VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(
+                INFO_ARCHIVE_PATH_FILE_COPY_STR, false, cfgCipherSpecMain());
 
             // If the copy loaded successfully, then check the checksums
             if (verifyArchiveInfoCopy.errorCode == 0)
@@ -292,7 +293,7 @@ verifyArchiveInfoFile(void)
         else
         {
             // Attempt to load the copy
-            const VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_COPY_STR, true, cfgCipherSpec());
+            const VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_COPY_STR, true, cfgCipherSpecMain());
 
             // If loaded successfully, then return the copy as usable
             if (verifyArchiveInfoCopy.errorCode == 0)
@@ -320,7 +321,7 @@ verifyBackupInfoFile(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the main info file
-        const VerifyInfoFile verifyBackupInfo = verifyInfoFile(INFO_BACKUP_PATH_FILE_STR, true, cfgCipherSpec());
+        const VerifyInfoFile verifyBackupInfo = verifyInfoFile(INFO_BACKUP_PATH_FILE_STR, true, cfgCipherSpecMain());
 
         // If the main file did not error, then report on the copy's status and check checksums
         if (verifyBackupInfo.errorCode == 0)
@@ -329,7 +330,7 @@ verifyBackupInfoFile(void)
             infoBackupMove(result, memContextPrior());
 
             // Attempt to load the copy and report on it's status but don't keep it in memory
-            const VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR, false, cfgCipherSpec());
+            const VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR, false, cfgCipherSpecMain());
 
             // If the copy loaded successfully, then check the checksums
             if (verifyBackupInfoCopy.errorCode == 0)
@@ -343,7 +344,7 @@ verifyBackupInfoFile(void)
         else
         {
             // Attempt to load the copy
-            const VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR, true, cfgCipherSpec());
+            const VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(INFO_BACKUP_PATH_FILE_COPY_STR, true, cfgCipherSpecMain());
 
             // If loaded successfully, then return the copy as usable
             if (verifyBackupInfoCopy.errorCode == 0)
@@ -987,7 +988,7 @@ verifyBackup(VerifyJobData *const jobData)
                     MEM_CONTEXT_BEGIN(jobData->memContext)
                     {
                         // Get the cipher spec used to decrypt files in the backup and initialize the file list index
-                        jobData->cipherSpecBackup = manifestCipherSpecSub(jobData->manifest);
+                        jobData->cipherSpecBackup = manifestCipherSpec(jobData->manifest);
                         jobData->manifestFileIdx = 0;
                     }
                     MEM_CONTEXT_END();

@@ -324,7 +324,7 @@ backupResume(Manifest *const manifest, const CipherSpec *const cipherSpecManifes
                 strZ(manifestData(manifest)->backupLabel));
 
             // Copy cipher subpass since it was used to encrypt the resumable files
-            manifestCipherSpecSubSet(manifest, manifestCipherSpecSub(manifestResume));
+            manifestCipherSpecSet(manifest, manifestCipherSpec(manifestResume));
 
             // Clean resumed backup
             const String *const backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel));

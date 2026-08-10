@@ -2514,7 +2514,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         hrnBackupPqScriptP(
-            PG_VERSION_11, BACKUP_EPOCH + 200000, .cipherSpec = TEST_CIPHER_SPEC);
+            PG_VERSION_11, BACKUP_EPOCH + 200000, .cipherSpecMain = TEST_CIPHER_SPEC);
         TEST_RESULT_VOID(hrnCmdBackup(), "backup");
         TEST_RESULT_LOG(
             "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
