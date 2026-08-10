@@ -56,13 +56,13 @@ storageGetProcess(IoWrite *const destination)
             {
                 // Determine the passphrase using the following pattern:
                 //
-                // REPO / (repo passphrase)
-                //      / archive / (repo passphrase)
+                // REPO / (main passphrase)
+                //      / archive / (main passphrase)
                 //      / archive / stanza / (archive passphrase)
-                //      / backup  / (repo passphrase)
-                //      / backup  / stanza / (backup passphrase)
-                //      / backup  / stanza / set / (manifest passphrase)
-                //      / backup  / stanza / backup.history / (backup passphrase)
+                //      / backup  / (main passphrase)
+                //      / backup  / stanza / (manifest passphrase)
+                //      / backup  / stanza / set / (backup passphrase)
+                //      / backup  / stanza / backup.history / (manifest passphrase)
                 //
                 // Nothing should be stored at the top level of the repo except the backup/archive paths. The backup/archive paths
                 // should contain only stanza paths.
@@ -93,7 +93,7 @@ storageGetProcess(IoWrite *const destination)
                         {
                             const InfoArchive *const info = infoArchiveLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
-                                cipherSpec);
+                                cfgCipherSpec());
                             cipherSpec = infoArchiveCipherSpec(info);
                         }
                     }
@@ -105,13 +105,14 @@ storageGetProcess(IoWrite *const destination)
 
                         if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                         {
-                            // Find the backup passphrase
+                            // Find the manifest passphrase
                             const InfoBackup *const info = infoBackupLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
-                                cipherSpec);
-                            cipherSpec = infoBackupCipherSpec(info);
+                                cfgCipherSpec());
+                            const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(info);
+                            cipherSpec = cipherSpecManifest;
 
-                            // Find the manifest passphrase
+                            // Find the backup passphrase
                             if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF(BACKUP_PATH_HISTORY)) &&
                                 !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
                                 !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
@@ -121,7 +122,7 @@ storageGetProcess(IoWrite *const destination)
                                     strNewFmt(
                                         STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza), strZ(strLstGet(filePathSplitLst, 2)),
                                         BACKUP_MANIFEST_FILE),
-                                    cipherSpec);
+                                    cipherSpecManifest);
                                 cipherSpec = manifestCipherSpecSub(manifest);
                             }
                         }

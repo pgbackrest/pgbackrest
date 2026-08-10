@@ -1823,11 +1823,11 @@ testRun(void)
         TEST_RESULT_Z(cfgOptionName(cfgOptBufferSize), "buffer-size", "buffer-size name");
 
         // Cipher spec is built once per repo and then cached
-        const CipherSpec *const cipherSpec = cfgCipherSpec();
+        const CipherSpec *const cipherSpecMain = cfgCipherSpec();
 
-        TEST_RESULT_UINT(cipherSpecType(cipherSpec), cipherTypeAes256Cbc, "repo1 cipher spec type");
-        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpec)), "xxx-cipher", "repo1 cipher spec pass");
-        TEST_RESULT_PTR(cfgCipherSpecIdx(0), cipherSpec, "repo1 cipher spec is cached");
+        TEST_RESULT_UINT(cipherSpecType(cipherSpecMain), cipherTypeAes256Cbc, "repo1 cipher spec type");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecMain)), "xxx-cipher", "repo1 cipher spec pass");
+        TEST_RESULT_PTR(cfgCipherSpecIdx(0), cipherSpecMain, "repo1 cipher spec is cached");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);

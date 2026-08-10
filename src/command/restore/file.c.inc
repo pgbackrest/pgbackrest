@@ -30,7 +30,7 @@ typedef struct RestoreFileResult
 static List *
 restoreFile(
     const String *const repoFile, const unsigned int repoIdx, const CompressType repoFileCompressType, const time_t copyTimeBegin,
-    const bool delta, const bool deltaForce, const bool bundleRaw, const CipherSpec *const cipherSpec,
+    const bool delta, const bool deltaForce, const bool bundleRaw, const CipherSpec *const cipherSpecBackup,
     const StringList *const referenceList, List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -41,7 +41,7 @@ restoreFile(
         FUNCTION_LOG_PARAM(BOOL, delta);
         FUNCTION_LOG_PARAM(BOOL, deltaForce);
         FUNCTION_LOG_PARAM(BOOL, bundleRaw);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecBackup);
         FUNCTION_LOG_PARAM(STRING_LIST, referenceList);             // List of references (for block incremental)
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to restore
     FUNCTION_LOG_END();
@@ -222,7 +222,7 @@ restoreFile(
                     storageReadMultiAddP(
                         repoFileRead, repoFile,
                         .compressible =
-                            repoFileCompressType == compressTypeNone && cipherSpecType(cipherSpec) == cipherTypeNone,
+                            repoFileCompressType == compressTypeNone && cipherSpecType(cipherSpecBackup) == cipherTypeNone,
                         .offset = file->offset, .limit = file->limit);
                 }
             }
@@ -261,11 +261,11 @@ restoreFile(
                         // blocks need to be fetched from the repository. If we got here there must be at least one block to fetch.
                         IoRead *const blockMapRead = ioLimitReadNew(storageReadMultiIo(repoFileRead), varUInt64(file->limit));
 
-                        if (cipherSpecType(cipherSpec) != cipherTypeNone)
+                        if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
                         {
                             ioFilterGroupAdd(
                                 ioReadFilterGroup(blockMapRead),
-                                cipherBlockNewP(cipherModeDecrypt, cipherSpec, .raw = true));
+                                cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
                         }
 
                         ioReadOpen(blockMapRead);
@@ -281,7 +281,7 @@ restoreFile(
                         // Apply delta to file
                         BlockDelta *const blockDelta = blockDeltaNew(
                             blockMap, file->blockIncrSize, file->blockIncrChecksumSize, file->blockChecksum,
-                            cipherSpec, repoFileCompressType);
+                            cipherSpecBackup, repoFileCompressType);
 
                         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
                         {
@@ -335,11 +335,11 @@ restoreFile(
                         IoFilterGroup *const filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
 
                         // Add decryption filter
-                        if (cipherSpecType(cipherSpec) != cipherTypeNone)
+                        if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
                         {
                             ioFilterGroupAdd(
                                 filterGroup,
-                                cipherBlockNewP(cipherModeDecrypt, cipherSpec, .raw = bundleRaw));
+                                cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = bundleRaw));
                         }
 
                         // Add decompression filter

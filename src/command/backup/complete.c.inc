@@ -3,11 +3,11 @@ Save a copy of the backup manifest during processing to preserve checksums for a
 resume is disabled since an incremental copy will not be used in a future backup unless resume is enabled beforehand.
 ***********************************************************************************************************************************/
 static void
-backupManifestSaveCopy(Manifest *const manifest, const CipherSpec *const cipherSpecBackup, const bool final)
+backupManifestSaveCopy(Manifest *const manifest, const CipherSpec *const cipherSpecManifest, const bool final)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecBackup);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecManifest);
         FUNCTION_LOG_PARAM(BOOL, final);
     FUNCTION_LOG_END();
 
@@ -25,7 +25,7 @@ backupManifestSaveCopy(Manifest *const manifest, const CipherSpec *const cipherS
                         STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestData(manifest)->backupLabel))));
 
             // Add encryption filter if required
-            cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpecBackup);
+            cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpecManifest);
 
             // Save file
             manifestSave(manifest, write);
@@ -40,12 +40,12 @@ backupManifestSaveCopy(Manifest *const manifest, const CipherSpec *const cipherS
 Check and copy WAL segments required to make the backup consistent
 ***********************************************************************************************************************************/
 static void
-backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manifest, const CipherSpec *const cipherSpecBackup)
+backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manifest, const CipherSpec *const cipherSpecManifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecBackup);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecManifest);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -66,7 +66,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                 strZ(pgLsnToWalSegment(backupData->timeline, lsnStop, backupData->walSegmentSize)));
 
             // Save the backup manifest before getting archive logs in case of failure
-            backupManifestSaveCopy(manifest, cipherSpecBackup, false);
+            backupManifestSaveCopy(manifest, cipherSpecManifest, false);
 
             // Use base path to set ownership and mode
             const ManifestPath *const basePath = manifestPathFind(manifest, MANIFEST_TARGET_PGDATA_STR);

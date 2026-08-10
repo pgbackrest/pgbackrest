@@ -59,7 +59,7 @@ cmdRestore(void)
 
         jobData.manifest = manifestLoadFile(
             storageRepoIdx(backupData.repoIdx),
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.cipherSpec);
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.cipherSpecManifest);
 
         // Verify that the selected timeline is valid for the backup -- including current and latest timelines
         if (manifestData(jobData.manifest)->backupOptionOnline)
@@ -90,7 +90,7 @@ cmdRestore(void)
         manifestValidate(jobData.manifest, false);
 
         // Get the cipher subpass used to decrypt files in the backup
-        jobData.cipherSpec = manifestCipherSpecSub(jobData.manifest);
+        jobData.cipherSpecBackup = manifestCipherSpecSub(jobData.manifest);
 
         // Validate the manifest
         restoreManifestValidate(jobData.manifest, backupData.backupSet);

@@ -75,18 +75,18 @@ cmdStanzaCreate(void)
                 }
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent archive files
-                const CipherSpec *cipherSpecSub = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
+                const CipherSpec *const cipherSpecArchive = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save archive info
-                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherSpecSub);
+                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, cipherSpecArchive);
 
                 infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
 
-                // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent backup files
-                cipherSpecSub = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
+                // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent manifests
+                const CipherSpec *const cipherSpecManifest = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
                 // Create and save backup info
-                infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, pgControl.catalogVersion, cipherSpecSub);
+                infoBackup = infoBackupNew(pgControl.version, pgControl.systemId, pgControl.catalogVersion, cipherSpecManifest);
 
                 infoBackupSaveFile(infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
             }

@@ -27,7 +27,7 @@ Get a list of all files in the backup and a redacted version of the manifest tha
 static String *
 testBackupValidateFile(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack, const CipherSpec *const cipherSpec)
+    const String *const fileName, uint64_t fileSize, ManifestFilePack **const filePack)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -37,11 +37,13 @@ testBackupValidateFile(
         FUNCTION_HARNESS_PARAM(STRING, fileName);
         FUNCTION_HARNESS_PARAM(UINT64, fileSize);
         FUNCTION_HARNESS_PARAM_P(VOID, filePack);
-        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_HARNESS_END();
 
     String *const result = strNew();
     ManifestFile file = manifestFileUnpack(manifest, *filePack);
+
+    // Every backup in a set shares the passphrase stored in the manifest, including files referenced from a prior backup
+    const CipherSpec *const cipherSpecBackup = manifestCipherSpecSub(manifest);
 
     // Output name and size
     // -------------------------------------------------------------------------------------------------------------
@@ -87,11 +89,11 @@ testBackupValidateFile(
             .offset = file.bundleOffset + file.sizeRepo - file.blockIncrMapSize,
             .limit = VARUINT64(file.blockIncrMapSize));
 
-        if (cipherSpecType(cipherSpec) != cipherTypeNone)
+        if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
         {
             ioFilterGroupAdd(
                 ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherSpec, .raw = true));
+                cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
         }
 
         ioReadOpen(storageReadIo(read));
@@ -127,7 +129,7 @@ testBackupValidateFile(
         bufUsedSet(fileBuffer, bufSize(fileBuffer));
 
         BlockDelta *const blockDelta = blockDeltaNew(
-            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherSpec,
+            blockMap, file.blockIncrSize, file.blockIncrChecksumSize, NULL, cipherSpecBackup,
             manifestData->backupOptionCompressType);
 
         for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
@@ -168,11 +170,11 @@ testBackupValidateFile(
             .limit = VARUINT64(file.sizeRepo));
         const bool raw = file.bundleId != 0 && manifest->pub.data.bundleRaw;
 
-        if (cipherSpecType(cipherSpec) != cipherTypeNone)
+        if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
         {
             ioFilterGroupAdd(
                 ioReadFilterGroup(storageReadIo(read)),
-                cipherBlockNewP(cipherModeDecrypt, cipherSpec, .raw = raw));
+                cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = raw));
         }
 
         if (manifestData->backupOptionCompressType != compressTypeNone)
@@ -253,7 +255,7 @@ testBackupValidateFile(
 static String *
 testBackupValidateList(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
-    StringList *const manifestFileList, const CipherSpec *const cipherSpec, String *const result)
+    StringList *const manifestFileList, String *const result)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE, storage);
@@ -261,7 +263,6 @@ testBackupValidateList(
         FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
         FUNCTION_HARNESS_PARAM_P(VOID, manifestData);
         FUNCTION_HARNESS_PARAM(STRING_LIST, manifestFileList);
-        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_HARNESS_PARAM(STRING, result);
     FUNCTION_HARNESS_END();
 
@@ -352,8 +353,7 @@ testBackupValidateList(
 
                     strCat(
                         result,
-                        testBackupValidateFile(
-                            storage, path, manifest, manifestData, info.name, info.size, filePack, cipherSpec));
+                        testBackupValidateFile(storage, path, manifest, manifestData, info.name, info.size, filePack));
                 }
 
                 break;
@@ -440,9 +440,7 @@ testBackupValidate(const Storage *const storage, const String *const path, const
             strLstAdd(manifestFileList, manifestFileUnpack(manifest, manifestFilePackGet(manifest, fileIdx)).name);
 
         // Validate files on disk against the manifest
-        const CipherSpec *const cipherSpec = manifestCipherSpecSub(manifest);
-
-        testBackupValidateList(storage, path, manifest, manifestData(manifest), manifestFileList, cipherSpec, result);
+        testBackupValidateList(storage, path, manifest, manifestData(manifest), manifestFileList, result);
 
         // Check remaining files in the manifest -- these should all be references
         for (unsigned int manifestFileIdx = 0; manifestFileIdx < strLstSize(manifestFileList); manifestFileIdx++)
@@ -470,7 +468,7 @@ testBackupValidate(const Storage *const storage, const String *const path, const
                             .compressType = manifestData(manifest)->backupOptionCompressType,
                             .blockIncr = file.blockIncrMapSize != 0),
                         sizeof(STORAGE_REPO_BACKUP)),
-                    file.sizeRepo, filePack, cipherSpec));
+                    file.sizeRepo, filePack));
         }
 
         // Make sure both backup.manifest files exist since we skipped them in the callback above

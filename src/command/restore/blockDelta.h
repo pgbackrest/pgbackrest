@@ -37,8 +37,8 @@ typedef struct BlockDeltaWrite
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN BlockDelta *blockDeltaNew(
-    const BlockMap *blockMap, size_t blockSize, size_t checksumSize, const Buffer *blockChecksum, const CipherSpec *cipherSpec,
-    const CompressType compressType);
+    const BlockMap *blockMap, size_t blockSize, size_t checksumSize, const Buffer *blockChecksum,
+    const CipherSpec *cipherSpecBackup, const CompressType compressType);
 
 /***********************************************************************************************************************************
 Functions

@@ -209,7 +209,7 @@ cmdBackup(void)
         // Load backup.info
         InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpec());
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-        const CipherSpec *const cipherSpecBackup = infoBackupCipherSpec(infoBackup);
+        const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(infoBackup);
 
         // Get pg storage and database objects
         BackupData *const backupData = backupInit(infoBackup);
@@ -245,7 +245,7 @@ cmdBackup(void)
             cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
         // Resume a backup when possible
-        if (!backupResume(manifest, cipherSpecBackup))
+        if (!backupResume(manifest, cipherSpecManifest))
         {
             manifestBackupLabelSet(
                 manifest,
@@ -254,10 +254,10 @@ cmdBackup(void)
         }
 
         // Save the manifest before processing starts
-        backupManifestSaveCopy(manifest, cipherSpecBackup, false);
+        backupManifestSaveCopy(manifest, cipherSpecManifest, false);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, cipherSpecBackup);
+        backupProcess(backupData, manifest, cipherSpecManifest);
 
         // Check that the clusters are alive and correctly configured after the backup
         backupDbPing(backupData, true);
@@ -285,7 +285,7 @@ cmdBackup(void)
         dbFree(backupData->dbPrimary);
 
         // Check and copy WAL segments required to make the backup consistent
-        backupArchiveCheckCopy(backupData, manifest, cipherSpecBackup);
+        backupArchiveCheckCopy(backupData, manifest, cipherSpecManifest);
 
         // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy() so
         // the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further access to

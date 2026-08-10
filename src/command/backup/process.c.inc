@@ -334,7 +334,7 @@ typedef struct BackupJobData
     const bool backupStandby;                                       // Backup from standby
     RegExp *standbyExp;                                             // Identify files that may be copied from the standby
     const CipherType cipherType;                                    // Cipher type
-    const CipherSpec *const cipherSpec;                             // Cipher spec used to encrypt files in the backup
+    const CipherSpec *const cipherSpecBackup;                       // Cipher spec used to encrypt files in the backup
     const PgPageSize pageSize;                                      // Page size
     const CompressType compressType;                                // Backup compression type
     const int compressLevel;                                        // Compress level if backup is compressed
@@ -685,7 +685,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
 
                     pckWriteU32P(param, jobData->compressType);
                     pckWriteI32P(param, jobData->compressLevel);
-                    cipherSpecPack(param, jobData->cipherSpec);
+                    cipherSpecPack(param, jobData->cipherSpecBackup);
                     pckWriteU32P(param, jobData->pageSize);
                     pckWriteStrP(param, cfgOptionStrNull(cfgOptPgVersionForce));
                 }
@@ -770,12 +770,12 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
 Process the backup manifest
 ***********************************************************************************************************************************/
 static void
-backupProcess(const BackupData *const backupData, Manifest *const manifest, const CipherSpec *const cipherSpecBackup)
+backupProcess(const BackupData *const backupData, Manifest *const manifest, const CipherSpec *const cipherSpecManifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecBackup);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecManifest);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -799,7 +799,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
             .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
-            .cipherSpec = manifestCipherSpecSub(manifest),
+            .cipherSpecBackup = manifestCipherSpecSub(manifest),
             .pageSize = backupData->pageSize,
             .delta = cfgOptionBool(cfgOptDelta),
             .bundle = cfgOptionBool(cfgOptRepoBundle),
@@ -928,7 +928,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
                 // Save the manifest periodically to preserve checksums for resume
                 if (sizeProgress - manifestSaveLast >= manifestSaveSize)
                 {
-                    backupManifestSaveCopy(manifest, cipherSpecBackup, false);
+                    backupManifestSaveCopy(manifest, cipherSpecManifest, false);
                     manifestSaveLast = sizeProgress;
                 }
 

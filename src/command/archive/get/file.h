@@ -17,7 +17,7 @@ typedef struct ArchiveGetFile
     const String *file;                                             // File in the repo (with path, checksum, ext, etc.)
     unsigned int repoIdx;                                           // Repo idx
     const String *archiveId;                                        // Repo archive id
-    const CipherSpec *cipherSpec;                                   // Repo archive cipher spec
+    const CipherSpec *cipherSpecArchive;                            // Repo archive cipher spec
 } ArchiveGetFile;
 
 typedef struct ArchiveGetFileResult

@@ -264,7 +264,7 @@ archivePushCheck(const bool pgPathSet)
                     {
                         .repoIdx = repoIdx,
                         .archiveId = strDup(archiveId),
-                        .cipherSpec = cipherSpecDup(infoArchiveCipherSpec(info)),
+                        .cipherSpecArchive = cipherSpecDup(infoArchiveCipherSpec(info)),
                     };
 
                     lstAdd(result.repoList, &archivePushFileRepoData);
@@ -488,7 +488,7 @@ archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
                 pckWriteObjBeginP(param);
                 pckWriteU32P(param, data->repoIdx);
                 pckWriteStrP(param, data->archiveId);
-                cipherSpecPack(param, data->cipherSpec);
+                cipherSpecPack(param, data->cipherSpecArchive);
                 pckWriteObjEndP(param);
             }
 

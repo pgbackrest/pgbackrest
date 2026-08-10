@@ -4,7 +4,7 @@ Get the backup set to restore
 typedef struct RestoreBackupData
 {
     unsigned int repoIdx;                                           // Internal repo index
-    const CipherSpec *cipherSpec;                                   // Cipher spec of backup files if repo is encrypted (else NULL)
+    const CipherSpec *cipherSpecManifest;                           // Cipher spec to open the manifest, none when not encrypted
     const String *backupSet;                                        // Backup set to restore
 } RestoreBackupData;
 
@@ -15,7 +15,7 @@ typedef struct RestoreBackupData
 
 // Helper function for restoreBackupSet
 static RestoreBackupData
-restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, const CipherSpec *const backupCipherSpec)
+restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, const CipherSpec *const cipherSpecManifest)
 {
     ASSERT(backupLabel != NULL);
 
@@ -25,7 +25,7 @@ restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, c
     {
         restoreBackup.backupSet = strDup(backupLabel);
         restoreBackup.repoIdx = repoIdx;
-        restoreBackup.cipherSpec = cipherSpecDup(backupCipherSpec);
+        restoreBackup.cipherSpecManifest = cipherSpecDup(cipherSpecManifest);
     }
     MEM_CONTEXT_PRIOR_END();
 

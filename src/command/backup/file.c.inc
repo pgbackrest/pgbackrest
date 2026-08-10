@@ -56,7 +56,7 @@ typedef struct BackupFileResult
 static List *
 backupFile(
     const String *const repoFile, const uint64_t bundleId, const bool bundleRaw, const unsigned int blockIncrReference,
-    const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherSpec *const cipherSpec,
+    const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherSpec *const cipherSpecBackup,
     const String *const pgVersionForce, const PgPageSize pageSize, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -66,14 +66,14 @@ backupFile(
         FUNCTION_LOG_PARAM(UINT, blockIncrReference);               // Block incremental reference to use in map
         FUNCTION_LOG_PARAM(ENUM, repoFileCompressType);             // Compress type for repo file
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);                // Cipher spec to encrypt the repo file
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecBackup);          // Cipher spec to encrypt the backup file
         FUNCTION_LOG_PARAM(ENUM, pageSize);                         // Page size
         FUNCTION_LOG_PARAM(STRING, pgVersionForce);                 // Force pg version
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to backup
     FUNCTION_LOG_END();
 
     ASSERT(repoFile != NULL);
-    ASSERT(cipherSpec != NULL);
+    ASSERT(cipherSpecBackup != NULL);
     ASSERT(fileList != NULL && !lstEmpty(fileList));
     ASSERT(pgPageSizeValid(pageSize));
 
@@ -216,7 +216,7 @@ backupFile(
         }
 
         // Are the files compressible during the copy?
-        const bool compressible = repoFileCompressType == compressTypeNone && cipherSpecType(cipherSpec) == cipherTypeNone;
+        const bool compressible = repoFileCompressType == compressTypeNone && cipherSpecType(cipherSpecBackup) == cipherTypeNone;
 
         // Copy files that need to be copied
         StorageWrite *write = NULL;
@@ -275,9 +275,9 @@ backupFile(
 
                     // Encrypt filter
                     IoFilter *const encrypt =
-                        cipherSpecType(cipherSpec) != cipherTypeNone ?
+                        cipherSpecType(cipherSpecBackup) != cipherTypeNone ?
                             cipherBlockNewP(
-                                cipherModeEncrypt, cipherSpec, .raw = bundleRaw || file->blockIncrSize != 0) :
+                                cipherModeEncrypt, cipherSpecBackup, .raw = bundleRaw || file->blockIncrSize != 0) :
                             NULL;
 
                     // If block incremental then add the filter and pass compress/encrypt filters to it since each block is
@@ -292,10 +292,11 @@ backupFile(
                             blockMap = bufNew(0);
                             IoWrite *const blockMapWrite = ioBufferWriteNew(blockMap);
 
-                            if (cipherSpecType(cipherSpec) != cipherTypeNone)
+                            if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
                             {
                                 ioFilterGroupAdd(
-                                    ioWriteFilterGroup(blockMapWrite), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .raw = true));
+                                    ioWriteFilterGroup(blockMapWrite),
+                                    cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
                             }
 
                             ioWriteOpen(blockMapWrite);
