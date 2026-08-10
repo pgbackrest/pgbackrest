@@ -877,17 +877,17 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         HRN_INFO_PUT(
-            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .cipherType = cipherTypeAes256Cbc,
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .cipherSpec = TEST_CIPHER_SPEC,
             .comment = "encrypted backup.info");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_NO_CURRENT_BACKUP,
-            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted backup.info.copy");
+            .cipherSpec = TEST_CIPHER_SPEC, .comment = "encrypted backup.info.copy");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
-            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted archive.info");
+            .cipherSpec = TEST_CIPHER_SPEC, .comment = "encrypted archive.info");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
-            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted archive.info.copy");
+            .cipherSpec = TEST_CIPHER_SPEC, .comment = "encrypted archive.info.copy");
 
         TEST_RESULT_VOID(cmdVerify(), "usable encrypted backup and archive info files");
         TEST_RESULT_LOG("");
@@ -934,8 +934,8 @@ testRun(void)
         // Create a compressed encrypted repo file in backup
         filePathName = strCatZ(strNew(), STORAGE_REPO_BACKUP "/testfile");
         HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), strZ(filePathName), fileContents, .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc,
-            .cipherPass = "pass");
+            storageRepoWrite(), strZ(filePathName), fileContents, .compressType = compressTypeGz,
+            .cipherSpec = TEST_CIPHER_SPEC_PASS("pass"));
 
         strCatZ(filePathName, ".gz");
         TEST_RESULT_UINT(
@@ -2516,7 +2516,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         hrnBackupPqScriptP(
-            PG_VERSION_11, BACKUP_EPOCH + 200000, .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS);
+            PG_VERSION_11, BACKUP_EPOCH + 200000, .cipherSpecMain = TEST_CIPHER_SPEC);
         TEST_RESULT_VOID(hrnCmdBackup(), "backup");
         TEST_RESULT_LOG(
             "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"

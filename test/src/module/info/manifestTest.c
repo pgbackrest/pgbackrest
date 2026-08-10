@@ -1489,7 +1489,7 @@ testRun(void)
             manifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
         TEST_RESULT_STR_Z(manifestData(manifest)->backupLabel, "20190808-163540F", "check manifest data");
 
-        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpecSub(manifest))), "somepass", "check cipher subpass");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpec(manifest))), "somepass", "check cipher subpass");
 
         TEST_RESULT_VOID(
             manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "update target no change");
@@ -1776,11 +1776,11 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_data/PG_VERSION")), "PG_VERSION", "check pg_data path/file");
         TEST_RESULT_STR_Z(manifestPathPg(STRDEF("pg_tblspc/1")), "pg_tblspc/1", "check pg_tblspc path/file");
 
-        TEST_RESULT_UINT(cipherSpecType(manifestCipherSpecSub(manifest)), cipherTypeNone, "check cipher subpass");
+        TEST_RESULT_UINT(cipherSpecType(manifestCipherSpec(manifest)), cipherTypeNone, "check cipher subpass");
         TEST_RESULT_VOID(
-            manifestCipherSpecSubSet(manifest, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("supersecret"))),
+            manifestCipherSpecSet(manifest, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("supersecret"))),
             "cipher subpass set");
-        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpecSub(manifest))), "supersecret", "check cipher subpass");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpec(manifest))), "supersecret", "check cipher subpass");
 
         // Absolute target paths
         TEST_RESULT_STR_Z(manifestTargetPath(manifest, manifestTargetBase(manifest)), "/pg/base", "base target path");

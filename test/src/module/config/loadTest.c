@@ -965,12 +965,12 @@ testRun(void)
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         // Cipher spec is cached per repo since each repo has its own cipher type and passphrase
-        TEST_RESULT_UINT(cipherSpecType(cfgCipherSpecIdx(0)), cipherTypeNone, "repo1 cipher spec");
+        TEST_RESULT_UINT(cipherSpecType(cfgCipherSpecMainIdx(0)), cipherTypeNone, "repo1 cipher spec");
 
-        const CipherSpec *const cipherSpecRepo2 = cfgCipherSpecIdx(1);
+        const CipherSpec *const cipherSpecMain = cfgCipherSpecMainIdx(1);
 
-        TEST_RESULT_UINT(cipherSpecType(cipherSpecRepo2), cipherTypeAes256Cbc, "repo2 cipher spec");
-        TEST_RESULT_PTR(cfgCipherSpecIdx(1), cipherSpecRepo2, "repo2 cipher spec is cached");
+        TEST_RESULT_UINT(cipherSpecType(cipherSpecMain), cipherTypeAes256Cbc, "repo2 cipher spec");
+        TEST_RESULT_PTR(cfgCipherSpecMainIdx(1), cipherSpecMain, "repo2 cipher spec is cached");
 
         cmdLockReleaseP();
 

@@ -1823,11 +1823,11 @@ testRun(void)
         TEST_RESULT_Z(cfgOptionName(cfgOptBufferSize), "buffer-size", "buffer-size name");
 
         // Cipher spec is built once per repo and then cached
-        const CipherSpec *const cipherSpec = cfgCipherSpec();
+        const CipherSpec *const cipherSpecMain = cfgCipherSpecMain();
 
-        TEST_RESULT_UINT(cipherSpecType(cipherSpec), cipherTypeAes256Cbc, "repo1 cipher spec type");
-        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpec)), "xxx-cipher", "repo1 cipher spec pass");
-        TEST_RESULT_PTR(cfgCipherSpecIdx(0), cipherSpec, "repo1 cipher spec is cached");
+        TEST_RESULT_UINT(cipherSpecType(cipherSpecMain), cipherTypeAes256Cbc, "repo1 cipher spec type");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecMain)), "xxx-cipher", "repo1 cipher spec pass");
+        TEST_RESULT_PTR(cfgCipherSpecMainIdx(0), cipherSpecMain, "repo1 cipher spec is cached");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
@@ -1851,7 +1851,7 @@ testRun(void)
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "parse config");
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/global/stanza", "default pg-path");
-        TEST_RESULT_UINT(cipherSpecType(cfgCipherSpecIdx(0)), cipherTypeNone, "no cipher spec when repo is not encrypted");
+        TEST_RESULT_UINT(cipherSpecType(cfgCipherSpecMainIdx(0)), cipherTypeNone, "no cipher spec when repo is not encrypted");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warnings for environment variables, command-line and config file options");

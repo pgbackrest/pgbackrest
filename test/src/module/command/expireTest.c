@@ -2460,7 +2460,7 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
             "2={\"db-id\":6626363367545678089,\"db-version\":\"12\"}",
-            .cipherType = cipherTypeAes256Cbc);
+            .cipherSpec = TEST_CIPHER_SPEC);
 
         const String *backupInfoContent = STRDEF(
             TEST_BACKUP_CURRENT
@@ -2469,16 +2469,16 @@ testRun(void)
             "cipher-pass=\"somepass\"\n"
             TEST_BACKUP_DB);
 
-        HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, strZ(backupInfoContent), .cipherType = cipherTypeAes256Cbc);
+        HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, strZ(backupInfoContent), .cipherSpec = TEST_CIPHER_SPEC);
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152850F/" BACKUP_MANIFEST_FILE,
-            "[backup]\nbackup-type=\"full\"\n", .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
+            "[backup]\nbackup-type=\"full\"\n", .cipherSpec = TEST_CIPHER_SPEC_PASS("somepass"));
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152850F_20181119-152252D/" BACKUP_MANIFEST_FILE,
-            "[backup]\nbackup-type=\"diff\"\n", .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass");
+            "[backup]\nbackup-type=\"diff\"\n", .cipherSpec = TEST_CIPHER_SPEC_PASS("somepass"));
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20181119-152850F_20181200-152252D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
-            strZ(manifestContent), .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass", .comment = "resumable backup");
+            strZ(manifestContent), .cipherSpec = TEST_CIPHER_SPEC_PASS("somepass"), .comment = "resumable backup");
 
         // archives to repo2
         archiveGenerate(storageRepoIdxWrite(1), STORAGE_REPO_ARCHIVE, 2, 10, "12-2", "0000000100000000");

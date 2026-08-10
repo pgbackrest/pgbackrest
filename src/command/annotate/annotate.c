@@ -54,7 +54,7 @@ cmdAnnotate(void)
             {
                 // Attempt to load the backup info file
                 InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
-                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
+                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 
                 if (infoBackupLabelExists(infoBackup, backupLabel))
                 {
@@ -69,7 +69,7 @@ cmdAnnotate(void)
                     infoBackupDataAnnotationSet(infoBackup, backupLabel, cfgOptionKv(cfgOptAnnotation));
 
                     // Write the updated backup info
-                    infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
+                    infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
                 }
             }
             CATCH_ANY()

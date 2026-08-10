@@ -4,13 +4,8 @@ Cipher Spec
 Everything needed to encrypt or decrypt, kept together so that adding to it does not mean changing every function and protocol
 message that carries it.
 
-The pass is the bytes the key is derived from rather than the text it was stored as. Whatever reads a pass from the repository
-decides how to interpret it and builds a cipher spec from the result, so nothing downstream needs to know how it was stored. The
-digest travels with the pass because the two are chosen together and deriving with the wrong digest produces a wrong key rather
-than an error.
-
-The pass is a buffer rather than a string so an absent pass is simply NULL, which saves callers from guarding a conversion that
-cannot represent one. It is copied into the object, so the caller is free to release whatever it was read from.
+The passphrase (pass) contains the bytes the key is derived from. The digest is also here because the two are chosen together and
+deriving from the wrong digest produces a wrong key rather than an error.
 
 There is no digest or pass when the type is none, and the pass is never logged.
 ***********************************************************************************************************************************/
@@ -30,7 +25,7 @@ typedef struct CipherSpec CipherSpec;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-// Create from a pass, which is the key bytes or the passphrase text rather than what either was stored as
+// Create from a pass and optionally a digest
 typedef struct CipherSpecNewParam
 {
     VAR_PARAM_HEADER;
@@ -42,7 +37,7 @@ typedef struct CipherSpecNewParam
 
 FN_EXTERN CipherSpec *cipherSpecNew(CipherType type, const Buffer *pass, CipherSpecNewParam param);
 
-// Create for data that is not encrypted
+// Create for no encryption
 FN_INLINE_ALWAYS CipherSpec *
 cipherSpecNewNone(void)
 {

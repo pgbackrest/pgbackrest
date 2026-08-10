@@ -850,9 +850,7 @@ infoBackupLoadFileReconstruct(
                 if (storageExistsP(storage, manifestFileName))
                 {
                     bool found = false;
-                    const Manifest *const manifest = manifestLoadFile(
-                        storage, manifestFileName,
-                        infoBackupCipherSpec(infoBackup));
+                    const Manifest *const manifest = manifestLoadFile(storage, manifestFileName, infoBackupCipherSpec(infoBackup));
                     const ManifestData *const manData = manifestData(manifest);
 
                     // If the pg data for the manifest exists in the history, then add it to current, but if something doesn't match

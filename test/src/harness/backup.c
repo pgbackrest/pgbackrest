@@ -96,12 +96,12 @@ hrnBackupScriptSet(const HrnBackupScript *const script, const unsigned int scrip
 
 /**********************************************************************************************************************************/
 static void
-backupProcess(const BackupData *const backupData, Manifest *const manifest, const CipherSpec *const cipherSpecBackup)
+backupProcess(const BackupData *const backupData, Manifest *const manifest, const CipherSpec *const cipherSpecManifest)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(BACKUP_DATA, backupData);
         FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
-        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpecBackup);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpecManifest);
     FUNCTION_HARNESS_END();
 
     // If any file changes are scripted then make them
@@ -142,7 +142,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
         hrnBackupLocal.scriptSize = 0;
     }
 
-    backupProcess_SHIMMED(backupData, manifest, cipherSpecBackup);
+    backupProcess_SHIMMED(backupData, manifest, cipherSpecManifest);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -217,9 +217,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         {
             InfoArchive *infoArchive = infoArchiveLoadFile(
                 storageRepo(), INFO_ARCHIVE_PATH_FILE_STR,
-                cipherSpecNewP(
-                    param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-                    param.cipherPass == NULL ? NULL : BUFSTRZ(param.cipherPass)));
+                param.cipherSpecMain == NULL ? cipherSpecNewNone() : param.cipherSpecMain);
             const String *archiveId = infoArchiveId(infoArchive);
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
                 param.timeline, lsnStart - pgControl.walSegmentSize, param.noWal ? lsnStart - pgControl.walSegmentSize : lsnStop,

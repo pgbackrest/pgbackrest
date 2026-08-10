@@ -56,13 +56,13 @@ storageGetProcess(IoWrite *const destination)
             {
                 // Determine the passphrase using the following pattern:
                 //
-                // REPO / (repo passphrase)
-                //      / archive / (repo passphrase)
+                // REPO / (main passphrase)
+                //      / archive / (main passphrase)
                 //      / archive / stanza / (archive passphrase)
-                //      / backup  / (repo passphrase)
-                //      / backup  / stanza / (backup passphrase)
-                //      / backup  / stanza / set / (manifest passphrase)
-                //      / backup  / stanza / backup.history / (backup passphrase)
+                //      / backup  / (main passphrase)
+                //      / backup  / stanza / (manifest passphrase)
+                //      / backup  / stanza / set / (backup passphrase)
+                //      / backup  / stanza / backup.history / (manifest passphrase)
                 //
                 // Nothing should be stored at the top level of the repo except the backup/archive paths. The backup/archive paths
                 // should contain only stanza paths.
@@ -86,14 +86,14 @@ storageGetProcess(IoWrite *const destination)
                     // Archive path
                     if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
                     {
-                        cipherSpec = cfgCipherSpec();
+                        cipherSpec = cfgCipherSpecMain();
 
                         // Find the archive passphrase
                         if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
                         {
                             const InfoArchive *const info = infoArchiveLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
-                                cipherSpec);
+                                cfgCipherSpecMain());
                             cipherSpec = infoArchiveCipherSpec(info);
                         }
                     }
@@ -101,17 +101,17 @@ storageGetProcess(IoWrite *const destination)
                     // Backup path
                     if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_BACKUP_STR))
                     {
-                        cipherSpec = cfgCipherSpec();
+                        cipherSpec = cfgCipherSpecMain();
 
                         if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                         {
-                            // Find the backup passphrase
+                            // Find the manifest passphrase
                             const InfoBackup *const info = infoBackupLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
-                                cipherSpec);
-                            cipherSpec = infoBackupCipherSpec(info);
+                                cfgCipherSpecMain());
+                            const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(info);
 
-                            // Find the manifest passphrase
+                            // Find the backup passphrase if not a manifest
                             if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF(BACKUP_PATH_HISTORY)) &&
                                 !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
                                 !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
@@ -121,9 +121,12 @@ storageGetProcess(IoWrite *const destination)
                                     strNewFmt(
                                         STORAGE_PATH_BACKUP "/%s/%s/%s", strZ(stanza), strZ(strLstGet(filePathSplitLst, 2)),
                                         BACKUP_MANIFEST_FILE),
-                                    cipherSpec);
-                                cipherSpec = manifestCipherSpecSub(manifest);
+                                    cipherSpecManifest);
+                                cipherSpec = manifestCipherSpec(manifest);
                             }
+                            // Else use the manifest passphrase
+                            else
+                                cipherSpec = cipherSpecManifest;
                         }
                     }
                 }
