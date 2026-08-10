@@ -242,7 +242,7 @@ FN_EXTERN bool cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx);
 /***********************************************************************************************************************************
 Cipher Functions
 
-Cipher spec for a repository, built from the cipher options and cached per repo since the options cannot change while a command
+Main cipher spec for a repository, built from the cipher options and cached per repo since the options cannot change while a command
 runs. This is the top of the chain. The info files are read with it and each of those carries the cipher spec for the files that
 depend on it, so nothing further down needs to consult the options again.
 ***********************************************************************************************************************************/

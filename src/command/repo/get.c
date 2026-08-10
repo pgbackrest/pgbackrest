@@ -110,9 +110,8 @@ storageGetProcess(IoWrite *const destination)
                                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
                                 cfgCipherSpecMain());
                             const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(info);
-                            cipherSpec = cipherSpecManifest;
 
-                            // Find the backup passphrase
+                            // Find the backup passphrase if not a manifest
                             if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF(BACKUP_PATH_HISTORY)) &&
                                 !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
                                 !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
@@ -125,6 +124,9 @@ storageGetProcess(IoWrite *const destination)
                                     cipherSpecManifest);
                                 cipherSpec = manifestCipherSpec(manifest);
                             }
+                            // Else use the manifest passphrase
+                            else
+                                cipherSpec = cipherSpecManifest;
                         }
                     }
                 }
