@@ -212,7 +212,7 @@ typedef struct StoragePathParam
     bool noEnforce;
 } StoragePathParam;
 
-#define storagePathP(this, pathExp, ...)                                                                                                \
+#define storagePathP(this, pathExp, ...)                                                                                           \
     storagePath(this, pathExp, (StoragePathParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN String *storagePath(const Storage *this, const String *pathExp, StoragePathParam param);

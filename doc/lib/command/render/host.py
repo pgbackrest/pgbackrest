@@ -1,7 +1,8 @@
 """Documentation Hosts.
 
 The user guide is built by running its commands on real hosts, which are containers started here. A host is what a reader would have
-in front of them, so a command runs as the user the documentation says to run it as and against a host that knows the others by name.
+in front of them, so a command runs as the user the documentation says to run it as and against a host that knows the others by
+name.
 
 Building an image for a host is expensive, so a built image is cached in the container registry keyed by a hash of what built it.
 That way a run only pays for an image when the image has actually changed."""

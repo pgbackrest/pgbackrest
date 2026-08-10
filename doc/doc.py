@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """pgBackRest Documentation Builder.
 
-Builds the documentation and renders it. The reference documents, the user guide, the release notes, and the manual page all come from
-the same declarations the binary is generated from, so the documentation describes what the code does.
+Builds the documentation and renders it. The reference documents, the user guide, the release notes, and the manual page all come
+from the same declarations the binary is generated from, so the documentation describes what the code does.
 
 Exit status: 0 = success, greater = error."""
 
@@ -15,8 +15,8 @@ import sys
 # linter and in the distribution. This must be set before the library modules are imported below.
 sys.dont_write_bytecode = True
 
-# Each tool keeps its library beside itself and may use the libraries below it in the hierarchy. Insert them first, lowest last, so the
-# doc modules are found before anything else on the path.
+# Each tool keeps its library beside itself and may use the libraries below it in the hierarchy. Insert them first, lowest last, so
+# the doc modules are found before anything else on the path.
 for lib in ("build", "doc"):
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), lib, "lib"))
 

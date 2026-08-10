@@ -1,7 +1,7 @@
 """Test Yaml Handler.
 
-What matters here is what the loader does differently from a normal yaml load, since the generators depend on all three: scalars stay
-text, mappings keep their order, and a repeated key keeps both values."""
+What matters here is what the loader does differently from a normal yaml load, since the generators depend on all three: scalars
+stay text, mappings keep their order, and a repeated key keeps both values."""
 
 ####################################################################################################################################
 from harness.test import *

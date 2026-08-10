@@ -1,9 +1,10 @@
 """Build Manual Page Reference.
 
-Renders the manual page, which is the reference as plain text for a console rather than as a document. It lists every command and every
-option with its summary, wrapped to a fixed width.
+Renders the manual page, which is the reference as plain text for a console rather than as a document. It lists every command and
+every option with its summary, wrapped to a fixed width.
 
-The wrapping is a port of what the binary does for its own help, so the manual page and `pgbackrest help` break lines the same way."""
+The wrapping is a port of what the binary does for its own help, so the manual page and `pgbackrest help` break lines the same
+way."""
 
 ####################################################################################################################################
 from common.error import ToolError, check

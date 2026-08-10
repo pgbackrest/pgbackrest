@@ -1,7 +1,7 @@
 """Test Help Render.
 
-The rendered help is checked as the console text it becomes, and the packed help by decompressing it again, since what the C reads back
-is the only thing that matters about the bytes."""
+The rendered help is checked as the console text it becomes, and the packed help by decompressing it again, since what the C reads
+back is the only thing that matters about the bytes."""
 
 ####################################################################################################################################
 import bz2

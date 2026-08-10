@@ -190,7 +190,10 @@ Header
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: .85rem;
+
+    /* Only there when the title does not fit beside the name, and kept tight because a window that narrow has none to spare */
+    row-gap: .425rem;
+
     padding-top: 1rem;
     padding-bottom: 1rem;
 }
@@ -221,12 +224,32 @@ Header
     white-space: nowrap;
 }
 
-/* What the page is sits opposite what the project is, on the same line and centered against it */
+/* What the page is sits in what the name leaves over, centered there by the space either side of it. The space before it is also
+   what holds it off the name, and the space after it asks for no room of its own, so a line too narrow to hold the title beside
+   the name breaks before the title rather than after it, which leaves the title at the start of a line rather than centered on
+   one. */
+.page-header::before, .page-header::after
+{
+    content: "";
+    flex: 1 0 0;
+}
+
+.page-header::before
+{
+    order: 1;
+    flex-basis: .85rem;
+}
+
 .page-header-subtitle
 {
-    margin-left: auto;
+    order: 2;
     color: var(--text-muted);
     font-size: 1.25rem;
+}
+
+.page-header::after
+{
+    order: 3;
 }
 
 /***********************************************************************************************************************************
@@ -1242,10 +1265,11 @@ Narrow screens
         line-height: 1.65;
     }
 
+    /* The title is on a row of its own here, so the space under it is halved to give back some of what that row takes */
     .page-header
     {
         padding-top: 1.5rem;
-        padding-bottom: 1rem;
+        padding-bottom: .5rem;
     }
 
     .page-header-title
@@ -1257,7 +1281,6 @@ Narrow screens
     .page-header-subtitle
     {
         flex-basis: 100%;
-        margin-left: 0;
     }
 
     .section2-header

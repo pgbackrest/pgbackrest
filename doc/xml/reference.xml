@@ -83,17 +83,7 @@
                         <summary>Level for file logging.</summary>
 
                         <text>
-                            <p>The following log levels are supported:</p>
-
-                            <list>
-                                <list-item><id>off</id> - No logging at all (not recommended)</list-item>
-                                <list-item><id>error</id> - Log only errors</list-item>
-                                <list-item><id>warn</id> - Log warnings and errors</list-item>
-                                <list-item><id>info</id> - Log info, warnings, and errors</list-item>
-                                <list-item><id>detail</id> - Log detail, info, warnings, and errors</list-item>
-                                <list-item><id>debug</id> - Log debug, detail, info, warnings, and errors</list-item>
-                                <list-item><id>trace</id> - Log trace (very verbose debugging), debug, info, warnings, and errors</list-item>
-                            </list>
+                            <allow-list inherit="log-level-console"/>
                         </text>
 
                         <example>debug</example>
@@ -103,17 +93,15 @@
                         <summary>Level for console logging.</summary>
 
                         <text>
-                            <p>The following log levels are supported:</p>
-
-                            <list>
-                                <list-item><id>off</id> - No logging at all (not recommended)</list-item>
-                                <list-item><id>error</id> - Log only errors</list-item>
-                                <list-item><id>warn</id> - Log warnings and errors</list-item>
-                                <list-item><id>info</id> - Log info, warnings, and errors</list-item>
-                                <list-item><id>detail</id> - Log detail, info, warnings, and errors</list-item>
-                                <list-item><id>debug</id> - Log debug, detail, info, warnings, and errors</list-item>
-                                <list-item><id>trace</id> - Log trace (very verbose debugging), debug, info, warnings, and errors</list-item>
-                            </list>
+                            <allow-list caption="log levels">
+                                <allow-item id="off">No logging at all (not recommended)</allow-item>
+                                <allow-item id="error">Log only errors</allow-item>
+                                <allow-item id="warn">Log warnings and errors</allow-item>
+                                <allow-item id="info">Log info, warnings, and errors</allow-item>
+                                <allow-item id="detail">Log detail, info, warnings, and errors</allow-item>
+                                <allow-item id="debug">Log debug, detail, info, warnings, and errors</allow-item>
+                                <allow-item id="trace">Log trace (very verbose debugging), debug, info, warnings, and errors</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>error</example>
@@ -125,17 +113,7 @@
                         <text>
                             <p>Specifies which log levels will output to <id>stderr</id> rather than <id>stdout</id> (specified by <br-option>log-level-console</br-option>). The timestamp and process will not be output to <id>stderr</id>.</p>
 
-                            <p>The following log levels are supported:</p>
-
-                            <list>
-                                <list-item><id>off</id> - No logging at all (not recommended)</list-item>
-                                <list-item><id>error</id> - Log only errors</list-item>
-                                <list-item><id>warn</id> - Log warnings and errors</list-item>
-                                <list-item><id>info</id> - Log info, warnings, and errors</list-item>
-                                <list-item><id>detail</id> - Log detail, info, warnings, and errors</list-item>
-                                <list-item><id>debug</id> - Log debug, detail, info, warnings, and errors</list-item>
-                                <list-item><id>trace</id> - Log trace (very verbose debugging), debug, info, warnings, and errors</list-item>
-                            </list>
+                            <allow-list inherit="log-level-console"/>
                         </text>
 
                         <example>error</example>
@@ -207,7 +185,7 @@
                         <text>
                             <p>Buffer size used for copy, compress, encrypt, and other operations. The number of buffers used depends on options and each operation may use additional memory, e.g. <id>gz</id> compression may use an additional 256KiB of memory.</p>
 
-                            <p>Allowed values are <id>16KiB</id>, <id>32KiB</id>, <id>64KiB</id>, <id>128KiB</id>, <id>256KiB</id>, <id>512KiB</id>, <id>1MiB</id>, <id>2MiB</id>, <id>4MiB</id>, <id>8MiB</id>, and <id>16MiB</id>.</p>
+                            <p>Allowed values are <allow-list/>.</p>
                         </text>
 
                         <example>2MiB</example>
@@ -251,15 +229,13 @@
                         <summary>File compression type.</summary>
 
                         <text>
-                            <p>The following compression types are supported:</p>
-
-                            <list>
-                                <list-item><id>none</id> - no compression</list-item>
-                                <list-item><id>bz2</id> - bzip2 compression format</list-item>
-                                <list-item><id>gz</id> - gzip compression format</list-item>
-                                <list-item><id>lz4</id> - lz4 compression format (not available on all platforms)</list-item>
-                                <list-item><id>zst</id> - Zstandard compression format (not available on all platforms)</list-item>
-                            </list>
+                            <allow-list caption="compression types">
+                                <allow-item id="none">no compression</allow-item>
+                                <allow-item id="bz2">bzip2 compression format</allow-item>
+                                <allow-item id="gz">gzip compression format</allow-item>
+                                <allow-item id="lz4">lz4 compression format (not available on all platforms)</allow-item>
+                                <allow-item id="zst">Zstandard compression format (not available on all platforms)</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>none</example>
@@ -608,13 +584,11 @@
                         <summary>Azure repository key type.</summary>
 
                         <text>
-                            <p>The following types are supported for authorization:</p>
-
-                            <list>
-                                <list-item><id>shared</id> - Shared key</list-item>
-                                <list-item><id>sas</id> - Shared access signature</list-item>
-                                <list-item><id>auto</id> - Automatically authorize using Azure managed identities</list-item>
-                            </list>
+                            <allow-list caption="authorization types">
+                                <allow-item id="shared">Shared key</allow-item>
+                                <allow-item id="sas">Shared access signature</allow-item>
+                                <allow-item id="auto">Automatically authorize using Azure managed identities</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>sas</example>
@@ -624,12 +598,10 @@
                         <summary>Azure URI Style.</summary>
 
                         <text>
-                            <p>The following URI styles are supported:</p>
-
-                            <list>
-                                <list-item><id>host</id> - Connect to <id>account.endpoint</id> host.</list-item>
-                                <list-item><id>path</id> - Connect to <id>endpoint</id> host and prepend account to URIs.</list-item>
-                            </list>
+                            <allow-list caption="URI styles">
+                                <allow-item id="host">Connect to <id>account.endpoint</id> host.</allow-item>
+                                <allow-item id="path">Connect to <id>endpoint</id> host and prepend account to URIs.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>path</example>
@@ -775,13 +747,11 @@
                         <summary>GCS repository key type.</summary>
 
                         <text>
-                            <p>The following types are supported for authorization:</p>
-
-                            <list>
-                                <list-item><id>auto</id> - Authorize using the instance service account.</list-item>
-                                <list-item><id>service</id> - Service account from locally stored key.</list-item>
-                                <list-item><id>token</id> - For local testing, e.g. <file>fakegcs</file>.</list-item>
-                            </list>
+                            <allow-list caption="authorization types">
+                                <allow-item id="auto">Authorize using the instance service account.</allow-item>
+                                <allow-item id="service">Service account from locally stored key.</allow-item>
+                                <allow-item id="token">For local testing, e.g. <file>fakegcs</file>.</allow-item>
+                            </allow-list>
 
                             <p>When <br-option>repo-gcs-key-type=service</br-option> the credentials will be reloaded when the authentication token is renewed.</p>
                         </text>
@@ -803,12 +773,10 @@
                         <summary>Repository host protocol type.</summary>
 
                         <text>
-                            <p>The following protocol types are supported:</p>
-
-                            <list>
-                                <list-item><id>ssh</id> - Secure Shell.</list-item>
-                                <list-item><id>tls</id> - <backrest/> TLS server.</list-item>
-                            </list>
+                            <allow-list caption="protocol types">
+                                <allow-item id="ssh">Secure Shell.</allow-item>
+                                <allow-item id="tls"><backrest/> TLS server.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>tls</example>
@@ -974,9 +942,10 @@
                         <text>
                             <p>Determines whether the <setting>repo-retention-full</setting> setting represents a time period (days) or count of full backups to keep.</p>
 
-                            <p>If set to <setting>time</setting> then full backups older than <setting>repo-retention-full</setting> will be removed from the repository if there is at least one other backup that is equal to or greater than the <setting>repo-retention-full</setting> setting. For example, if <setting>repo-retention-full</setting> is 30 (days) and there are 2 full backups: one 25 days old and one 35 days old, no full backups will be expired because expiring the 35 day old backup would leave only the 25 day old backup, which would violate the 30 day retention policy of having at least one backup 30 days old before an older one can be expired. Archived WAL older than the oldest full backup remaining will be automatically expired unless <setting>repo-retention-archive-type</setting> and <setting>repo-retention-archive</setting> are explicitly set.</p>
-
-                            <p>If set to <setting>count</setting> then full backups that exceed <setting>repo-retention-full</setting> will be expired. For example, if <setting>repo-retention-full</setting> is <setting>4</setting> and a fifth full backup is completed, then the oldest full backup will be expired to keep the count at 4.</p>
+                            <allow-list caption="retention types">
+                                <allow-item id="time">full backups older than <setting>repo-retention-full</setting> will be removed from the repository if there is at least one other backup that is equal to or greater than the <setting>repo-retention-full</setting> setting. For example, if <setting>repo-retention-full</setting> is 30 (days) and there are 2 full backups: one 25 days old and one 35 days old, no full backups will be expired because expiring the 35 day old backup would leave only the 25 day old backup, which would violate the 30 day retention policy of having at least one backup 30 days old before an older one can be expired. Archived WAL older than the oldest full backup remaining will be automatically expired unless <setting>repo-retention-archive-type</setting> and <setting>repo-retention-archive</setting> are explicitly set.</allow-item>
+                                <allow-item id="count">full backups that exceed <setting>repo-retention-full</setting> will be expired. For example, if <setting>repo-retention-full</setting> is <setting>4</setting> and a fifth full backup is completed, then the oldest full backup will be expired to keep the count at 4.</allow-item>
+                            </allow-list>
 
                             <p>Note that a backup must be successfully completed before it will be considered for retention. For example, if <setting>repo-retention-full-type</setting> is <setting>count</setting> and <setting>repo-retention-full</setting> is <setting>2</setting>, then there must be 3 complete full backups before the oldest will be expired.</p>
                         </text>
@@ -1000,7 +969,13 @@
                         <summary>Backup type for WAL retention.</summary>
 
                         <text>
-                            <p>If set to <setting>full</setting> <backrest/> will keep archive logs for the number of full backups defined by <setting>repo-retention-archive</setting>. If set to <setting>diff</setting> (differential) <backrest/> will keep archive logs for the number of full and differential backups defined by <setting>repo-retention-archive</setting>, meaning if the last backup taken was a full backup, it will be counted as a differential for the purpose of repo-retention. If set to <setting>incr</setting> (incremental) <backrest/> will keep archive logs for the number of full, differential, and incremental backups defined by <setting>repo-retention-archive</setting>. It is recommended that this setting not be changed from the default which will only expire WAL in conjunction with expiring full backups.</p>
+                            <allow-list caption="backup types">
+                                <allow-item id="full"><backrest/> will keep archive logs for the number of full backups defined by <setting>repo-retention-archive</setting>.</allow-item>
+                                <allow-item id="diff">(differential) <backrest/> will keep archive logs for the number of full and differential backups defined by <setting>repo-retention-archive</setting>, meaning if the last backup taken was a full backup, it will be counted as a differential for the purpose of repo-retention.</allow-item>
+                                <allow-item id="incr">(incremental) <backrest/> will keep archive logs for the number of full, differential, and incremental backups defined by <setting>repo-retention-archive</setting>.</allow-item>
+                            </allow-list>
+
+                            <p>It is recommended that this setting not be changed from the default which will only expire WAL in conjunction with expiring full backups.</p>
                         </text>
 
                         <example>diff</example>
@@ -1058,15 +1033,13 @@
                         <summary>S3 repository key type.</summary>
 
                         <text>
-                            <p>The following types are supported:</p>
-
-                            <list>
-                                <list-item><id>shared</id> - Shared keys</list-item>
-                                <list-item><id>auto</id> - Automatically retrieve temporary credentials</list-item>
-                                <list-item><id>web-id</id> - Automatically retrieve web identity credentials</list-item>
-                                <list-item><id>pod-id</id> - Automatically retrieve EKS pod identity credentials</list-item>
-                                <list-item><id>process</id> - Retrieve credentials by executing a process</list-item>
-                            </list>
+                            <allow-list caption="authorization types">
+                                <allow-item id="shared">Shared keys</allow-item>
+                                <allow-item id="auto">Automatically retrieve temporary credentials</allow-item>
+                                <allow-item id="web-id">Automatically retrieve web identity credentials</allow-item>
+                                <allow-item id="pod-id">Automatically retrieve EKS pod identity credentials</allow-item>
+                                <allow-item id="process">Retrieve credentials by executing a process</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>auto</example>
@@ -1194,12 +1167,10 @@
                         <summary>S3 URI Style.</summary>
 
                         <text>
-                            <p>The following URI styles are supported:</p>
-
-                            <list>
-                                <list-item><id>host</id> - Connect to <id>bucket.endpoint</id> host.</list-item>
-                                <list-item><id>path</id> - Connect to <id>endpoint</id> host and prepend bucket to URIs.</list-item>
-                            </list>
+                            <allow-list caption="URI styles">
+                                <allow-item id="host">Connect to <id>bucket.endpoint</id> host.</allow-item>
+                                <allow-item id="path">Connect to <id>endpoint</id> host and prepend bucket to URIs.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>path</example>
@@ -1229,13 +1200,12 @@
                         <summary>SFTP host key check type.</summary>
 
                         <text>
-                            <p>The following SFTP host key check types are supported:</p>
-                            <list>
-                                <list-item><id>strict</id> - <backrest/> will never automatically add host keys to the ~/.ssh/known_hosts file, and refuses to connect to hosts whose host key has changed or is not found in the known hosts files. This option forces the user to manually add all new hosts.</list-item>
-                                <list-item><id>accept-new</id> - <backrest/> will automatically add new host keys to the user's known hosts file, but will not permit connections to hosts with changed host keys.</list-item>
-                                <list-item><id>fingerprint</id> - <backrest/> will check the host key against the fingerprint specified by the <br-option>repo-sftp-host-fingerprint</br-option> option.</list-item>
-                                <list-item><id>none</id> - no host key checking will be performed.</list-item>
-                            </list>
+                            <allow-list caption="SFTP host key check types">
+                                <allow-item id="strict"><backrest/> will never automatically add host keys to the ~/.ssh/known_hosts file, and refuses to connect to hosts whose host key has changed or is not found in the known hosts files. This option forces the user to manually add all new hosts.</allow-item>
+                                <allow-item id="accept-new"><backrest/> will automatically add new host keys to the user's known hosts file, but will not permit connections to hosts with changed host keys.</allow-item>
+                                <allow-item id="fingerprint"><backrest/> will check the host key against the fingerprint specified by the <br-option>repo-sftp-host-fingerprint</br-option> option.</allow-item>
+                                <allow-item id="none">no host key checking will be performed.</allow-item>
+                            </allow-list>
                         </text>
 
                         <default>yes</default>
@@ -1246,7 +1216,7 @@
                         <summary>SFTP repository host key hash type.</summary>
 
                         <text>
-                            <p>SFTP repository host key hash type. Declares the hash type to be used to compute the digest of the remote system's host key on SSH startup. Newer versions of <id>libssh2</id> support <id>sha256</id> in addition to md5 and sha1.</p>
+                            <p>SFTP repository host key hash type. Declares the hash type to be used to compute the digest of the remote system's host key on SSH startup. Allowed values are <allow-list/>, though <id>sha256</id> is only supported by newer versions of <id>libssh2</id>.</p>
                         </text>
 
                         <example>sha256</example>
@@ -1444,16 +1414,14 @@
                         <summary>Type of storage used for the repository.</summary>
 
                         <text>
-                            <p>The following repository types are supported:</p>
-
-                            <list>
-                                <list-item><id>azure</id> - Azure Blob Storage Service</list-item>
-                                <list-item><id>cifs</id> - Like <id>posix</id>, but disables links and directory fsyncs</list-item>
-                                <list-item><id>gcs</id> - Google Cloud Storage</list-item>
-                                <list-item><id>posix</id> - Posix-compliant file systems</list-item>
-                                <list-item><id>s3</id> - AWS Simple Storage Service</list-item>
-                                <list-item><id>sftp</id> - Secure File Transfer Protocol</list-item>
-                            </list>
+                            <allow-list caption="repository types">
+                                <allow-item id="azure">Azure Blob Storage Service</allow-item>
+                                <allow-item id="cifs">Like <id>posix</id>, but disables links and directory fsyncs</allow-item>
+                                <allow-item id="gcs">Google Cloud Storage</allow-item>
+                                <allow-item id="posix">Posix-compliant file systems</allow-item>
+                                <allow-item id="s3">AWS Simple Storage Service</allow-item>
+                                <allow-item id="sftp">Secure File Transfer Protocol</allow-item>
+                            </allow-list>
 
                             <p>When an <proper>NFS</proper> mount is used as a <id>posix</id> repository, the same rules apply to <backrest/> as described in the <postgres/> documentation: <link url="https://www.postgresql.org/docs/current/creating-cluster.html#CREATING-CLUSTER-FILESYSTEM">Creating a Database Cluster - File Systems</link>.</p>
                         </text>
@@ -1465,12 +1433,10 @@
                         <summary>Cipher used to encrypt the repository.</summary>
 
                         <text>
-                            <p>The following cipher types are supported:</p>
-
-                            <list>
-                                <list-item><id>none</id> - The repository is not encrypted</list-item>
-                                <list-item><id>aes-256-cbc</id> - Advanced Encryption Standard with 256 bit key length</list-item>
-                            </list>
+                            <allow-list caption="cipher types">
+                                <allow-item id="none">The repository is not encrypted</allow-item>
+                                <allow-item id="aes-256-cbc">Advanced Encryption Standard with 256 bit key length</allow-item>
+                            </allow-list>
 
                             <p>Note that encryption is always performed client-side even if the repository type (e.g. S3) supports encryption.</p>
                         </text>
@@ -1559,13 +1525,11 @@
                         <text>
                             <p>Enable backup from standby to reduce load on the primary cluster. This option requires that both the <host>primary</host> and <host>standby</host> hosts be configured.</p>
 
-                            <p>The following modes are supported:</p>
-
-                            <list>
-                                <list-item><id>y</id> - Standby is required for backup.</list-item>
-                                <list-item><id>prefer</id> - Backup from standby if available otherwise backup from primary.</list-item>
-                                <list-item><id>n</id> - Backup from primary only.</list-item>
-                            </list>
+                            <allow-list caption="modes">
+                                <allow-item id="y">Standby is required for backup.</allow-item>
+                                <allow-item id="prefer">Backup from standby if available otherwise backup from primary.</allow-item>
+                                <allow-item id="n">Backup from primary only.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>y</example>
@@ -1762,12 +1726,10 @@
                         <text>
                             <p>This option allows archiving to be preserved or disabled on a restored cluster. This is useful when the cluster must be promoted to do some work but is not intended to become the new primary. In this case it is not a good idea to push WAL from the cluster into the repository.</p>
 
-                            <p>The following modes are supported:</p>
-
-                            <list>
-                                <list-item><id>off</id> - disable archiving by setting <setting>archive_mode=off</setting>.</list-item>
-                                <list-item><id>preserve</id> - preserve current <setting>archive_mode</setting> setting.</list-item>
-                            </list>
+                            <allow-list caption="modes">
+                                <allow-item id="off">disable archiving by setting <setting>archive_mode=off</setting>.</allow-item>
+                                <allow-item id="preserve">preserve current <setting>archive_mode</setting> setting.</allow-item>
+                            </allow-list>
 
                             <p><b>NOTE</b>: This option is not available on <postgres/> &lt; 12.</p>
                         </text>
@@ -2039,12 +2001,7 @@
                         <summary><postgres/> host protocol type.</summary>
 
                         <text>
-                            <p>The following protocol types are supported:</p>
-
-                            <list>
-                                <list-item><id>ssh</id> - Secure Shell.</list-item>
-                                <list-item><id>tls</id> - <backrest/> TLS server.</list-item>
-                            </list>
+                            <allow-list inherit="repo-host-type"/>
                         </text>
 
                         <example>tls</example>
@@ -2286,13 +2243,11 @@
                         <summary>Backup type.</summary>
 
                         <text>
-                            <p>The following backup types are supported:</p>
-
-                            <list>
-                                <list-item><id>full</id> - all database cluster files will be copied and there will be no dependencies on previous backups.</list-item>
-                                <list-item><id>incr</id> - incremental from the last successful backup.</list-item>
-                                <list-item><id>diff</id> - like an incremental backup but always based on the last full backup.</list-item>
-                            </list>
+                            <allow-list caption="backup types">
+                                <allow-item id="full">all database cluster files will be copied and there will be no dependencies on previous backups.</allow-item>
+                                <allow-item id="incr">incremental from the last successful backup.</allow-item>
+                                <allow-item id="diff">like an incremental backup but always based on the last full backup.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>full</example>
@@ -2446,12 +2401,10 @@
                         <summary>Output format.</summary>
 
                         <text>
-                            <p>The following output types are supported:</p>
-
-                            <list>
-                                <list-item><id>text</id> - Human-readable summary of manifest information.</list-item>
-                                <list-item><id>json</id> - Exhaustive machine-readable manifest information in JSON format.</list-item>
-                            </list>
+                            <allow-list caption="output types">
+                                <allow-item id="text">Human-readable summary of manifest information.</allow-item>
+                                <allow-item id="json">Exhaustive machine-readable manifest information in JSON format.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>json</example>
@@ -2539,12 +2492,10 @@
                         <summary>Output format.</summary>
 
                         <text>
-                            <p>The following output types are supported:</p>
-
-                            <list>
-                                <list-item><id>text</id> - Simple list with one file/link/path name on each line.</list-item>
-                                <list-item><id>json</id> - Detailed file/link/path information in JSON format.</list-item>
-                            </list>
+                            <allow-list caption="output types">
+                                <allow-item id="text">Simple list with one file/link/path name on each line.</allow-item>
+                                <allow-item id="json">Detailed file/link/path information in JSON format.</allow-item>
+                            </allow-list>
 
                             <p>In JSON format the available fields are:</p>
 
@@ -2574,13 +2525,11 @@
                         <summary>Sort output ascending, descending, or none.</summary>
 
                         <text>
-                            <p>The following sort types are supported:</p>
-
-                            <list>
-                                <list-item><id>asc</id> - sort ascending.</list-item>
-                                <list-item><id>desc</id> - sort descending.</list-item>
-                                <list-item><id>none</id> - no sorting.</list-item>
-                            </list>
+                            <allow-list caption="sort types">
+                                <allow-item id="asc">sort ascending.</allow-item>
+                                <allow-item id="desc">sort descending.</allow-item>
+                                <allow-item id="none">no sorting.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>desc</example>
@@ -2646,19 +2595,17 @@
                         <summary>Recovery type.</summary>
 
                         <text>
-                            <p>The following recovery types are supported:</p>
-
-                            <list>
-                                <list-item><id>default</id> - recover to the end of the archive stream.</list-item>
-                                <list-item><id>immediate</id> - recover only until the database becomes consistent.</list-item>
-                                <list-item><id>lsn</id> - recover to the LSN (Log Sequence Number) specified in <br-option>--target</br-option>. This option is only supported on <postgres/> &gt;= 10.</list-item>
-                                <list-item><id>name</id> - recover the restore point specified in <br-option>--target</br-option>.</list-item>
-                                <list-item><id>xid</id> - recover to the transaction id specified in <br-option>--target</br-option>.</list-item>
-                                <list-item><id>time</id> - recover to the time specified in <br-option>--target</br-option>.</list-item>
-                                <list-item><id>preserve</id> - preserve the existing <file>postgresql.auto.conf</file> or <file>recovery.conf</file> file.</list-item>
-                                <list-item><id>standby</id> - add <setting>standby_mode=on</setting> to the <file>postgresql.auto.conf</file> or <file>recovery.conf</file> file so cluster will start in standby mode.</list-item>
-                                <list-item><id>none</id> - no <file>postgresql.auto.conf</file> or <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>. Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</list-item>
-                            </list>
+                            <allow-list caption="recovery types">
+                                <allow-item id="default">recover to the end of the archive stream.</allow-item>
+                                <allow-item id="immediate">recover only until the database becomes consistent.</allow-item>
+                                <allow-item id="lsn">recover to the LSN (Log Sequence Number) specified in <br-option>--target</br-option>. This option is only supported on <postgres/> &gt;= 10.</allow-item>
+                                <allow-item id="name">recover the restore point specified in <br-option>--target</br-option>.</allow-item>
+                                <allow-item id="xid">recover to the transaction id specified in <br-option>--target</br-option>.</allow-item>
+                                <allow-item id="time">recover to the time specified in <br-option>--target</br-option>.</allow-item>
+                                <allow-item id="preserve">preserve the existing <file>postgresql.auto.conf</file> or <file>recovery.conf</file> file.</allow-item>
+                                <allow-item id="standby">add <setting>standby_mode=on</setting> to the <file>postgresql.auto.conf</file> or <file>recovery.conf</file> file so cluster will start in standby mode.</allow-item>
+                                <allow-item id="none">no <file>postgresql.auto.conf</file> or <file>recovery.conf</file> file is written so <postgres/> will attempt to achieve consistency using WAL segments present in <path>pg_xlog</path>/<path>pg_wal</path>. Provide the required WAL segments or use the <setting>archive-copy</setting> setting to include them with the backup.</allow-item>
+                            </allow-list>
 
                             <admonition type="warning">Recovery <br-option>type=none</br-option> should be avoided because the timeline will not be incremented at the end of recovery. This can lead to, for example, <postgres/> attempting to archive duplicate WAL, which will be rejected, and may cause the disk to fill up and result in a <postgres/> panic. In addition, tools like <id>pg_rewind</id> may not work correctly or may cause corruption.</admonition>
 
@@ -2696,13 +2643,11 @@
 
                             <p>When <setting>hot_standby=off</setting> in <postgres/> &gt;= 12, <id>pause</id> acts like <id>shutdown</id>. When <setting>hot_standby=off</setting> in <postgres/> &lt; 12, <id>pause</id> acts like <id>promote</id>.</p>
 
-                            <p>The following actions are supported:</p>
-
-                            <list>
-                                <list-item><id>pause</id> - pause when recovery target is reached.</list-item>
-                                <list-item><id>promote</id> - promote and switch timeline when recovery target is reached.</list-item>
-                                <list-item><id>shutdown</id> - shutdown server when recovery target is reached. (<postgres/> &gt;= 9.5)</list-item>
-                            </list>
+                            <allow-list caption="actions">
+                                <allow-item id="pause">pause when recovery target is reached.</allow-item>
+                                <allow-item id="promote">promote and switch timeline when recovery target is reached.</allow-item>
+                                <allow-item id="shutdown">shutdown server when recovery target is reached. (<postgres/> &gt;= 9.5)</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>promote</example>
@@ -2754,12 +2699,10 @@
                         <summary>Output detail level.</summary>
 
                         <text>
-                            <p>The following levels are supported:</p>
-
-                            <list>
-                                <list-item><id>progress</id> - Output only the current backup/expire progress. This level cannot be used with the <br-option>--set</br-option> option.</list-item>
-                                <list-item><id>full</id> - Output full info.</list-item>
-                            </list>
+                            <allow-list caption="levels">
+                                <allow-item id="progress">Output only the current backup/expire progress. This level cannot be used with the <br-option>--set</br-option> option.</allow-item>
+                                <allow-item id="full">Output full info.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>progress</example>
@@ -2769,12 +2712,10 @@
                         <summary>Output format.</summary>
 
                         <text>
-                            <p>The following output types are supported:</p>
-
-                            <list>
-                                <list-item><id>text</id> - Human-readable summary of backup information.</list-item>
-                                <list-item><id>json</id> - Exhaustive machine-readable backup information in JSON format.</list-item>
-                            </list>
+                            <allow-list caption="output types">
+                                <allow-item id="text">Human-readable summary of backup information.</allow-item>
+                                <allow-item id="json">Exhaustive machine-readable backup information in JSON format.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>json</example>
@@ -2794,13 +2735,11 @@
                         <summary>Filter on backup type.</summary>
 
                         <text>
-                            <p>Filter the output using one of the following backup types:</p>
-
-                            <list>
-                                <list-item><id>full</id> - Output only full backups.</list-item>
-                                <list-item><id>diff</id> - Output only differential backups.</list-item>
-                                <list-item><id>incr</id> - Output only incremental backups.</list-item>
-                            </list>
+                            <allow-list caption="backup types">
+                                <allow-item id="full">Output only full backups.</allow-item>
+                                <allow-item id="diff">Output only differential backups.</allow-item>
+                                <allow-item id="incr">Output only incremental backups.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>full</example>
@@ -2908,11 +2847,10 @@
                         <summary>Output type.</summary>
 
                         <text>
-                            <p>The following output types are supported:</p>
-                                <list>
-                                    <list-item><id>none</id> - No verify output.</list-item>
-                                    <list-item><id>text</id> - Output verify information to stdout.</list-item>
-                                </list>
+                                <allow-list caption="output types">
+                                    <allow-item id="none">No verify output.</allow-item>
+                                    <allow-item id="text">Output verify information to stdout.</allow-item>
+                                </allow-list>
                         </text>
 
                         <example>text</example>
@@ -2942,11 +2880,10 @@
                         <summary>Output type.</summary>
 
                         <text>
-                            <p>The following output types are supported:</p>
-                            <list>
-                                <list-item><id>text</id> - Display the installed <backrest/> version as text.</list-item>
-                                <list-item><id>num</id> - Display the installed <backrest/> version as an integer.</list-item>
-                            </list>
+                            <allow-list caption="output types">
+                                <allow-item id="text">Display the installed <backrest/> version as text.</allow-item>
+                                <allow-item id="num">Display the installed <backrest/> version as an integer.</allow-item>
+                            </allow-list>
                         </text>
 
                         <example>num</example>

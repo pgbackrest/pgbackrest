@@ -209,8 +209,8 @@ class Manifest:
     def link_verify(self):
         """Check that every link to a section of a page points at a section that page has.
 
-        This can only be done once every page is rendered, since the sections a page has are only known once it has been. A link to a
-        page that was not rendered in this build is skipped rather than reported, since there is nothing to check it against."""
+        This can only be done once every page is rendered, since the sections a page has are only known once it has been. A link to
+        a page that was not rendered in this build is skipped rather than reported, since there is nothing to check it against."""
 
         for link in self.link_list:
             anchor_map = self.page_anchor_map.get(link["page"])

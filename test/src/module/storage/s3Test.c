@@ -372,7 +372,8 @@ testRun(void)
         TEST_RESULT_STR(driver->secretAccessKey, secretAccessKey, "check secret access key");
         TEST_RESULT_STR(driver->securityToken, NULL, "check security token");
 
-        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
         TEST_RESULT_Z(
             logBuf,
             zNewFmt(
@@ -2110,6 +2111,10 @@ testRun(void)
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
 
                 ioWriteOpen(storageWriteIo(write));
+
+                // Shrink the part buffer to make sure it is resized to hold the entire input buffer
+                TEST_RESULT_VOID(bufResize(((StorageWriteS3 *)write->driver)->partBuffer, 1), "resize part buffer to 1");
+
                 ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
 
                 TEST_RESULT_VOID(bufResize(((StorageWriteS3 *)write->driver)->partBuffer, 17), "resize part buffer to 17");

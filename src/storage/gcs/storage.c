@@ -224,7 +224,7 @@ storageGcsAuthJwt(StorageGcs *const this, const time_t timeBegin)
             cryptoError(privateKey == NULL, "unable to read PEM");
 
             // Create signature
-            sign = EVP_MD_CTX_create();
+            sign = EVP_MD_CTX_new();
             cryptoError(EVP_DigestSignInit(sign, NULL, EVP_sha256(), NULL, privateKey) <= 0, "unable to init");
             cryptoError(
                 EVP_DigestSignUpdate(sign, (const uint8_t *)strZ(result), (unsigned int)strSize(result)) <= 0, "unable to update");

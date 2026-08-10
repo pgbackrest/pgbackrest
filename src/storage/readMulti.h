@@ -36,7 +36,7 @@ typedef struct StorageReadMultiAddParam
 
 #include "storage/readMulti.intern.h"
 
-#define storageReadMultiAddP(this, pathExp, ...)                                                                                        \
+#define storageReadMultiAddP(this, pathExp, ...)                                                                                   \
     storageReadMultiAdd(this, pathExp, (StorageReadMultiAddParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // Add a file to the read. All files must be added before the io is opened since some drivers, e.g. remote, send the entire request

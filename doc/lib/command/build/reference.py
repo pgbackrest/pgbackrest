@@ -3,8 +3,8 @@
 Renders the reference documents from the same declarations the binary is generated from, so what is documented is what the code does
 rather than a second description of it that has to be kept in step.
 
-The configuration reference documents every option that can be set in the configuration file, grouped by the section it belongs to. The
-command reference documents every command and, under each, the options that command takes, grouped by what they are about.
+The configuration reference documents every option that can be set in the configuration file, grouped by the section it belongs to.
+The command reference documents every command and, under each, the options that command takes, grouped by what they are about.
 
 An option is described once and listed wherever it is taken, since describing it again under every command that takes it makes the
 command reference too long to read. An option that is about the command itself is described with the command, one that can only be
@@ -253,8 +253,8 @@ def reference_configuration_render(bld_cfg, bld_hlp):
 def _command_section(section):
     """The section an option is grouped under in the command reference.
 
-    A section that means the same thing everywhere keeps its name. Anything else is about the command itself, so it is grouped under one
-    heading rather than a heading per command."""
+    A section that means the same thing everywhere keeps its name. Anything else is about the command itself, so it is grouped under
+    one heading rather than a heading per command."""
 
     if section is None:
         return _SECTION_DEFAULT

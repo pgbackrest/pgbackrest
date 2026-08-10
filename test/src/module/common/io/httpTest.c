@@ -946,7 +946,8 @@ testRun(void)
                 hrnServerScriptExpectZ(http, "GET /reuse HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ncontent-length:2\r\n\r\nOK");
 
-                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/reuse")), true), "request");
+                TEST_ASSIGN(
+                    response, httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/reuse")), true), "request");
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)), "OK", "check response");
 
                 // -----------------------------------------------------------------------------------------------------------------

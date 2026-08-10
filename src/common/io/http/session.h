@@ -45,7 +45,7 @@ typedef struct HttpSessionIoReadParam
     bool ignoreUnexpectedEof;
 } HttpSessionIoReadParam;
 
-#define httpSessionIoReadP(this, ...)                                                                                                \
+#define httpSessionIoReadP(this, ...)                                                                                              \
     httpSessionIoRead(this, (HttpSessionIoReadParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN IoRead *httpSessionIoRead(HttpSession *this, HttpSessionIoReadParam param);

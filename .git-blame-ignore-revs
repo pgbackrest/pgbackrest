@@ -1,11 +1,120 @@
+# Rename PGBACKREST/BACKREST constants to PROJECT.
+801e2a5a2ce14f6ef447526c646f0c641c94efa2
+
+# Rename FUNCTION_DEBUG_* and consolidate ASSERT_* macros for consistency.
+db08656537b22c39e5278f9f2770b816278e771a
+
+# Remove unused type parameter from FUNCTION_TEST_RETURN().
+8b2a344cfecc2438aafeba7f1c1b7b0572973562
+
+# Fix comment indents.
+aa6f7eb862f71bf0b8f64d3c5e3d67903b048214
+
+# Fix comment typos.
+c2771e5469ecd94899243e86668a4bcc0d2c65f5
+
+# Remove errant tabs and fix spacing.
+74c3842595f49b81be341faf56f2343e9a5c60c8
+
+# Add braces and spaces for clarity.
+d3be1e41a4cdb5b7bbc40d73de8f185b22a97efd
+
+# Remove extra spaces.
+79a6798f39124db044f0af5091027ecb255ba033
+
+# Standardize some section names in headers.
+f984aec66508354e8537b3f8c226f0e574592306
+
+# Add missing spaces between while keyword and condition.
+1d45282b9723a05d0b14e7222c42b915aa217735
+
+# Fix incorrect whitespace.
+4cbd1f1e7efe5217540e2e69bb3baf5d55556068
+
+# Remove extra spaces.
+35ab61da708c6b42341449ed5fb68b24bd3a854c
+
+# Rename strPtr()/strPtrNull() to strZ()/strZNull().
+3e9dce0d7615f0f56f3eff754095c57c6d56fd6b
+
+# Fix macro spacing.
+a1d7d50223510eda06d68234a03e3c19f972dc47
+
+# Rename handle to fd.
+cde2c756ea8ae32663e0a817098fc9f5d4f2a1f2
+
+# Rename FUNCTION_HARNESS_RESULT*() macros to FUNCTION_HARNESS_RETURN*().
+28301199ebf647909ff31a0fe6df417bd44b6208
+
+# Fix indentation.
+c5b446d406937d35b277cd0d9131e6c058183f3b
+
+# Rename strNew() to strNewZ() and add parameter-less strNew().
+aed3d468a1557474eba4a24854732fc09581b265
+
+# Fix indentation.
+980b777a4a0cc07200ccb06cc55b89181101b266
+
+# Add missing static keywords in test modules.
+90f7f11a9f71152185219bbb57bf1de001e3a91b
+
+# Fix indentation.
+a63e732987bc1f6f26514568dabc6c0b23df07ab
+
+# Remove extra spaces.
+e21ba7c92bc15e9314eefa80cef8f17cf2f0e224
+
+# Remove extraneous double spaces in code and comments.
+2c96327e654ab634ee4077a39d6d20a7eae1065f
+
+# Require type for FUNCTION_TEST_RETURN*() macros.
+1e2b545ba47d66760cf4c6df65c6325bb6404bb2
+
+# Fix indentation.
+77311a9af7870e79d7a3c9ecadc268c2364458c8
+
+# Split VR_EXTERN/FN_EXTERN macros from FV_EXTERN.
+f0189129088456cf22f7bf86fa505cf9c28a5e37
+
 # Reformat code with uncrustify.
 d4070c90641a61fa3cb1169f3bd53067193bab4e
 
 # Fix formatting errors.
 b2202c36d9e7c4557ac37087757df80193d516b5
 
+# Fix indentation in config.yaml.
+5f001248cce08137a601ce5671aa67d26bfdd366
+
+# Remove extraneous spaces in user guide.
+c510046dd77c40487d2d6c659834927a3bab1106
+
 # Remove double spaces from comments and documentation.
 1bd5530a59cd8ddbabc279802d1ede4f8fbd5314
 
 # Remove double spaces missed in 1bd5530a.
 d49907239eb37c3e4e905f97543824181a1bd406
+
+# Remove extra space before colons in meson.build files.
+014e24889ce082c7cdaf3d128c796e1e00dcd3ff
+
+# Fix comment typos and formatting.
+91156bf7e1dec5dfeec18bf13a112d16e3badfda
+
+# Replace tabs with spaces in meson.build files.
+01838995ce08f93789d5003598cf5b43ed405465
+
+# Fix typos.
+c351263a1d09829c91fc3f9016fefe666b5b6c62
+
+# Rename unsigned char to uint8_t.
+7786b5d8472221a94dda3dc3ac7871aab2c0e5be
+
+# Fix minor formatting issue.
+67c8b3462dd4e43e3acc7252d8551b95f3e018f0
+
+# Move static build defines to build.h.
+cf003f67e71b33cf83a653ff5c918b551e2d47be
+
+# Fix lines that exceed 132 characters.
+9b3831242c11712008d9c4f013a81b69ff80e544
+3f590f7012e919174948d35dd75ea804ad46dedb
