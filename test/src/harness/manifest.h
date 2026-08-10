@@ -101,7 +101,7 @@ typedef struct HrnManifestTarget
     const char *tablespaceName;
 } HrnManifestTarget;
 
-#define HRN_MANIFEST_TARGET_ADD(manifest, ...)                                                                                       \
+#define HRN_MANIFEST_TARGET_ADD(manifest, ...)                                                                                     \
     hrnManifestTargetAdd(manifest, (HrnManifestTarget){__VA_ARGS__});
 
 void hrnManifestTargetAdd(Manifest *manifest, HrnManifestTarget hrnManifestTarget);

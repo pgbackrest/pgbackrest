@@ -4,8 +4,8 @@ Parses the command line and runs the requested generator. Each generator reads a
 describes into the build path, which is the repository itself for the files that are committed and the build directory for the files
 meson generates as it builds.
 
-The documentation generates its own option parse tables and help from its own declarations, so it runs these same generators with the
-repository set to the documentation directory."""
+The documentation generates its own option parse tables and help from its own declarations, so it runs these same generators with
+the repository set to the documentation directory."""
 
 ####################################################################################################################################
 import argparse

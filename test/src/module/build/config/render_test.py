@@ -481,8 +481,8 @@ def test_config_render_optional():
         parse,
     )
 
-    # A default that is not the first value the option allows also says where it sits, since that is what a sequence counts. A default
-    # that is the first needs nothing, since that is where a sequence starts.
+    # A default that is not the first value the option allows also says where it sits, since that is what a sequence counts. A
+    # default that is the first needs nothing, since that is where a sequence starts.
     assert_in("PARSE_RULE_VAL_SEQ(1),", parse)
     assert_not_in("PARSE_RULE_VAL_SEQ(0),", parse)
 

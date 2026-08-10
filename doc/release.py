@@ -231,8 +231,8 @@ def cmd_build(config):
 def host_remove():
     """Remove the hosts of a documentation build.
 
-    The addresses hosts are given depend on what else is running, and the documentation shows those addresses, so a build starts from
-    nothing."""
+    The addresses hosts are given depend on what else is running, and the documentation shows those addresses, so a build starts
+    from nothing."""
 
     name_list = exec_result("docker ps -a --format '{{.Names}}'", suppress_stderr=True)[1].split()
     doc_list = [name for name in name_list if name.startswith("doc-")]

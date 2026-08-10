@@ -1,11 +1,11 @@
 """Render Configuration Data.
 
-Writes the constants and enums the code refers to options and commands by, and the parse rules the command line and configuration file
-are read with.
+Writes the constants and enums the code refers to options and commands by, and the parse rules the command line and configuration
+file are read with.
 
-The parse rules are packed rather than written as plain structures: every value the rules refer to is collected into one array per type
-and the rules index into it, so a value used by many options is stored once. That is what most of the work here is. Each rule is also
-labelled with the option or command it came from, in a comment at the right margin, so the generated file can be read.
+The parse rules are packed rather than written as plain structures: every value the rules refer to is collected into one array per
+type and the rules index into it, so a value used by many options is stored once. That is what most of the work here is. Each rule
+is also labelled with the option or command it came from, in a comment at the right margin, so the generated file can be read.
 
 Rules that come out identical for several commands are emitted once with a filter naming those commands, which is why the rules are
 built as text first and grouped by what they turned out to be."""
@@ -190,8 +190,8 @@ def _render_allow_range(allow_range, opt_type):
 def _render_allow_list(allow_list, opt_type):
     """Render the values an option allows.
 
-    A value that is only compiled in with a feature is replaced by false when the feature is not, so the value keeps its index and the
-    rules that refer to it by index stay correct."""
+    A value that is only compiled in with a feature is replaced by false when the feature is not, so the value keeps its index and
+    the rules that refer to it by index stay correct."""
 
     result = "                PARSE_RULE_OPTIONAL_ALLOW_LIST\n                (\n"
 
@@ -605,7 +605,8 @@ def _render_option(opt, bld_cfg, rule_val_map, dynamic_default_list):
                 if group_idx != 0:
                     result += "\n"
 
-                result += "            PARSE_RULE_OPTIONAL_GROUP\n            (\n                PARSE_RULE_FILTER_CMD\n                (\n"
+                result += "            PARSE_RULE_OPTIONAL_GROUP\n            (\n"
+                result += "                PARSE_RULE_FILTER_CMD\n                (\n"
                 result += "".join("                    PARSE_RULE_VAL_CMD(%s),\n" % bld_enum("", cmd) for cmd in cmd_name_list)
                 result += "                ),\n%s            ),\n" % group
 

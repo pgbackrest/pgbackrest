@@ -112,7 +112,7 @@ typedef struct JsonWriteNewParam
     String *json;
 } JsonWriteNewParam;
 
-#define jsonWriteNewP(...)                                                                                                          \
+#define jsonWriteNewP(...)                                                                                                         \
     jsonWriteNew((JsonWriteNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN JsonWrite *jsonWriteNew(JsonWriteNewParam param);

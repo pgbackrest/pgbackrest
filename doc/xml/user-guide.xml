@@ -147,7 +147,7 @@
         <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
 
         <!-- S3 Settings -->
-        <variable key="s3-image">chrislusf/seaweedfs:4.40</variable> <!-- SeaweedFS docker image -->
+        <variable key="s3-image">chrislusf/seaweedfs:4.41</variable> <!-- SeaweedFS docker image -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
@@ -2702,7 +2702,7 @@
 
             <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} --stanza={[postgres-cluster-demo]} --repo=3 info</exe-cmd>
-                <exe-highlight>missing stanza data</exe-highlight>
+                <exe-highlight>missing stanza path</exe-highlight>
             </execute>
         </execute-list>
 

@@ -1,8 +1,8 @@
 """Test Code Linter.
 
-The linter is made of the scan for content that could hide code, the check that StringId macros encode what they claim to, and the
-check that every test module is declared, so all of them are tested here along with the command that walks the repository and
-applies them."""
+The linter is made of the scan for content that could hide code, the line length check, the check that StringId macros encode what
+they claim to, and the check that every test module is declared, so all of them are tested here along with the command that walks
+the repository and applies them."""
 
 ####################################################################################################################################
 import io
@@ -13,13 +13,18 @@ from contextlib import redirect_stdout
 from harness.test import *
 
 from command.lint.ascii import *
+from command.lint.line import *
 from command.lint.lint import *
 from command.lint.string_id import *
 from common.error import *
 from common.log import *
+from common.render import LINE_LENGTH
 
 # A test definition with no test modules at all, which is what a repository has to have before the linter can scan it
 _DEFINE_NONE = b"unit: []\nintegration: []\nperformance: []\ntool: []\n"
+
+# A line that runs past the line length, written out rather than given literally since this file is itself checked
+_LINE_LONG = b"x" * (LINE_LENGTH + 1) + b"\n"
 
 # A test definition with a module in each language, since the file a module lives in is named differently for each
 _DEFINE_MODULE = b"""
@@ -109,6 +114,21 @@ def test_lint_ascii():
     assert_in("line 2 contains disallowed character U+00E9", output)
     assert_in("line 3 contains disallowed character U+0080", output)
     assert_in("line 4 contains disallowed character U+0080", output)
+
+
+####################################################################################################################################
+def test_lint_line():
+    """A line that runs past the line length is reported with the line it is on."""
+
+    # A line exactly at the line length is not over it, and neither is a file that does not end in a linefeed
+    assert_equal(_capture(lambda: lint_line("x" * LINE_LENGTH + "\n" + "y" * LINE_LENGTH)), (0, ""))
+
+    # Every line is reported rather than only the first, so the file says what it needs fixed
+    result, output = _capture(lambda: lint_line("short\n" + "x" * (LINE_LENGTH + 1) + "\n" + "y" * (LINE_LENGTH + 8) + "\n"))
+
+    assert_equal(result, 2)
+    assert_in("line 2 is 133 characters (maximum is 132)", output)
+    assert_in("line 3 is 140 characters (maximum is 132)", output)
 
 
 ####################################################################################################################################
@@ -203,13 +223,15 @@ def test_lint_clean():
 
     error, output = _lint(
         {
-            "README.md": b"clean text\twith a tab\n",
+            "README.md": b"clean text\twith a tab\n" + _LINE_LONG,
             "src/x.c": b'#define ANY STRID5("any", 0x65c10)\n',
             "src/x.h": b'#define LZ4 STRID6("lz4", 0x2068c1)\n',
             "src/x.c.inc": b'#define ASC STRID5S("asc", 1, 0xe614)\n',
             # Generated and vendored includes are not ours to fix, so the StringId check is not applied to them
             "src/x.auto.c.inc": b'#define ANY STRID5("any", 0x1)\n',
-            "src/x.vendor.c.inc": b'#define ANY STRID5("any", 0x1)\n',
+            "src/x.vendor.c.inc": b'#define ANY STRID5("any", 0x1)\n' + _LINE_LONG,
+            # Documentation is exempt from the line length check by path and markdown by extension, as is vendored source above
+            "doc/xml/user-guide.xml": _LINE_LONG,
             # A binary file that is on the skip list, which is a deliberate and reviewable decision
             "doc/resource/card.png": b"\x00binary\n",
         },
@@ -243,6 +265,12 @@ def test_lint_error():
 
     assert_equal(error, "1 linter error(s) in 'src/x.c' (see warnings above)")
     assert_in("""should be 'STRID5("any", 0x65c10)'""", output)
+
+    # A file that is not exempt from the line length check, which is everything the exempt list above does not name
+    error, output = _lint({"src/x.h": _LINE_LONG})
+
+    assert_equal(error, "1 linter error(s) in 'src/x.h' (see warnings above)")
+    assert_in("line 1 is 133 characters (maximum is 132)", output)
 
     # A file with both kinds of error reports what it needs fixed rather than what stopped the scan
     error, output = _lint({"src/x.c": b'#define ANY STRID5("any", 0x1) // it\xe2\x80\x99s wrong\n'})

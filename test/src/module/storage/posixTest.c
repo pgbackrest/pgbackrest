@@ -987,6 +987,35 @@ testRun(void)
         TEST_RESULT_UINT(storageWriteChunkSize(32, 1, 2, 1), 1065353216, "asc chunk size not rounded");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageWriteChunkBufferResize()");
+
+        Buffer *const chunkInput = bufNew(8);
+        Buffer *const chunkBuffer = bufNew(0);
+
+        bufUsedSet(chunkInput, 8);
+        TEST_RESULT_VOID(storageWriteChunkBufferResize(chunkInput, 0, chunkBuffer, 40), "resize on first write");
+        TEST_RESULT_UINT(bufSize(chunkBuffer), 16, "chunk buffer is double input buffer");
+
+        bufUsedSet(chunkBuffer, 16);
+        TEST_RESULT_VOID(storageWriteChunkBufferResize(chunkInput, 0, chunkBuffer, 16), "resize at max chunk size");
+        TEST_RESULT_UINT(bufSize(chunkBuffer), 16, "chunk buffer not resized");
+
+        Buffer *const chunkBufferSmall = bufNew(0);
+
+        bufUsedSet(chunkInput, 3);
+        TEST_RESULT_VOID(storageWriteChunkBufferResize(chunkInput, 0, chunkBufferSmall, 40), "resize when input not full");
+        TEST_RESULT_UINT(bufSize(chunkBufferSmall), 3, "chunk buffer sized for input");
+
+        bufUsedSet(chunkBufferSmall, 3);
+        TEST_RESULT_VOID(storageWriteChunkBufferResize(chunkInput, 0, chunkBufferSmall, 40), "resize when chunk buffer not empty");
+        TEST_RESULT_UINT(bufSize(chunkBufferSmall), 6, "chunk buffer doubled");
+
+        bufUsedSet(chunkBufferSmall, 6);
+        bufUsedSet(chunkInput, 8);
+        TEST_RESULT_VOID(storageWriteChunkBufferResize(chunkInput, 6, chunkBufferSmall, 40), "resize when input partly copied");
+        TEST_RESULT_UINT(bufSize(chunkBufferSmall), 12, "chunk buffer doubled");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write file - defaults");
 
         TEST_ASSIGN(

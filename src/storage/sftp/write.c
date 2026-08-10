@@ -298,8 +298,8 @@ storageWriteSftpClose(THIS_VOID)
             do
             {
                 rc = libssh2_sftp_rename_ex(
-                    storageSftpSessionSftp(this->storage), strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), strZ(this->name),
-                    (unsigned int)strSize(this->name),
+                    storageSftpSessionSftp(this->storage), strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp),
+                    strZ(this->name), (unsigned int)strSize(this->name),
                     LIBSSH2_SFTP_RENAME_OVERWRITE | LIBSSH2_SFTP_RENAME_ATOMIC | LIBSSH2_SFTP_RENAME_NATIVE);
             }
             while (storageSftpWaitFd(this->storage, rc));

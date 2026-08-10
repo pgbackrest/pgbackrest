@@ -171,7 +171,7 @@ FN_EXTERN HttpRequestMulti *httpRequestMultiNew(void);
 Request Multi Functions
 ***********************************************************************************************************************************/
 // Add a request to multipart content
-#define httpRequestMultiAddP(this, contentId, verb, path, ...)                                                                                \
+#define httpRequestMultiAddP(this, contentId, verb, path, ...)                                                                     \
     httpRequestMultiAdd(this, contentId, verb, path, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN void httpRequestMultiAdd(

@@ -761,7 +761,8 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
     {
         do
         {
-            sftpHandle = libssh2_sftp_open_ex(this->sftpSession, strZ(path), (unsigned int)strSize(path), 0, 0, LIBSSH2_SFTP_OPENDIR);
+            sftpHandle = libssh2_sftp_open_ex(
+                this->sftpSession, strZ(path), (unsigned int)strSize(path), 0, 0, LIBSSH2_SFTP_OPENDIR);
         }
         while (sftpHandle == NULL && storageSftpWaitFd(this, (connErrno = libssh2_session_last_errno(this->session))));
     }

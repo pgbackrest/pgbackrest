@@ -868,6 +868,31 @@ testRun(void)
             "            status: error\n"
             "              No usable backup.info file");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("encrypted info files");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .cipherType = cipherTypeAes256Cbc,
+            .comment = "encrypted backup.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_NO_CURRENT_BACKUP,
+            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted backup.info.copy");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted archive.info.copy");
+
+        TEST_RESULT_VOID(cmdVerify(), "usable encrypted backup and archive info files");
+        TEST_RESULT_LOG("");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
         harnessLogLevelReset();
     }
 
@@ -2367,7 +2392,26 @@ testRun(void)
         // Replace checksums since they can differ between architectures (e.g. 32/64 bit)
         hrnLogReplaceAdd("\\) checksum [a-f0-9]{40}", "[a-f0-9]{40}$", "SHA1", false);
 
-        StringList *argList = strLstDup(argListBase);
+        // Add a second repository that is encrypted. Verify runs against one repository at a time, so this covers a repository
+        // written entirely by the commands both ways: repo1 in the clear and repo2 with the info files opened by the repo
+        // passphrase, the manifests by the passphrase stored in backup.info, and the backup files and WAL by the passphrase
+        // stored in the manifest.
+        StringList *const argListMulti = strLstDup(argListBase);
+        hrnCfgArgKeyRawZ(argListMulti, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawStrId(argListMulti, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
+
+        // Options common to the backups. Retention is set for both repositories so that neither warns about the other.
+        StringList *const argListBackup = strLstDup(argListMulti);
+        hrnCfgArgKeyRawZ(argListBackup, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argListBackup, cfgOptRepoRetentionFull, 2, "1");
+        hrnCfgArgRawZ(argListBackup, cfgOptPgPath, TEST_PATH "/pg1");
+        hrnCfgArgKeyRawBool(argListBackup, cfgOptRepoBundle, 1, true);
+        hrnCfgArgKeyRawBool(argListBackup, cfgOptRepoBundle, 2, true);
+        hrnCfgArgKeyRawBool(argListBackup, cfgOptRepoBlock, 1, true);
+        hrnCfgArgKeyRawBool(argListBackup, cfgOptRepoBlock, 2, true);
+
+        StringList *argList = strLstDup(argListMulti);
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawBool(argList, cfgOptOnline, false);
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
@@ -2377,7 +2421,9 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = BACKUP_EPOCH - 10);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
-        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-create for stanza 'db' on repo1\n"
+            "P00   INFO: stanza-create for stanza 'db' on repo2");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup with block incr");
@@ -2401,12 +2447,9 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF, .timeModified = timeBase - 1);
 
         // Backup
-        argList = strLstDup(argListBase);
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        argList = strLstDup(argListBackup);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
-        hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
-        hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH);
@@ -2438,12 +2481,9 @@ testRun(void)
         HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = timeBase);
 
         // Backup
-        argList = strLstDup(argListBase);
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        argList = strLstDup(argListBackup);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
-        hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
-        hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 100000);
@@ -2465,12 +2505,40 @@ testRun(void)
             "P00   INFO: new backup label = 20191002-070640F_20191003-105320D\n"
             "P00   INFO: diff backup size = 264KB, file total = 6");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full backup with block incr on encrypted repo2");
+
+        argList = strLstDup(argListBackup);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        hrnBackupPqScriptP(
+            PG_VERSION_11, BACKUP_EPOCH + 200000, .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS);
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+        TEST_RESULT_LOG(
+            "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
+            "P00   INFO: backup start archive = 0000000105D9759000000000, lsn = 5d97590/0\n"
+            "P00   INFO: check archive for prior segment 0000000105D9758F000000FF\n"
+            "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/postgresql.auto.conf\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/44 (bundle 1/0, 16KB, 5.71%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/96, 256KB, 97.14%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/608, 2B, 97.14%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/632, 8KB, 100.00%) checksum [SHA1]\n"
+            "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
+            "P00   INFO: backup stop archive = 0000000105D9759000000000, lsn = 5d97590/800000\n"
+            "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+            "P00   INFO: check archive for segment(s) 0000000105D9759000000000:0000000105D9759000000000\n"
+            "P00   INFO: new backup label = 20191004-144000F\n"
+            "P00   INFO: full backup size = 280KB, file total = 6");
+
         hrnLogReplaceClear();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verify with block incr");
 
-        argList = strLstDup(argListBase);
+        argList = strLstDup(argListMulti);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawZ(argList, cfgOptOutput, "text");
         hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
         hrnCfgArgRawZ(argList, cfgOptSet, "20191002-070640F_20191003-105320D");
@@ -2492,6 +2560,28 @@ testRun(void)
             "P00 DETAIL: path '11-1/0000000105D944C0' does not contain any valid WAL to be processed\n"
             "P00 DETAIL: path '11-1/0000000105D95D2F' does not contain any valid WAL to be processed\n"
             "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D95D3000000000, wal stop: 0000000105D95D3000000000");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verify encrypted repo2");
+
+        argList = strLstDup(argListMulti);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: ok\n"
+            "  archiveId: 11-1, total WAL checked: 2, total valid WAL: 2\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191004-144000F, status: valid, total files checked: 6, total valid files: 6\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0", "encrypted repository");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D9758F000000FF, wal stop: 0000000105D9759000000000");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

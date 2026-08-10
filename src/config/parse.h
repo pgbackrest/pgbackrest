@@ -102,7 +102,7 @@ typedef struct CfgParseOptionResult
     bool multi;                                                     // Can the option be specified multiple times?
 } CfgParseOptionResult;
 
-#define cfgParseOptionP(optionName, ...)                                                                                            \
+#define cfgParseOptionP(optionName, ...)                                                                                           \
     cfgParseOption(optionName, (CfgParseOptionParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN CfgParseOptionResult cfgParseOption(const String *const optionName, const CfgParseOptionParam param);

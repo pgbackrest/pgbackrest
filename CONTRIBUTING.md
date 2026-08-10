@@ -635,6 +635,24 @@ To add an option, add the following to the `<option-list>` section; if it does n
 ```
 > **IMPORTANT:** A period (.) is required to end the `summary` section.
 
+An option that declares an `allow-list` must document it with the `<allow-list>` tag, which is checked against the declaration so the two cannot drift apart. Where each value needs an explanation, describe them with `<allow-item>` and say what the list is a list of with `caption`, which is rendered as "The following protocol types are supported:":
+```
+<allow-list caption="protocol types">
+    <allow-item id="ssh">Secure Shell.</allow-item>
+    <allow-item id="tls"><backrest/> TLS server.</allow-item>
+</allow-list>
+```
+
+Where the values speak for themselves, leave the tag empty and the values will be rendered from the declaration into the sentence that introduces them:
+```
+<p>Allowed values are <allow-list/>.</p>
+```
+
+Where an option allows what another option allows, describe the values once and inherit them, as the declaration does with `inherit`:
+```
+<allow-list inherit="log-level-console"/>
+```
+
 ### Testing the help
 
 It is important to run the `help` command unit test after adding an option in case a change is required:

@@ -121,8 +121,8 @@ _TAG_RENDER = {
 def child_list(node):
     """The children of a node that are part of the document rather than properties of it.
 
-    A child that holds nothing but text and says nothing about itself is a property, e.g. the command an execute runs, and is read by
-    name where it is needed rather than walked with the content. A tag that is text is content however little it holds."""
+    A child that holds nothing but text and says nothing about itself is a property, e.g. the command an execute runs, and is read
+    by name where it is needed rather than walked with the content. A tag that is text is content however little it holds."""
 
     return [
         child for child in node if child.tag != "text" and (child.tag in _TAG_CONTENT or len(child) > 0 or len(child.attrib) > 0)

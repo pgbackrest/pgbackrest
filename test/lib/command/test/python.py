@@ -32,8 +32,8 @@ class ImportGuard:
         # The test harness is support for the tests rather than part of the harness under test, so it is always available
         self.allow_list = set(allow_list) | {"harness.test"}
 
-        # Top level packages of every library, i.e. the imports that are guarded. Anything else, e.g. the standard library, is left to
-        # the finders that follow this one.
+        # Top level packages of every library, i.e. the imports that are guarded. Anything else, e.g. the standard library, is left
+        # to the finders that follow this one.
         self.root_list = {
             name for path_lib in self.path_lib_list for name in os.listdir(path_lib) if os.path.isdir(os.path.join(path_lib, name))
         }

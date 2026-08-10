@@ -297,7 +297,7 @@ storagePosixMove(THIS_VOID, StorageRead *const source, StorageWrite *const desti
         if (rename(strZ(sourceFile), strZ(destinationFile)) == -1)
         {
             // Determine which file/path is missing
-            if (errno == ENOENT)
+            if (errno == ENOENT)                                                                                    // {vm_covered}
             {
                 // Check if the source is missing. Rename does not follow links so there is no need to set followLink.
                 if (!storageInterfaceInfoP(this, sourceFile, storageInfoLevelExists).exists)
@@ -315,7 +315,7 @@ storagePosixMove(THIS_VOID, StorageRead *const source, StorageWrite *const desti
             // Else the destination is on a different device so a copy will be needed
             else if (errno == EXDEV)                                                                                // {vm_covered}
             {
-                result = false;
+                result = false;                                                                                     // {vm_covered}
             }
             else
             {

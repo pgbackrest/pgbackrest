@@ -2,14 +2,14 @@
 
 Loads a declaration the way the generators need to read it, which is not the way yaml is usually loaded:
 
-- Every scalar stays the text it was written as. Yaml would otherwise type a scalar by how it looks, so a version written as 9.6 would
-  arrive as a float and render as 9.6000000000000005, and a code written as 011 would arrive as the octal 9.
+- Every scalar stays the text it was written as. Yaml would otherwise type a scalar by how it looks, so a version written as 9.6
+  would arrive as a float and render as 9.6000000000000005, and a code written as 011 would arrive as the octal 9.
 
 - A mapping keeps its pairs rather than becoming a dict, because a key may be repeated and the repetition is meaningful. The option
   command list uses it to add several roles or exclude several commands, and a dict would silently keep only the last one.
 
-- A mapping keeps the order it was written in, which yaml guarantees for sequences only. Order matters because it decides the order of
-  the generated code, so the loader is what makes the declaration order the record."""
+- A mapping keeps the order it was written in, which yaml guarantees for sequences only. Order matters because it decides the order
+  of the generated code, so the loader is what makes the declaration order the record."""
 
 ####################################################################################################################################
 import yaml

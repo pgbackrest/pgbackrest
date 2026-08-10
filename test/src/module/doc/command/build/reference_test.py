@@ -1,7 +1,7 @@
 """Test Command and Configuration Reference.
 
-The declarations are written out here rather than read from the repository, since what needs testing is how an option is rendered rather
-than what the project happens to declare. The rendered documents are checked as fragments of the xml that comes out.
+The declarations are written out here rather than read from the repository, since what needs testing is how an option is rendered
+rather than what the project happens to declare. The rendered documents are checked as fragments of the xml that comes out.
 
 An option that can be set in the configuration file is described in the configuration reference and linked to from the command
 reference, so what is checked there is the link. An option that can only be given on the command line is described in the command

@@ -1,7 +1,7 @@
 """Test Manual Page Reference.
 
-The wrapping is what most of this is about, so the expectations are written as the exact lines that come out. The width is fixed at 80
-and cannot be varied, so the summaries here are written long enough to wrap at it."""
+The wrapping is what most of this is about, so the expectations are written as the exact lines that come out. The width is fixed at
+80 and cannot be varied, so the summaries here are written long enough to wrap at it."""
 
 ####################################################################################################################################
 import os

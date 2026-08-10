@@ -56,8 +56,8 @@ cryptoInit(void)
     if (!cryptoInitDone)
     {
         // Load crypto strings and algorithms
-        ERR_load_crypto_strings();
-        OpenSSL_add_all_algorithms();
+        OPENSSL_init_crypto(
+            OPENSSL_INIT_LOAD_CRYPTO_STRINGS | OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL);
 
         // Initialization
         OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
