@@ -9,6 +9,7 @@ List Handler
 
 #include "common/debug.h"
 #include "common/type/list.h"
+#include "common/valgrind.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -320,6 +321,11 @@ lstInsert(List *const this, const unsigned int listIdx, const void *const item)
         (lstSize(this) + ((uintptr_t)(this->pub.list - this->listAlloc) / this->pub.itemSize) == this->listSizeMax))
     {
         memmove(this->listAlloc, this->pub.list, lstSize(this) * this->pub.itemSize);
+
+        // Invalidate the area vacated by the move so Valgrind will warn on a read from it
+        VALGRIND_MAKE_MEM_UNDEFINED(
+            this->listAlloc + (lstSize(this) * this->pub.itemSize), (size_t)(this->pub.list - this->listAlloc));
+
         this->pub.list = this->listAlloc;
     }
 
@@ -357,6 +363,9 @@ lstRemoveIdx(List *const this, const unsigned int listIdx)
     if (listIdx == 0)
     {
         this->pub.list += this->pub.itemSize;
+
+        // Invalidate the item that is no longer in the list so Valgrind will warn on a read from it
+        VALGRIND_MAKE_MEM_UNDEFINED(this->pub.list - this->pub.itemSize, this->pub.itemSize);
     }
     // Else remove the item by moving the items after it down
     else
@@ -364,6 +373,9 @@ lstRemoveIdx(List *const this, const unsigned int listIdx)
         memmove(
             this->pub.list + (listIdx * this->pub.itemSize), this->pub.list + ((listIdx + 1) * this->pub.itemSize),
             (lstSize(this) - listIdx) * this->pub.itemSize);
+
+        // Invalidate the item vacated at the end of the list so Valgrind will warn on a read from it
+        VALGRIND_MAKE_MEM_UNDEFINED(this->pub.list + (lstSize(this) * this->pub.itemSize), this->pub.itemSize);
     }
 
     FUNCTION_TEST_RETURN(LIST, this);
