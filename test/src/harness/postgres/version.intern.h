@@ -1,21 +1,19 @@
 /***********************************************************************************************************************************
 Harness for PostgreSQL Interface
 
-Macros to create harness functions per PostgreSQL version.
+Macros for building version-specific functions that write the pg_control and WAL a test needs, using the types in version.vendor.h.
+This is the write side of the interface the code reads with postgres/interface/version.intern.h.
+
+The header is included again for each version, so it declares only what varies by version. Everything else the macros use is
+included by the module that expands them.
 ***********************************************************************************************************************************/
-#ifndef TEST_HARNESS_POSTGRES_VERSION_INTERN_H
-#define TEST_HARNESS_POSTGRES_VERSION_INTERN_H
-
-#include "postgres/interface/crc32.h"
 #include "postgres/interface/version.vendor.h"
-
-#include "harness/postgres.h"
 
 /***********************************************************************************************************************************
 Get the catalog version
 ***********************************************************************************************************************************/
 #define HRN_PG_INTERFACE_CATALOG_VERSION(version)                                                                                  \
-    uint32_t                                                                                                                       \
+    static uint32_t                                                                                                                \
     hrnPgInterfaceCatalogVersion##version(void)                                                                                    \
     {                                                                                                                              \
         return CATALOG_VERSION_NO;                                                                                                 \
@@ -24,8 +22,8 @@ Get the catalog version
 /***********************************************************************************************************************************
 Create a pg_control file
 ***********************************************************************************************************************************/
-#define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
-    void                                                                                                                           \
+#define HRN_PG_INTERFACE_CONTROL(version)                                                                                          \
+    static void                                                                                                                    \
     hrnPgInterfaceControl##version(                                                                                                \
         const unsigned int controlVersion, const unsigned int crc, const PgControl pgControl, uint8_t *const buffer)               \
     {                                                                                                                              \
@@ -52,8 +50,8 @@ Create a pg_control file
 /***********************************************************************************************************************************
 Create a WAL file
 ***********************************************************************************************************************************/
-#define HRN_PG_INTERFACE_WAL_TEST(version)                                                                                         \
-    void                                                                                                                           \
+#define HRN_PG_INTERFACE_WAL(version)                                                                                              \
+    static void                                                                                                                    \
     hrnPgInterfaceWal##version(const unsigned int magic, const PgWal pgWal, uint8_t *const buffer)                                 \
     {                                                                                                                              \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = magic == 0 ? XLOG_PAGE_MAGIC : (uint16)magic;                          \
@@ -61,13 +59,3 @@ Create a WAL file
         ((XLogLongPageHeaderData *)buffer)->xlp_sysid = pgWal.systemId;                                                            \
         ((XLogLongPageHeaderData *)buffer)->xlp_seg_size = pgWal.size;                                                             \
     }
-
-/***********************************************************************************************************************************
-Call all macros with a single macro to make the vXXX.c files as simple as possible
-***********************************************************************************************************************************/
-#define HRN_PG_INTERFACE(version)                                                                                                  \
-    HRN_PG_INTERFACE_CATALOG_VERSION(version)                                                                                      \
-    HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                         \
-    HRN_PG_INTERFACE_WAL_TEST(version)
-
-#endif

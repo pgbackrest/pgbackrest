@@ -70,7 +70,11 @@ def _version_update(path_repo):
 
 ####################################################################################################################################
 # Files the copy needs that are generated into the repository rather than version controlled, so git does not list them
-_FILE_GENERATE_LIST = ("src/command/help/help.auto.c.inc", "src/postgres/interface.auto.c.inc")
+_FILE_GENERATE_LIST = (
+    "src/command/help/help.auto.c.inc",
+    "src/postgres/interface.auto.c.inc",
+    "test/src/harness/postgres/interface.auto.c.inc",
+)
 
 
 ####################################################################################################################################
@@ -143,8 +147,9 @@ def _code_generate(config):
         generate_list += ["config", "error", "postgres-version"]
 
     # The help and the PostgreSQL interfaces are generated here because they are built rather than committed and a unit build does
-    # not run the code generation that the build does
-    generate_list += ["help", "postgres"]
+    # not run the code generation that the build does. The interfaces the harness uses are not part of the build at all, so this is
+    # the only thing that generates them.
+    generate_list += ["help", "postgres", "postgres-harness"]
 
     exec_one(" && \\\n".join("%s/build/build.py %s" % (path_repo, generate) for generate in generate_list))
 

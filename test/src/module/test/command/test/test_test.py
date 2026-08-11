@@ -249,12 +249,12 @@ def test_test_generate():
         assert_equal(status, 0)
 
         # The generator is run for everything it generates, and needs nothing built first since it is python
-        for generate in ("config", "error", "postgres-version", "help"):
+        for generate in ("config", "error", "postgres-version", "help", "postgres"):
             assert_in("%s/build/build.py %s" % (path_repo, generate), command_list[-1])
 
-        # The PostgreSQL interfaces are generated into the repository, the same as everything else, even though they are built
-        # rather than committed
-        assert_true(command_list[-1].endswith("%s/build/build.py postgres" % path_repo))
+        # The interfaces the harness uses are generated into the repository, the same as everything else, even though nothing but a
+        # test build ever compiles them
+        assert_true(command_list[-1].endswith("%s/build/build.py postgres-harness" % path_repo))
 
         assert_in("autogenerate code", output)
 
@@ -263,7 +263,7 @@ def test_test_generate():
 
         assert_not_in("build.py config", command_list[-1])
         assert_in("build.py help", command_list[-1])
-        assert_true(command_list[-1].endswith("build.py postgres"))
+        assert_true(command_list[-1].endswith("build.py postgres-harness"))
 
 
 ####################################################################################################################################
@@ -281,6 +281,7 @@ def test_test_repo_copy():
         # A generated file is copied even though git does not list it, since a unit build compiles it from the copy
         file_write(os.path.join(path_repo, "src/command/help/help.auto.c.inc"), "help")
         file_write(os.path.join(path_repo, "src/postgres/interface.auto.c.inc"), "generated")
+        file_write(os.path.join(path_repo, "test/src/harness/postgres/interface.auto.c.inc"), "harness")
 
         # Files that are no longer in the repository, including one in a path that nothing else is left in and one in a path that
         # has since become a file
@@ -299,6 +300,7 @@ def test_test_repo_copy():
         assert_in(VERSION_DEFINE, file_read(os.path.join(path_copy, "src/version.h")))
         assert_equal(file_read(os.path.join(path_copy, "src/command/help/help.auto.c.inc")), "help")
         assert_equal(file_read(os.path.join(path_copy, "src/postgres/interface.auto.c.inc")), "generated")
+        assert_equal(file_read(os.path.join(path_copy, "test/src/harness/postgres/interface.auto.c.inc")), "harness")
 
         # What is not in the repository is gone from the copy, along with the path it was the last file in
         assert_false(os.path.exists(os.path.join(path_copy, "src/removed.c")))
