@@ -130,8 +130,8 @@ def _code_generate(config):
     """Generate the code that is built from the declarations in the source.
 
     This runs on the host rather than in a container, since the generator is python and needs nothing built first. Everything is
-    generated into the repository, which is where the build generates it as well, so the copy above is a copy rather than a mix of
-    the repository and what was generated into it."""
+    generated into the repository, so the copy above holds all of it rather than a mix of the repository and what was generated
+    somewhere else."""
 
     path_repo = config.repo_path
     generate_list = []

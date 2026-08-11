@@ -1,7 +1,8 @@
 ####################################################################################################################################
 # Generate PostgreSQL interfaces
 ####################################################################################################################################
-# Generate interface.auto.c.inc, unless this is a distribution tarball that ships the file
+# Generate interface.auto.c.inc, unless this is a distribution tarball that ships the file. The generator writes into the build path
+# so the file lands where the output is declared, else it would be missing there and ninja would run the generator on every build.
 if not dist
     interface_auto_c_inc = custom_target(
         'interface.auto.c.inc',
@@ -13,6 +14,7 @@ if not dist
             build_code,
             'postgres',
             '--repo-path=@CURRENT_SOURCE_DIR@/../..',
+            '--build-path=@BUILD_ROOT@',
         ],
     )
 else
