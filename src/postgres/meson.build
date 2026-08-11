@@ -9,6 +9,8 @@ if not dist
         output: 'interface.auto.c.inc',
         depend_files: [
             '../../build/postgres.yaml',
+            'interface/version.intern.h',
+            'interface/version.vendor.h',
         ],
         command: [
             build_code,
