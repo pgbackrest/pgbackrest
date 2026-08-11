@@ -8,6 +8,7 @@ Buffer Handler
 
 #include "common/debug.h"
 #include "common/type/buffer.h"
+#include "common/valgrind.h"
 
 /***********************************************************************************************************************************
 Constant buffers that are generally useful
@@ -356,6 +357,9 @@ bufUsedSet(Buffer *const this, const size_t used)
     ASSERT(this != NULL);
     ASSERT(used <= bufSize(this));
 
+    // Invalidate the unused area so Valgrind will warn on a read from it
+    VALGRIND_MAKE_MEM_UNDEFINED(bufPtr(this) + used, bufSize(this) - used);
+
     this->pub.used = used;
 
     FUNCTION_TEST_RETURN_VOID();
@@ -369,6 +373,9 @@ bufUsedZero(Buffer *const this)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+
+    // Invalidate the unused area so Valgrind will warn on a read from it
+    VALGRIND_MAKE_MEM_UNDEFINED(bufPtr(this), bufSize(this));
 
     this->pub.used = 0;
 

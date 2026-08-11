@@ -4,6 +4,7 @@ Harness for PostgreSQL Interface
 #include <build.h>
 
 #include "common/assert.h"
+#include "postgres/interface/crc32.h"
 
 #include "harness/debug.h"
 #include "harness/postgres.h"
@@ -11,50 +12,6 @@ Harness for PostgreSQL Interface
 /***********************************************************************************************************************************
 Interface definition
 ***********************************************************************************************************************************/
-uint32_t hrnPgInterfaceCatalogVersion096(void);
-void hrnPgInterfaceControl096(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
-void hrnPgInterfaceWal096(unsigned int magic, PgWal pgWal, uint8_t *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion100(void);
-void hrnPgInterfaceControl100(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
-void hrnPgInterfaceWal100(unsigned int magic, PgWal pgWal, uint8_t *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion110(void);
-void hrnPgInterfaceControl110(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
-void hrnPgInterfaceWal110(unsigned int magic, PgWal pgWal, uint8_t *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion120(void);
-void hrnPgInterfaceControl120(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
-void hrnPgInterfaceWal120(unsigned int magic, PgWal pgWal, uint8_t *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion130(void);
-void hrnPgInterfaceControl130(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
-void hrnPgInterfaceWal130(unsigned int magic, PgWal pgWal, uint8_t *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion140(void);
-void hrnPgInterfaceControl140(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
-void hrnPgInterfaceWal140(unsigned int magic, PgWal pgWal, uint8_t *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion150(void);
-void hrnPgInterfaceControl150(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
-void hrnPgInterfaceWal150(unsigned int magic, PgWal pgWal, uint8_t *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion160(void);
-void hrnPgInterfaceControl160(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
-void hrnPgInterfaceWal160(unsigned int magic, PgWal pgWal, uint8_t *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion170(void);
-void hrnPgInterfaceControl170(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
-void hrnPgInterfaceWal170(unsigned int magic, PgWal pgWal, uint8_t *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion180(void);
-void hrnPgInterfaceControl180(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
-void hrnPgInterfaceWal180(unsigned int magic, PgWal pgWal, uint8_t *buffer);
-
-uint32_t hrnPgInterfaceCatalogVersion190(void);
-void hrnPgInterfaceControl190(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
-void hrnPgInterfaceWal190(unsigned int magic, PgWal pgWal, uint8_t *buffer);
-
 typedef struct HrnPgInterface
 {
     // Version of PostgreSQL supported by this interface
@@ -70,86 +27,8 @@ typedef struct HrnPgInterface
     void (*wal)(unsigned int, PgWal, uint8_t *);
 } HrnPgInterface;
 
-static const HrnPgInterface hrnPgInterface[] =
-{
-    {
-        .version = PG_VERSION_19,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion190,
-        .control = hrnPgInterfaceControl190,
-        .wal = hrnPgInterfaceWal190,
-    },
-    {
-        .version = PG_VERSION_18,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion180,
-        .control = hrnPgInterfaceControl180,
-        .wal = hrnPgInterfaceWal180,
-    },
-    {
-        .version = PG_VERSION_17,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion170,
-        .control = hrnPgInterfaceControl170,
-        .wal = hrnPgInterfaceWal170,
-    },
-    {
-        .version = PG_VERSION_16,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion160,
-        .control = hrnPgInterfaceControl160,
-        .wal = hrnPgInterfaceWal160,
-    },
-    {
-        .version = PG_VERSION_15,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion150,
-        .control = hrnPgInterfaceControl150,
-        .wal = hrnPgInterfaceWal150,
-    },
-    {
-        .version = PG_VERSION_14,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion140,
-        .control = hrnPgInterfaceControl140,
-        .wal = hrnPgInterfaceWal140,
-    },
-    {
-        .version = PG_VERSION_13,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion130,
-        .control = hrnPgInterfaceControl130,
-        .wal = hrnPgInterfaceWal130,
-    },
-    {
-        .version = PG_VERSION_12,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion120,
-        .control = hrnPgInterfaceControl120,
-        .wal = hrnPgInterfaceWal120,
-    },
-    {
-        .version = PG_VERSION_11,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion110,
-        .control = hrnPgInterfaceControl110,
-        .wal = hrnPgInterfaceWal110,
-    },
-    {
-        .version = PG_VERSION_10,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion100,
-        .control = hrnPgInterfaceControl100,
-        .wal = hrnPgInterfaceWal100,
-    },
-    {
-        .version = PG_VERSION_96,
-
-        .catalogVersion = hrnPgInterfaceCatalogVersion096,
-        .control = hrnPgInterfaceControl096,
-        .wal = hrnPgInterfaceWal096,
-    },
-};
+// Include auto-generated interfaces
+#include "harness/postgres/interface.auto.c.inc"
 
 /***********************************************************************************************************************************
 Get the interface for a PostgreSQL version

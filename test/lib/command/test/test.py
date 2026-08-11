@@ -9,6 +9,7 @@ its own, since a test runs inside a container where only the repository copy is 
 ####################################################################################################################################
 import os
 import re
+import shutil
 import time
 
 from command.coverage.coverage import cmd_coverage
@@ -20,7 +21,7 @@ from command.vm.build import container_remove, container_repo
 from common.error import ToolError, check
 from common.exec import exec_one
 from common.log import *
-from common.storage import file_read, file_write, file_write_differs, path_create
+from common.storage import file_read, file_remove, file_write, file_write_differs, path_create, path_list_recurse
 from common.user import user_name
 from common.vm import *
 from config.project import project_version, project_version_part
@@ -68,42 +69,89 @@ def _version_update(path_repo):
 
 
 ####################################################################################################################################
-def _repo_copy(config):
-    """Copy the repository so a test can tell which files it changed.
-
-    Only version controlled files are copied, and the generated files that the code generation below writes into the copy are left
-    out so a stale copy of them cannot be used."""
-
-    exec_one(
-        "git -C %s ls-files -c --others --exclude-standard |" % config.repo_path
-        + " rsync -rLtW --delete --files-from=- --exclude=test/result"
-        + " --exclude=src/postgres/interface.auto.c.inc --exclude=src/command/help/help.auto.c.inc"
-        # This option is not supported on MacOS. The eventual plan is to remove the need for it.
-        + ("" if exec_one("uname").strip() == "Darwin" else " --ignore-missing-args")
-        + " %s/ %s" % (config.repo_path, os.path.join(config.test_path, "repo"))
-    )
+# Files the copy needs that are generated into the repository rather than version controlled, so git does not list them
+_FILE_GENERATE_LIST = (
+    "src/command/help/help.auto.c.inc",
+    "src/postgres/interface.auto.c.inc",
+    "test/src/harness/postgres/interface.auto.c.inc",
+)
 
 
 ####################################################################################################################################
-def _code_generate(config, path_repo_copy):
-    """Generate the code that is built from the declarations in the source.
+def _repo_copy(config):
+    """Mirror the repository into the copy the tests are built and run from, so the repository can be edited while a run is in
+    progress without changing what the run is testing.
 
-    This runs on the host rather than in a container, since the generator is python and needs nothing built first."""
+    The copy holds the version controlled files plus the generated files above and nothing else. Anything else is removed, since a
+    file that was renamed or deleted in the repository would otherwise live on in the copy and still be linted, built, and run.
+
+    A file is copied only when its size or timestamp differs, so an unchanged file keeps its timestamp and does not make the build
+    rebuild what depends on it."""
 
     path_repo = config.repo_path
-    command = ""
+    path_copy = os.path.join(config.test_path, "repo")
+    path_create(path_copy, mode=0o770)
+
+    # Files the copy should hold. A file that git has in the index but that is no longer in the working tree is not one of them, so
+    # it is left out here and removed below.
+    file_list = set(_FILE_GENERATE_LIST)
+    file_list.update(exec_one("git -C %s ls-files -c --others --exclude-standard" % path_repo).splitlines())
+    file_list = {name for name in file_list if os.path.isfile(os.path.join(path_repo, name))}
+
+    # Remove what the copy should not hold. This runs before the copy below so a file that took the name of a path, or a path that
+    # took the name of a file, does not run into what is left of the old name.
+    for name in path_list_recurse(path_copy):
+        if name not in file_list:
+            log(DETAIL, "remove '%s' from repository copy" % name)
+            file_remove(os.path.join(path_copy, name))
+
+    # Remove the paths left empty, deepest first, so a path that was renamed does not live on either
+    for path, _, _ in os.walk(path_copy, topdown=False):
+        if path != path_copy and not os.listdir(path):
+            os.rmdir(path)
+
+    # Copy the files that are not in the copy yet or differ from the repository, which is size or timestamp since reading every file
+    # to compare the content would cost more than the copy it saves. The mode and timestamp are copied along with the content so the
+    # copy is the same file the repository has.
+    for name in sorted(file_list):
+        file_repo = os.path.join(path_repo, name)
+        file_copy = os.path.join(path_copy, name)
+        stat_repo = os.stat(file_repo)
+
+        try:
+            stat_copy = os.stat(file_copy)
+            copy = stat_copy.st_size != stat_repo.st_size or stat_copy.st_mtime_ns != stat_repo.st_mtime_ns
+        except FileNotFoundError:
+            copy = True
+
+        if copy:
+            path_create(os.path.dirname(file_copy), mode=0o770)
+            shutil.copy2(file_repo, file_copy)
+
+
+####################################################################################################################################
+def _code_generate(config):
+    """Generate the code that is built from the declarations in the source.
+
+    This runs on the host rather than in a container, since the generator is python and needs nothing built first. Everything is
+    generated into the repository, so the copy above holds all of it rather than a mix of the repository and what was generated
+    somewhere else."""
+
+    path_repo = config.repo_path
+    generate_list = []
 
     log(INFO, "autogenerate code")
 
     # A dry run does the minimum required, i.e. only what building the test list depends on
     if not config.dry_run:
-        for generate in ("config", "error", "postgres-version"):
-            command += "%s/build/build.py %s && \\\n" % (path_repo, generate)
+        generate_list += ["config", "error", "postgres-version"]
 
-    # The PostgreSQL interfaces are generated into the repository copy, since they are built rather than committed
-    command += "%s/build/build.py postgres --build-path=%s" % (path_repo, path_repo_copy)
+    # The help and the PostgreSQL interfaces are generated here because they are built rather than committed and a unit build does
+    # not run the code generation that the build does. The interfaces the harness uses are not part of the build at all, so this is
+    # the only thing that generates them.
+    generate_list += ["help", "postgres", "postgres-harness"]
 
-    exec_one(command)
+    exec_one(" && \\\n".join("%s/build/build.py %s" % (path_repo, generate) for generate in generate_list))
 
 
 ####################################################################################################################################
@@ -335,10 +383,7 @@ def cmd_test(config):
             )
         )
 
-    # Create the repository copy path first so an obvious rsync error is reported rather than a confusing one
-    path_create(path_repo_copy, mode=0o770)
-
-    _code_generate(config, path_repo_copy)
+    _code_generate(config)
 
     if config.gen_only:
         return 0

@@ -40,17 +40,21 @@ INTERN = """#define PG_INTERFACE_CONTROL_IS(version)
 #define PG_INTERFACE_CONTROL(version)
 """
 
+# The header that declares the interface functions the harness writes test files with
+INTERN_HARNESS = """#define HRN_PG_INTERFACE_CONTROL(version)
+"""
+
 
 ####################################################################################################################################
-def _parse(version, vendor=VENDOR, intern=INTERN):
+def _parse(version, vendor=VENDOR, intern=INTERN, interface=BLD_PG_INTERFACE):
     """Parse an interface declaration."""
 
     with tempfile.TemporaryDirectory() as path:
         file_write(os.path.join(path, "build/postgres.yaml"), version)
         file_write(os.path.join(path, "src/postgres/interface/version.vendor.h"), vendor)
-        file_write(os.path.join(path, "src/postgres/interface/version.intern.h"), intern)
+        file_write(os.path.join(path, interface.path_intern), intern)
 
-        return bld_pg_parse(path)
+        return bld_pg_parse(path, interface)
 
 
 ####################################################################################################################################
@@ -106,6 +110,23 @@ def test_postgres_parse_define():
 
     # Functions keep the order they were declared in, since that is the order the interface struct is filled in
     assert_equal(bld_pg.function_list, ["PG_INTERFACE_CONTROL_IS", "PG_INTERFACE_CONTROL"])
+
+
+####################################################################################################################################
+def test_postgres_parse_interface_harness():
+    """The harness interface is the same declaration read with the header its own macros live in."""
+
+    bld_pg = _parse("version:\n  - 10\n", intern=INTERN_HARNESS, interface=BLD_PG_INTERFACE_HARNESS)
+
+    # The versions and the vendored names are the same, since only the macros that build an interface from them differ
+    assert_equal([pg.version for pg in bld_pg.pg_list], ["10"])
+    assert_in("ControlFileData", bld_pg.type_list)
+    assert_equal(bld_pg.function_list, ["HRN_PG_INTERFACE_CONTROL"])
+
+    # The struct the functions are collected in is named after the prefix they share
+    assert_equal(bld_pg.interface.prefix, "hrnPgInterface")
+    assert_equal(bld_pg.interface.type, "HrnPgInterface")
+    assert_equal(BLD_PG_INTERFACE.type, "PgInterface")
 
 
 ####################################################################################################################################

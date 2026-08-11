@@ -140,7 +140,7 @@ jobs:
 
           # postgresql*-client provides the libpq to build against and postgresql*-server provides the tooling the smoke test needs
           # to create a cluster
-          sudo pkg install -y bash git ${pgServer%-server}-client ${pgServer} pkgconf libxml2 gmake rsync meson
+          sudo pkg install -y bash git ${pgServer%-server}-client ${pgServer} pkgconf libxml2 gmake meson
 
           # PyYAML for the test harness. The package is py<version>-pyyaml, renamed from py<version>-yaml in 2024 so both names are
           # searched, and it is built only for the python flavors the ports tree selects, which is not necessarily the version the

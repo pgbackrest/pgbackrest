@@ -1,20 +1,33 @@
 """Render PostgreSQL Interface.
 
-Each version gets a block that includes the vendored header again with every name suffixed by the version, which is how one binary
-carries an interface for every version it supports. The interfaces are rendered newest first so the most likely match is found first
-at run time."""
+Each version gets a block that includes the vendored header again with every name suffixed by the version, which is how one
+translation unit carries an interface for every version it supports. The interfaces are rendered newest first so the most likely
+match is found first at run time.
+
+The interface being rendered is whichever one the declaration was parsed for, so the binary and the test harness are rendered by the
+same code from the same versions."""
 
 ####################################################################################################################################
 import os
 
+from common.error import ToolError
 from common.render import bld_comment_block, bld_define, bld_header
-from common.storage import file_write_differs
-
-_MODULE = "postgres"
-_DESCRIPTION = "PostgreSQL Interface"
+from common.storage import file_read, file_write_differs
 
 _VERSION_MODULE = "postgres-version"
 _VERSION_DESCRIPTION = "PostgreSQL Version"
+
+# Base a test system id is offset from, which is the base hrnPgSystemId() adds the version to
+_SYSTEM_ID_BASE = 10000000000000000000
+
+# Offsets a test asks for a system id at, since a test that needs a second system id for a version varies it by a small amount
+_SYSTEM_ID_OFFSET_LIST = (0, 1)
+
+# Prefix of the defines that are generated into the harness header, which is what identifies them there
+_SYSTEM_ID_DEFINE = "HRN_PG_SYSTEMID_"
+
+# Header the system id defines are generated into, which is hand-written apart from them
+_PATH_SYSTEM_ID = "test/src/harness/postgres.h"
 
 
 ####################################################################################################################################
@@ -35,7 +48,9 @@ def _version_num(version):
 
 ####################################################################################################################################
 def _function_name(define):
-    """The interface function a macro defines, e.g. "PG_INTERFACE_CONTROL_IS" becomes "pgInterfaceControlIs"."""
+    """The interface function a macro defines, e.g. "PG_INTERFACE_CONTROL_IS" becomes "pgInterfaceControlIs".
+
+    A harness macro reads the same way, e.g. "HRN_PG_INTERFACE_CONTROL" becomes "hrnPgInterfaceControl"."""
 
     result = ""
 
@@ -48,9 +63,10 @@ def _function_name(define):
 
 ####################################################################################################################################
 def _render_interface_auto_c(bld_pg):
-    """Render interface.auto.c.inc, which is one interface per version plus the struct that finds them."""
+    """Render the interface, which is one interface per version plus the struct that finds them."""
 
-    result = bld_header(_MODULE, _DESCRIPTION)
+    interface = bld_pg.interface
+    result = bld_header(interface.module, interface.description)
 
     # Interfaces, newest first
     for pg in reversed(bld_pg.pg_list):
@@ -66,7 +82,7 @@ def _render_interface_auto_c(bld_pg):
         if not pg.release:
             result += "\n#define CATALOG_VERSION_NO_MAX\n"
 
-        result += '\n#include "postgres/interface/version.intern.h"\n\n'
+        result += '\n#include "%s"\n\n' % interface.include
 
         for function in bld_pg.function_list:
             result += "%s(%s);\n" % (function, version_no_dot)
@@ -78,7 +94,7 @@ def _render_interface_auto_c(bld_pg):
 
     # Interface struct, newest first so the most likely match is found first
     result += "\n" + bld_comment_block("PostgreSQL interface struct")
-    result += "static const PgInterface pgInterface[] =\n{\n"
+    result += "static const %s %s[] =\n{\n" % (interface.type, interface.prefix)
 
     for pg in reversed(bld_pg.pg_list):
         version_no_dot = _version_no_dot(pg.version)
@@ -87,7 +103,7 @@ def _render_interface_auto_c(bld_pg):
 
         for function in bld_pg.function_list:
             name = _function_name(function)
-            member = name[len("pgInterface") :]
+            member = name[len(interface.prefix) :]
 
             result += "        .%s = %s%s,\n" % (member[:1].lower() + member[1:], name, version_no_dot)
 
@@ -122,10 +138,40 @@ def _render_version_auto_h(bld_pg):
 
 
 ####################################################################################################################################
+def _render_system_id(bld_pg):
+    """Render the system id defines, which are the system id the harness writes for a version and the strings a test reads it as.
+
+    A system id is derived from the version so a test that reports one says which version wrote it. The strings are rendered here
+    rather than built by the preprocessor because there is no way to make a string of the sum."""
+
+    result = ""
+
+    for pg in bld_pg.pg_list:
+        version_no_dot = _version_no_dot(pg.version)
+
+        result += (
+            bld_define(_SYSTEM_ID_DEFINE + version_no_dot, "(%uULL + (uint64_t)PG_VERSION_%s)" % (_SYSTEM_ID_BASE, version_no_dot))
+            + "\n"
+        )
+
+        # An offset is a system id a test asks for by adding to the one for the version, which is how a test uses more than one
+        for offset in _SYSTEM_ID_OFFSET_LIST:
+            result += (
+                bld_define(
+                    "%s%s%s_Z" % (_SYSTEM_ID_DEFINE, version_no_dot, "" if offset == 0 else "_%u" % offset),
+                    '"%u"' % (_SYSTEM_ID_BASE + _version_num(pg.version) + offset),
+                )
+                + "\n"
+            )
+
+    return result
+
+
+####################################################################################################################################
 def bld_pg_render(path_build, bld_pg):
     """Render the PostgreSQL interfaces."""
 
-    file_write_differs(os.path.join(path_build, "src/postgres/interface.auto.c.inc"), _render_interface_auto_c(bld_pg))
+    file_write_differs(os.path.join(path_build, bld_pg.interface.path_render), _render_interface_auto_c(bld_pg))
 
 
 ####################################################################################################################################
@@ -133,3 +179,32 @@ def bld_pg_version_render(path_build, bld_pg):
     """Render the PostgreSQL version constants."""
 
     file_write_differs(os.path.join(path_build, "src/postgres/version.auto.h"), _render_version_auto_h(bld_pg))
+
+
+####################################################################################################################################
+def bld_pg_system_id_render(path_repo, bld_pg):
+    """Render the system id defines into the harness header.
+
+    They go into the header the rest of the harness declarations are in rather than a generated file of their own, so this replaces
+    the defines where they are instead of writing a file. Every one of them is replaced by the block, which is rendered where the
+    first one was."""
+
+    path = os.path.join(path_repo, _PATH_SYSTEM_ID)
+    result = ""
+    rendered = False
+
+    for line in file_read(path).rstrip("\n").split("\n"):
+        if line.startswith("#define " + _SYSTEM_ID_DEFINE):
+            if not rendered:
+                result += _render_system_id(bld_pg)
+                rendered = True
+
+            continue
+
+        result += line + "\n"
+
+    # A header with none of them is a header this can no longer generate, which is an error rather than a file left as it was
+    if not rendered:
+        raise ToolError("unable to find %s defines in '%s'" % (_SYSTEM_ID_DEFINE, path))
+
+    file_write_differs(path, result)

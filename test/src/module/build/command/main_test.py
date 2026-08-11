@@ -99,6 +99,10 @@ HELP = """<doc title="Reference">
 POSTGRES = "version:\n  - 10\n"
 VENDOR = "typedef uint32 TransactionId;\n"
 INTERN = "#define PG_INTERFACE_CONTROL_IS(version)\n"
+INTERN_HARNESS = "#define HRN_PG_INTERFACE_CONTROL(version)\n"
+
+# The harness header, which the system ids are generated into rather than into a file of their own
+HEADER_HARNESS = "#define HRN_PG_SYSTEMID_10 (stale)\n"
 
 
 ####################################################################################################################################
@@ -111,6 +115,8 @@ def _repo_create(path):
     file_write(os.path.join(path, "doc/xml/reference.xml"), HELP)
     file_write(os.path.join(path, "src/postgres/interface/version.vendor.h"), VENDOR)
     file_write(os.path.join(path, "src/postgres/interface/version.intern.h"), INTERN)
+    file_write(os.path.join(path, "test/src/harness/postgres/version.intern.h"), INTERN_HARNESS)
+    file_write(os.path.join(path, "test/src/harness/postgres.h"), HEADER_HARNESS)
 
 
 ####################################################################################################################################
@@ -157,8 +163,8 @@ def test_cmd_build():
         "config": ("src/config/config.auto.h", "src/config/parse.auto.c.inc"),
         "error": ("src/common/error/error.auto.h", "src/common/error/error.auto.c.inc"),
         "help": ("src/command/help/help.auto.c.inc",),
-        "help-data": ("help.dat",),
         "postgres": ("src/postgres/interface.auto.c.inc",),
+        "postgres-harness": ("test/src/harness/postgres/interface.auto.c.inc",),
         "postgres-version": ("src/postgres/version.auto.h",),
     }
 

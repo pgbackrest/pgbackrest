@@ -30,7 +30,7 @@ def test_file_read_write():
 
         assert_equal(file_read(path_file), "replaced")
 
-        # Bytes are written as bytes, which is how the raw help data is written for the C test to load
+        # Bytes are written as bytes, which is how a binary file such as an image is written
         file_write(path_file, b"\x00\x01raw")
 
         with open(path_file, "rb") as file:

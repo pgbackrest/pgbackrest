@@ -30,9 +30,16 @@ jobs:
           meson setup --unity=on -Dwerror=true build ${GITHUB_WORKSPACE?}/pgbackrest
           ninja -vC build
 
+      # Check that the unity build leaves main as the only symbol. FN_EXTERN and friends are defined as static for the unity
+      # build, so any other symbol is a function or variable that escaped that treatment. The object is checked rather than the
+      # linked binary because the binary also has whatever the C runtime, the static libbacktrace archive, and the copy
+      # relocations for shared library variables put there, none of which is what is being tested and all of which vary by
+      # architecture and distribution.
       - name: Check
         run: |
-          diff ${GITHUB_WORKSPACE?}/pgbackrest/.github/workflows/data/symbol.out <(nm -gj --defined-only build/src/pgbackrest)
+          diff - <(nm -gj --defined-only build/src/pgbackrest.p/*.o) <<'EOF'
+          main
+          EOF
 
   # Check that code is correctly formatted
   code-format:

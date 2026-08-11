@@ -15,6 +15,7 @@ String Handler
 #include "common/memContext.h"
 #include "common/type/string.h"
 #include "common/type/stringList.h"
+#include "common/valgrind.h"
 
 /***********************************************************************************************************************************
 Constant strings that are generally useful
@@ -1014,6 +1015,10 @@ strTrim(String *const this)
 
             // Move the substr to the beginning of the buffer
             memmove(this->pub.buffer, begin, strSize(this));
+
+            // Invalidate the area that was trimmed, including the prior terminator, so Valgrind will warn on a read from it
+            VALGRIND_MAKE_MEM_UNDEFINED(this->pub.buffer + strSize(this), this->pub.extra + 1);
+
             this->pub.buffer[strSize(this)] = 0;
         }
     }
@@ -1061,6 +1066,10 @@ strTruncIdx(String *const this, const int idx)
         // Reset the size to end at the index
         this->pub.extra = (unsigned int)(strSize(this) - (size_t)idx);
         this->pub.size = (unsigned int)idx;
+
+        // Invalidate the area that was truncated, including the prior terminator, so Valgrind will warn on a read from it
+        VALGRIND_MAKE_MEM_UNDEFINED(this->pub.buffer + strSize(this), this->pub.extra + 1);
+
         this->pub.buffer[strSize(this)] = 0;
     }
 

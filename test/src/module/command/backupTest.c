@@ -2773,7 +2773,9 @@ testRun(void)
             HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_BASE "/1/3", relation);
 
             // Add file that is large enough for block incremental but larger on the primary than the standby. This tests that file
-            // size is set correctly when a file is referenced to a prior backup but the original size is different.
+            // size is set correctly when a file is referenced to a prior backup but the original size is different. Zero the buffer
+            // again since the area beyond used was invalidated when the buffer was made smaller above.
+            memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgIdxWrite(0), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);

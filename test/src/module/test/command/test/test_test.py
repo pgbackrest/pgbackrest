@@ -169,7 +169,7 @@ def _repo_create(path, define=DEFINE):
 
 
 ####################################################################################################################################
-def _cmd_test(config, exec_result=None, job_fail=None, job_start=True, job_poll=0, coverage_status=0):
+def _cmd_test(config, exec_result=None, file_list=None, job_fail=None, job_start=True, job_poll=0, coverage_status=0):
     """Run the command with everything it would run captured rather than run.
 
     Returns the status, the commands, the tests that were started, and what was written to the log."""
@@ -179,6 +179,11 @@ def _cmd_test(config, exec_result=None, job_fail=None, job_start=True, job_poll=
 
     def exec_fake(command, result_expect=0, show_output=False):
         command_list.append(command)
+
+        # Files the repository copy is made from, since the repository written here is not a git repository to list them from
+        if "ls-files" in command:
+            return "" if file_list is None else "\n".join(file_list)
+
         result = exec_result.pop(0) if exec_result else ""
 
         if isinstance(result, Exception):
@@ -244,11 +249,12 @@ def test_test_generate():
         assert_equal(status, 0)
 
         # The generator is run for everything it generates, and needs nothing built first since it is python
-        for generate in ("config", "error", "postgres-version"):
+        for generate in ("config", "error", "postgres-version", "help", "postgres"):
             assert_in("%s/build/build.py %s" % (path_repo, generate), command_list[-1])
 
-        # The PostgreSQL interfaces are generated into the repository copy, since they are built rather than committed
-        assert_in("%s/build/build.py postgres --build-path=%s/repo" % (path_repo, path_test), command_list[-1])
+        # The interfaces the harness uses are generated into the repository, the same as everything else, even though nothing but a
+        # test build ever compiles them
+        assert_true(command_list[-1].endswith("%s/build/build.py postgres-harness" % path_repo))
 
         assert_in("autogenerate code", output)
 
@@ -256,7 +262,65 @@ def test_test_generate():
         status, command_list, started, output = _cmd_test(Config(path_repo, path_test, gen_only=True, dry_run=True))
 
         assert_not_in("build.py config", command_list[-1])
-        assert_in("build.py postgres ", command_list[-1])
+        assert_in("build.py help", command_list[-1])
+        assert_true(command_list[-1].endswith("build.py postgres-harness"))
+
+
+####################################################################################################################################
+def test_test_repo_copy():
+    """The repository copy holds the version controlled files, the files generated into the repository, and nothing else."""
+
+    with tempfile.TemporaryDirectory() as path:
+        path_repo = _repo_create(path)
+        path_test = os.path.join(path, "test")
+        path_copy = os.path.join(path_test, "repo")
+
+        # Files git lists, the last of which is in the index but no longer in the working tree so there is nothing to copy
+        file_list = ["meson.build", "src/version.h", "test/define.yaml", "test/uncrustify.cfg", "src/removed.c"]
+
+        # A generated file is copied even though git does not list it, since a unit build compiles it from the copy
+        file_write(os.path.join(path_repo, "src/command/help/help.auto.c.inc"), "help")
+        file_write(os.path.join(path_repo, "src/postgres/interface.auto.c.inc"), "generated")
+        file_write(os.path.join(path_repo, "test/src/harness/postgres/interface.auto.c.inc"), "harness")
+
+        # Files that are no longer in the repository, including one in a path that nothing else is left in and one in a path that
+        # has since become a file
+        file_write(os.path.join(path_copy, "src/removed.c"), "removed")
+        file_write(os.path.join(path_copy, "renamed/renamed.c"), "renamed")
+        file_write(os.path.join(path_copy, "meson.build/renamed.c"), "renamed")
+
+        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, lint_only=True), file_list=file_list)
+
+        # The copy holds the repository as it is after the version was updated in it, since the copy is made after that
+        file_copy = os.path.join(path_copy, "meson.build")
+        meson_build = file_read(os.path.join(path_repo, "meson.build"))
+
+        assert_equal(status, 0)
+        assert_equal(file_read(file_copy), meson_build)
+        assert_in(VERSION_DEFINE, file_read(os.path.join(path_copy, "src/version.h")))
+        assert_equal(file_read(os.path.join(path_copy, "src/command/help/help.auto.c.inc")), "help")
+        assert_equal(file_read(os.path.join(path_copy, "src/postgres/interface.auto.c.inc")), "generated")
+        assert_equal(file_read(os.path.join(path_copy, "test/src/harness/postgres/interface.auto.c.inc")), "harness")
+
+        # What is not in the repository is gone from the copy, along with the path it was the last file in
+        assert_false(os.path.exists(os.path.join(path_copy, "src/removed.c")))
+        assert_false(os.path.exists(os.path.join(path_copy, "renamed")))
+
+        # A file with the same size and timestamp is not copied again, which is what keeps an unchanged file from being rebuilt
+        stat_copy = os.stat(file_copy)
+        file_write(file_copy, "x" * stat_copy.st_size)
+        os.utime(file_copy, ns=(stat_copy.st_atime_ns, stat_copy.st_mtime_ns))
+
+        _cmd_test(Config(path_repo, path_test, lint_only=True), file_list=file_list)
+
+        assert_equal(file_read(file_copy), "x" * stat_copy.st_size)
+
+        # A file with a different timestamp is copied again even when the size is the same
+        os.utime(file_copy, ns=(stat_copy.st_atime_ns, stat_copy.st_mtime_ns + 1000000000))
+
+        _cmd_test(Config(path_repo, path_test, lint_only=True), file_list=file_list)
+
+        assert_equal(file_read(file_copy), meson_build)
 
 
 ####################################################################################################################################

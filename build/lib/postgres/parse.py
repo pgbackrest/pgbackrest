@@ -2,7 +2,11 @@
 
 The versions come from postgres.yaml, but the types, defines, and functions that make up an interface are read out of the vendored
 PostgreSQL headers rather than declared. A version interface is the same headers compiled again with different names, so scanning
-them is what keeps the generated code in step with a header update."""
+them is what keeps the generated code in step with a header update.
+
+Two interfaces are generated from the same declaration: the one the binary carries and the one the test harness carries. They are
+the same versions and the same vendored types, so all that differs is where their macros are declared and what the functions those
+macros define are called."""
 
 ####################################################################################################################################
 import os
@@ -25,14 +29,55 @@ class BldPgVersion:
 
 
 ####################################################################################################################################
+class BldPgInterface:
+    """An interface that is generated from the vendored headers."""
+
+    def __init__(self, module, description, path_intern, include, prefix, path_render):
+        self.module = module  # Generator that renders it, which the generated file names as what wrote it
+        self.description = description  # What the generated file says it is
+        self.path_intern = path_intern  # Header the interface macros are declared in
+        self.include = include  # How the generated code includes that header
+        self.prefix = prefix  # Prefix of the functions the macros define, e.g. "pgInterface"
+        self.path_render = path_render  # Where the interface is rendered
+
+    @property
+    def type(self):
+        """The struct type the interface functions are collected in, e.g. "pgInterface" becomes "PgInterface"."""
+
+        return self.prefix[:1].upper() + self.prefix[1:]
+
+
+# The interface the binary carries, which is the default since it is the one the build generates
+BLD_PG_INTERFACE = BldPgInterface(
+    "postgres",
+    "PostgreSQL Interface",
+    "src/postgres/interface/version.intern.h",
+    "postgres/interface/version.intern.h",
+    "pgInterface",
+    "src/postgres/interface.auto.c.inc",
+)
+
+# The interface the test harness carries, which writes the files a test needs rather than reading the ones PostgreSQL wrote
+BLD_PG_INTERFACE_HARNESS = BldPgInterface(
+    "postgres-harness",
+    "PostgreSQL Interface Harness",
+    "test/src/harness/postgres/version.intern.h",
+    "harness/postgres/version.intern.h",
+    "hrnPgInterface",
+    "test/src/harness/postgres/interface.auto.c.inc",
+)
+
+
+####################################################################################################################################
 class BldPg:
     """The PostgreSQL interface declaration."""
 
-    def __init__(self, pg_list, type_list, define_list, function_list):
+    def __init__(self, pg_list, type_list, define_list, function_list, interface):
         self.pg_list = pg_list  # Supported versions, oldest first
         self.type_list = type_list  # Interface types, sorted
         self.define_list = define_list  # Interface defines, sorted
         self.function_list = function_list  # Functions defined by macros, in the order they are declared
+        self.interface = interface  # Interface the functions were read for, which is the one that gets rendered
 
 
 ####################################################################################################################################
@@ -130,7 +175,7 @@ def _type_list(header):
 
 
 ####################################################################################################################################
-def bld_pg_parse(path_repo):
+def bld_pg_parse(path_repo, interface=BLD_PG_INTERFACE):
     """Parse the PostgreSQL interface declaration."""
 
     path_vendor = os.path.join(path_repo, "src/postgres/interface/version.vendor.h")
@@ -141,6 +186,6 @@ def bld_pg_parse(path_repo):
     define_list = sorted(_define_list(header_vendor) + list(_DEFINE_EXTRA_LIST))
 
     # Functions are defined as macros, which each interface expands for its own version
-    function_list = _define_list(file_read(os.path.join(path_repo, "src/postgres/interface/version.intern.h")))
+    function_list = _define_list(file_read(os.path.join(path_repo, interface.path_intern)))
 
-    return BldPg(bld_pg_version_list(path_repo), type_list, define_list, function_list)
+    return BldPg(bld_pg_version_list(path_repo), type_list, define_list, function_list, interface)
