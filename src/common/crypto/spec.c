@@ -88,7 +88,7 @@ cipherSpecDup(const CipherSpec *const this)
     if (cipherSpecType(this) == cipherTypeNone)
         result = cipherSpecNewNone();
     else
-        result = cipherSpecNewP(cipherSpecType(this), cipherSpecPass(this));
+        result = cipherSpecNewP(cipherSpecType(this), cipherSpecPass(this), .digest = cipherSpecDigest(this));
 
     FUNCTION_TEST_RETURN(CIPHER_SPEC, result);
 }
