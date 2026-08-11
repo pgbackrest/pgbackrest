@@ -94,7 +94,6 @@ typedef struct ArchiveGetFindCacheArchive
 typedef struct ArchiveGetFindCacheRepo
 {
     unsigned int repoIdx;
-    CipherType cipherType;                                          // Repo cipher type
     const CipherSpec *cipherSpecArchive;                            // Repo archive cipher spec
     List *archiveList;                                              // Cached list of archiveIds and associated paths
     StringList *warnList;                                           // Track repo warnings so each is only reported once
