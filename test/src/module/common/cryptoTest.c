@@ -94,13 +94,26 @@ testRun(void)
             hashTypeSha256, "dup digest");
 
         // A pack carries nothing but the type when there is no cipher
-        PackWrite *const packWrite = pckWriteNewP();
+        PackWrite *packWrite = pckWriteNewP();
 
         cipherSpecPack(packWrite, cipherSpecNewNone());
         pckWriteEndP(packWrite);
 
         TEST_RESULT_UINT(
             cipherSpecType(cipherSpecNewPack(pckReadNew(pckWriteResult(packWrite)))), cipherTypeNone, "unpack none");
+
+        // Else it carries the type, digest, and pass. Pack a digest that is not the default so that a pack which loses the digest
+        // cannot pass by falling back to the default.
+        packWrite = pckWriteNewP();
+
+        cipherSpecPack(packWrite, cipherSpecNewP(cipherTypeAes256Cbc, testPass, .digest = hashTypeSha256));
+        pckWriteEndP(packWrite);
+
+        const CipherSpec *const cipherSpecUnpack = cipherSpecNewPack(pckReadNew(pckWriteResult(packWrite)));
+
+        TEST_RESULT_UINT(cipherSpecType(cipherSpecUnpack), cipherTypeAes256Cbc, "unpack type");
+        TEST_RESULT_UINT(cipherSpecDigest(cipherSpecUnpack), hashTypeSha256, "unpack digest");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecUnpack)), TEST_PASS, "unpack pass");
 
         CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(cipherBlockNewP(cipherModeEncrypt, cipherSpec));
         TEST_RESULT_INT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");
