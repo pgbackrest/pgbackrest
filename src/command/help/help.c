@@ -20,6 +20,9 @@ Help Command
 #include "config/parse.h"
 #include "version.h"
 
+// Include auto-generated help data
+#include "command/help/help.auto.c.inc"
+
 /***********************************************************************************************************************************
 Define the console width - use a fixed width of 80 since this should be safe on virtually all consoles
 ***********************************************************************************************************************************/
@@ -361,11 +364,9 @@ typedef struct HelpOptionData
 } HelpOptionData;
 
 static String *
-helpRender(const Buffer *const helpData)
+helpRender(void)
 {
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(BUFFER, helpData);
-    FUNCTION_TEST_END();
+    FUNCTION_TEST_VOID();
 
     String *const result = strCatZ(strNew(), PROJECT_NAME " " PROJECT_VERSION);
 
@@ -389,7 +390,7 @@ helpRender(const Buffer *const helpData)
         ioBufferSizeSet(8192);
 
         // Read pack from compressed buffer
-        IoRead *const helpRead = ioBufferReadNew(helpData);
+        IoRead *const helpRead = ioBufferReadNew(BUF(helpData, sizeof(helpData)));
         ioFilterGroupAdd(ioReadFilterGroup(helpRead), bz2DecompressNew(false));
         ioReadOpen(helpRead);
 
@@ -733,15 +734,13 @@ helpRender(const Buffer *const helpData)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-cmdHelp(const Buffer *const helpData)
+cmdHelp(void)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(BUFFER, helpData);
-    FUNCTION_LOG_END();
+    FUNCTION_LOG_VOID(logLevelDebug);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ioFdWriteOneStr(STDOUT_FILENO, helpRender(helpData));
+        ioFdWriteOneStr(STDOUT_FILENO, helpRender());
     }
     MEM_CONTEXT_TEMP_END();
 

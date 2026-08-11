@@ -17,6 +17,6 @@ if not dist
         ],
     )
 else
-    # The shipped file is included by main.c via the implicit source include path, so it is not a compiled source
+    # The shipped file is included by help.c via the implicit source include path, so it is not a compiled source
     help_auto_c_inc = []
 endif

@@ -13,7 +13,7 @@ import os
 from common.error import ToolError
 from common.pack import PackWrite
 from common.render import LINE_LENGTH, bld_header
-from common.storage import file_write, file_write_differs
+from common.storage import file_write_differs
 
 _MODULE = "help"
 _DESCRIPTION = "Help Data"
@@ -210,17 +210,11 @@ def _pack(bld_cfg, bld_hlp):
 
 
 ####################################################################################################################################
-def _bld_hlp_data(bld_cfg, bld_hlp):
-    """The packed and compressed help, which is what the binary carries and decompresses at run time."""
-
-    return bz2.compress(_pack(bld_cfg, bld_hlp), _COMPRESS_LEVEL)
-
-
-####################################################################################################################################
 def _render_help_auto_c(bld_cfg, bld_hlp):
     """Render help.auto.c.inc, which is the compressed help as a C string literal."""
 
-    data = _bld_hlp_data(bld_cfg, bld_hlp)
+    # The packed and compressed help, which is what the binary carries and decompresses at run time
+    data = bz2.compress(_pack(bld_cfg, bld_hlp), _COMPRESS_LEVEL)
 
     result = bld_header(_MODULE, _DESCRIPTION)
     result += 'VR_NON_STRING static const char helpData[%u] =\n"' % len(data)
@@ -251,13 +245,3 @@ def bld_hlp_render(path_build, bld_cfg, bld_hlp):
     """Render the help."""
 
     file_write_differs(os.path.join(path_build, "src/command/help/help.auto.c.inc"), _render_help_auto_c(bld_cfg, bld_hlp))
-
-
-####################################################################################################################################
-def bld_hlp_render_data(path_build, bld_cfg, bld_hlp):
-    """Write the help as raw data rather than as C.
-
-    The help unit test loads this to run the help against the current declarations, since the C literal the build compiles in may
-    not have been generated when the test runs. It goes at the root of the build path because it is not part of any source tree."""
-
-    file_write(os.path.join(path_build, "help.dat"), _bld_hlp_data(bld_cfg, bld_hlp))

@@ -157,7 +157,6 @@ def test_cmd_build():
         "config": ("src/config/config.auto.h", "src/config/parse.auto.c.inc"),
         "error": ("src/common/error/error.auto.h", "src/common/error/error.auto.c.inc"),
         "help": ("src/command/help/help.auto.c.inc",),
-        "help-data": ("help.dat",),
         "postgres": ("src/postgres/interface.auto.c.inc",),
         "postgres-version": ("src/postgres/version.auto.h",),
     }

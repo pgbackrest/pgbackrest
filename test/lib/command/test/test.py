@@ -69,9 +69,8 @@ def _version_update(path_repo):
 
 
 ####################################################################################################################################
-# Files the copy needs that are generated into the repository rather than version controlled, so git does not list them. The help is
-# not one of them since no unit build compiles it, the help test generates the data it needs.
-_FILE_GENERATE_LIST = ("src/postgres/interface.auto.c.inc",)
+# Files the copy needs that are generated into the repository rather than version controlled, so git does not list them
+_FILE_GENERATE_LIST = ("src/command/help/help.auto.c.inc", "src/postgres/interface.auto.c.inc")
 
 
 ####################################################################################################################################
@@ -135,20 +134,19 @@ def _code_generate(config):
     the repository and what was generated into it."""
 
     path_repo = config.repo_path
-    command = ""
+    generate_list = []
 
     log(INFO, "autogenerate code")
 
     # A dry run does the minimum required, i.e. only what building the test list depends on
     if not config.dry_run:
-        for generate in ("config", "error", "postgres-version"):
-            command += "%s/build/build.py %s && \\\n" % (path_repo, generate)
+        generate_list += ["config", "error", "postgres-version"]
 
-    # The PostgreSQL interfaces are generated here because they are built rather than committed and a unit build does not run the
-    # code generation that the build does
-    command += "%s/build/build.py postgres" % path_repo
+    # The help and the PostgreSQL interfaces are generated here because they are built rather than committed and a unit build does
+    # not run the code generation that the build does
+    generate_list += ["help", "postgres"]
 
-    exec_one(command)
+    exec_one(" && \\\n".join("%s/build/build.py %s" % (path_repo, generate) for generate in generate_list))
 
 
 ####################################################################################################################################

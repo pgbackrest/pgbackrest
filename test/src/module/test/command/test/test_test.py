@@ -249,7 +249,7 @@ def test_test_generate():
         assert_equal(status, 0)
 
         # The generator is run for everything it generates, and needs nothing built first since it is python
-        for generate in ("config", "error", "postgres-version"):
+        for generate in ("config", "error", "postgres-version", "help"):
             assert_in("%s/build/build.py %s" % (path_repo, generate), command_list[-1])
 
         # The PostgreSQL interfaces are generated into the repository, the same as everything else, even though they are built
@@ -262,6 +262,7 @@ def test_test_generate():
         status, command_list, started, output = _cmd_test(Config(path_repo, path_test, gen_only=True, dry_run=True))
 
         assert_not_in("build.py config", command_list[-1])
+        assert_in("build.py help", command_list[-1])
         assert_true(command_list[-1].endswith("build.py postgres"))
 
 
@@ -278,6 +279,7 @@ def test_test_repo_copy():
         file_list = ["meson.build", "src/version.h", "test/define.yaml", "test/uncrustify.cfg", "src/removed.c"]
 
         # A generated file is copied even though git does not list it, since a unit build compiles it from the copy
+        file_write(os.path.join(path_repo, "src/command/help/help.auto.c.inc"), "help")
         file_write(os.path.join(path_repo, "src/postgres/interface.auto.c.inc"), "generated")
 
         # Files that are no longer in the repository, including one in a path that nothing else is left in and one in a path that
@@ -295,6 +297,7 @@ def test_test_repo_copy():
         assert_equal(status, 0)
         assert_equal(file_read(file_copy), meson_build)
         assert_in(VERSION_DEFINE, file_read(os.path.join(path_copy, "src/version.h")))
+        assert_equal(file_read(os.path.join(path_copy, "src/command/help/help.auto.c.inc")), "help")
         assert_equal(file_read(os.path.join(path_copy, "src/postgres/interface.auto.c.inc")), "generated")
 
         # What is not in the repository is gone from the copy, along with the path it was the last file in
