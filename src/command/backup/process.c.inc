@@ -333,7 +333,6 @@ typedef struct BackupJobData
     const String *const backupLabel;                                // Backup label (defines the backup path)
     const bool backupStandby;                                       // Backup from standby
     RegExp *standbyExp;                                             // Identify files that may be copied from the standby
-    const CipherType cipherType;                                    // Cipher type
     const CipherSpec *const cipherSpecBackup;                       // Cipher spec used to encrypt files in the backup
     const PgPageSize pageSize;                                      // Page size
     const CompressType compressType;                                // Backup compression type
@@ -798,7 +797,6 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
             .backupStandby = backupData->dbStandby != NULL,
             .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
-            .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
             .cipherSpecBackup = manifestCipherSpec(manifest),
             .pageSize = backupData->pageSize,
             .delta = cfgOptionBool(cfgOptDelta),
