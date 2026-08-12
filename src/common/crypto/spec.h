@@ -4,10 +4,8 @@ Cipher Spec
 Everything needed to encrypt or decrypt, kept together so that adding to it does not mean changing every function and protocol
 message that carries it.
 
-The passphrase (pass) contains the bytes the key is derived from. The digest is also here because the two are chosen together and
-deriving from the wrong digest produces a wrong key rather than an error.
-
-There is no digest or pass when the type is none, and the pass is never logged.
+The passphrase (pass) contains the bytes the key is derived from. There is no pass when the type is none, and the pass is never
+logged.
 ***********************************************************************************************************************************/
 #ifndef COMMON_CRYPTO_SPEC_H
 #define COMMON_CRYPTO_SPEC_H
@@ -25,23 +23,14 @@ typedef struct CipherSpec CipherSpec;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-// Create from a pass and optionally a digest
-typedef struct CipherSpecNewParam
-{
-    VAR_PARAM_HEADER;
-    HashType digest;                                                // Digest to derive the key with instead of the default
-} CipherSpecNewParam;
-
-#define cipherSpecNewP(type, pass, ...)                                                                                            \
-    cipherSpecNew(type, pass, (CipherSpecNewParam){VAR_PARAM_INIT, __VA_ARGS__})
-
-FN_EXTERN CipherSpec *cipherSpecNew(CipherType type, const Buffer *pass, CipherSpecNewParam param);
+// Create from a pass
+FN_EXTERN CipherSpec *cipherSpecNew(CipherType type, const Buffer *pass);
 
 // Create for no encryption
 FN_INLINE_ALWAYS CipherSpec *
 cipherSpecNewNone(void)
 {
-    return cipherSpecNewP(cipherTypeNone, NULL);
+    return cipherSpecNew(cipherTypeNone, NULL);
 }
 
 // Create from a pack written by cipherSpecPack()
@@ -56,7 +45,6 @@ Getters/Setters
 typedef struct CipherSpecPub
 {
     CipherType type;                                                // Cipher type, none when not encrypted
-    HashType digest;                                                // Digest the pass derives the key with
     const Buffer *pass;                                             // Passphrase text or key bytes
 } CipherSpecPub;
 
@@ -65,13 +53,6 @@ FN_INLINE_ALWAYS CipherType
 cipherSpecType(const CipherSpec *const this)
 {
     return THIS_PUB(CipherSpec)->type;
-}
-
-// Digest the pass derives the key with
-FN_INLINE_ALWAYS HashType
-cipherSpecDigest(const CipherSpec *const this)
-{
-    return THIS_PUB(CipherSpec)->digest;
 }
 
 // Passphrase text or key bytes

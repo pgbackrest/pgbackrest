@@ -888,7 +888,7 @@ protocolKeepAlive(void)
             ProtocolHelperClient *const match = lstGet(protocolHelper.clientList, clientIdx);
 
             if (match->type == protocolClientRemote)
-                protocolClientNoOp(match->client);
+                protocolClientKeepAlive(match->client);
         }
     }
 

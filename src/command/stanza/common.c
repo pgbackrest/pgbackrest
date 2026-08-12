@@ -34,7 +34,7 @@ cipherSpecGen(const CipherType cipherType)
             cryptoRandomBytes(buffer, sizeof(buffer));
 
             // The pass is the encoded text rather than the bytes it encodes, so it is stored and derived from as that text
-            result = cipherSpecNewP(cipherType, BUFSTR(strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)))));
+            result = cipherSpecNew(cipherType, BUFSTR(strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)))));
             cipherSpecMove(result, memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();

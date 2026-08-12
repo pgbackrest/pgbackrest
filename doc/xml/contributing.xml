@@ -93,7 +93,7 @@
 
             <execute user="root" pre="y">
                 <exe-cmd>
-                    apt-get install rsync git build-essential valgrind libssl-dev zlib1g-dev libxml2-dev
+                    apt-get install git build-essential valgrind libssl-dev zlib1g-dev libxml2-dev
                     libpq-dev pkg-config liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev ccache
                     meson python3-yaml python3-coverage
                 </exe-cmd>

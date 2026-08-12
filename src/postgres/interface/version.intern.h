@@ -10,38 +10,63 @@ These macros should be kept as simple as possible, with most of the logic contai
 #include "postgres/version.h"
 
 /***********************************************************************************************************************************
-Determine if the supplied pg_control is for this version of PostgreSQL. When CATALOG_VERSION_NO_MAX is defined then the catalog will
-be accepted as a range that lasts until the end of the encoded year. This allows pgBackRest to work with PostgreSQL during the
-alpha/beta/rc period without needing to be updated, unless of course the actual interface changes.
+Values that vary by version
+
+Each is captured as a constant named for the version so that the interface struct, which is built after every version has
+undefined what it defined, can still name it. A define cannot do this because it is expanded where it is used rather than where
+it is made, by which time the value it was given is gone.
+
+One macro per value so that a value which does not vary between two versions is captured once for both, the same way a function
+that does not vary is rendered once for both.
 ***********************************************************************************************************************************/
-#ifdef CATALOG_VERSION_NO_MAX
+// Control version that pg_control matches for this version of PostgreSQL
+#define PG_INTERFACE_VALUE_CONTROL_VERSION(version)                                                                                \
+    enum {pgInterfaceControlVersion##version = PG_CONTROL_VERSION}
 
-#define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
+// Catalog version that pg_control matches for this version of PostgreSQL
+#define PG_INTERFACE_VALUE_CATALOG_VERSION(version)                                                                                \
+    enum {pgInterfaceCatalogVersion##version = CATALOG_VERSION_NO}
+
+// Magic that the WAL header matches for this version of PostgreSQL
+#define PG_INTERFACE_VALUE_WAL_MAGIC(version)                                                                                      \
+    enum {pgInterfaceWalMagic##version = XLOG_PAGE_MAGIC}
+
+// Offset of the crc in pg_control, which is also the length of the part the crc is calculated over since the crc is last
+#define PG_INTERFACE_VALUE_CONTROL_CRC_OFFSET(version)                                                                             \
+    enum {pgInterfaceControlCrcOffset##version = offsetof(ControlFileData, crc)}
+
+/***********************************************************************************************************************************
+Determine whether pg_control matches an interface
+
+Rendered once after the versions, in whichever form fits the versions that were rendered. The range form is rendered when one of
+them has not been released, since only then is there an interface accepting more than a single catalog version. Rendering the form
+that is used means there is never a comparison that no supported version can fail.
+
+An unreleased version accepts any catalog version until the end of the year the one it was built with encodes.
+***********************************************************************************************************************************/
+#define PG_INTERFACE_CONTROL_MATCH()                                                                                               \
     static bool                                                                                                                    \
-    pgInterfaceControlIs##version(const uint8_t *controlFile)                                                                      \
+    pgInterfaceControlMatch(const PgInterface *const interface, const PgControlCommon *const control)                              \
     {                                                                                                                              \
-        ASSERT(controlFile != NULL);                                                                                               \
-                                                                                                                                   \
-        return                                                                                                                     \
-            ((const ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                    \
-            ((const ControlFileData *)controlFile)->catalog_version_no >= CATALOG_VERSION_NO &&                                    \
-            ((const ControlFileData *)controlFile)->catalog_version_no < (CATALOG_VERSION_NO / 100000 + 1) * 100000;               \
+        return control->controlVersion == interface->controlVersion && control->catalogVersion == interface->catalogVersion;       \
     }
 
-#else
-
-#define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
+#define PG_INTERFACE_CONTROL_MATCH_RANGE()                                                                                         \
     static bool                                                                                                                    \
-    pgInterfaceControlIs##version(const uint8_t *controlFile)                                                                      \
+    pgInterfaceControlMatch(const PgInterface *const interface, const PgControlCommon *const control)                              \
     {                                                                                                                              \
-        ASSERT(controlFile != NULL);                                                                                               \
+        if (control->controlVersion != interface->controlVersion)                                                                  \
+            return false;                                                                                                          \
                                                                                                                                    \
-        return                                                                                                                     \
-            ((const ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                    \
-            ((const ControlFileData *)controlFile)->catalog_version_no == CATALOG_VERSION_NO;                                      \
+        if (interface->unreleased)                                                                                                 \
+        {                                                                                                                          \
+            return                                                                                                                 \
+                control->catalogVersion >= interface->catalogVersion &&                                                            \
+                control->catalogVersion < (interface->catalogVersion / 100000 + 1) * 100000;                                       \
+        }                                                                                                                          \
+                                                                                                                                   \
+        return control->catalogVersion == interface->catalogVersion;                                                               \
     }
-
-#endif
 
 /***********************************************************************************************************************************
 Read the version specific pg_control into a general data structure
@@ -65,16 +90,6 @@ Read the version specific pg_control into a general data structure
     }
 
 /***********************************************************************************************************************************
-Get control crc offset
-***********************************************************************************************************************************/
-#define PG_INTERFACE_CONTROL_CRC_OFFSET(version)                                                                                   \
-    static size_t                                                                                                                  \
-    pgInterfaceControlCrcOffset##version(void)                                                                                     \
-    {                                                                                                                              \
-        return offsetof(ControlFileData, crc);                                                                                     \
-    }
-
-/***********************************************************************************************************************************
 Invalidate control checkpoint. PostgreSQL skips the first segment so any LSN in that segment is invalid.
 ***********************************************************************************************************************************/
 #define PG_INTERFACE_CONTROL_CHECKPOINT_INVALIDATE(version)                                                                        \
@@ -82,28 +97,6 @@ Invalidate control checkpoint. PostgreSQL skips the first segment so any LSN in 
     pgInterfaceControlCheckpointInvalidate##version(uint8_t *const controlFile)                                                    \
     {                                                                                                                              \
         ((ControlFileData *)controlFile)->checkPoint = PG_CONTROL_CHECKPOINT_INVALID;                                              \
-    }
-
-/***********************************************************************************************************************************
-Get the control version
-***********************************************************************************************************************************/
-#define PG_INTERFACE_CONTROL_VERSION(version)                                                                                      \
-    static uint32_t                                                                                                                \
-    pgInterfaceControlVersion##version(void)                                                                                       \
-    {                                                                                                                              \
-        return PG_CONTROL_VERSION;                                                                                                 \
-    }
-
-/***********************************************************************************************************************************
-Determine if the supplied WAL is for this version of PostgreSQL
-***********************************************************************************************************************************/
-#define PG_INTERFACE_WAL_IS(version)                                                                                               \
-    static bool                                                                                                                    \
-    pgInterfaceWalIs##version(const uint8_t *walFile)                                                                              \
-    {                                                                                                                              \
-        ASSERT(walFile != NULL);                                                                                                   \
-                                                                                                                                   \
-        return ((const XLogPageHeaderData *)walFile)->xlp_magic == XLOG_PAGE_MAGIC;                                                \
     }
 
 /***********************************************************************************************************************************

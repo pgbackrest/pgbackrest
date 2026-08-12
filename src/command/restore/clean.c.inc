@@ -127,7 +127,6 @@ typedef struct RestoreCleanCallbackData
     const ManifestTarget *target;                                   // Current target being compared
     const String *targetName;                                       // Name to use when finding files/paths/links
     const String *targetPath;                                       // Path of target currently being compared
-    const String *subPath;                                          // Subpath in target currently being compared
     bool basePath;                                                  // Is this the base path?
     bool exists;                                                    // Does the target path exist?
     bool delta;                                                     // Is this a delta restore?

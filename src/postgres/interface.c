@@ -62,34 +62,31 @@ typedef struct PgInterface
     // Version of PostgreSQL supported by this interface
     unsigned int version;
 
-    // Does pg_control match this version of PostgreSQL?
-    bool (*controlIs)(const uint8_t *);
+    // Control version and catalog version that pg_control matches for this version of PostgreSQL. A version that has not been
+    // released has no catalog version of its own yet, so it accepts a range of them rather than only its own.
+    uint32_t controlVersion;
+    uint32_t catalogVersion;
+    bool unreleased;
+
+    // Magic that the WAL header matches for this version of PostgreSQL
+    uint16_t walMagic;
+
+    // Offset of the crc in pg_control
+    size_t controlCrcOffset;
 
     // Convert pg_control to a common data structure
     PgControl (*control)(const uint8_t *);
 
-    // Get control crc offset
-    size_t (*controlCrcOffset)(void);
-
     // Invalidate control checkpoint
     void (*controlCheckpointInvalidate)(uint8_t *);
-
-    // Get the control version for this version of PostgreSQL
-    uint32_t (*controlVersion)(void);
-
-    // Does the WAL header match this version of PostgreSQL?
-    bool (*walIs)(const uint8_t *);
 
     // Convert WAL header to a common data structure
     PgWal (*wal)(const uint8_t *);
 } PgInterface;
 
-// Include auto-generated interfaces
-#include "postgres/interface.auto.c.inc"
-
 /***********************************************************************************************************************************
-These pg_control fields are common to all versions of PostgreSQL, so we can use them to generate error messages when the pg_control
-version cannot be found.
+These pg_control fields are common to all versions of PostgreSQL, so we can use them to match an interface and to generate error
+messages when the pg_control version cannot be found.
 ***********************************************************************************************************************************/
 typedef struct PgControlCommon
 {
@@ -97,6 +94,9 @@ typedef struct PgControlCommon
     uint32_t controlVersion;
     uint32_t catalogVersion;
 } PgControlCommon;
+
+// Include auto-generated interfaces
+#include "postgres/interface.auto.c.inc"
 
 /***********************************************************************************************************************************
 Get the interface for a PostgreSQL version
@@ -203,7 +203,7 @@ pgControlCrcValidate(const Buffer *const controlFile, const PgInterface *const i
     ASSERT(controlFile != NULL);
     ASSERT(interface != NULL);
 
-    size_t result = interface->controlCrcOffset();
+    size_t result = interface->controlCrcOffset;
 
     do
     {
@@ -283,9 +283,11 @@ pgControlFromBuffer(const Buffer *const controlFile, const String *const pgVersi
         interface = pgInterfaceVersion(pgVersionFromStr(pgVersionForce));
     else
     {
+        const PgControlCommon *const controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
+
         for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
         {
-            if (pgInterface[interfaceIdx].controlIs(bufPtrConst(controlFile)))
+            if (pgInterfaceControlMatch(&pgInterface[interfaceIdx], controlCommon))
             {
                 interface = &pgInterface[interfaceIdx];
                 break;
@@ -295,8 +297,6 @@ pgControlFromBuffer(const Buffer *const controlFile, const String *const pgVersi
         // If the version was not found then error with the control and catalog version that were found
         if (interface == NULL)
         {
-            const PgControlCommon *controlCommon = (const PgControlCommon *)bufPtrConst(controlFile);
-
             THROW_FMT(
                 VersionNotSupportedError,
                 "unexpected control version = %u and catalog version = %u\n"
@@ -307,8 +307,6 @@ pgControlFromBuffer(const Buffer *const controlFile, const String *const pgVersi
     }
 
     // Get info from the control file
-    ASSERT(pgVersionForce != NULL || interface->controlIs(bufPtrConst(controlFile)));
-
     PgControl result = interface->control(bufPtrConst(controlFile));
     result.version = interface->version;
 
@@ -460,7 +458,7 @@ pgControlVersion(const unsigned int pgVersion)
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(UINT32, pgInterfaceVersion(pgVersion)->controlVersion());
+    FUNCTION_TEST_RETURN(UINT32, pgInterfaceVersion(pgVersion)->controlVersion);
 }
 
 /***********************************************************************************************************************************
@@ -499,7 +497,7 @@ pgWalFromBuffer(const Buffer *const walBuffer, const String *const pgVersionForc
     {
         for (unsigned int interfaceIdx = 0; interfaceIdx < LENGTH_OF(pgInterface); interfaceIdx++)
         {
-            if (pgInterface[interfaceIdx].walIs(bufPtrConst(walBuffer)))
+            if (((const PgWalCommon *)bufPtrConst(walBuffer))->magic == pgInterface[interfaceIdx].walMagic)
             {
                 interface = &pgInterface[interfaceIdx];
                 break;
@@ -519,8 +517,6 @@ pgWalFromBuffer(const Buffer *const walBuffer, const String *const pgVersionForc
     }
 
     // Get info from the control file
-    ASSERT(pgVersionForce != NULL || interface->walIs(bufPtrConst(walBuffer)));
-
     PgWal result = interface->wal(bufPtrConst(walBuffer));
     result.version = interface->version;
 

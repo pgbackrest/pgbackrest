@@ -56,7 +56,6 @@ typedef struct BackupData
 
     unsigned int pgIdxStandby;                                      // cfgOptGrpPg index of the standby
     Db *dbStandby;                                                  // Database connection to the standby
-    const Storage *storageStandby;                                  // Storage object for the standby
     const String *hostStandby;                                      // Host name of the standby
 
     const InfoArchive *archiveInfo;                                 // Archive info
@@ -114,7 +113,6 @@ backupInit(const InfoBackup *const infoBackup)
 
             result->pgIdxStandby = dbInfo.standbyIdx;
             result->dbStandby = dbInfo.standby;
-            result->storageStandby = storagePgIdx(result->pgIdxStandby);
             result->hostStandby = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxStandby);
         }
 

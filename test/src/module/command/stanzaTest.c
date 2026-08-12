@@ -135,7 +135,7 @@ testRun(void)
         TEST_ASSIGN(
             infoArchive,
             infoArchiveLoadFile(
-                storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
+                storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
             "load archive info from encrypted repo2");
         TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(infoArchive)), cipherTypeAes256Cbc, "cipher sub set");
 
@@ -143,7 +143,7 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupLoadFile(
-                storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
+                storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
             "load backup info from encrypted repo2");
         TEST_RESULT_UINT(cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeAes256Cbc, "cipher sub set");
 
@@ -181,14 +181,14 @@ testRun(void)
         TEST_ASSIGN(
             infoArchive,
             infoArchiveLoadFile(
-                storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
+                storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load archive info from encrypted repo4");
         TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(infoArchive)), cipherTypeAes256Cbc, "cipher sub set");
 
         TEST_ASSIGN(
             infoBackup,
             infoBackupLoadFile(
-                storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
+                storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load backup info from encrypted repo4");
         TEST_RESULT_UINT(cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeAes256Cbc, "cipher sub set");
 

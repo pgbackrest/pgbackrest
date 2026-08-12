@@ -239,7 +239,7 @@ infoNewLoad(
                                 MEM_CONTEXT_OBJ_BEGIN(this)
                                 {
                                     // The dependent files are encrypted with the same cipher type as this one
-                                    this->pub.cipherSpec = cipherSpecNewP(
+                                    this->pub.cipherSpec = cipherSpecNew(
                                         cipherSpecType(cipherSpec), BUFSTR(varStr(jsonToVar(value->value))));
                                 }
                                 MEM_CONTEXT_OBJ_END();

@@ -656,7 +656,10 @@ unit:
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: postgres/interface
     total: 10
-    harness: postgres
+    harness:
+      name: postgres
+      shim:
+        - postgres/interface
 
     coverage:
       - postgres/interface

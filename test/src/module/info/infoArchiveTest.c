@@ -87,7 +87,7 @@ testRun(void)
             info,
             infoArchiveNew(
                 PG_VERSION_10, 6569239123849665999, REPOSITORY_FORMAT_DEFAULT,
-                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
+                cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
             "infoArchiveNew() - cipher sub");
 
         contentSave = bufNew(0);
@@ -95,7 +95,7 @@ testRun(void)
         TEST_RESULT_VOID(infoArchiveSave(info, ioBufferWriteNew(contentSave)), "save new with cipher");
 
         TEST_ASSIGN(
-            info, infoArchiveNewLoad(ioBufferReadNew(contentSave), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
+            info, infoArchiveNewLoad(ioBufferReadNew(contentSave), cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
             "load encrypted archive info");
         TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), infoArchivePg(info), "infoPg set");

@@ -88,7 +88,7 @@ testRun(void)
             infoBackup,
             infoBackupNew(
                 PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT,
-                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
+                cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
             "infoBackupNew() - cipher sub");
 
         contentSave = bufNew(0);
@@ -97,7 +97,7 @@ testRun(void)
 
         infoBackup = NULL;
         TEST_ASSIGN(
-            infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
+            infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave), cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
             "load backup info with cipher sub");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackupPg(infoBackup), "infoPg set");
         TEST_RESULT_STR_Z(
