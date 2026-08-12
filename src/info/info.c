@@ -122,40 +122,6 @@ infoNew(const unsigned int format, const CipherSpec *const cipherSpecSub)
     FUNCTION_LOG_RETURN(INFO, this);
 }
 
-/***********************************************************************************************************************************
-Header
-
-An encrypted info file at repository format 6 or above begins with a fixed-size plaintext header naming the format it was written
-with. The header exists because the digest the passphrase derives with follows the format, and the format is recorded inside the
-file that the passphrase encrypts. A reader that could not see the format in advance would have to decrypt to learn what it should
-have decrypted with.
-
-A file with no header was written at format 5, the only format there was before the header, so an unrecognized start is not an
-error.
-
-The header takes the place of the salted magic that the cipher writes, which is why a file is always encrypted raw. Both are eight
-bytes followed by the salt, so the eight bytes are consumed either way and what follows begins with the salt no matter which was
-there. It also means a file of either format is opened with the openssl command-line tool the same way: replace the first eight
-bytes with the magic that tool expects.
-
-Only encrypted files carry a header. An unencrypted file is parsed straight away and its format is read from the content like any
-other value, so a header would tell the reader nothing it does not already have and would change what a user sees in a file they
-can read.
-
-Of the four bytes after the magic, the first three are the format and the last is held back for whatever the header turns out to
-need. The format comes first so that it is always at the same place, which is what lets a version work out whether it can read the
-file at all. Only once the format turns out to be one this version knows is the spare byte examined, and then it must be the
-underscore this version writes.
-
-The header is not part of the file content. Whatever writes an info file adds it and whatever reads one consumes it, so nothing
-downstream sees anything but the info file itself.
-***********************************************************************************************************************************/
-#define INFO_HEADER_MAGIC                                           "PGBR"
-#define INFO_HEADER_MAGIC_SIZE                                      (sizeof(INFO_HEADER_MAGIC) - 1)
-#define INFO_HEADER_RESERVED                                        '_'
-#define INFO_HEADER_FORMAT_SIZE                                     3
-#define INFO_HEADER_SIZE                                            (INFO_HEADER_MAGIC_SIZE + INFO_HEADER_FORMAT_SIZE + 1)
-
 // Error when the format cannot be read by this version. Called for the format in the header before anything is decrypted and again
 // for the format in the content, since the two are written together but stored apart.
 static void
@@ -200,106 +166,6 @@ infoFormatDigest(const unsigned int format)
     FUNCTION_TEST_RETURN(STRING_ID, format >= REPOSITORY_FORMAT_6 ? hashTypeSha256 : hashTypeSha1);
 }
 
-// Cipher spec to read or write an info file at a format with. Only the digest differs from the spec the caller supplied, which
-// carries the passphrase the repository was configured with.
-static CipherSpec *
-infoFormatCipherSpec(const unsigned int format, const CipherSpec *const cipherSpec)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, format);
-        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
-    FUNCTION_TEST_END();
-
-    ASSERT(cipherSpec != NULL);
-    ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
-
-    FUNCTION_TEST_RETURN(
-        CIPHER_SPEC,
-        cipherSpecNewP(cipherSpecType(cipherSpec), cipherSpecPass(cipherSpec), .digest = infoFormatDigest(format)));
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN IoRead *
-infoContentRead(IoRead *const read, const CipherSpec *const cipherSpec, unsigned int *const format)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(IO_READ, read);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
-        FUNCTION_LOG_PARAM_P(UINT, format);
-    FUNCTION_LOG_END();
-
-    FUNCTION_AUDIT_HELPER();
-
-    ASSERT(read != NULL);
-    ASSERT(cipherSpec != NULL);
-    ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
-
-    // Read what a header would be. A file that has none was written at format 5, where these are the magic the cipher writes, so
-    // either way they are consumed and what follows begins with the salt.
-    Buffer *const header = bufNew(INFO_HEADER_SIZE);
-    ioRead(read, header);
-
-    unsigned int formatHeader = REPOSITORY_FORMAT_5;
-
-    if (bufUsed(header) == INFO_HEADER_SIZE && memcmp(bufPtrConst(header), INFO_HEADER_MAGIC, INFO_HEADER_MAGIC_SIZE) == 0)
-    {
-        const char *const headerZ = (const char *)bufPtrConst(header);
-
-        for (unsigned int digitIdx = 0; digitIdx < INFO_HEADER_FORMAT_SIZE; digitIdx++)
-        {
-            if (!isdigit((unsigned char)headerZ[INFO_HEADER_MAGIC_SIZE + digitIdx]))
-                THROW(FormatError, "invalid info file header");
-        }
-
-        formatHeader = cvtZToUInt(strZ(strNewZN(headerZ + INFO_HEADER_MAGIC_SIZE, INFO_HEADER_FORMAT_SIZE)));
-
-        // Error on a format this version cannot read before anything is decrypted, since decrypting requires knowing what the
-        // format expects and this version does not know what a newer format expects
-        infoFormatValidate(formatHeader);
-
-        // The format is one this version knows, so the byte held back for later must be the one this version writes
-        if (headerZ[INFO_HEADER_SIZE - 1] != INFO_HEADER_RESERVED)
-            THROW(FormatError, "invalid info file header");
-    }
-    // Else the bytes must be the magic the cipher writes, since that is all a file with no header can begin with. Say so the way
-    // the cipher would have, as this is what a file that was never encrypted looks like from here.
-    else if (bufUsed(header) == INFO_HEADER_SIZE && memcmp(bufPtrConst(header), CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
-        THROW(CryptoError, "cipher header invalid");
-
-    if (format != NULL)
-        *format = formatHeader;
-
-    // Decrypt the content into a buffer
-    Buffer *const result = bufNew(ioBufferSize());
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        IoWrite *const write = ioBufferWriteNew(result);
-        ioFilterGroupAdd(
-            ioWriteFilterGroup(write),
-            cipherBlockNewP(cipherModeDecrypt, infoFormatCipherSpec(formatHeader, cipherSpec), .raw = true));
-        ioWriteOpen(write);
-
-        Buffer *const chunk = bufNew(ioBufferSize());
-
-        while (!ioReadEof(read))
-        {
-            bufUsedZero(chunk);
-            ioRead(read, chunk);
-            ioWrite(write, chunk);
-        }
-
-        ioWriteClose(write);
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    // Close the read now that it has been consumed so that filters the caller added to it, e.g. a checksum over the file as it is
-    // stored, produce their results
-    ioReadClose(read);
-
-    FUNCTION_LOG_RETURN(IO_READ, ioBufferReadNew(result));
-}
-
 /**********************************************************************************************************************************/
 #define INFO_SECTION_BACKREST                                       "backrest"
 #define INFO_KEY_CHECKSUM                                           "backrest-checksum"
@@ -342,17 +208,12 @@ infoNewLoad(
 
             TRY_BEGIN()
             {
+                // The content is decrypted as it is parsed. A file that may carry a header is read with one, which the cipher
+                // consumes and reports the format of once the read is done.
                 if (cipherSpecType(cipherSpec) != cipherTypeNone)
                 {
-                    // A file that carries a header must be read past it before the content can be parsed
-                    if (param.header)
-                    {
-                        ioReadOpen(read);
-                        contentRead = infoContentRead(read, cipherSpec, &formatHeader);
-                    }
-                    // Else the content is decrypted as it is parsed
-                    else
-                        cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, cipherSpec);
+                    ioFilterGroupAdd(
+                        ioReadFilterGroup(read), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .header = param.header));
                 }
 
                 Ini *const ini = iniNewP(contentRead, .strict = true);
@@ -388,15 +249,6 @@ infoNewLoad(
                             {
                                 const uint64_t format = varUInt64(jsonToVar(value->value));
                                 infoFormatValidate(format);
-
-                                // The header is written from the same format as the content, so a file where they disagree has
-                                // been damaged or put together from parts of two files
-                                if (formatHeader != 0 && format != formatHeader)
-                                {
-                                    THROW_FMT(
-                                        FormatError, "repository format %" PRIu64 " does not match header format %u", format,
-                                        formatHeader);
-                                }
 
                                 this->pub.format = (unsigned int)format;
                             }
@@ -453,6 +305,22 @@ infoNewLoad(
             }
             TRY_END();
 
+            // Only a cipher that read a header reports a format, so a result here is what says the file had one. The header is
+            // written from the same format as the content, so a file where they disagree has been damaged or put together from
+            // parts of two files.
+            PackRead *const cipherResult = ioFilterGroupResultP(ioReadFilterGroup(read), CIPHER_BLOCK_FILTER_TYPE);
+
+            if (cipherResult != NULL)
+            {
+                formatHeader = cipherBlockFormat(cipherResult);
+
+                if (this->pub.format != formatHeader)
+                {
+                    THROW_FMT(
+                        FormatError, "repository format %u does not match header format %u", this->pub.format, formatHeader);
+                }
+            }
+
             INFO_CHECKSUM_END(checksumActualFilter);
 
             // Verify the checksum
@@ -495,21 +363,16 @@ infoWriteNew(Buffer *const buffer, const unsigned int format, const CipherSpec *
     ASSERT(format >= REPOSITORY_FORMAT_MIN && format <= REPOSITORY_FORMAT_MAX);
     ASSERT(cipherSpec != NULL);
 
-    // Write the header before the encryption filter is added so it stays plaintext. Format 5 gets none since it is the format a
-    // reader assumes when there is nothing to say otherwise.
-    const bool header = cipherSpecType(cipherSpec) != cipherTypeNone && format >= REPOSITORY_FORMAT_6;
-
-    if (header)
-        bufCat(buffer, BUFSTR(strNewFmt(INFO_HEADER_MAGIC "%0*u%c", INFO_HEADER_FORMAT_SIZE, format, INFO_HEADER_RESERVED)));
-
     IoWrite *const result = ioBufferWriteNew(buffer);
 
-    // Encrypt raw when there is a header since the header takes the place of the magic the cipher would write
+    // The cipher writes the header and derives the pass with the digest the format calls for. Format 5 gets no header since it is
+    // the format a reader assumes when there is nothing to say otherwise.
     if (cipherSpecType(cipherSpec) != cipherTypeNone)
     {
         ioFilterGroupAdd(
             ioWriteFilterGroup(result),
-            cipherBlockNewP(cipherModeEncrypt, infoFormatCipherSpec(format, cipherSpec), .raw = header));
+            cipherBlockNewP(
+                cipherModeEncrypt, cipherSpec, .header = format >= REPOSITORY_FORMAT_6, .format = format));
     }
 
     FUNCTION_LOG_RETURN(IO_WRITE, result);

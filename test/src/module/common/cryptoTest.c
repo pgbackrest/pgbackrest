@@ -2,6 +2,7 @@
 Test Block Cipher
 ***********************************************************************************************************************************/
 #include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 #include "common/io/filter/filter.h"
 #include "common/io/io.h"
 #include "common/type/json.h"
@@ -114,6 +115,158 @@ testRun(void)
         TEST_RESULT_UINT(cipherSpecType(cipherSpecUnpack), cipherTypeAes256Cbc, "unpack type");
         TEST_RESULT_UINT(cipherSpecDigest(cipherSpecUnpack), hashTypeSha1, "unpack digest");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecUnpack)), TEST_PASS, "unpack pass");
+
+        // Format header
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write a header and read the format back from it");
+
+        Buffer *headerBuffer = bufNew(TEST_BUFFER_SIZE);
+        IoWrite *headerWrite = ioBufferWriteNew(headerBuffer);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(headerWrite),
+            cipherBlockNewP(
+                cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true,
+                .format = REPOSITORY_FORMAT_6));
+        ioWriteOpen(headerWrite);
+        ioWrite(headerWrite, testPlainText);
+        ioWriteClose(headerWrite);
+
+        TEST_RESULT_BOOL(
+            memcmp(bufPtrConst(headerBuffer), CIPHER_BLOCK_HEADER_MAGIC "006_", CIPHER_BLOCK_MAGIC_SIZE) == 0, true,
+            "header names the format");
+
+        // The format is not given on decrypt, so it comes from the header and is what the pass derives with
+        Buffer *headerResult = bufNew(TEST_BUFFER_SIZE);
+        IoWrite *headerRead = ioBufferWriteNew(headerResult);
+        IoFilterGroup *headerFilterGroup = ioWriteFilterGroup(headerRead);
+
+        ioFilterGroupAdd(
+            headerFilterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true));
+        ioWriteOpen(headerRead);
+        ioWrite(headerRead, headerBuffer);
+        ioWriteClose(headerRead);
+
+        TEST_RESULT_STR_Z(strNewBuf(headerResult), TEST_PLAINTEXT, "content decrypted with the digest the header called for");
+        TEST_RESULT_UINT(
+            cipherBlockFormat(ioFilterGroupResultP(headerFilterGroup, CIPHER_BLOCK_FILTER_TYPE)), REPOSITORY_FORMAT_6,
+            "filter reports the format");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a file that begins with the magic was written before there was a header");
+
+        headerBuffer = bufNew(TEST_BUFFER_SIZE);
+        headerWrite = ioBufferWriteNew(headerBuffer);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(headerWrite),
+            cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass, .digest = hashTypeSha1)));
+        ioWriteOpen(headerWrite);
+        ioWrite(headerWrite, testPlainText);
+        ioWriteClose(headerWrite);
+
+        headerResult = bufNew(TEST_BUFFER_SIZE);
+        headerRead = ioBufferWriteNew(headerResult);
+        headerFilterGroup = ioWriteFilterGroup(headerRead);
+
+        ioFilterGroupAdd(
+            headerFilterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true));
+        ioWriteOpen(headerRead);
+        ioWrite(headerRead, headerBuffer);
+        ioWriteClose(headerRead);
+
+        TEST_RESULT_STR_Z(strNewBuf(headerResult), TEST_PLAINTEXT, "content decrypted");
+        TEST_RESULT_UINT(
+            cipherBlockFormat(ioFilterGroupResultP(headerFilterGroup, CIPHER_BLOCK_FILTER_TYPE)), REPOSITORY_FORMAT_5,
+            "filter reports the format before the header");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a format given on decrypt must be the one the header names");
+
+        headerBuffer = bufNew(TEST_BUFFER_SIZE);
+        headerWrite = ioBufferWriteNew(headerBuffer);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(headerWrite),
+            cipherBlockNewP(
+                cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true,
+                .format = REPOSITORY_FORMAT_6));
+        ioWriteOpen(headerWrite);
+        ioWrite(headerWrite, testPlainText);
+        ioWriteClose(headerWrite);
+
+        IoWrite *const headerMismatch = ioBufferWriteNew(bufNew(TEST_BUFFER_SIZE));
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(headerMismatch),
+            cipherBlockNewP(
+                cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true,
+                .format = REPOSITORY_FORMAT_5));
+        ioWriteOpen(headerMismatch);
+
+        TEST_ERROR(
+            ioWrite(headerMismatch, headerBuffer), FormatError, "expected repository format 5 but found 6");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a format given on decrypt that the header agrees with is accepted");
+
+        headerResult = bufNew(TEST_BUFFER_SIZE);
+        headerRead = ioBufferWriteNew(headerResult);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(headerRead),
+            cipherBlockNewP(
+                cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true,
+                .format = REPOSITORY_FORMAT_6));
+        ioWriteOpen(headerRead);
+        ioWrite(headerRead, headerBuffer);
+        ioWriteClose(headerRead);
+
+        TEST_RESULT_STR_Z(strNewBuf(headerResult), TEST_PLAINTEXT, "content decrypted");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("damaged headers");
+
+        // Decrypt the buffer above after damaging a byte of the header, which is the same buffer for each case
+        #define TEST_HEADER_DAMAGE(damageIdx, damageChar, errorType, errorMessage)                                                 \
+            do                                                                                                                     \
+            {                                                                                                                      \
+                Buffer *const damaged = bufDup(headerBuffer);                                                                      \
+                bufPtr(damaged)[damageIdx] = damageChar;                                                                           \
+                                                                                                                                   \
+                IoWrite *const write = ioBufferWriteNew(bufNew(TEST_BUFFER_SIZE));                                                 \
+                ioFilterGroupAdd(                                                                                                  \
+                    ioWriteFilterGroup(write),                                                                                     \
+                    cipherBlockNewP(                                                                                               \
+                        cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true));                        \
+                ioWriteOpen(write);                                                                                                \
+                                                                                                                                   \
+                TEST_ERROR(ioWrite(write, damaged), errorType, errorMessage);                                                      \
+            }                                                                                                                      \
+            while (0)
+
+        // Where the format should be, so this version cannot tell what it is looking at
+        TEST_HEADER_DAMAGE(CIPHER_BLOCK_HEADER_MAGIC_SIZE, 'X', FormatError, "invalid cipher header");
+
+        // The byte held back for later, which must be the one this version writes
+        TEST_HEADER_DAMAGE(CIPHER_BLOCK_MAGIC_SIZE - 1, 'X', FormatError, "invalid cipher header");
+
+        // A format newer than this version can read, reported before anything is decrypted
+        TEST_HEADER_DAMAGE(
+            CIPHER_BLOCK_MAGIC_SIZE - 2, '7', FormatError,
+            "repository format 7 requires a newer version of " PROJECT_NAME "\n"
+            "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format 5 to 6.");
+
+        // A format older than this version can read
+        TEST_HEADER_DAMAGE(
+            CIPHER_BLOCK_MAGIC_SIZE - 2, '4', FormatError,
+            "repository format 4 is no longer supported by " PROJECT_NAME "\n"
+            "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format 5 to 6.");
+
+        // Neither a header nor the magic, which is what a file that was never encrypted looks like from here
+        TEST_HEADER_DAMAGE(0, 'X', CryptoError, "cipher header invalid");
+
+        #undef TEST_HEADER_DAMAGE
 
         CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(cipherBlockNewP(cipherModeEncrypt, cipherSpec));
         TEST_RESULT_INT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");

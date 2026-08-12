@@ -104,7 +104,6 @@ Functions
 // content is decrypted into a buffer here rather than as it is read. An info file is small enough for that to be reasonable, and is
 // already built whole in a buffer when it is saved so that it can be written twice. The format the header gives is returned when
 // format is not NULL, so that the content can be checked against it.
-FN_EXTERN IoRead *infoContentRead(IoRead *read, const CipherSpec *cipherSpec, unsigned int *format);
 
 // Create a write to save an info file into a buffer. The header is written and the encryption filter added according to the
 // format, so the caller has only to save into the write it gets back. The write side is the one that knows the format, so unlike

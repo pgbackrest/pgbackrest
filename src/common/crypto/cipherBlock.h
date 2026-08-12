@@ -13,20 +13,14 @@ Filter type constant
 #define CIPHER_BLOCK_FILTER_TYPE                                   STRID5("cipher-blk", 0x16c16e45441230)
 
 /***********************************************************************************************************************************
-Magic constant for salted encrypt, written before the salt unless the cipher is raw. Only salted encrypt is done here, but this
-constant is required for compatibility with the openssl command-line tool. It is exposed so that whatever puts something of its own
-in front of the salt can tell the two apart and report a file that has neither the way this filter would.
-***********************************************************************************************************************************/
-#define CIPHER_BLOCK_MAGIC                                          "Salted__"
-#define CIPHER_BLOCK_MAGIC_SIZE                                     (sizeof(CIPHER_BLOCK_MAGIC) - 1)
-
-/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 typedef struct CipherBlockNewParam
 {
     VAR_PARAM_HEADER;
     bool raw;                                                       // Omit header magic to save space
+    bool header;                                                    // Read/write the format header
+    unsigned int format;                                            // Repository format, required to write a header
 } CipherBlockNewParam;
 
 #define cipherBlockNewP(mode, cipherSpec, ...)                                                                                     \
@@ -34,6 +28,13 @@ typedef struct CipherBlockNewParam
 
 FN_EXTERN IoFilter *cipherBlockNew(CipherMode mode, const CipherSpec *cipherSpec, CipherBlockNewParam param);
 FN_EXTERN IoFilter *cipherBlockNewPack(const Pack *paramList);
+
+/***********************************************************************************************************************************
+Filter result
+
+The format the file was written with, which is what the header was read for. Only a filter that read a header has one to report.
+***********************************************************************************************************************************/
+FN_EXTERN unsigned int cipherBlockFormat(PackRead *cipherBlockResult);
 
 /***********************************************************************************************************************************
 Helper functions

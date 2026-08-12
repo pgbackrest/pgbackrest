@@ -307,12 +307,11 @@ testRun(void)
 
         // The content on its own, which is how a caller that wants the file rather than the values in it reads an info file
         IoRead *const infoRead = ioBufferReadNew(testInfoEncrypt(contentLoad, REPOSITORY_FORMAT_6, cipherSpec));
+
+        ioFilterGroupAdd(ioReadFilterGroup(infoRead), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .header = true));
         ioReadOpen(infoRead);
 
-        IoRead *const contentRead = infoContentRead(infoRead, cipherSpec, NULL);
-        ioReadOpen(contentRead);
-
-        TEST_RESULT_STR(strNewBuf(ioReadBuf(contentRead)), strNewBuf(contentLoad), "info content read");
+        TEST_RESULT_STR(strNewBuf(ioReadBuf(infoRead)), strNewBuf(contentLoad), "info content read");
 
         // A file written before the header existed is read as the format that had none
         contentLoad = harnessInfoChecksumZ("[c]\nkey=1\n");
@@ -349,7 +348,7 @@ testRun(void)
         TEST_ERROR(
             infoNewLoadP(
                 ioBufferReadNew(contentHeader), cipherSpec, harnessInfoLoadNewCallback, callbackContent, .header = true),
-            FormatError, "invalid info file header");
+            FormatError, "invalid cipher header");
 
         // Header damaged where the format should be
         contentHeader = testInfoEncrypt(contentLoad, REPOSITORY_FORMAT_6, cipherSpec);
@@ -358,7 +357,7 @@ testRun(void)
         TEST_ERROR(
             infoNewLoadP(
                 ioBufferReadNew(contentHeader), cipherSpec, harnessInfoLoadNewCallback, callbackContent, .header = true),
-            FormatError, "invalid info file header");
+            FormatError, "invalid cipher header");
 
         // Header names a format this version cannot read, which is reported before anything is decrypted
         contentHeader = testInfoEncrypt(contentLoad, REPOSITORY_FORMAT_6, cipherSpec);

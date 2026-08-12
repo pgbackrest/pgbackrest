@@ -48,9 +48,8 @@ storageGetProcess(IoWrite *const destination)
         IoRead *const source = storageReadIo(
             storageNewReadP(storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing)));
 
-        // Cipher spec when the file is an info file, else NULL. An info file gets no decryption filter because the header in front
-        // of its content must be read before the digest is known, so it is decrypted once the read is open.
-        const CipherSpec *cipherSpecInfo = NULL;
+        // Is the file an info file, i.e. one that carries a header in front of its content?
+        bool fileIsInfo = false;
 
         // Add decryption if needed
         if (!cfgOptionBool(cfgOptRaw))
@@ -103,7 +102,7 @@ storageGetProcess(IoWrite *const destination)
                         }
                         // Else the file is the archive info, which the repo passphrase opens
                         else
-                            cipherSpecInfo = cipherSpec;
+                            fileIsInfo = true;
                     }
 
                     // Backup path
@@ -138,7 +137,7 @@ storageGetProcess(IoWrite *const destination)
                         }
                         // Else the file is the backup info, which the repo passphrase opens
                         else
-                            cipherSpecInfo = cipherSpec;
+                            fileIsInfo = true;
                     }
                 }
 
@@ -146,32 +145,23 @@ storageGetProcess(IoWrite *const destination)
                 if (cipherSpec == NULL)
                     THROW_FMT(OptionInvalidValueError, "unable to determine cipher passphrase for '%s'", strZ(file));
 
-                // Add the decryption filter unless the file is an info file
-                if (cipherSpecInfo == NULL)
-                    cipherBlockFilterGroupAdd(ioReadFilterGroup(source), cipherModeDecrypt, cipherSpec);
+                // Add the decryption filter. An info file is read with a header, which the cipher consumes.
+                ioFilterGroupAdd(
+                    ioReadFilterGroup(source), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .header = fileIsInfo));
             }
         }
 
         // Open source
         if (ioReadOpen(source))
         {
-            IoRead *content = source;
-
-            // Read an info file from behind its header, which is where the format the passphrase derives with comes from
-            if (cipherSpecInfo != NULL)
-            {
-                content = infoContentRead(source, cipherSpecInfo, NULL);
-                ioReadOpen(content);
-            }
-
             // Open the destination file now that we know the source exists and is readable
             ioWriteOpen(destination);
 
             // Copy data from source to destination
-            ioCopyP(content, destination);
+            ioCopyP(source, destination);
 
-            // Close the source and destination. The source is already closed when the content came from an info file read.
-            ioReadClose(content);
+            // Close the source and destination
+            ioReadClose(source);
             ioWriteClose(destination);
 
             // Source file exists

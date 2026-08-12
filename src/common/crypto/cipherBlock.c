@@ -3,6 +3,7 @@ Block Cipher
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <ctype.h>
 #include <string.h>
 
 #include <openssl/err.h>
@@ -13,13 +14,97 @@ Block Cipher
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
+#include "common/type/convert.h"
 #include "common/type/object.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
-Header constants and sizes
+Magic constant for salted encrypt, written before the salt unless the cipher is raw. Only salted encrypt is done here, but this
+constant is required for compatibility with the openssl command-line tool.
 ***********************************************************************************************************************************/
+#define CIPHER_BLOCK_MAGIC                                          "Salted__"
+#define CIPHER_BLOCK_MAGIC_SIZE                                     (sizeof(CIPHER_BLOCK_MAGIC) - 1)
+
+/***********************************************************************************************************************************
+Format header
+
+A file written with a header begins with fixed-size plaintext naming the repository format it was written with. The header exists
+because the digest the pass derives with follows the format, and the format is recorded inside the file that the pass encrypts. A
+reader that could not see the format in advance would have to decrypt to learn what it should have decrypted with.
+
+The header takes the place of the salted magic, which is why a file that carries one is written raw. Both are eight bytes followed
+by the salt, so the eight bytes are consumed either way and what follows begins with the salt no matter which was there. It also
+means a file of either kind is opened with the openssl command-line tool the same way: replace the first eight bytes with the magic
+that tool expects.
+
+A file that begins with the magic rather than the header was written at format 5, the only format there was before the header, so
+that start is not an error when a header was expected.
+
+Of the four bytes after the header magic, the first three are the format and the last is held back for whatever the header turns
+out to need, e.g. naming which key the file was encrypted with once a repository can hold more than one. The format comes first so
+that it is always at the same place, which is what lets a version work out whether it can read the file at all. Only once the
+format turns out to be one this version knows is the spare byte examined, and then it must be the underscore this version writes.
+
+The header is not part of the file content. This filter adds it on encrypt and consumes it on decrypt, so nothing on either side
+sees anything but the content.
+***********************************************************************************************************************************/
+#define CIPHER_BLOCK_HEADER_MAGIC                                   "PGBR"
+#define CIPHER_BLOCK_HEADER_MAGIC_SIZE                              (sizeof(CIPHER_BLOCK_HEADER_MAGIC) - 1)
+#define CIPHER_BLOCK_HEADER_RESERVED                                '_'
+#define CIPHER_BLOCK_HEADER_FORMAT_SIZE                             3
+
 // Total length of cipher header
 #define CIPHER_BLOCK_HEADER_SIZE                                    (CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN)
+
+/***********************************************************************************************************************************
+Digest the pass derives the key with at a format. A format that predates the header derived with SHA-1, which is why a file with no
+header is read with it.
+***********************************************************************************************************************************/
+static const EVP_MD *
+cipherBlockFormatDigest(const unsigned int format)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, format);
+    FUNCTION_TEST_END();
+
+    // Both accessors always return a digest, so unlike a lookup by name this cannot fail
+    FUNCTION_TEST_RETURN_TYPE_CONST_P(EVP_MD, format >= REPOSITORY_FORMAT_6 ? EVP_sha256() : EVP_sha1());
+}
+
+/***********************************************************************************************************************************
+Error when the format read from a header cannot be read by this version. This is checked before anything is decrypted since
+decrypting requires knowing what the format expects and this version does not know what a newer format expects.
+***********************************************************************************************************************************/
+static void
+cipherBlockFormatValidate(const unsigned int format)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, format);
+    FUNCTION_TEST_END();
+
+    // A format newer than this version can read requires an upgrade. Do not suggest a version since this version cannot know which
+    // version added the format.
+    if (format > REPOSITORY_FORMAT_MAX)
+    {
+        THROW_FMT(
+            FormatError,
+            "repository format %u requires a newer version of " PROJECT_NAME "\n"
+            "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format %d to %d.",
+            format, REPOSITORY_FORMAT_MIN, REPOSITORY_FORMAT_MAX);
+    }
+
+    // A format older than this version can read requires an older version to migrate the repository
+    if (format < REPOSITORY_FORMAT_MIN)
+    {
+        THROW_FMT(
+            FormatError,
+            "repository format %u is no longer supported by " PROJECT_NAME "\n"
+            "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format %d to %d.",
+            format, REPOSITORY_FORMAT_MIN, REPOSITORY_FORMAT_MAX);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Object type
@@ -28,6 +113,8 @@ typedef struct CipherBlock
 {
     CipherMode mode;                                                // Mode encrypt/decrypt
     bool raw;                                                       // Omit header magic to save space
+    bool headerFormat;                                              // Read/write the format header
+    unsigned int format;                                            // Repository format, zero until a read header gives one
     bool saltDone;                                                  // Has the salt been read/generated?
     bool processDone;                                               // Has any data been processed?
     const Buffer *pass;                                             // Passphrase used to generate encryption key
@@ -126,8 +213,28 @@ cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t s
         // On encrypt the salt is generated
         if (this->mode == cipherModeEncrypt)
         {
-            // Add magic to the destination buffer so openssl knows the file is salted
-            if (!this->raw)
+            // Add the header to the destination buffer in place of the magic. Both are the same size so what follows begins with
+            // the salt either way.
+            if (this->headerFormat)
+            {
+                memcpy(destination, CIPHER_BLOCK_HEADER_MAGIC, CIPHER_BLOCK_HEADER_MAGIC_SIZE);
+
+                // Write the format right-aligned in the digits it gets so it is always at the same place
+                unsigned int format = this->format;
+
+                for (unsigned int digitIdx = CIPHER_BLOCK_HEADER_FORMAT_SIZE; digitIdx > 0; digitIdx--)
+                {
+                    destination[CIPHER_BLOCK_HEADER_MAGIC_SIZE + digitIdx - 1] = (uint8_t)('0' + format % 10);
+                    format /= 10;
+                }
+
+                destination[CIPHER_BLOCK_MAGIC_SIZE - 1] = CIPHER_BLOCK_HEADER_RESERVED;
+
+                destination += CIPHER_BLOCK_MAGIC_SIZE;
+                destinationSize += CIPHER_BLOCK_MAGIC_SIZE;
+            }
+            // Else add magic to the destination buffer so openssl knows the file is salted
+            else if (!this->raw)
             {
                 memcpy(destination, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE);
                 destination += CIPHER_BLOCK_MAGIC_SIZE;
@@ -156,9 +263,43 @@ cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t s
                 source += headerExpected - this->headerSize;
                 sourceSize -= headerExpected - this->headerSize;
 
-                // The first bytes of the file to decrypt should be equal to the magic. If not then this is not an encrypted file,
-                // or at least not in a format we recognize.
-                if (!this->raw && memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
+                // Read the format from the header. A file that begins with the magic instead was written at format 5, the only
+                // format there was before the header, so that start is not an error here.
+                if (this->headerFormat)
+                {
+                    const char *const headerZ = (const char *)this->header;
+                    unsigned int format = REPOSITORY_FORMAT_5;
+
+                    if (memcmp(headerZ, CIPHER_BLOCK_HEADER_MAGIC, CIPHER_BLOCK_HEADER_MAGIC_SIZE) == 0)
+                    {
+                        for (unsigned int digitIdx = 0; digitIdx < CIPHER_BLOCK_HEADER_FORMAT_SIZE; digitIdx++)
+                        {
+                            if (!isdigit((unsigned char)headerZ[CIPHER_BLOCK_HEADER_MAGIC_SIZE + digitIdx]))
+                                THROW(FormatError, "invalid cipher header");
+                        }
+
+                        format = cvtZSubNToUInt(headerZ, CIPHER_BLOCK_HEADER_MAGIC_SIZE, CIPHER_BLOCK_HEADER_FORMAT_SIZE);
+
+                        // Error on a format this version cannot read before anything is decrypted
+                        cipherBlockFormatValidate(format);
+
+                        // The format is one this version knows, so the byte held back for later must be the one this version writes
+                        if (headerZ[CIPHER_BLOCK_MAGIC_SIZE - 1] != CIPHER_BLOCK_HEADER_RESERVED)
+                            THROW(FormatError, "invalid cipher header");
+                    }
+                    // Else the bytes must be the magic, since that is all a file with no header can begin with
+                    else if (memcmp(headerZ, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
+                        THROW(CryptoError, "cipher header invalid");
+
+                    // Error when the format the caller expected is not the one the file was written with
+                    if (this->format != 0 && this->format != format)
+                        THROW_FMT(FormatError, "expected repository format %u but found %u", this->format, format);
+
+                    this->format = format;
+                }
+                // Else the first bytes of the file to decrypt should be equal to the magic. If not then this is not an encrypted
+                // file, or at least not in a format we recognize.
+                else if (!this->raw && memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
                     THROW(CryptoError, "cipher header invalid");
             }
             // Else copy what was provided into the header buffer and return 0
@@ -175,6 +316,10 @@ cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t s
         // If salt generation/read is done
         if (salt)
         {
+            // Resolve the digest now that the format is known, which for a header that was read is only true here
+            if (this->digest == NULL)
+                this->digest = cipherBlockFormatDigest(this->format);
+
             // Generate key and initialization vector
             uint8_t key[EVP_MAX_KEY_LENGTH];
             uint8_t initVector[EVP_MAX_IV_LENGTH];
@@ -377,6 +522,49 @@ cipherBlockInputSame(const THIS_VOID)
     FUNCTION_TEST_RETURN(BOOL, this->inputSame);
 }
 
+/***********************************************************************************************************************************
+Report the format the header gave
+***********************************************************************************************************************************/
+static Pack *
+cipherBlockResult(THIS_VOID)
+{
+    THIS(CipherBlock);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CIPHER_BLOCK, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    Pack *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteU32P(packWrite, this->format);
+        pckWriteEndP(packWrite);
+
+        result = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(PACK, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN unsigned int
+cipherBlockFormat(PackRead *const cipherBlockResult)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, cipherBlockResult);
+    FUNCTION_TEST_END();
+
+    ASSERT(cipherBlockResult != NULL);
+
+    FUNCTION_TEST_RETURN(UINT, pckReadU32P(cipherBlockResult));
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
 cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const CipherBlockNewParam param)
@@ -385,11 +573,20 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
         FUNCTION_LOG_PARAM(STRING_ID, mode);
         FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_LOG_PARAM(BOOL, param.raw);
+        FUNCTION_LOG_PARAM(BOOL, param.header);
+        FUNCTION_LOG_PARAM(UINT, param.format);
     FUNCTION_LOG_END();
 
     ASSERT(cipherSpec != NULL);
     ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
     ASSERT(cipherSpecPass(cipherSpec) != NULL && !bufEmpty(cipherSpecPass(cipherSpec)));
+
+    // The header takes the place of the magic, so a file that carries one is never also raw
+    ASSERT(!param.header || !param.raw);
+
+    // The format must be known to write a header. On decrypt it is optional since the header is what says which format it is, but
+    // when it is given the header must agree with it.
+    ASSERT(mode != cipherModeEncrypt || !param.header || param.format != 0);
 
     // Init crypto subsystem
     cryptoInit();
@@ -404,14 +601,26 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
 
     zFree(cipherTypeZ);
 
-    // Lookup digest
-    char digestZ[STRID_MAX + 1];
-    strIdToZ(cipherSpecDigest(cipherSpec), digestZ);
+    // Lookup digest. A header that has yet to be read is what says which format the file is, and the format is what says which
+    // digest, so in that case the lookup waits until the header has been read.
+    const EVP_MD *digest = NULL;
 
-    const EVP_MD *const digest = EVP_get_digestbyname(digestZ);
+    if (!param.header || mode == cipherModeEncrypt)
+    {
+        // A format says which digest, otherwise it comes from the spec and must be one openssl knows
+        if (param.format != 0)
+            digest = cipherBlockFormatDigest(param.format);
+        else
+        {
+            char digestZ[STRID_MAX + 1];
+            strIdToZ(cipherSpecDigest(cipherSpec), digestZ);
 
-    if (!digest)
-        THROW_FMT(AssertError, "unable to load digest '%s'", digestZ);
+            digest = EVP_get_digestbyname(digestZ);
+
+            if (!digest)
+                THROW_FMT(AssertError, "unable to load digest '%s'", digestZ);
+        }
+    }
 
     OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
@@ -419,6 +628,8 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
         {
             .mode = mode,
             .raw = param.raw,
+            .headerFormat = param.header,
+            .format = param.format,
             .cipher = cipher,
             .digest = digest,
             .pass = bufDup(cipherSpecPass(cipherSpec)),
@@ -436,6 +647,8 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
         pckWriteU64P(packWrite, mode);
         cipherSpecPack(packWrite, cipherSpec);
         pckWriteBoolP(packWrite, param.raw);
+        pckWriteBoolP(packWrite, param.header);
+        pckWriteU32P(packWrite, param.format);
         pckWriteEndP(packWrite);
 
         paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -446,7 +659,10 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
         IO_FILTER,
         ioFilterNewP(
             CIPHER_BLOCK_FILTER_TYPE, this, paramList, .done = cipherBlockDone, .inOut = cipherBlockProcess,
-            .inputSame = cipherBlockInputSame));
+            .inputSame = cipherBlockInputSame,
+
+            // Only a filter that reads a header has a format to report
+            .result = param.header && mode == cipherModeDecrypt ? cipherBlockResult : NULL));
 }
 
 FN_EXTERN IoFilter *
@@ -460,8 +676,11 @@ cipherBlockNewPack(const Pack *const paramList)
         const CipherMode cipherMode = (CipherMode)pckReadU64P(paramListPack);
         const CipherSpec *const cipherSpec = cipherSpecNewPack(paramListPack);
         const bool raw = pckReadBoolP(paramListPack);
+        const bool header = pckReadBoolP(paramListPack);
+        const unsigned int format = pckReadU32P(paramListPack);
 
-        result = ioFilterMove(cipherBlockNewP(cipherMode, cipherSpec, .raw = raw), memContextPrior());
+        result = ioFilterMove(
+            cipherBlockNewP(cipherMode, cipherSpec, .raw = raw, .header = header, .format = format), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
