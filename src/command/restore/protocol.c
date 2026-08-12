@@ -46,7 +46,7 @@ restoreFileProtocol(PackRead *const param)
         const bool delta = pckReadBoolP(param);
         const bool deltaForce = pckReadBoolP(param);
         const bool bundleRaw = pckReadBoolP(param);
-        const CipherSpec *const cipherSpec = cipherSpecNewPack(param);
+        const CipherSpec *const cipherSpecBackup = cipherSpecNewPack(param);
         const StringList *const referenceList = pckReadStrLstP(param);
 
         // Build the file list
@@ -85,7 +85,7 @@ restoreFileProtocol(PackRead *const param)
 
         // Restore files
         const List *const resultList = restoreFile(
-            repoFile, repoIdx, repoFileCompressType, copyTimeBegin, delta, deltaForce, bundleRaw, cipherSpec, referenceList,
+            repoFile, repoIdx, repoFileCompressType, copyTimeBegin, delta, deltaForce, bundleRaw, cipherSpecBackup, referenceList,
             fileList);
 
         // Return result

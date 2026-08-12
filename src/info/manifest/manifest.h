@@ -245,15 +245,15 @@ manifestFormat(const Manifest *const this)
 
 // Get cipher spec for the files this manifest describes, set the pass they are encrypted with
 FN_INLINE_ALWAYS const CipherSpec *
-manifestCipherSpecSub(const Manifest *const this)
+manifestCipherSpec(const Manifest *const this)
 {
     return infoCipherSpec(THIS_PUB(Manifest)->info);
 }
 
 FN_INLINE_ALWAYS void
-manifestCipherSpecSubSet(Manifest *const this, const CipherSpec *const cipherSpecSub)
+manifestCipherSpecSet(Manifest *const this, const CipherSpec *const cipherSpec)
 {
-    infoCipherSpecSet(THIS_PUB(Manifest)->info, cipherSpecSub);
+    infoCipherSpecSet(THIS_PUB(Manifest)->info, cipherSpec);
 }
 
 // Get manifest configuration and options

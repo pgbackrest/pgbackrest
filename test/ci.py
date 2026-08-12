@@ -110,7 +110,7 @@ def test_run(config):
     vm_arch = "" if config.vm_arch is None else " --vm-arch=%s" % config.vm_arch
 
     # Packages the tests need that the test images already have
-    package = "gcc ccache git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev pkg-config libssh2-1-dev valgrind"
+    package = "gcc ccache git zlib1g-dev libssl-dev libxml2-dev libpq-dev pkg-config libssh2-1-dev valgrind"
 
     # Extra packages required when testing without containers
     if config.vm == VM_NONE:

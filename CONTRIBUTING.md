@@ -30,7 +30,7 @@ This example is based on Ubuntu 24.04, but it should work on many versions of De
 
 pgbackrest-dev => Install development tools
 ```
-sudo apt-get install rsync git build-essential valgrind libssl-dev zlib1g-dev libxml2-dev \
+sudo apt-get install git build-essential valgrind libssl-dev zlib1g-dev libxml2-dev \
        libpq-dev pkg-config liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev ccache \
        meson python3-yaml python3-coverage
 ```

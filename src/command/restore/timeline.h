@@ -12,7 +12,7 @@ Functions
 ***********************************************************************************************************************************/
 // Verify that target timeline is valid for a backup
 FN_EXTERN void timelineVerify(
-    const Storage *storageRepo, const String *archiveId, unsigned int pgVersion, unsigned int timelineBackup,
-    uint64_t lsnBackup, const String *timelineTargetStr, unsigned int recoveryType, const CipherSpec *cipherSpec);
+    const Storage *storageRepo, const String *archiveId, unsigned int pgVersion, unsigned int timelineBackup, uint64_t lsnBackup,
+    const String *timelineTargetStr, unsigned int recoveryType, const CipherSpec *cipherSpecArchive);
 
 #endif

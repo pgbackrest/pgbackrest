@@ -129,8 +129,7 @@ hrnInfoPut(const Storage *const storage, const char *const file, const char *con
         FUNCTION_HARNESS_PARAM(STRINGZ, info);
         FUNCTION_HARNESS_PARAM(UINT, param.format);
         FUNCTION_HARNESS_PARAM(BOOL, param.header);
-        FUNCTION_HARNESS_PARAM(STRING_ID, param.cipherType);
-        FUNCTION_HARNESS_PARAM(STRINGZ, param.cipherPass);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, param.cipherSpec);
         FUNCTION_HARNESS_PARAM(STRINGZ, param.comment);
     FUNCTION_HARNESS_END();
 
@@ -144,11 +143,8 @@ hrnInfoPut(const Storage *const storage, const char *const file, const char *con
 
     // Encrypt the way the format stores the file. A file that carries a header gets it in place of the magic the cipher writes,
     // and from format 6 the pass derives with SHA-256 rather than SHA-1.
-    if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
+    if (param.cipherSpec != NULL && cipherSpecType(param.cipherSpec) != cipherTypeNone)
     {
-        if (param.cipherPass == NULL)
-            param.cipherPass = TEST_CIPHER_PASS;
-
         const bool header = param.header && param.format >= REPOSITORY_FORMAT_6;
         Buffer *const encrypted = bufNew(0);
 
@@ -161,7 +157,7 @@ hrnInfoPut(const Storage *const storage, const char *const file, const char *con
             cipherBlockNewP(
                 cipherModeEncrypt,
                 cipherSpecNewP(
-                    param.cipherType, BUFSTRZ(param.cipherPass),
+                    cipherSpecType(param.cipherSpec), cipherSpecPass(param.cipherSpec),
                     .digest = param.format >= REPOSITORY_FORMAT_6 ? hashTypeSha256 : hashTypeSha1),
                 .raw = header));
 

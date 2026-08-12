@@ -61,7 +61,7 @@ jobs:
       - name: Install
         run: |
           sudo apt-get update
-          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y sudo python3-yaml rsync \
+          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y sudo python3-yaml \
             zlib1g-dev libssl-dev libxml2-dev libpq-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd \
             libzstd-dev bzip2 libbz2-dev
           docker run --privileged --rm tonistiigi/binfmt --install all

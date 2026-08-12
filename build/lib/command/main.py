@@ -16,12 +16,12 @@ from config.render import bld_cfg_render
 from error.parse import bld_err_parse
 from error.render import bld_err_render
 from help.parse import bld_hlp_parse
-from help.render import bld_hlp_render, bld_hlp_render_data
+from help.render import bld_hlp_render
 
 # The help declaration, which lives with the documentation because that is what most of it is for
 _PATH_HELP = "doc/xml/reference.xml"
-from postgres.parse import bld_pg_parse
-from postgres.render import bld_pg_render, bld_pg_version_render
+from postgres.parse import BLD_PG_INTERFACE_HARNESS, bld_pg_parse
+from postgres.render import bld_pg_render, bld_pg_system_id_render, bld_pg_version_render
 
 
 ####################################################################################################################################
@@ -55,19 +55,23 @@ def _build_help(config):
 
 
 ####################################################################################################################################
-def _build_help_data(config):
-    """Generate the help as raw data, which is what the help unit test loads."""
-
-    bld_cfg = bld_cfg_parse(config.repo_path)
-
-    bld_hlp_render_data(config.build_path, bld_cfg, bld_hlp_parse(_path_help(config), bld_cfg, False))
-
-
-####################################################################################################################################
 def _build_postgres(config):
     """Generate the PostgreSQL interfaces."""
 
     bld_pg_render(config.build_path, bld_pg_parse(config.repo_path))
+
+
+####################################################################################################################################
+def _build_postgres_harness(config):
+    """Generate the PostgreSQL interfaces the test harness writes pg_control and WAL with."""
+
+    bld_pg = bld_pg_parse(config.repo_path, BLD_PG_INTERFACE_HARNESS)
+
+    bld_pg_render(config.build_path, bld_pg)
+
+    # The system ids are generated into a header that is hand-written apart from them, so they go to the repository rather than to
+    # wherever the generated code is going
+    bld_pg_system_id_render(config.repo_path, bld_pg)
 
 
 ####################################################################################################################################
@@ -83,8 +87,8 @@ _COMMAND_LIST = {
     "config": _build_config,
     "error": _build_error,
     "help": _build_help,
-    "help-data": _build_help_data,
     "postgres": _build_postgres,
+    "postgres-harness": _build_postgres_harness,
     "postgres-version": _build_postgres_version,
 }
 

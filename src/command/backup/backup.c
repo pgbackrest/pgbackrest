@@ -56,7 +56,6 @@ typedef struct BackupData
 
     unsigned int pgIdxStandby;                                      // cfgOptGrpPg index of the standby
     Db *dbStandby;                                                  // Database connection to the standby
-    const Storage *storageStandby;                                  // Storage object for the standby
     const String *hostStandby;                                      // Host name of the standby
 
     const InfoArchive *archiveInfo;                                 // Archive info
@@ -114,7 +113,6 @@ backupInit(const InfoBackup *const infoBackup)
 
             result->pgIdxStandby = dbInfo.standbyIdx;
             result->dbStandby = dbInfo.standby;
-            result->storageStandby = storagePgIdx(result->pgIdxStandby);
             result->hostStandby = cfgOptionIdxStrNull(cfgOptPgHost, result->pgIdxStandby);
         }
 
@@ -167,7 +165,7 @@ backupInit(const InfoBackup *const infoBackup)
     // Get archive info
     if (cfgOptionBool(cfgOptArchiveCheck))
     {
-        result->archiveInfo = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpec());
+        result->archiveInfo = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMain());
         result->archiveId = infoArchiveId(result->archiveInfo);
     }
 
@@ -207,9 +205,9 @@ cmdBackup(void)
         storageRepo();
 
         // Load backup.info
-        InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpec());
+        InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-        const CipherSpec *const cipherSpecBackup = infoBackupCipherSpec(infoBackup);
+        const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(infoBackup);
 
         // Get pg storage and database objects
         BackupData *const backupData = backupInit(infoBackup);
@@ -239,14 +237,14 @@ cmdBackup(void)
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
-            manifestCipherSpecSubSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType), manifestFormat(manifest)));
+            manifestCipherSpecSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType), manifestFormat(manifest)));
 
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
             cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
         // Resume a backup when possible
-        if (!backupResume(manifest, cipherSpecBackup))
+        if (!backupResume(manifest, cipherSpecManifest))
         {
             manifestBackupLabelSet(
                 manifest,
@@ -255,10 +253,10 @@ cmdBackup(void)
         }
 
         // Save the manifest before processing starts
-        backupManifestSaveCopy(manifest, cipherSpecBackup, false);
+        backupManifestSaveCopy(manifest, cipherSpecManifest, false);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, cipherSpecBackup);
+        backupProcess(backupData, manifest, cipherSpecManifest);
 
         // Check that the clusters are alive and correctly configured after the backup
         backupDbPing(backupData, true);
@@ -286,7 +284,7 @@ cmdBackup(void)
         dbFree(backupData->dbPrimary);
 
         // Check and copy WAL segments required to make the backup consistent
-        backupArchiveCheckCopy(backupData, manifest, cipherSpecBackup);
+        backupArchiveCheckCopy(backupData, manifest, cipherSpecManifest);
 
         // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy() so
         // the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further access to

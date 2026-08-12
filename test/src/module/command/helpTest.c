@@ -37,11 +37,6 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    // Create help data by running the generator against the current declarations, since the help.auto.c.inc that the build
-    // compiles into the binary may not have been generated when this test runs
-    HRN_SYSTEM_FMT("%s/build/build.py help-data --repo-path=%s --build-path=" TEST_PATH, HRN_PATH_REPO, HRN_PATH_REPO);
-    const Buffer *const helpData = storageGetP(storageNewReadP(storagePosixNewP(TEST_PATH_STR), STRDEF("help.dat")));
-
     // Program name a version are used multiple times
     const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;
 
@@ -147,27 +142,27 @@ testRun(void)
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "version");
         TEST_RESULT_VOID(testCfgLoad(argList), "version from version command");
-        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+        TEST_RESULT_STR_Z(helpRender(), versionOnly, "check text");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "version");
         hrnCfgArgRawZ(argList, cfgOptOutput, "text");
         TEST_RESULT_VOID(testCfgLoad(argList), "version text output from version command");
-        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+        TEST_RESULT_STR_Z(helpRender(), versionOnly, "check text");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "version");
         hrnCfgArgRawZ(argList, cfgOptOutput, "num");
         TEST_RESULT_VOID(testCfgLoad(argList), "version num output from version command");
-        TEST_RESULT_STR_Z(helpRender(helpData), zNewFmt("%d", PROJECT_VERSION_NUM), "check text");
+        TEST_RESULT_STR_Z(helpRender(), zNewFmt("%d", PROJECT_VERSION_NUM), "check text");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "--version");
         TEST_RESULT_VOID(testCfgLoad(argList), "version from version option");
-        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+        TEST_RESULT_STR_Z(helpRender(), versionOnly, "check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("general invocation");
@@ -175,20 +170,20 @@ testRun(void)
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         TEST_RESULT_VOID(testCfgLoad(argList), "help from empty command line");
-        TEST_RESULT_STR_Z(helpRender(helpData), generalHelp, "check text");
+        TEST_RESULT_STR_Z(helpRender(), generalHelp, "check text");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
         TEST_RESULT_VOID(testCfgLoad(argList), "help from help command");
-        TEST_RESULT_STR_Z(helpRender(helpData), generalHelp, "check text");
+        TEST_RESULT_STR_Z(helpRender(), generalHelp, "check text");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "--version");
         strLstAddZ(argList, "--help");
         TEST_RESULT_VOID(testCfgLoad(argList), "help from help option");
-        TEST_RESULT_STR_Z(helpRender(helpData), generalHelp, "check text");
+        TEST_RESULT_STR_Z(helpRender(), generalHelp, "check text");
 
         // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
         // -------------------------------------------------------------------------------------------------------------------------
@@ -396,7 +391,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptDbInclude, "db1");
         hrnCfgArgRawZ(argList, cfgOptDbInclude, "db2");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command");
-        TEST_RESULT_STR_Z(helpRender(helpData), commandHelp, "check text");
+        TEST_RESULT_STR_Z(helpRender(), commandHelp, "check text");
         hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -409,7 +404,7 @@ testRun(void)
         strLstAddZ(argList, "buffer-size");
         strLstAddZ(argList, "buffer-size");
         TEST_RESULT_VOID(testCfgLoad(argList), "parse too many options");
-        TEST_ERROR(helpRender(helpData), ParamInvalidError, "only one option allowed for option help");
+        TEST_ERROR(helpRender(), ParamInvalidError, "only one option allowed for option help");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -417,7 +412,7 @@ testRun(void)
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, BOGUS_STR);
         TEST_RESULT_VOID(testCfgLoad(argList), "parse bogus option");
-        TEST_ERROR(helpRender(helpData), OptionInvalidError, "option 'BOGUS' is not valid for command 'archive-push'");
+        TEST_ERROR(helpRender(), OptionInvalidError, "option 'BOGUS' is not valid for command 'archive-push'");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -425,7 +420,7 @@ testRun(void)
         strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH);
         strLstAddZ(argList, CFGOPT_PROCESS);
         TEST_RESULT_VOID(testCfgLoad(argList), "parse option invalid for command");
-        TEST_ERROR(helpRender(helpData), OptionInvalidError, "option 'process' is not valid for command 'archive-push'");
+        TEST_ERROR(helpRender(), OptionInvalidError, "option 'process' is not valid for command 'archive-push'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("default and current option value");
@@ -449,13 +444,12 @@ testRun(void)
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "buffer-size");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(helpRender(helpData), strNewFmt("%s\ndefault: 1MiB\n", optionHelp), "check text");
+        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ndefault: 1MiB\n", optionHelp), "check text");
 
         // Set a current value
         hrnCfgArgRawZ(argList, cfgOptBufferSize, "32k");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(
-            helpRender(helpData), strNewFmt("%s\ncurrent: 32k\ndefault: 1MiB\n", optionHelp), "check text, current value");
+        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32k\ndefault: 1MiB\n", optionHelp), "check text, current value");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("deprecated host option names");
@@ -483,7 +477,7 @@ testRun(void)
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "repo1-s3-host");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
 
         optionHelp = zNewFmt(
             HELP_OPTION
@@ -496,7 +490,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoType, "s3");
         strLstAddZ(argList, "--repo1-s3-host=s3-host");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text, current value");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text, current value");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cipher pass redacted");
@@ -524,7 +518,7 @@ testRun(void)
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "repo-cipher-pass");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
         hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -551,7 +545,7 @@ testRun(void)
         strLstAddZ(argList, "backup");
         strLstAddZ(argList, "repo-hardlink");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, repo-hardlink option");
-        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -559,7 +553,7 @@ testRun(void)
         strLstAddZ(argList, "backup");
         strLstAddZ(argList, "hardlink");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, deprecated hardlink option");
-        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check admonition");
@@ -595,7 +589,7 @@ testRun(void)
         strLstAddZ(argList, "backup");
         strLstAddZ(argList, "repo-retention-archive");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, repo-retention-archive option");
-        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check admonition text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check admonition text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple current values (with one missing)");
@@ -623,7 +617,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         strLstAddZ(argList, "repo-host");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-host option");
-        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple current values (with one unset)");
@@ -650,7 +644,7 @@ testRun(void)
         strLstAddZ(argList, "restore");
         strLstAddZ(argList, "repo-host");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-host option");
-        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple default values");
@@ -700,7 +694,7 @@ testRun(void)
         // There is currently no way for some defaults to be NULL and others not but it could happen in the future
         cfgOptionIdxSet(cfgOptRepoStorageUploadChunkSize, 2, cfgSourceDefault, NULL);
 
-        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
+        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
     }
 
     // *****************************************************************************************************************************
@@ -716,7 +710,7 @@ testRun(void)
         THROW_ON_SYS_ERROR(freopen(TEST_PATH "/stdout.help", "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
 
         // Not in a test wrapper to avoid writing to stdout
-        cmdHelp(helpData);
+        cmdHelp();
 
         // Restore normal stdout
         dup2(stdoutSave, STDOUT_FILENO);

@@ -20,6 +20,6 @@ FN_EXTERN void checkStanzaInfo(const InfoPgData *archiveInfo, const InfoPgData *
 
 // Load and validate the database data of the info files against each other and the current database
 FN_EXTERN void checkStanzaInfoPg(
-    const Storage *storage, const unsigned int pgVersion, const uint64_t pgSystemId, const CipherSpec *cipherSpec);
+    const Storage *storage, const unsigned int pgVersion, const uint64_t pgSystemId, const CipherSpec *cipherSpecMain);
 
 #endif

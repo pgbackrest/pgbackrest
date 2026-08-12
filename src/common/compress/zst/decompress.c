@@ -21,7 +21,6 @@ Object type
 typedef struct ZstDecompress
 {
     ZSTD_DStream *context;                                          // Decompression context
-    IoFilter *filter;                                               // Filter interface
 
     bool inputSame;                                                 // Is the same input required on the next process call?
     size_t inputOffset;                                             // Current offset in input buffer

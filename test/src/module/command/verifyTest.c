@@ -880,13 +880,13 @@ testRun(void)
         // saved, i.e. the content is built once in a buffer and that buffer is written twice
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .header = true,
-            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted backup.info");
+            .cipherSpec = TEST_CIPHER_SPEC, .comment = "encrypted backup.info");
         HRN_STORAGE_COPY(
             storageRepo(), INFO_BACKUP_PATH_FILE, storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT,
             .comment = "encrypted backup.info.copy");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .header = true,
-            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted archive.info");
+            .cipherSpec = TEST_CIPHER_SPEC, .comment = "encrypted archive.info");
         HRN_STORAGE_COPY(
             storageRepo(), INFO_ARCHIVE_PATH_FILE, storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT,
             .comment = "encrypted archive.info.copy");
@@ -899,13 +899,13 @@ testRun(void)
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .format = REPOSITORY_FORMAT_6, .header = true,
-            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted backup.info at format 6");
+            .cipherSpec = TEST_CIPHER_SPEC, .comment = "encrypted backup.info at format 6");
         HRN_STORAGE_COPY(
             storageRepo(), INFO_BACKUP_PATH_FILE, storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT,
             .comment = "encrypted backup.info.copy at format 6");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .format = REPOSITORY_FORMAT_6,
-            .header = true, .cipherType = cipherTypeAes256Cbc, .comment = "encrypted archive.info at format 6");
+            .header = true, .cipherSpec = TEST_CIPHER_SPEC, .comment = "encrypted archive.info at format 6");
         HRN_STORAGE_COPY(
             storageRepo(), INFO_ARCHIVE_PATH_FILE, storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT,
             .comment = "encrypted archive.info.copy at format 6");
@@ -955,8 +955,8 @@ testRun(void)
         // Create a compressed encrypted repo file in backup
         filePathName = strCatZ(strNew(), STORAGE_REPO_BACKUP "/testfile");
         HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), strZ(filePathName), fileContents, .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc,
-            .cipherPass = "pass");
+            storageRepoWrite(), strZ(filePathName), fileContents, .compressType = compressTypeGz,
+            .cipherSpec = TEST_CIPHER_SPEC_PASS("pass"));
 
         strCatZ(filePathName, ".gz");
         TEST_RESULT_UINT(
@@ -2537,7 +2537,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         hrnBackupPqScriptP(
-            PG_VERSION_11, BACKUP_EPOCH + 200000, .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS);
+            PG_VERSION_11, BACKUP_EPOCH + 200000, .cipherSpecMain = TEST_CIPHER_SPEC);
         TEST_RESULT_VOID(hrnCmdBackup(), "backup");
         TEST_RESULT_LOG(
             "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"

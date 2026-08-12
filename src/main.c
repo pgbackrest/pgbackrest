@@ -50,11 +50,6 @@ Main
 #include "storage/sftp/helper.h"
 #include "version.h"
 
-/***********************************************************************************************************************************
-Include automatically generated help data
-***********************************************************************************************************************************/
-#include "command/help/help.auto.c.inc"
-
 int
 main(int argListSize, const char *argList[])
 {
@@ -268,7 +263,7 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdHelp:
                 case cfgCmdVersion:
-                    cmdHelp(BUF(helpData, sizeof(helpData)));
+                    cmdHelp();
                     break;
             }
         }

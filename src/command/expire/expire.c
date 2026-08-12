@@ -585,7 +585,7 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
             {
                 // Attempt to load the archive info file
                 const InfoArchive *const infoArchive = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
+                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
                 const InfoPg *const infoArchivePgData = infoArchivePg(infoArchive);
 
                 // Get a list of archive directories (e.g. 9.6-1, 10-2, etc) sorted by the db-id (number after the dash).
@@ -896,8 +896,7 @@ removeExpiredBackup(const InfoBackup *const infoBackup, const String *const adho
                 if (adhocBackupLabel != NULL && strBeginsWith(strLstGet(backupList, 0), strSubN(adhocBackupLabel, 0, 16)))
                 {
                     const Manifest *const manifestResume = manifestLoadFile(
-                        storageRepoIdx(repoIdx), manifestFileName,
-                        infoBackupCipherSpec(infoBackup));
+                        storageRepoIdx(repoIdx), manifestFileName, infoBackupCipherSpec(infoBackup));
 
                     // If the ancestor of the resumable backup no longer exists in backup.info then it can be removed
                     if (!infoBackupLabelExists(infoBackup, manifestData(manifestResume)->backupLabelPrior))
@@ -1095,7 +1094,7 @@ cmdExpire(void)
             TRY_BEGIN()
             {
                 // Load backup.info for this repo
-                infoBackup = infoBackupLoadFileReconstruct(storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
+                infoBackup = infoBackupLoadFileReconstruct(storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 
                 // When expire oldest requested, expire the oldest full backup by lowering retention for this execution
                 if (expireOldest)
@@ -1177,7 +1176,7 @@ cmdExpire(void)
                 if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
                 {
                     infoBackupSaveFile(
-                        infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecIdx(repoIdx));
+                        infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
                 }
 
                 // Remove all files on disk that are now expired

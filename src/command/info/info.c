@@ -1477,7 +1477,7 @@ infoUpdateStanza(
                     // Attempt to load the backup info file
                     stanzaRepo->repoList[repoIdx].backupInfo = infoBackupLoadFile(
                         storage, strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaRepo->name), INFO_BACKUP_FILE),
-                        cfgCipherSpecIdx(repoIdx));
+                        cfgCipherSpecMainIdx(repoIdx));
                 }
                 CATCH(FileMissingError)
                 {
@@ -1501,7 +1501,7 @@ infoUpdateStanza(
                 {
                     stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
                         storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaRepo->name), INFO_ARCHIVE_FILE),
-                        cfgCipherSpecIdx(repoIdx));
+                        cfgCipherSpecMainIdx(repoIdx));
 
                     // If a specific backup exists on this repo then attempt to load the manifest
                     if (backupLabel != NULL)

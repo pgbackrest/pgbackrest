@@ -1321,7 +1321,18 @@ testRun(void)
 
         lstInsert(protocolHelper.clientList, 0, &protocolHelperClientAdd);
 
+        // The client was just created so no noop is needed to keep the server from timing out. A request updates the keep alive
+        // time, so the time not changing is what shows nothing was sent.
+        const TimeMSec keepAliveTime = client->keepAliveTime;
+
+        TEST_RESULT_VOID(protocolKeepAlive(), "keep alive skipped when client is not idle");
+        TEST_RESULT_UINT(client->keepAliveTime, keepAliveTime, "keep alive time not updated");
+
+        // Expire the keep alive to show the noop is sent once the client has been idle long enough
+        client->keepAliveTime = 0;
+
         TEST_RESULT_VOID(protocolKeepAlive(), "keep alive");
+        TEST_RESULT_INT_NE((int64_t)client->keepAliveTime, 0, "keep alive time updated");
         lstRemoveIdx(protocolHelper.clientList, 0);
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");

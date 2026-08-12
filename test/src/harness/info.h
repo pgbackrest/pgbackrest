@@ -14,8 +14,7 @@ typedef struct HrnInfoPutParam
     VAR_PARAM_HEADER;
     unsigned int format;                                            // Repository format, default format when zero
     bool header;                                                    // Does the file carry a header, i.e. is it an info file?
-    CipherType cipherType;                                          // Cipher type when the file is encrypted
-    const char *cipherPass;                                         // Cipher pass, main test pass when NULL
+    const CipherSpec *cipherSpec;                                   // Cipher spec when the file is encrypted, digest set by format
     const char *comment;                                            // Comment
 } HrnInfoPutParam;
 

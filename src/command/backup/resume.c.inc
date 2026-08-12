@@ -169,11 +169,11 @@ backupResumeClean(
 
 // Helper to find a resumable backup
 static const Manifest *
-backupResumeFind(const Manifest *const manifest, const CipherSpec *const cipherSpecBackup)
+backupResumeFind(const Manifest *const manifest, const CipherSpec *const cipherSpecManifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecBackup);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecManifest);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -217,7 +217,7 @@ backupResumeFind(const Manifest *const manifest, const CipherSpec *const cipherS
                         {
                             TRY_BEGIN()
                             {
-                                manifestResume = manifestLoadFile(storageRepo(), manifestFile, cipherSpecBackup);
+                                manifestResume = manifestLoadFile(storageRepo(), manifestFile, cipherSpecManifest);
                             }
                             CATCH_ANY()
                             {
@@ -303,11 +303,11 @@ backupResumeFind(const Manifest *const manifest, const CipherSpec *const cipherS
 }
 
 static bool
-backupResume(Manifest *const manifest, const CipherSpec *const cipherSpecBackup)
+backupResume(Manifest *const manifest, const CipherSpec *const cipherSpecManifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecBackup);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecManifest);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -316,7 +316,7 @@ backupResume(Manifest *const manifest, const CipherSpec *const cipherSpecBackup)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const Manifest *const manifestResume = backupResumeFind(manifest, cipherSpecBackup);
+        const Manifest *const manifestResume = backupResumeFind(manifest, cipherSpecManifest);
 
         // If a resumable backup was found set the label and cipher subpass
         if (manifestResume)
@@ -332,7 +332,7 @@ backupResume(Manifest *const manifest, const CipherSpec *const cipherSpecBackup)
                 strZ(manifestData(manifest)->backupLabel));
 
             // Copy cipher subpass since it was used to encrypt the resumable files
-            manifestCipherSpecSubSet(manifest, manifestCipherSpecSub(manifestResume));
+            manifestCipherSpecSet(manifest, manifestCipherSpec(manifestResume));
 
             // Clean resumed backup
             const String *const backupPath = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(manifestData(manifest)->backupLabel));

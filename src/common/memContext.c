@@ -9,18 +9,7 @@ Memory Context Manager
 #include "common/debug.h"
 #include "common/macro.h"
 #include "common/memContext.h"
-
-/***********************************************************************************************************************************
-Valgrind memcheck client requests keep leak, use-after-free, and uninitialized-read detection accurate when large freed
-allocations are retained for reuse rather than returned to the allocator (see the free list below). Without Valgrind support they
-compile to nothing.
-***********************************************************************************************************************************/
-#ifdef WITH_VALGRIND
-#include <valgrind/memcheck.h>
-#else
-#define VALGRIND_MAKE_MEM_NOACCESS(addr, size)                      ((void)0)
-#define VALGRIND_MAKE_MEM_UNDEFINED(addr, size)                     ((void)0)
-#endif
+#include "common/valgrind.h"
 
 /***********************************************************************************************************************************
 Contains information about a memory allocation. This header is placed at the beginning of every memory allocation returned to the

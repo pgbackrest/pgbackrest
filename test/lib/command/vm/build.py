@@ -250,7 +250,7 @@ def _script_package(vm):
     else:
         result += (
             "    apk update && \\\n"
-            + "    apk add --no-cache sudo openssh git rsync tzdata openssh ca-certificates openrc bash && \\\n"
+            + "    apk add --no-cache sudo openssh git tzdata openssh ca-certificates openrc bash && \\\n"
             + "    rc-update add sshd && \\\n"
             + "    apk add --no-cache meson build-base libpq-dev openssl-dev libxml2-dev pkgconfig lz4-dev bzip2-dev\\\n"
             + "        openssh-keygen zlib-dev libssh2-dev valgrind lz4 zstd zstd-dev py3-yaml"
