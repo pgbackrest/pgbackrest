@@ -409,15 +409,6 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
 
     zFree(cipherTypeZ);
 
-    // Lookup digest
-    char digestZ[STRID_MAX + 1];
-    strIdToZ(cipherSpecDigest(cipherSpec), digestZ);
-
-    const EVP_MD *const digest = EVP_get_digestbyname(digestZ);
-
-    if (!digest)
-        THROW_FMT(AssertError, "unable to load digest '%s'", digestZ);
-
     OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         *this = (CipherBlock)
@@ -425,7 +416,9 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
             .mode = mode,
             .raw = param.raw,
             .cipher = cipher,
-            .digest = digest,
+
+            // The key is always derived with SHA-1. Deriving it with anything else is not supported yet.
+            .digest = EVP_sha1(),
             .pass = bufDup(cipherSpecPass(cipherSpec)),
         };
     }

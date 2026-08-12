@@ -42,7 +42,7 @@ testRun(void)
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
 
         TEST_ASSIGN(
-            infoPg, infoPgNew(infoPgArchive, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
+            infoPg, infoPgNew(infoPgArchive, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
             "infoPgNew(cipherTypeAes256Cbc, 123xyz)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(infoPgInfo(infoPg)))), "123xyz", "  cipherPass set");
@@ -79,7 +79,7 @@ testRun(void)
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(infoPgBackup, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))), infoPgBackup,
+                infoPgNew(infoPgBackup, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))), infoPgBackup,
                 PG_VERSION_18, 6569239123849665679,
                 hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgBackup");

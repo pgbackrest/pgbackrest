@@ -78,7 +78,7 @@ testRun(void)
     {
         Info *info = NULL;
 
-        TEST_ASSIGN(info, infoNew(cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))), "infoNew(cipher)");
+        TEST_ASSIGN(info, infoNew(cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))), "infoNew(cipher)");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(info))), "123xyz", "    cipherPass is set");
 
         TEST_ASSIGN(info, infoNew(NULL), "infoNew(NULL)");
@@ -137,7 +137,7 @@ testRun(void)
         IoRead *read = ioBufferReadNew(contentLoad);
         ioFilterGroupAdd(
             ioReadFilterGroup(read),
-            cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("X"))));
+            cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("X"))));
 
         TEST_ERROR(
             infoNewLoad(read, cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent), CryptoError,
@@ -199,7 +199,7 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoNewLoad(
-                ioBufferReadNew(contentLoad), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")), harnessInfoLoadNewCallback,
+                ioBufferReadNew(contentLoad), cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x")), harnessInfoLoadNewCallback,
                 callbackContent),
             "info with content and cipher");
         TEST_RESULT_STR_Z(callbackContent, "[c] key=1\n[d] key=1\n", "    check callback content");
