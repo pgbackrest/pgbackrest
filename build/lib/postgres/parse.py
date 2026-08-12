@@ -26,6 +26,11 @@ _DEFINE_VERSION = "PG_VERSION"
 _DEFINE_CATALOG_MAX = "CATALOG_VERSION_NO_MAX"
 _DEFINE_EXTRA_LIST = (_DEFINE_CATALOG_MAX, _DEFINE_VERSION)
 
+# What marks a macro as one that captures a value rather than as one of the functions the interface collects. Both take a
+# version, so the name is what tells them apart, and the constant a value is captured as names the member it is carried in.
+_VALUE_MARKER = "_VALUE_"
+_VALUE_NAME = re.compile(r"(\w+)##version\s*=")
+
 # A name in C, and the comments that are removed before looking for one so that a comment naming a type does not read as a use of it
 _NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 _COMMENT = re.compile(r"/\*.*?\*/|//[^\n]*", re.S)
@@ -68,15 +73,26 @@ class BldPgEntity:
 
 
 ####################################################################################################################################
+class BldPgValue:
+    """A value an interface carries as data."""
+
+    def __init__(self, macro, name):
+        self.macro = macro  # Macro capturing it for a version, which is rendered and shared the same way a function is
+        self.name = name  # Constant it is captured as, which also names the member it is carried in
+
+
+####################################################################################################################################
 class BldPgInterface:
     """An interface that is generated from the vendored headers."""
 
-    def __init__(self, module, description, path_intern, include, prefix, path_render):
+    def __init__(self, module, description, path_intern, include, prefix, vendor, unreleased, path_render):
         self.module = module  # Generator that renders it, which the generated file names as what wrote it
         self.description = description  # What the generated file says it is
         self.path_intern = path_intern  # Header the interface macros are declared in
         self.include = include  # How the generated code includes that header
         self.prefix = prefix  # Prefix of the functions the macros define, e.g. "pgInterface"
+        self.vendor = vendor  # Does it declare the vendored types, or use the ones another interface declared?
+        self.unreleased = unreleased  # Does it carry the mark for a version that has not been released?
         self.path_render = path_render  # Where the interface is rendered
 
     @property
@@ -93,6 +109,8 @@ BLD_PG_INTERFACE = BldPgInterface(
     "src/postgres/interface/version.intern.h",
     "postgres/interface/version.intern.h",
     "pgInterface",
+    True,
+    True,
     "src/postgres/interface.auto.c.inc",
 )
 
@@ -103,6 +121,8 @@ BLD_PG_INTERFACE_HARNESS = BldPgInterface(
     "test/src/harness/postgres/version.intern.h",
     "harness/postgres/version.intern.h",
     "hrnPgInterface",
+    False,
+    False,
     "test/src/harness/postgres/interface.auto.c.inc",
 )
 
@@ -111,12 +131,14 @@ BLD_PG_INTERFACE_HARNESS = BldPgInterface(
 class BldPg:
     """The PostgreSQL interface declaration."""
 
-    def __init__(self, pg_list, type_list, define_list, function_list, function_version, interface):
+    def __init__(self, pg_list, type_list, define_list, function_list, function_version, value_list, macro_list, interface):
         self.pg_list = pg_list  # Supported versions, oldest first
         self.type_list = type_list  # Interface types, sorted
         self.define_list = define_list  # Interface defines, sorted
         self.function_list = function_list  # Functions defined by macros, in the order they are declared
         self.function_version = function_version  # Version whose rendering of a function each version uses, by function
+        self.value_list = value_list  # Constants the values are captured as, which also name the members they are carried in
+        self.macro_list = macro_list  # Every macro the interface header declares, which says what it has to render
         self.interface = interface  # Interface the functions were read for, which is the one that gets rendered
 
 
@@ -194,9 +216,9 @@ def _define_list(header):
 def _function_list(header):
     """Scan the interface functions out of a header, which are the macros taking the version to render one for.
 
-    A macro that does not take a version is a helper the function macros are written with rather than a function the interface has,
-    so it is not rendered. It is still followed when working out what a function depends on, since a type it names is a type the
-    function that uses it reaches."""
+    A macro that does not take a version is a value or a helper the function macros are written with rather than a function the
+    interface has, so it is not rendered. It is still followed when working out what a function depends on, since a type it names is
+    a type the function that uses it reaches."""
 
     result = []
 
@@ -206,8 +228,31 @@ def _function_list(header):
         if define is None or not line.strip()[len("#define ") + len(define) :].startswith("(version)"):
             continue
 
+        if _VALUE_MARKER in define:
+            continue
+
         if define not in result:
             result.append(define)
+
+    return result
+
+
+####################################################################################################################################
+def _value_list(macro_map):
+    """Scan the values an interface carries out of the macros capturing them, in the order they are declared.
+
+    Each is captured by a macro of its own, as a constant named for the version, e.g. pgInterfaceControlVersion##version. That name
+    is also what says which member the value is carried in, e.g. controlVersion. A macro of its own is what lets a value that does
+    not vary between two versions be captured once for both, the way a function that does not vary is rendered once for both."""
+
+    result = []
+
+    for macro, body in macro_map.items():
+        if _VALUE_MARKER not in macro:
+            continue
+
+        for name in _VALUE_NAME.findall(body):
+            result.append(BldPgValue(macro, name))
 
     return result
 
@@ -475,10 +520,20 @@ def bld_pg_parse(path_repo, interface=BLD_PG_INTERFACE):
     type_list = sorted(_type_list(header_vendor.split("\n")))
     define_list = sorted(_define_list(header_vendor) + list(_DEFINE_EXTRA_LIST))
 
-    # Functions are defined as macros, which each interface expands for its own version
+    # Functions are defined as macros, which each interface expands for its own version, and values as macros it reads
     function_list = _function_list(header_intern)
+    macro_map = _macro_map(header_intern)
+    macro_list = _define_list(header_intern)
 
     # A function only has to be expanded once for each set of branches it reaches, so work out which versions can share one
-    function_version = _function_version(pg_list, _entity_map(header_vendor, pg_list), _macro_map(header_intern), function_list)
+    value_list = _value_list(macro_map)
 
-    return BldPg(pg_list, type_list, define_list, function_list, function_version, interface)
+    # A value is rendered and shared the same way a function is, so which versions can share one is worked out for both
+    function_version = _function_version(
+        pg_list,
+        _entity_map(header_vendor, pg_list),
+        macro_map,
+        function_list + list(dict.fromkeys(value.macro for value in value_list)),
+    )
+
+    return BldPg(pg_list, type_list, define_list, function_list, function_version, value_list, macro_list, interface)

@@ -14,10 +14,20 @@ from postgres.render import *
 # The comment the vendored header divides itself with, one before each entity it declares
 SEPARATOR = "// " + "-" * 129
 
-# A vendored header with a type that never varies and a type that does, since what a function reaches decides what can be shared
+# A vendored header with a type that never varies, a type that does, and a define the interface carries as a value, since what a
+# function reaches decides what can be shared
 VENDOR = (
     "// TransactionId type\n" + SEPARATOR + "\n"
     "typedef uint32 TransactionId;\n"
+    "\n"
+    "// PG_CONTROL_VERSION define\n" + SEPARATOR + "\n"
+    "#if PG_VERSION > PG_VERSION_MAX\n"
+    "\n"
+    "#elif PG_VERSION >= PG_VERSION_96\n"
+    "\n"
+    "#define PG_CONTROL_VERSION 960\n"
+    "\n"
+    "#endif\n"
     "\n"
     "// ControlFileData type\n" + SEPARATOR + "\n"
     "#if PG_VERSION > PG_VERSION_MAX\n"
@@ -40,7 +50,8 @@ VENDOR = (
 )
 
 # One function reading the type that varies, so every version renders it, and one reading only the type that does not, so they
-# share. The first is declared twice under a conditional, as the real header declares it, so which is rendered is a dependency too.
+# share. The first is declared twice under a conditional, as the real header declares it, so which is rendered is a dependency
+# too. The value macro is not a function, so it is rendered for every version and collected by none of them.
 INTERN = (
     "#ifdef CATALOG_VERSION_NO_MAX\n"
     "\n"
@@ -56,9 +67,14 @@ INTERN = (
     "\n"
     "#define PG_INTERFACE_CONTROL_CRC_OFFSET(version)\\\n"
     "    static size_t pgInterfaceControlCrcOffset##version(void) { return sizeof(TransactionId); }\n"
+    "\n"
+    "#define PG_INTERFACE_VALUE_CONTROL_VERSION(version)  enum {pgInterfaceControlVersion##version = PG_CONTROL_VERSION}\n"
+    "\n"
+    "#define PG_INTERFACE_CONTROL_MATCH()  static bool pgInterfaceControlMatch(void) { return true; }\n"
+    "#define PG_INTERFACE_CONTROL_MATCH_RANGE()  static bool pgInterfaceControlMatch(void) { return false; }\n"
 )
 
-# An interface where every function is shared, which leaves the newer version with nothing of its own to render
+# An interface with no function that varies, which leaves the newer version rendering nothing but its own interface
 INTERN_SHARE = (
     "#define PG_INTERFACE_CONTROL_CRC_OFFSET(version)\\\n"
     "    static size_t pgInterfaceControlCrcOffset##version(void) { return sizeof(TransactionId); }\n"
@@ -148,19 +164,33 @@ def test_postgres_render_interface():
     assert_in("PG_INTERFACE_CONTROL_CRC_OFFSET(96_10);                             // Shared with 10\n", interface)
     assert_not_in("PG_INTERFACE_CONTROL_CRC_OFFSET(10)", interface)
 
-    # The struct names each function after the macro that defines it, and a version that shares one names the version that rendered
-    # it rather than itself
+    # A version captures the values it carries in its own block, since that is the only place they have a value, and a value
+    # that does not vary is captured once for every version that shares it, the same way a function is rendered once
+    assert_in("PG_INTERFACE_VALUE_CONTROL_VERSION(96_10);                          // Shared with 10\n", interface)
+    assert_not_in("PG_INTERFACE_VALUE_CONTROL_VERSION(10)", interface)
+
+    # Every version has been released, so the match that compares a single value is the one rendered
+    assert_in("PostgreSQL control match\n", interface)
+    assert_in("PG_INTERFACE_CONTROL_MATCH();\n", interface)
+    assert_not_in("PG_INTERFACE_CONTROL_MATCH_RANGE();", interface)
+
+    # The struct names each value after the constant the block captured it as, and the member it is carried in after that same
+    # name. A function it shares names the version that rendered it rather than itself.
     assert_in(
         """static const PgInterface pgInterface[] =
 {
     {
         .version = PG_VERSION_10,
 
+        .controlVersion = pgInterfaceControlVersion96_10,
+
         .controlIs = pgInterfaceControlIs10,
         .controlCrcOffset = pgInterfaceControlCrcOffset96_10,
     },
     {
         .version = PG_VERSION_96,
+
+        .controlVersion = pgInterfaceControlVersion96_10,
 
         .controlIs = pgInterfaceControlIs96,
         .controlCrcOffset = pgInterfaceControlCrcOffset96_10,
@@ -170,12 +200,12 @@ def test_postgres_render_interface():
         interface,
     )
 
-    # A version that shares every one of its functions has nothing to render, so it gets no block at all
+    # A version that shares every one of its functions still gets a block, since it captures its own values there
     interface, _ = _render("version:\n  - 9.6\n  - 10\n", intern=INTERN_SHARE)
 
-    assert_in("PostgreSQL 9.6 interface\n", interface)
-    assert_not_in("PostgreSQL 10 interface", interface)
     assert_in("PG_INTERFACE_CONTROL_CRC_OFFSET(96_10);                             // Shared with 10\n", interface)
+    assert_not_in("PG_INTERFACE_CONTROL_CRC_OFFSET(10)", interface)
+    assert_in("PostgreSQL 10 interface\n", interface)
 
 
 ####################################################################################################################################
@@ -195,7 +225,14 @@ def test_postgres_render_interface_harness():
     assert_in("HRN_PG_INTERFACE_WAL(96_10);                                        // Shared with 10\n", interface)
     assert_in("#undef HRN_PG_INTERFACE_CONTROL\n", interface)
 
-    # The struct and its functions carry the harness prefix
+    # This interface does not declare the vendored types, it renames the ones the interface it shims declared, so it neither says
+    # which version they are declared for nor undefines what declaring them defined
+    assert_not_in("#define PG_VERSION ", interface)
+    assert_not_in("#define CATALOG_VERSION_NO_MAX\n", interface)
+    assert_not_in("#undef CATALOG_VERSION_NO\n", interface)
+    assert_in("#undef TransactionId\n", interface)
+
+    # The struct and its functions carry the harness prefix, and it carries no values since it reads them from what it shims
     assert_in(
         """static const HrnPgInterface hrnPgInterface[] =
 {
@@ -216,6 +253,9 @@ def test_postgres_render_interface_harness():
         interface,
     )
 
+    # The harness declares no match, since a test asks for the version it wants rather than matching one
+    assert_not_in("match", interface)
+
 
 ####################################################################################################################################
 def test_postgres_render_interface_unreleased():
@@ -233,6 +273,14 @@ def test_postgres_render_interface_unreleased():
     assert_in("PG_INTERFACE_CONTROL_IS(19);\n", interface)
     assert_in("PG_INTERFACE_CONTROL_IS(10);\n", interface)
     assert_in("PG_INTERFACE_CONTROL_CRC_OFFSET(10_19);                             // Shared with 19\n", interface)
+
+    # A version that has not been released accepts a range of values, so the match that compares a range is the one rendered
+    assert_in("PG_INTERFACE_CONTROL_MATCH_RANGE();\n", interface)
+    assert_not_in("PG_INTERFACE_CONTROL_MATCH();", interface)
+
+    # Only that version is marked, since the declaration is what says so rather than anything the interface header captures
+    assert_in("        .version = PG_VERSION_19,\n        .unreleased = true,\n", interface)
+    assert_equal(interface.count(".unreleased = true,"), 1)
 
 
 ####################################################################################################################################
