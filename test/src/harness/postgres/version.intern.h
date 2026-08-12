@@ -1,23 +1,12 @@
 /***********************************************************************************************************************************
 Harness for PostgreSQL Interface
 
-Macros for building version-specific functions that write the pg_control and WAL a test needs, using the types in version.vendor.h.
-This is the write side of the interface the code reads with postgres/interface/version.intern.h.
+Macros for building version-specific functions that write the pg_control and WAL a test needs. This is the write side of the
+interface the code reads with postgres/interface/version.intern.h.
 
-The header is included again for each version, so it declares only what varies by version. Everything else the macros use is
-included by the module that expands them.
+The types are the ones that interface declares, which the harness reaches by shimming it rather than declaring them again, so a type
+may only be named here if it is named there. Everything else the macros use is included by the module that expands them.
 ***********************************************************************************************************************************/
-#include "postgres/interface/version.vendor.h"
-
-/***********************************************************************************************************************************
-Get the catalog version
-***********************************************************************************************************************************/
-#define HRN_PG_INTERFACE_CATALOG_VERSION(version)                                                                                  \
-    static uint32_t                                                                                                                \
-    hrnPgInterfaceCatalogVersion##version(void)                                                                                    \
-    {                                                                                                                              \
-        return CATALOG_VERSION_NO;                                                                                                 \
-    }
 
 /***********************************************************************************************************************************
 Create a pg_control file
@@ -32,7 +21,7 @@ Create a pg_control file
         *(ControlFileData *)buffer = (ControlFileData)                                                                             \
         {                                                                                                                          \
             .system_identifier = pgControl.systemId,                                                                               \
-            .pg_control_version = controlVersion == 0 ? PG_CONTROL_VERSION : controlVersion,                                       \
+            .pg_control_version = controlVersion,                                                                                  \
             .catalog_version_no = pgControl.catalogVersion,                                                                        \
             .checkPoint = pgControl.checkpoint,                                                                                    \
             .checkPointCopy =                                                                                                      \
@@ -54,8 +43,8 @@ Create a WAL file
     static void                                                                                                                    \
     hrnPgInterfaceWal##version(const unsigned int magic, const PgWal pgWal, uint8_t *const buffer)                                 \
     {                                                                                                                              \
-        ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = magic == 0 ? XLOG_PAGE_MAGIC : (uint16)magic;                          \
-        ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \
+        ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = (uint16)magic;                                                         \
+        ((XLogLongPageHeaderData *)buffer)->std.xlp_info = PG_WAL_LONG_HEADER;                                                     \
         ((XLogLongPageHeaderData *)buffer)->xlp_sysid = pgWal.systemId;                                                            \
         ((XLogLongPageHeaderData *)buffer)->xlp_seg_size = pgWal.size;                                                             \
     }

@@ -10,15 +10,20 @@ Harness for PostgreSQL Interface
 #include "harness/postgres.h"
 
 /***********************************************************************************************************************************
+Include shimmed C modules
+
+The interface the code reads is shimmed so the harness can write with the types it declares rather than declaring them again, and so
+the values a test gets by default are the ones the code matches on rather than a second copy of them.
+***********************************************************************************************************************************/
+{[SHIM_MODULE]}
+
+/***********************************************************************************************************************************
 Interface definition
 ***********************************************************************************************************************************/
 typedef struct HrnPgInterface
 {
     // Version of PostgreSQL supported by this interface
     unsigned int version;
-
-    // Catalog version
-    unsigned int (*catalogVersion)(void);
 
     // Create pg_control
     void (*control)(unsigned int, unsigned int, PgControl, uint8_t *);
@@ -66,12 +71,12 @@ hrnPgCatalogVersion(unsigned int pgVersion)
         FUNCTION_HARNESS_PARAM(UINT, pgVersion);
     FUNCTION_HARNESS_END();
 
-    FUNCTION_HARNESS_RETURN(UINT, hrnPgInterfaceVersion(pgVersion)->catalogVersion());
+    FUNCTION_HARNESS_RETURN(UINT, pgInterfaceVersion(pgVersion)->catalogVersion);
 }
 
 /**********************************************************************************************************************************/
 Buffer *
-hrnPgControlToBuffer(const unsigned int controlVersion, const unsigned int crc, PgControl pgControl)
+hrnPgControlToBuffer(unsigned int controlVersion, const unsigned int crc, PgControl pgControl)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(UINT, controlVersion);
@@ -87,7 +92,7 @@ hrnPgControlToBuffer(const unsigned int controlVersion, const unsigned int crc, 
         pgControl.walSegmentSize == UINT_MAX ?
             0 : (pgControl.walSegmentSize == 0 ? HRN_PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize);
     pgControl.catalogVersion =
-        pgControl.catalogVersion == 0 ? hrnPgInterfaceVersion(pgControl.version)->catalogVersion() : pgControl.catalogVersion;
+        pgControl.catalogVersion == 0 ? pgInterfaceVersion(pgControl.version)->catalogVersion : pgControl.catalogVersion;
     pgControl.systemId = pgControl.systemId < 100 ? hrnPgSystemId(pgControl.version) + pgControl.systemId : pgControl.systemId;
     pgControl.checkpoint = pgControl.checkpoint == 0 ? 1 : pgControl.checkpoint;
     pgControl.timeline = pgControl.timeline == 0 ? 1 : pgControl.timeline;
@@ -98,6 +103,9 @@ hrnPgControlToBuffer(const unsigned int controlVersion, const unsigned int crc, 
     bufUsedSet(result, bufSize(result));
 
     // Generate pg_control
+    if (controlVersion == 0)
+        controlVersion = pgInterfaceVersion(pgControl.version)->controlVersion;
+
     hrnPgInterfaceVersion(pgControl.version)->control(controlVersion, crc, pgControl, bufPtr(result));
 
     FUNCTION_HARNESS_RETURN(BUFFER, result);
@@ -105,7 +113,7 @@ hrnPgControlToBuffer(const unsigned int controlVersion, const unsigned int crc, 
 
 /**********************************************************************************************************************************/
 void
-hrnPgWalToBuffer(Buffer *const walBuffer, const unsigned int magic, PgWal pgWal)
+hrnPgWalToBuffer(Buffer *const walBuffer, unsigned int magic, PgWal pgWal)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(BUFFER, walBuffer);
@@ -124,6 +132,9 @@ hrnPgWalToBuffer(Buffer *const walBuffer, const unsigned int magic, PgWal pgWal)
         pgWal.systemId = hrnPgSystemId(pgWal.version) + pgWal.systemId;
 
     // Generate WAL
+    if (magic == 0)
+        magic = pgInterfaceVersion(pgWal.version)->walMagic;
+
     hrnPgInterfaceVersion(pgWal.version)->wal(magic, pgWal, bufPtr(walBuffer));
 
     FUNCTION_HARNESS_RETURN_VOID();

@@ -276,7 +276,7 @@ testRun(void)
 
         // Start with an invalid crc but write a valid one at a greater offset to test the forced scan
         Buffer *control = hrnPgControlToBuffer(0, 0xFADEFADE, (PgControl){.version = PG_VERSION_13, .systemId = 0xAAAA0AAAA});
-        size_t crcOffset = pgInterfaceVersion(PG_VERSION_13)->controlCrcOffset() + sizeof(uint32_t) * 4;
+        size_t crcOffset = pgInterfaceVersion(PG_VERSION_13)->controlCrcOffset + sizeof(uint32_t) * 4;
         *((uint32_t *)(bufPtr(control) + crcOffset)) = crc32cOne(bufPtrConst(control), crcOffset);
 
         HRN_STORAGE_PUT(storageTest, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, control);
@@ -304,7 +304,7 @@ testRun(void)
         // Start with an invalid crc but write a valid one at a greater offset to test the forced scan
         control = hrnPgControlToBuffer(
             0, 0xFADEFADE, (PgControl){.version = PG_VERSION_18, .systemId = 0xAAAA0AAAA, .checkpoint = 777});
-        crcOffset = pgInterfaceVersion(PG_VERSION_18)->controlCrcOffset() + sizeof(uint32_t) * 2;
+        crcOffset = pgInterfaceVersion(PG_VERSION_18)->controlCrcOffset + sizeof(uint32_t) * 2;
         *((uint32_t *)(bufPtr(control) + crcOffset)) = crc32cOne(bufPtrConst(control), crcOffset);
 
         info = pgControlFromBuffer(control, STRDEF(PG_VERSION_18_Z));

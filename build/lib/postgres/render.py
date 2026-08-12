@@ -4,6 +4,13 @@ Each version gets a block that includes the vendored header again with every nam
 translation unit carries an interface for every version it supports. The interfaces are rendered newest first so the most likely
 match is found first at run time.
 
+A block only renders the functions that no other version already renders the same code for, since a function whose types and
+defines all resolve to the same branches for two versions would compile to the same thing twice. The struct then points both
+versions at the one that was rendered, so what is shared is visible where it is used.
+
+The values a version carries are macros of the vendored header, which have a value only inside its block, so the block captures
+them as constants named for the version and the struct names those.
+
 The interface being rendered is whichever one the declaration was parsed for, so the binary and the test harness are rendered by the
 same code from the same versions."""
 
@@ -13,6 +20,7 @@ import os
 from common.error import ToolError
 from common.render import bld_comment_block, bld_define, bld_header
 from common.storage import file_read, file_write_differs
+from postgres.parse import bld_pg_version_num
 
 _VERSION_MODULE = "postgres-version"
 _VERSION_DESCRIPTION = "PostgreSQL Version"
@@ -29,6 +37,21 @@ _SYSTEM_ID_DEFINE = "HRN_PG_SYSTEMID_"
 # Header the system id defines are generated into, which is hand-written apart from them
 _PATH_SYSTEM_ID = "test/src/harness/postgres.h"
 
+# Column the comment naming the versions that share a rendering is aligned at, which is the column a #define value is aligned at
+_SHARE_COLUMN = 68
+
+# Member marking a version that has not been released, which the declaration says rather than the interface header
+_UNRELEASED_MEMBER = "unreleased"
+
+# Macro capturing the values of a version as constants named for it, which is rendered in the block since that is the only place
+# they have a value
+_VALUE_MACRO = "%s_VALUE"
+
+# Macro matching a version against an interface, which is rendered once after the versions when the interface declares it. The
+# range form is rendered when a version has not been released, since only then does an interface accept more than one value.
+_MATCH_MACRO = "%s_MATCH"
+_MATCH_MACRO_RANGE = "%s_MATCH_RANGE"
+
 
 ####################################################################################################################################
 def _version_no_dot(version):
@@ -38,17 +61,31 @@ def _version_no_dot(version):
 
 
 ####################################################################################################################################
-def _version_num(version):
-    """The version as the number the C compares, e.g. "9.6" becomes 90600 and "10" becomes 100000."""
+def _version_suffix(bld_pg, function, version):
+    """The suffix the rendering of a function is named with, given the version that rendered it.
 
-    major, _, minor = version.partition(".")
+    A rendering only one version uses is named with it, e.g. "14", and a rendering more than one shares is named with the range it
+    covers, e.g. "14_19", so which versions share it can be read from the name."""
 
-    return int(major) * 10000 + (int(minor) * 100 if minor != "" else 0)
+    index_list = [idx for idx, pg in enumerate(bld_pg.pg_list) if bld_pg.function_version[function][pg.version] == version]
+
+    if len(index_list) == 1:
+        return _version_no_dot(version)
+
+    # Versions sharing a rendering are consecutive, since a branch of the vendored header applies from where it begins until the
+    # next one begins. A range over versions that are not would name versions that do not share it.
+    if index_list[-1] - index_list[0] != len(index_list) - 1:
+        raise ToolError(
+            "versions %s share %s but are not consecutive"
+            % (", ".join(bld_pg.pg_list[idx].version for idx in index_list), function)
+        )
+
+    return "%s_%s" % (_version_no_dot(version), _version_no_dot(bld_pg.pg_list[index_list[-1]].version))
 
 
 ####################################################################################################################################
 def _function_name(define):
-    """The interface function a macro defines, e.g. "PG_INTERFACE_CONTROL_IS" becomes "pgInterfaceControlIs".
+    """The interface function a macro defines, e.g. "PG_INTERFACE_CONTROL" becomes "pgInterfaceControl".
 
     A harness macro reads the same way, e.g. "HRN_PG_INTERFACE_CONTROL" becomes "hrnPgInterfaceControl"."""
 
@@ -62,50 +99,136 @@ def _function_name(define):
 
 
 ####################################################################################################################################
+def _render_macro_list(bld_pg, macro_list, pg):
+    """Macros of a list that a version renders, which are the ones no other version already renders the same code for."""
+
+    return [macro for macro in macro_list if bld_pg.function_version[macro][pg.version] == pg.version]
+
+
+####################################################################################################################################
+def _render_expand(bld_pg, macro_list, pg):
+    """Render the macros a version expands, each saying which other versions share the rendering."""
+
+    result = ""
+
+    for macro in macro_list:
+        expand = "%s(%s);" % (macro, _version_suffix(bld_pg, macro, pg.version))
+
+        # Versions using this rendering rather than one of their own, which says why they have no rendering of it
+        share_list = [
+            pg_share.version
+            for pg_share in bld_pg.pg_list
+            if pg_share.version != pg.version and bld_pg.function_version[macro][pg_share.version] == pg.version
+        ]
+
+        if share_list != []:
+            expand += "%*s// Shared with %s" % (_SHARE_COLUMN - len(expand), "", ", ".join(share_list))
+
+        result += expand + "\n"
+
+    return result
+
+
+####################################################################################################################################
 def _render_interface_auto_c(bld_pg):
     """Render the interface, which is one interface per version plus the struct that finds them."""
 
     interface = bld_pg.interface
     result = bld_header(interface.module, interface.description)
 
-    # Interfaces, newest first
+    # Interfaces, newest first so the most likely match is found first at run time
     for pg in reversed(bld_pg.pg_list):
         version_no_dot = _version_no_dot(pg.version)
 
+        # Values and functions this version renders, which are the ones no other version already renders the same code for
+        value_list = _render_macro_list(bld_pg, list(dict.fromkeys(value.macro for value in bld_pg.value_list)), pg)
+        function_list = _render_macro_list(bld_pg, bld_pg.function_list, pg)
+
         result += "\n" + bld_comment_block("PostgreSQL %s interface" % pg.version)
-        result += bld_define("PG_VERSION", "PG_VERSION_%s" % version_no_dot) + "\n\n"
+
+        # Only the interface declaring the vendored types sets the version they are declared for. The other renames them to
+        # what that one declared, which is why they are named the same way here.
+        if interface.vendor:
+            result += bld_define("PG_VERSION", "PG_VERSION_%s" % version_no_dot) + "\n\n"
 
         for type in bld_pg.type_list:
             result += bld_define(type, "%s_%s" % (type, version_no_dot)) + "\n"
 
         # An unreleased version has no catalog version of its own yet, so it accepts any catalog version up to the maximum
-        if not pg.release:
+        if interface.vendor and not pg.release:
             result += "\n#define CATALOG_VERSION_NO_MAX\n"
 
         result += '\n#include "%s"\n\n' % interface.include
 
-        for function in bld_pg.function_list:
-            result += "%s(%s);\n" % (function, version_no_dot)
+        # Values this version captures as constants named for it, so the struct at the end can name them
+        result += _render_expand(bld_pg, value_list, pg)
+
+        # A value is read where a function is called, so what a version captures is separated from what it renders
+        if value_list != [] and function_list != []:
+            result += "\n"
+
+        result += _render_expand(bld_pg, function_list, pg)
 
         # Undefine everything the interface defined so the next one starts clean
         result += "\n" + "".join("#undef %s\n" % type for type in bld_pg.type_list)
-        result += "\n" + "".join("#undef %s\n" % define for define in bld_pg.define_list)
+
+        # Only the interface declaring the vendored types defines what they define, so only it has them to undefine
+        if interface.vendor:
+            result += "\n" + "".join("#undef %s\n" % define for define in bld_pg.define_list)
+
         result += "\n" + "".join("#undef %s\n" % function for function in bld_pg.function_list)
 
+    # Matches, rendered once each in the form that fits the versions that were rendered. Only a version that has not been released
+    # accepts a range of values, so the range form is rendered only while there is one.
+    release = all(pg.release for pg in bld_pg.pg_list)
+
+    for macro in [macro for macro in bld_pg.macro_list if macro.endswith(_MATCH_MACRO % "")]:
+        prefix = macro[: -len(_MATCH_MACRO % "")]
+        member = _function_name(prefix)[len(interface.prefix) :]
+
+        result += "\n" + bld_comment_block("PostgreSQL %s match" % (member[:1].lower() + member[1:]))
+        result += "%s();\n" % ((_MATCH_MACRO if release else _MATCH_MACRO_RANGE) % prefix)
+
     # Interface struct, newest first so the most likely match is found first
-    result += "\n" + bld_comment_block("PostgreSQL interface struct")
+    result += "\n" + bld_comment_block(
+        "PostgreSQL interface struct\n\nA function shared by more than one version is named for the range it covers, so a version"
+        " may name a\nfunction whose name does not begin with it."
+    )
     result += "static const %s %s[] =\n{\n" % (interface.type, interface.prefix)
 
     for pg in reversed(bld_pg.pg_list):
         version_no_dot = _version_no_dot(pg.version)
 
-        result += "    {\n        .version = PG_VERSION_%s,\n\n" % version_no_dot
+        result += "    {\n        .version = PG_VERSION_%s,\n" % version_no_dot
+
+        # A version that has not been released accepts a range of catalog versions rather than only its own
+        if interface.unreleased and not pg.release:
+            result += "        .%s = true,\n" % _UNRELEASED_MEMBER
+
+        result += "\n"
+
+        # An interface reading the values from another one carries none of its own, so there is no group to separate
+        if bld_pg.value_list != []:
+            for value in bld_pg.value_list:
+                member = value.name[len(interface.prefix) :]
+
+                result += "        .%s = %s%s,\n" % (
+                    member[:1].lower() + member[1:],
+                    value.name,
+                    _version_suffix(bld_pg, value.macro, bld_pg.function_version[value.macro][pg.version]),
+                )
+
+            result += "\n"
 
         for function in bld_pg.function_list:
             name = _function_name(function)
             member = name[len(interface.prefix) :]
 
-            result += "        .%s = %s%s,\n" % (member[:1].lower() + member[1:], name, version_no_dot)
+            result += "        .%s = %s%s,\n" % (
+                member[:1].lower() + member[1:],
+                name,
+                _version_suffix(bld_pg, function, bld_pg.function_version[function][pg.version]),
+            )
 
         result += "    },\n"
 
@@ -124,7 +247,7 @@ def _render_version_auto_h(bld_pg):
     for pg in bld_pg.pg_list:
         version_no_dot = _version_no_dot(pg.version)
 
-        result += bld_define("PG_VERSION_%s" % version_no_dot, "%u" % _version_num(pg.version)) + "\n"
+        result += bld_define("PG_VERSION_%s" % version_no_dot, "%u" % bld_pg_version_num(pg.version)) + "\n"
 
     # The newest version is the maximum, which the code uses to reject anything newer than it knows about
     result += "\n" + bld_define("PG_VERSION_MAX", "PG_VERSION_%s" % _version_no_dot(bld_pg.pg_list[-1].version)) + "\n"
@@ -159,7 +282,7 @@ def _render_system_id(bld_pg):
             result += (
                 bld_define(
                     "%s%s%s_Z" % (_SYSTEM_ID_DEFINE, version_no_dot, "" if offset == 0 else "_%u" % offset),
-                    '"%u"' % (_SYSTEM_ID_BASE + _version_num(pg.version) + offset),
+                    '"%u"' % (_SYSTEM_ID_BASE + bld_pg_version_num(pg.version) + offset),
                 )
                 + "\n"
             )
