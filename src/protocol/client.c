@@ -13,6 +13,11 @@ Protocol Client
 #include "version.h"
 
 /***********************************************************************************************************************************
+Minimum time between keep-alive noops
+***********************************************************************************************************************************/
+#define PROTOCOL_KEEP_ALIVE_TIME                                    ((TimeMSec)30000)
+
+/***********************************************************************************************************************************
 Client state enum
 ***********************************************************************************************************************************/
 typedef enum
@@ -140,6 +145,9 @@ protocolClientRequestInternal(ProtocolClientSession *const this, const ProtocolC
 
         // Flush to send request immediately
         ioWriteFlush(this->client->write);
+
+        // Reset the keep alive time since data was just put to the server
+        this->client->keepAliveTime = timeMSec();
 
         this->pub.queued = true;
 
@@ -432,6 +440,23 @@ protocolClientNoOp(ProtocolClient *const this)
     ASSERT(this != NULL);
 
     protocolClientRequestP(this, PROTOCOL_COMMAND_NOOP);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolClientKeepAlive(ProtocolClient *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    // A request is data put to the server, so a client that is busy needs no noop to keep the server from timing out
+    if (timeMSec() - this->keepAliveTime >= PROTOCOL_KEEP_ALIVE_TIME)
+        protocolClientNoOp(this);
 
     FUNCTION_LOG_RETURN_VOID();
 }
