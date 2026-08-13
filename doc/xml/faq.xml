@@ -73,6 +73,8 @@ process-max=1
         <title>Can I use dots (periods) in my S3 bucket name?</title>
 
         <p><proper>RFC-2818</proper> does not allow wildcards to match on a dot (.) so s3 bucket names must not contain dots. If there are dots in the S3 bucket name then an error such as <quote>unable to find hostname 'my.backup.bucket.s3.amazonaws.com' in certificate common name or subject alternative names</quote> will occur.</p>
+
+        <p>The exception is <br-option>repo-s3-uri-style=path</br-option>, which prepends the bucket to the URI instead of the host. Since the bucket is not part of the host name, the certificate is matched against the endpoint alone and dots in the bucket name are not a problem. Note that path-style URIs are not supported by all S3-compatible object stores.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
