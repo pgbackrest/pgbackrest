@@ -2,6 +2,20 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
+                <github-issue id="2818"/>
+                <github-pull-request id="2819"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="crajac66"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="andrew.pogrebnoi"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix hang when the chunk buffer is smaller than the input buffer.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2792"/>
                 <github-pull-request id="2824"/>
 

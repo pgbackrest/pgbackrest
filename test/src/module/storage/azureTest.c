@@ -1501,6 +1501,10 @@ testRun(void)
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
 
                 ioWriteOpen(storageWriteIo(write));
+
+                // Shrink the block buffer to make sure it is resized to hold the entire input buffer
+                TEST_RESULT_VOID(bufResize(((StorageWriteAzure *)write->driver)->blockBuffer, 1), "resize block buffer to 1");
+
                 ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
 
                 TEST_RESULT_VOID(bufResize(((StorageWriteAzure *)write->driver)->blockBuffer, 17), "resize part buffer to 17");
