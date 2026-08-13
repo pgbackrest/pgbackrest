@@ -1,14 +1,24 @@
 #!/bin/sh
 ####################################################################################################################################
-# Prepare the distribution so the tarball can be built and installed without the code generation or documentation tooling: generate
-# the code files, copy the man pages and HTML documentation into doc, copy the distribution README, and write the dist marker that
-# tells the build to use the shipped generated files.
+# Prepare the distribution so the tarball can be built and installed without the code generation or documentation tooling: remove
+# everything that is not needed to build, generate the code files, copy the man pages and HTML documentation into doc, copy the
+# distribution README, and write the dist marker that tells the build to use the shipped generated files.
 #
 # build-code reads its inputs from the source tree and writes the generated files into the distribution. The inputs come from the
-# source rather than the distribution because src/build (the code generation sources) is excluded from the tarball. The read path
+# source rather than the distribution because src/build (the code generation sources) is not shipped in the tarball. The read path
 # is passed with a trailing component because build-code uses the parent directory of that argument as the repo root.
 ####################################################################################################################################
 set -eu
+
+# Remove everything that is not needed to build pgbackrest. The trimming is done here rather than with export-ignore in
+# .gitattributes so the source archives that GitHub generates for a tag remain complete and can be built by anyone willing to run
+# the code generation tooling. Keep src, the root meson files, and LICENSE. The tooling in src/build is removed even though src is
+# kept, since the generated files are added below instead, as is the documentation source in doc. The smoke test (test/smoke.py)
+# and the meson.build that runs it are kept so packagers can verify a build; the rest of test is removed.
+find "$MESON_DIST_ROOT" -mindepth 1 -maxdepth 1 \
+    ! -name LICENSE ! -name meson.build ! -name meson_options.txt ! -name src ! -name test -exec rm -rf {} +
+rm -rf "$MESON_DIST_ROOT/src/build"
+find "$MESON_DIST_ROOT/test" -mindepth 1 -maxdepth 1 ! -name meson.build ! -name smoke.py -exec rm -rf {} +
 
 build_code="$MESON_BUILD_ROOT/src/build-code"
 

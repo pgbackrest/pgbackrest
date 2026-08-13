@@ -54,27 +54,22 @@ jobs:
           # each on its own distribution.
           meson dist -C build --formats gztar --no-tests
 
-      # Check that the tarball ships exactly the expected generated files (the *.auto.c.inc code and the rendered documentation) and
-      # that none of them is empty. Only the path list is compared, not sizes or timestamps, so a missing or unexpected file is
-      # caught here while the zero-size check below catches a file that exists but was generated or rendered empty. Update the list
-      # when the generated or documentation file set changes.
+      # Check that the tarball ships exactly what is needed to build and nothing else. src/build/dist.sh trims the distribution
+      # rather than git archive, so a keep list that drifts is caught here instead of shipping a tarball full of tooling and test
+      # data. Everything under src collapses to the directory since it changes too often to list, except the generated *.auto.c.inc
+      # code, which is listed so a failed generation is caught. Only the path list is compared, not sizes or timestamps, so the
+      # zero-size check below catches a file that exists but was generated or rendered empty. Update the list when the shipped file
+      # set changes.
       - name: Check Tarball
-        env:
-          # Generated files shipped in the tarball, as path regexps relative to the version directory. Joined into a single
-          # expression below and used for both the path list and the zero-size check.
-          FILES: |
-            src/command/help/help\.auto\.c\.inc
-            src/postgres/interface\.auto\.c\.inc
-            doc/html/[^/]+
-            doc/man/[^/]+
         run: |
-          # Join the file list above into one extended-regexp expression
-          files=$(printf '%s' "$FILES" | awk 'NF' | paste -sd '|' -)
-
           diff - <(tar tzf build/meson-dist/pgbackrest-*.tar.gz \
               | sed 's#^pgbackrest-[^/]*/##' \
-              | grep -E "^(${files})\$" \
-              | LC_ALL=C sort) <<'EOF'
+              | grep -v -e '/$' -e '^$' \
+              | sed -E '\%^src/(command/help/help|postgres/interface)\.auto\.c\.inc$%!s#^src/.*#src/#' \
+              | LC_ALL=C sort -u) <<'EOF'
+          LICENSE
+          README.md
+          dist
           doc/html/command.html
           doc/html/configuration.html
           doc/html/default.css
@@ -86,15 +81,19 @@ jobs:
           doc/html/user-guide-rhel.html
           doc/html/user-guide.html
           doc/man/pgbackrest.1.txt
+          meson.build
+          meson_options.txt
+          src/
           src/command/help/help.auto.c.inc
           src/postgres/interface.auto.c.inc
+          test/meson.build
+          test/smoke.py
           EOF
 
-          # Confirm none of those generated files is zero size, which would pass the path check above but indicate a broken
-          # generation or render.
+          # Confirm no file in the tarball is zero size, which would pass the path check above but indicate a broken generation or
+          # render. Directory entries are also zero size so they are skipped.
           tar tzvf build/meson-dist/pgbackrest-*.tar.gz \
-              | grep -E "pgbackrest-[^/]+/(${files})\$" \
-              | awk '$3 == 0 { print "ERROR: zero-size file: " $NF; rc = 1 } END { exit rc }'
+              | awk '$1 !~ /^d/ && $3 == 0 { print "ERROR: zero-size file: " $NF; rc = 1 } END { exit rc }'
 
       # The release process depends on the upload filename so do not modify it without also modifying the release process
       - name: Upload Tarball
