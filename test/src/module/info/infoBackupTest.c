@@ -763,7 +763,6 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
             "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
-            "P00   WARN: invalid backup '20190818-084502F_20190820-084502I' cannot be added to current backups\n"
             "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"
             "P00   WARN: invalid backup '20190818-084666F' cannot be added to current backups\n"
             "P00   WARN: invalid backup '20190818-084777F' cannot be added to current backups\n"
@@ -836,6 +835,46 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT,
             .comment = "write manifest for dependent backup to be added to full already in backup.info");
 
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20190923-164324F_20190925-084502I/" BACKUP_MANIFEST_FILE,
+            "[backup]\n"
+            "backup-archive-start=\"000000030000028500000091\"\n"
+            "backup-archive-stop=\"000000030000028500000092\"\n"
+            "backup-label=\"20190923-164324F_20190925-084502I\"\n"
+            "backup-lsn-start=\"285/91000028\"\n"
+            "backup-lsn-stop=\"285/91001F88\"\n"
+            "backup-prior=\"20190923-164324F_20190924-084502D\"\n"
+            "backup-timestamp-copy-start=1569343541\n"
+            "backup-timestamp-start=1569343540\n"
+            "backup-timestamp-stop=1569343542\n"
+            "backup-type=\"incr\"\n"
+            "\n"
+            "[backup:db]\n"
+            "db-catalog-version=201809051\n"
+            "db-control-version=1100\n"
+            "db-id=2\n"
+            "db-system-id=6739907367085689196\n"
+            "db-version=\"11\"\n"
+            "\n"
+            "[backup:option]\n"
+            "option-archive-check=true\n"
+            "option-archive-copy=true\n"
+            "option-compress=false\n"
+            "option-hardlink=false\n"
+            "option-online=false\n"
+            "\n"
+            "[backup:target]\n"
+            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
+            "\n"
+            "[target:file]\n"
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"size\":4,\"timestamp\":1565282114}\n"
+            TEST_MANIFEST_FILE_DEFAULT
+            "\n"
+            "[target:path]\n"
+            "pg_data={}\n"
+            TEST_MANIFEST_PATH_DEFAULT,
+            .comment = "write manifest for backup in a set that is in backup.info but whose prior backup is not");
+
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
             "save updated backup info");
@@ -854,7 +893,8 @@ testRun(void)
             "P00   WARN: backup '20190818-084444F_20190924-084502D' found in repository added to backup.info\n"
             "P00   WARN: invalid backup '20190818-084555F' cannot be added to current backups\n"
             "P00   WARN: invalid backup '20190818-084666F' cannot be added to current backups\n"
-            "P00   WARN: invalid backup '20190818-084777F' cannot be added to current backups");
+            "P00   WARN: invalid backup '20190818-084777F' cannot be added to current backups\n"
+            "P00   WARN: invalid backup '20190923-164324F_20190925-084502I' cannot be added to current backups");
     }
 
     // *****************************************************************************************************************************
