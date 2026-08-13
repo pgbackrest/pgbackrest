@@ -781,6 +781,27 @@ infoBackupLoadFile(
 }
 
 /**********************************************************************************************************************************/
+// Helper to determine if any backup in the full backup set is in backup.info
+static bool
+infoBackupSetExists(const InfoBackup *const this, const String *const backupSet)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+        FUNCTION_TEST_PARAM(STRING, backupSet);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(backupSet != NULL);
+
+    for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(this); backupIdx++)
+    {
+        if (strBeginsWith(infoBackupData(this, backupIdx).backupLabel, backupSet))
+            FUNCTION_TEST_RETURN(BOOL, true);
+    }
+
+    FUNCTION_TEST_RETURN(BOOL, false);
+}
+
 FN_EXTERN InfoBackup *
 infoBackupLoadFileReconstruct(
     const Storage *const storage, const String *const fileName, const CipherSpec *const cipherSpec)
@@ -812,11 +833,16 @@ infoBackupLoadFileReconstruct(
         for (unsigned int backupCurrIdx = 0; backupCurrIdx < strLstSize(backupCurrentList); backupCurrIdx++)
         {
             const String *const backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
-            const String *const manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
+
+            // Only check the manifest when the backup is in the repository. When it is not there is no manifest either, so the
+            // listing that has already been read is enough to know the backup is gone.
+            const bool manifestExists =
+                strLstExists(backupList, backupLabel) &&
+                storageExistsP(storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)));
 
             // If the manifest does not exist on disk and this backup has not already been deleted from the current list in the
             // infoBackup object, then remove it and its dependencies
-            if (!storageExistsP(storage, manifestFileName) && infoBackupLabelExists(infoBackup, backupLabel))
+            if (!manifestExists && infoBackupLabelExists(infoBackup, backupLabel))
             {
                 const StringList *const backupList = strLstSort(
                     infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
@@ -840,8 +866,14 @@ infoBackupLoadFileReconstruct(
         {
             const String *const backupLabel = strLstGet(backupList, backupIdx);
 
-            // If it does not exist in the list of current backups, then if it is valid, add it
-            if (!strLstExists(backupCurrentList, backupLabel))
+            // If it does not exist in the list of current backups, then if it is valid, add it. A diff/incr backup is only added
+            // when the backup it depends on is in backup.info, and since its label is generated from the label of that backup the
+            // two are always in the same full backup set. When no backup from the set is in backup.info the manifest can never be
+            // added no matter what it contains, so there is no reason to read it. Backups are processed oldest to newest, which
+            // means a full backup added by this loop is in backup.info before the backups that depend on it are processed.
+            if (!strLstExists(backupCurrentList, backupLabel) &&
+                (strSize(backupLabel) == DATE_TIME_LEN + 1 ||
+                 infoBackupSetExists(infoBackup, strSubN(backupLabel, 0, DATE_TIME_LEN + 1))))
             {
                 const String *const manifestFileName = strNewFmt(
                     STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));

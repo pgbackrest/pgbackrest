@@ -36,9 +36,6 @@ cipherSpecNewNone(void)
 // Create from a pack written by cipherSpecPack()
 FN_EXTERN CipherSpec *cipherSpecNewPack(PackRead *packRead);
 
-// Duplicate
-FN_EXTERN CipherSpec *cipherSpecDup(const CipherSpec *this);
-
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
@@ -65,6 +62,13 @@ cipherSpecPass(const CipherSpec *const this)
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Duplicate
+FN_INLINE_ALWAYS CipherSpec *
+cipherSpecDup(const CipherSpec *const this)
+{
+    return cipherSpecNew(cipherSpecType(this), cipherSpecPass(this));
+}
+
 // Write to a pack so it can be passed over a protocol
 FN_EXTERN void cipherSpecPack(PackWrite *packWrite, const CipherSpec *this);
 

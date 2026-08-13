@@ -341,7 +341,7 @@
 
 <contributor id="david.christensen">
     <contributor-name-display>David Christensen</contributor-name-display>
-    <contributor-id type="github">machack666</contributor-id>
+    <contributor-id type="github">pgguru</contributor-id>
 </contributor>
 
 <contributor id="david.raftis">
@@ -1257,6 +1257,11 @@
 <contributor id="todd.vernick">
     <contributor-name-display>Todd Vernick</contributor-name-display>
     <contributor-id type="github">gintoddic</contributor-id>
+</contributor>
+
+<contributor id="todeb">
+    <contributor-name-display>todeb</contributor-name-display>
+    <contributor-id type="github">todeb</contributor-id>
 </contributor>
 
 <contributor id="tom.swartz">

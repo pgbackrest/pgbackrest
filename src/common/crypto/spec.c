@@ -63,26 +63,6 @@ cipherSpecNewPack(PackRead *const packRead)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN CipherSpec *
-cipherSpecDup(const CipherSpec *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CIPHER_SPEC, this);
-    FUNCTION_TEST_END();
-
-    ASSERT(this != NULL);
-
-    CipherSpec *result;
-
-    if (cipherSpecType(this) == cipherTypeNone)
-        result = cipherSpecNewNone();
-    else
-        result = cipherSpecNew(cipherSpecType(this), cipherSpecPass(this));
-
-    FUNCTION_TEST_RETURN(CIPHER_SPEC, result);
-}
-
-/**********************************************************************************************************************************/
 FN_EXTERN void
 cipherSpecPack(PackWrite *const packWrite, const CipherSpec *const this)
 {
