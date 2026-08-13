@@ -1358,6 +1358,8 @@
                 </execute>
             </execute-list>
 
+            <p>The <pg-option>hot_standby</pg-option> setting is enabled by default and should be left that way on every cluster. Any cluster may be restored as a standby later, e.g. a primary that is rebuilt as a standby after failover, and a standby will not accept read-only connections without it.</p>
+
             <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) to reach the <backrest/> repository, then the <backrest/> <br-option>archive-timeout</br-option> option should be increased. Note that this option is not the same as the <postgres/> <pg-option>archive_timeout</pg-option> option which is used to force a WAL segment switch; useful for databases where there are long periods of inactivity. For more information on the <postgres/> <pg-option>archive_timeout</pg-option> option, see <postgres/> <link url="https://www.postgresql.org/docs/current/static/runtime-config-wal.html">Write Ahead Log</link>.</p>
 
             <p>The <cmd>archive-push</cmd> command can be configured with its own options. For example, a lower compression level may be set to speed archiving without affecting the compression used for backups.</p>
@@ -3305,12 +3307,11 @@
                 </execute>
             </execute-list>
 
-            <p>The <pg-setting>hot_standby</pg-setting> setting must be enabled before starting <postgres/> to allow read-only connections on <host>{[host-pg2]}</host>. Otherwise, connection attempts will be refused. The rest of the configuration is in case the standby is promoted to a primary.</p>
+            <p>The configuration is in case the standby is promoted to a primary.</p>
 
             <postgres-config host="{[host-pg2]}" file="{[postgres-config-demo]}">
                 <title>Configure <postgres/></title>
 
-                <postgres-config-option key="hot_standby">on</postgres-config-option>
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
                 <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
@@ -4447,12 +4448,6 @@
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=standby restore</exe-cmd>
             </execute>
         </execute-list>
-
-        <postgres-config host="{[host-pg2]}" file="{[postgres-config-demo-upgrade]}">
-            <title>Configure <postgres/></title>
-
-            <postgres-config-option key="hot_standby">on</postgres-config-option>
-        </postgres-config>
 
         <execute-list host="{[host-pg2]}">
             <title>Start <postgres/> and check the <backrest/> configuration</title>
