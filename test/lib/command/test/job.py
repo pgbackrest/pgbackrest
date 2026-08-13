@@ -11,7 +11,7 @@ import math
 import os
 import time
 
-from command.test.define import TEST_LANG_C, TEST_TYPE_PERFORMANCE
+from command.test.define import TEST_LANG_C
 from command.vm.build import container_remove
 from common.exec import Exec, exec_one
 from common.log import *
@@ -212,9 +212,9 @@ class TestJob:
         if not run.integration:
             path_create(self.path_unit, mode=0o770)
 
-            # A performance test is timed rather than checked so it writes no data
-            if run.module.type != TEST_TYPE_PERFORMANCE:
-                path_create(self.path_data, mode=0o770)
+            # The data path is created even for a performance test, which writes nothing to it, since the harness clears it between
+            # tests and a path that is not there cannot be cleared
+            path_create(self.path_data, mode=0o770)
 
             if run.vm != VM_NONE:
                 self._container_run()

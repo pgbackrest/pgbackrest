@@ -32,7 +32,6 @@ typedef struct Lz4Compress
 {
     LZ4F_compressionContext_t context;                              // LZ4 compression context
     LZ4F_preferences_t prefs;                                       // Preferences -- just compress level set
-    IoFilter *filter;                                               // Filter interface
 
     Buffer *buffer;                                                 // For when the output buffer can't accept all compressed data
     bool first;                                                     // Is this the first call to process?

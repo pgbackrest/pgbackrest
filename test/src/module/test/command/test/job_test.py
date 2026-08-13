@@ -178,10 +178,18 @@ def test_job_command():
         # The test is listed at detail, since at info the log would be a list of tests that have not finished yet
         assert_equal(output, "P00 DETAIL: P1-T1/1 - vm=none, module=common/error\n")
 
-        # The paths the test writes to are created, and the data path for everything but a performance test
+        # The paths the test writes to are created
         assert_true(os.path.isdir(os.path.join(path, "test-0")))
         assert_true(os.path.isdir(os.path.join(path, "unit-0/none")))
         assert_true(os.path.isdir(os.path.join(path, "data-0")))
+
+        # A performance test gets a data path as well, since the harness clears it between tests even though the test writes
+        # nothing to it
+        job = _job(config, _run(name="performance/type", type=TEST_TYPE_PERFORMANCE), vm_idx=1)
+
+        _capture(job, lambda job: job.begin())
+
+        assert_true(os.path.isdir(os.path.join(path, "data-1")))
 
         # A python test has nothing to build so the harness runs it, and it writes its own coverage
         job = _job(config, _run(name="test/common/log", type=TEST_TYPE_TOOL, lang=TEST_LANG_PYTHON))

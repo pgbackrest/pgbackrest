@@ -127,6 +127,10 @@ protocolClientNoExit(ProtocolClient *const this)
 // Send noop to test connection or keep it alive
 FN_EXTERN void protocolClientNoOp(ProtocolClient *this);
 
+// Send noop only when the client has been idle long enough for the server to be at risk of timing out. Callers send a keep-alive
+// once per unit of work, which is far more often than the server needs one, so most calls do nothing.
+FN_EXTERN void protocolClientKeepAlive(ProtocolClient *this);
+
 // Simple request that does not require a session or async
 typedef struct ProtocolClientRequestParam
 {

@@ -13,44 +13,87 @@ from common.error import *
 from common.storage import file_write
 from postgres.parse import *
 
-# A vendored header holding each shape a type can be declared in
-VENDOR = """#define CATALOG_VERSION_NO 202411051
-#define PG_CONTROL_VERSION\t1700
-#define FirstNormalObjectId(x) (x)
-#define CATALOG_VERSION_NO 202411051
+# The comment the vendored header divides itself with, one before each entity it declares
+SEPARATOR = "// " + "-" * 129
 
-typedef uint32 TransactionId;
+# A vendored header holding each shape a type can be declared in, and the branches that decide which versions can share a function.
+# ControlFileData reaches TransactionId twice, once directly and once through MultiXactId, and FullTransactionId is missing from the
+# versions before it was added.
+VENDOR = (
+    "// Defines\n" + SEPARATOR + "\n"
+    "#define CATALOG_VERSION_NO 202411051\n"
+    "#define PG_CONTROL_VERSION\t1700\n"
+    "#define FirstNormalObjectId(x) (x)\n"
+    "#define CATALOG_VERSION_NO 202411051\n"
+    "\n"
+    "// TransactionId type\n" + SEPARATOR + "\n"
+    "typedef uint32 TransactionId;\n"
+    "\n"
+    "// MultiXactId type\n" + SEPARATOR + "\n"
+    "typedef TransactionId MultiXactId;\n"
+    "\n"
+    "// FullTransactionId type\n" + SEPARATOR + "\n"
+    "#if PG_VERSION > PG_VERSION_MAX\n"
+    "\n"
+    "#elif PG_VERSION >= PG_VERSION_11\n"
+    "\n"
+    "typedef struct FullTransactionId\n"
+    "{\n"
+    "    TransactionId xid;\n"
+    "} FullTransactionId;\n"
+    "\n"
+    "#endif\n"
+    "\n"
+    "// ControlFileData type\n" + SEPARATOR + "\n"
+    "typedef struct ControlFileData\n"
+    "{\n"
+    "    TransactionId xid;\n"
+    "    MultiXactId multi;\n"
+    "} ControlFileData;\n"
+    "\n"
+    "// DBState enum\n" + SEPARATOR + "\n"
+    "typedef enum DBState\n"
+    "{\n"
+    "    DB_STARTUP = 0,\n"
+    "    DB_SHUTDOWNED,\n"
+    "} DBState;\n"
+    "\n"
+    "// TransactionId type\n" + SEPARATOR + "\n"
+    "typedef uint32 TransactionId;\n"
+)
 
-typedef struct ControlFileData
-{
-    uint64 system_identifier;
-} ControlFileData;
+# The header that declares the interface functions as macros, with a helper the macros are written with rather than a function of
+# its own. PG_INTERFACE_CONTROL reaches ControlFileData only through that helper and names it twice.
+INTERN = (
+    "#define PG_INTERFACE_CONTROL_FIELD(control)  (((const ControlFileData *)(control))->xid)\n"
+    "\n"
+    "#define PG_INTERFACE_CONTROL_IS(version)\\\n"
+    "    static bool pgInterfaceControlIs##version(void)\\\n"
+    "    { return PG_VERSION > 0; }\n"
+    "\n"
+    "#define PG_INTERFACE_CONTROL(version)\\\n"
+    "    static uint32 pgInterfaceControl##version(const uint8_t *control)\\\n"
+    "    { return PG_INTERFACE_CONTROL_FIELD(control) + PG_INTERFACE_CONTROL_FIELD(control); }\n"
+    "\n"
+    "#define PG_INTERFACE_XID(version)\\\n"
+    "    static void pgInterfaceXid##version(FullTransactionId xid);\n"
+)
 
-typedef enum DBState
-{
-    DB_STARTUP = 0,
-    DB_SHUTDOWNED,
-} DBState;
-
-typedef uint32 TransactionId;
-"""
-
-# The header that declares the interface functions as macros
-INTERN = """#define PG_INTERFACE_CONTROL_IS(version)
-#define PG_INTERFACE_CONTROL(version)
+# The header that declares the interface functions the harness writes test files with
+INTERN_HARNESS = """#define HRN_PG_INTERFACE_CONTROL(version)
 """
 
 
 ####################################################################################################################################
-def _parse(version, vendor=VENDOR, intern=INTERN):
+def _parse(version, vendor=VENDOR, intern=INTERN, interface=BLD_PG_INTERFACE):
     """Parse an interface declaration."""
 
     with tempfile.TemporaryDirectory() as path:
         file_write(os.path.join(path, "build/postgres.yaml"), version)
         file_write(os.path.join(path, "src/postgres/interface/version.vendor.h"), vendor)
-        file_write(os.path.join(path, "src/postgres/interface/version.intern.h"), intern)
+        file_write(os.path.join(path, interface.path_intern), intern)
 
-        return bld_pg_parse(path)
+        return bld_pg_parse(path, interface)
 
 
 ####################################################################################################################################
@@ -88,7 +131,10 @@ def test_postgres_parse_type():
 
     # A plain typedef is named before the type, a struct and an enum after it, and an enum also contributes its values. A name the
     # header declares more than once is listed once.
-    assert_equal(bld_pg.type_list, ["ControlFileData", "DBState", "DB_SHUTDOWNED", "DB_STARTUP", "TransactionId"])
+    assert_equal(
+        bld_pg.type_list,
+        ["ControlFileData", "DBState", "DB_SHUTDOWNED", "DB_STARTUP", "FullTransactionId", "MultiXactId", "TransactionId"],
+    )
 
 
 ####################################################################################################################################
@@ -104,8 +150,43 @@ def test_postgres_parse_define():
         ["CATALOG_VERSION_NO", "CATALOG_VERSION_NO_MAX", "FirstNormalObjectId", "PG_CONTROL_VERSION", "PG_VERSION"],
     )
 
-    # Functions keep the order they were declared in, since that is the order the interface struct is filled in
-    assert_equal(bld_pg.function_list, ["PG_INTERFACE_CONTROL_IS", "PG_INTERFACE_CONTROL"])
+    # Functions keep the order they were declared in, since that is the order the interface struct is filled in. A macro that does
+    # not take a version is a helper the macros are written with rather than a function, so it is not one of them.
+    assert_equal(bld_pg.function_list, ["PG_INTERFACE_CONTROL_IS", "PG_INTERFACE_CONTROL", "PG_INTERFACE_XID"])
+
+
+####################################################################################################################################
+def test_postgres_parse_function_version():
+    """A function only has to be rendered once for each set of branches it reaches, so work out which versions can share one."""
+
+    bld_pg = _parse("version:\n  - 9.6\n  - 10\n  - 11\n  - 12\n")
+
+    # PG_VERSION is the version itself, so a function reading it is never the same code for two versions
+    assert_equal(bld_pg.function_version["PG_INTERFACE_CONTROL_IS"], {"9.6": "9.6", "10": "10", "11": "11", "12": "12"})
+
+    # ControlFileData never varies, and neither does anything it reaches, so every version shares the oldest rendering. The helper
+    # the macro is written with is followed to find it, and the type it reaches twice is only resolved once.
+    assert_equal(bld_pg.function_version["PG_INTERFACE_CONTROL"], {"9.6": "9.6", "10": "9.6", "11": "9.6", "12": "9.6"})
+
+    # FullTransactionId is missing before 11 and the same from 11 on, which is two answers rather than four
+    assert_equal(bld_pg.function_version["PG_INTERFACE_XID"], {"9.6": "9.6", "10": "9.6", "11": "11", "12": "11"})
+
+
+####################################################################################################################################
+def test_postgres_parse_interface_harness():
+    """The harness interface is the same declaration read with the header its own macros live in."""
+
+    bld_pg = _parse("version:\n  - 10\n", intern=INTERN_HARNESS, interface=BLD_PG_INTERFACE_HARNESS)
+
+    # The versions and the vendored names are the same, since only the macros that build an interface from them differ
+    assert_equal([pg.version for pg in bld_pg.pg_list], ["10"])
+    assert_in("ControlFileData", bld_pg.type_list)
+    assert_equal(bld_pg.function_list, ["HRN_PG_INTERFACE_CONTROL"])
+
+    # The struct the functions are collected in is named after the prefix they share
+    assert_equal(bld_pg.interface.prefix, "hrnPgInterface")
+    assert_equal(bld_pg.interface.type, "HrnPgInterface")
+    assert_equal(BLD_PG_INTERFACE.type, "PgInterface")
 
 
 ####################################################################################################################################

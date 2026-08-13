@@ -20,7 +20,6 @@ Object type
 typedef struct Lz4Decompress
 {
     LZ4F_decompressionContext_t context;                            // LZ4 decompression context
-    IoFilter *filter;                                               // Filter interface
 
     bool inputSame;                                                 // Is the same input required on the next process call?
     size_t inputOffset;                                             // Current offset from the start of the buffer

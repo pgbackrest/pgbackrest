@@ -53,13 +53,14 @@ hrnProtocolClientCleanup(void)
 
             memContextCallbackClear(objMemContext(clientHelper->client));
             protocolClientFree(clientHelper->client);
-            lstRemoveIdx(protocolHelper.clientList, 0);
 
             if (clientHelper->exec != NULL)
             {
                 memContextCallbackClear(objMemContext(clientHelper->exec));
                 execFree(clientHelper->exec);
             }
+
+            lstRemoveIdx(protocolHelper.clientList, 0);
         }
     }
 

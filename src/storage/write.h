@@ -132,8 +132,9 @@ Helper functions
 FN_EXTERN size_t storageWriteChunkSize(
     size_t chunkSizeDefault, unsigned int defaultSplit, unsigned int maxSplit, unsigned int chunkIdx);
 
-// Resize chunk buffer for multipart upload to an object store
-FN_EXTERN void storageWriteChunkBufferResize(const Buffer *input, Buffer *const chunk, size_t chunkSizeMax);
+// Resize chunk buffer for multipart upload to an object store. After the resize the chunk buffer is able to hold the input from
+// inputOffset to the end of the input buffer, unless max chunk size has been reached.
+FN_EXTERN void storageWriteChunkBufferResize(const Buffer *input, size_t inputOffset, Buffer *const chunk, size_t chunkSizeMax);
 
 /***********************************************************************************************************************************
 Macros for function logging

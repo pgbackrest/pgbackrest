@@ -19,11 +19,20 @@ backupLabelCreate(const BackupType type, const String *const backupLabelPrior, c
     {
         const String *backupLabelLatest = NULL;
 
+        // For full backup compare against all backups. For other backup types compare only against backups in the same full backup
+        // set, i.e. those whose name begins with the full backup part of backupLabelPrior. Since the new label is generated from
+        // backupLabelPrior it can never conflict with a label in another full backup set. This prevents label generation from
+        // failing when the last full backup is removed and then a diff/incr is generated from the last remaining full backup, or
+        // when a removed full backup is still returned by the repository listing, which can happen on object stores that retain
+        // empty prefixes.
+        const String *const labelRegExp =
+            type == backupTypeFull ?
+                backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true) :
+                strNewFmt("^%.*sF\\_" DATE_TIME_REGEX "(D|I)", DATE_TIME_LEN, strZ(backupLabelPrior));
+
         // Get the newest backup
         const StringList *const backupList = strLstSort(
-            storageListP(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP),
-                .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+            storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP), .expression = strNewFmt("%s$", strZ(labelRegExp))),
             sortOrderDesc);
 
         if (!strLstEmpty(backupList))
@@ -36,18 +45,11 @@ backupLabelCreate(const BackupType type, const String *const backupLabelPrior, c
 
         if (!strLstEmpty(historyYearList))
         {
-            // For full backup compare against all backups in the history. For other backup types find backups whose name begins
-            // with full backup part of backupLabelLatest. This prevents label generation from failing when the last full backup is
-            // removed and then an diff/incr is generated from the last remaining full backup.
-            const String *const fileNameRegExp =
-                (type == backupTypeFull) ?
-                    backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true) :
-                    strNewFmt("^%.*sF\\_" DATE_TIME_REGEX "(D|I)", DATE_TIME_LEN, strZ(backupLabelLatest));
             const StringList *const historyList = strLstSort(
                 storageListP(
                     storageRepo(),
                     strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(strLstGet(historyYearList, 0))),
-                    .expression = strNewFmt("%s\\.manifest\\.%s$", strZ(fileNameRegExp), strZ(compressTypeStr(compressTypeGz)))),
+                    .expression = strNewFmt("%s\\.manifest\\.%s$", strZ(labelRegExp), strZ(compressTypeStr(compressTypeGz)))),
                 sortOrderDesc);
 
             if (!strLstEmpty(historyList))

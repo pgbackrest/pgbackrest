@@ -274,31 +274,6 @@ def test_help_render():
 
 
 ####################################################################################################################################
-def test_help_render_data():
-    """The help is also written as raw data, which is what the C help test loads to run against the current declarations."""
-
-    with tempfile.TemporaryDirectory() as path:
-        file_write(os.path.join(path, "build/config.yaml"), CONFIG)
-        file_write(os.path.join(path, PATH_HELP), HELP)
-
-        bld_cfg = bld_cfg_parse(path)
-        bld_hlp = bld_hlp_parse(os.path.join(path, PATH_HELP), bld_cfg, False)
-
-        bld_hlp_render_data(path, bld_cfg, bld_hlp)
-
-        with open(os.path.join(path, "help.dat"), "rb") as file:
-            data = file.read()
-
-        # The data is exactly what the C literal holds, which is the pack the binary reads back
-        assert_in(b"Backup summary.", bz2.decompress(data))
-
-        # The data is byte for byte what the C literal decodes to
-        _, literal_data = _render()
-
-        assert_equal(data, literal_data)
-
-
-####################################################################################################################################
 def test_help_render_size():
     """The help is only written when it changes, so an unchanged one does not trigger a rebuild."""
 

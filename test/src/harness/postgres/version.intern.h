@@ -1,31 +1,18 @@
 /***********************************************************************************************************************************
 Harness for PostgreSQL Interface
 
-Macros to create harness functions per PostgreSQL version.
+Macros for building version-specific functions that write the pg_control and WAL a test needs. This is the write side of the
+interface the code reads with postgres/interface/version.intern.h.
+
+The types are the ones that interface declares, which the harness reaches by shimming it rather than declaring them again, so a type
+may only be named here if it is named there. Everything else the macros use is included by the module that expands them.
 ***********************************************************************************************************************************/
-#ifndef TEST_HARNESS_POSTGRES_VERSION_INTERN_H
-#define TEST_HARNESS_POSTGRES_VERSION_INTERN_H
-
-#include "postgres/interface/crc32.h"
-#include "postgres/interface/version.vendor.h"
-
-#include "harness/postgres.h"
-
-/***********************************************************************************************************************************
-Get the catalog version
-***********************************************************************************************************************************/
-#define HRN_PG_INTERFACE_CATALOG_VERSION(version)                                                                                  \
-    uint32_t                                                                                                                       \
-    hrnPgInterfaceCatalogVersion##version(void)                                                                                    \
-    {                                                                                                                              \
-        return CATALOG_VERSION_NO;                                                                                                 \
-    }
 
 /***********************************************************************************************************************************
 Create a pg_control file
 ***********************************************************************************************************************************/
-#define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
-    void                                                                                                                           \
+#define HRN_PG_INTERFACE_CONTROL(version)                                                                                          \
+    static void                                                                                                                    \
     hrnPgInterfaceControl##version(                                                                                                \
         const unsigned int controlVersion, const unsigned int crc, const PgControl pgControl, uint8_t *const buffer)               \
     {                                                                                                                              \
@@ -34,7 +21,7 @@ Create a pg_control file
         *(ControlFileData *)buffer = (ControlFileData)                                                                             \
         {                                                                                                                          \
             .system_identifier = pgControl.systemId,                                                                               \
-            .pg_control_version = controlVersion == 0 ? PG_CONTROL_VERSION : controlVersion,                                       \
+            .pg_control_version = controlVersion,                                                                                  \
             .catalog_version_no = pgControl.catalogVersion,                                                                        \
             .checkPoint = pgControl.checkpoint,                                                                                    \
             .checkPointCopy =                                                                                                      \
@@ -52,22 +39,12 @@ Create a pg_control file
 /***********************************************************************************************************************************
 Create a WAL file
 ***********************************************************************************************************************************/
-#define HRN_PG_INTERFACE_WAL_TEST(version)                                                                                         \
-    void                                                                                                                           \
+#define HRN_PG_INTERFACE_WAL(version)                                                                                              \
+    static void                                                                                                                    \
     hrnPgInterfaceWal##version(const unsigned int magic, const PgWal pgWal, uint8_t *const buffer)                                 \
     {                                                                                                                              \
-        ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = magic == 0 ? XLOG_PAGE_MAGIC : (uint16)magic;                          \
-        ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \
+        ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = (uint16)magic;                                                         \
+        ((XLogLongPageHeaderData *)buffer)->std.xlp_info = PG_WAL_LONG_HEADER;                                                     \
         ((XLogLongPageHeaderData *)buffer)->xlp_sysid = pgWal.systemId;                                                            \
         ((XLogLongPageHeaderData *)buffer)->xlp_seg_size = pgWal.size;                                                             \
     }
-
-/***********************************************************************************************************************************
-Call all macros with a single macro to make the vXXX.c files as simple as possible
-***********************************************************************************************************************************/
-#define HRN_PG_INTERFACE(version)                                                                                                  \
-    HRN_PG_INTERFACE_CATALOG_VERSION(version)                                                                                      \
-    HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                         \
-    HRN_PG_INTERFACE_WAL_TEST(version)
-
-#endif
