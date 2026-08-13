@@ -11,6 +11,7 @@ if not dist
             '../../build/postgres.yaml',
             'interface/version.intern.h',
             'interface/version.vendor.h',
+            build_code_lib,
         ],
         command: [
             build_code,

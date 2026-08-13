@@ -125,7 +125,6 @@ typedef struct VerifyJobData
     bool backupProcessing;                                          // Are we processing WAL or are we processing backups
     const CipherSpec *cipherSpecManifest;                           // Cipher spec for reading backup manifests
     const CipherSpec *cipherSpecArchive;                            // Cipher spec for reading WAL files
-    const CipherSpec *cipherSpecBackup;                             // Cipher spec for reading backup files from a manifest
     unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
     List *archiveIdResultList;                                      // Archive results
     List *backupResultList;                                         // Backup results
@@ -989,15 +988,7 @@ verifyBackup(VerifyJobData *const jobData)
                 {
                     // Move the manifest to the jobData for processing
                     jobData->manifest = manifestMove(manifest, jobData->memContext);
-
-                    // Initialize the jobData
-                    MEM_CONTEXT_BEGIN(jobData->memContext)
-                    {
-                        // Get the cipher spec used to decrypt files in the backup and initialize the file list index
-                        jobData->cipherSpecBackup = manifestCipherSpec(jobData->manifest);
-                        jobData->manifestFileIdx = 0;
-                    }
-                    MEM_CONTEXT_END();
+                    jobData->manifestFileIdx = 0;
 
                     const ManifestData *const manData = manifestData(jobData->manifest);
 
@@ -1122,7 +1113,7 @@ verifyBackup(VerifyJobData *const jobData)
                                 pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
                                 pckWriteBinP(param, BUF(fileData.checksumSha1, HASH_TYPE_SHA1_SIZE));
                                 pckWriteU64P(param, fileData.size);
-                                cipherSpecPack(param, jobData->cipherSpecBackup);
+                                cipherSpecPack(param, manifestCipherSpec(jobData->manifest));
                             }
 
                             // Assign job to result (prepend backup label being processed to the key since some files are in a prior

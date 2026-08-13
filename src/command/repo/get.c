@@ -145,6 +145,8 @@ storageGetProcess(IoWrite *const destination)
                 if (cipherSpec == NULL)
                     THROW_FMT(OptionInvalidValueError, "unable to determine cipher passphrase for '%s'", strZ(file));
 
+                ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
+
                 // Add the decryption filter. An info file is read with a header, which the cipher consumes.
                 ioFilterGroupAdd(
                     ioReadFilterGroup(source), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .header = fileIsInfo));

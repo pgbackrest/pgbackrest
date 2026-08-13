@@ -1087,6 +1087,8 @@ cfgCipherSpecMainIdx(const unsigned int repoIdx)
         FUNCTION_TEST_PARAM(UINT, repoIdx);
     FUNCTION_TEST_END();
 
+    ASSERT(repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo));
+
     // Allocate a slot per repo. Each repo has its own cipher type and passphrase so cipher spec cannot be shared between them.
     if (configLocal->cipherSpecMain == NULL)
     {
