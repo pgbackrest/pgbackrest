@@ -89,7 +89,7 @@ cmdRestore(void)
         // Validate manifest. Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);
 
-        // Get the cipher subpass used to decrypt files in the backup
+        // Get the cipher spec used to decrypt files in the backup
         jobData.cipherSpecBackup = manifestCipherSpec(jobData.manifest);
 
         // Validate the manifest
