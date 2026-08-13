@@ -10,6 +10,7 @@ if not dist
         depend_files: [
             '../../../build/config.yaml',
             '../../../doc/xml/reference.xml',
+            build_code_lib,
         ],
         command: [
             build_code,

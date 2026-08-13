@@ -32,6 +32,20 @@ configure_file(output: 'build.auto.h', configuration: configuration)
 # excludes the generator, and a unit test build comments out this subdir, so neither looks for it.
 if not dist
     build_code = find_program('../build/build.py')
+
+    # The library the generator is built from, which the generated code depends on just as much as the declarations it is generated
+    # from, since how something is rendered decides the result as much as what is declared. Whichever generator runs loads all of
+    # the library, so this is the whole of it rather than the part that writes a particular file. Meson has no glob, so the list is
+    # built here and a module added to the library is picked up the next time meson configures.
+    build_code_lib = run_command(
+        [
+            python,
+            '-c',
+            '''import glob, sys; print("\n".join(sorted(glob.glob(sys.argv[1] + "/**/*.py", recursive=True))))''',
+            meson.current_source_dir() / '../build/lib',
+        ],
+        check: true,
+    ).stdout().split()
 endif
 
 # Build help.auto.c.inc (or use the copy shipped in the distribution tarball)
