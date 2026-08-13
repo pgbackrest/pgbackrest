@@ -49,7 +49,7 @@
                 <list-item>Exit async archive-push on first error (David Steele)</list-item>
             </list>
 
-            <p>See the <link page="release" section="2.59.0">2.59.0 Release Notes</link> for additional features and improvements.</p>
+            <p>See the <link page="release" section="/2.59.0">2.59.0 Release Notes</link> for additional features and improvements.</p>
         </section>
 
         <section id="note">
