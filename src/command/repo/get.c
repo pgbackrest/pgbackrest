@@ -135,6 +135,8 @@ storageGetProcess(IoWrite *const destination)
                 if (cipherSpec == NULL)
                     THROW_FMT(OptionInvalidValueError, "unable to determine cipher passphrase for '%s'", strZ(file));
 
+                ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
+
                 // Add encryption filter
                 cipherBlockFilterGroupAdd(ioReadFilterGroup(source), cipherModeDecrypt, cipherSpec);
             }
