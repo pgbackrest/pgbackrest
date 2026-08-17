@@ -1,5 +1,51 @@
 [
     {
+        "commit": "5cbc256bf37a44fa478d73a12a2e5b2d84fa6337",
+        "date": "2026-08-17 10:20:47 +0700",
+        "subject": "PostgreSQL 19beta3 support.",
+        "body": "Update XLOG_PAGE_MAGIC, which beta3 bumped for this bug fix:\n\nhttps://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=ed62d26cacac96ca5c6b4e6fcc5308b11a8371c8"
+    },
+    {
+        "commit": "a53e470eca258c2db088af55be307403c8f43b7a",
+        "date": "2026-08-13 13:07:52 +0700",
+        "subject": "Fix hang when the chunk buffer is smaller than the input buffer.",
+        "body": "The chunk buffer used for S3/GCS/Azure multi-part upload is only written when it contains exactly chunk size bytes, so when the chunk buffer is allocated smaller than chunk size and fills up, no more data can be copied into it and no write is triggered, which results in an infinite loop.\n\nThis could happen when chunk size grew after a chunk was written, since the chunk buffer was resized only once before the copy loop, or when the chunk buffer had been sized exactly to fit a prior partial write and doubling was not enough to hold the next input buffer.\n\nResize the chunk buffer in the copy loop and make sure it is always large enough to hold the entire input buffer, unless max chunk size has been reached. Also grow the chunk buffer aggressively when it is not empty, since in that case more data is likely no matter how full the input buffer is."
+    },
+    {
+        "commit": "d01f77e8237f5d008bb7782c18ced12cd6d1971a",
+        "date": "2026-08-13 12:58:09 +0700",
+        "subject": "Compare a new backup label only against its own full backup set.",
+        "body": "A diff or incr label is generated from the prior backup label, so it begins with the full backup part of that label and can only collide with, or need to sort after, a label in the same full backup set. The history lookup has always known this and restricts itself to one set, but the repository listing beside it compared against every backup in the repository, including full backups from other sets, which a diff or incr label sorts before whenever the full backup it belongs to is older.\n\nThat costs nothing while the listing holds only backups that exist. On object stores that keep a prefix alive after everything under it has been deleted, such as MinIO with object locking or SeaweedFS, a backup that pgBackRest removed goes on being returned by the listing. An aborted full backup cleaned up by resume therefore keeps sorting after the prior full backup, and every diff and incr taken afterwards fails with \"new backup label ... is not later than latest backup label ...\", naming a backup that is no longer there.\n\nBuild the expression that restricts a comparison to a single full backup set once and filter both the backup listing and the history listing with it. For a full backup the expression matches everything, as it did before.\n\nBuild the expression from the prior backup label rather than from the newest label in the repository listing, since that is the value the listing gets wrong and it is also the label the new label is generated from. Where the last full backup has been removed and a diff or incr is generated from the last remaining full backup, which is the case the history restriction was written for, the two labels are the same."
+    },
+    {
+        "commit": "163670a4eeede6d2d170b5d1f55c5ba0b66ba564",
+        "date": "2026-08-13 12:48:32 +0700",
+        "subject": "Move the distribution trimming from .gitattributes to dist.sh.",
+        "body": "The export-ignore rules applied to every archive git produced, not just the one meson dist builds, so the source archives GitHub generates for a tag were missing the code generation tooling, the declarations it reads, and the documentation source. That left them unbuildable even for someone willing to run the tooling, which was never the intent -- the rules existed to keep the distribution tarball to what a packager needs.\n\nRemove the rules and have dist.sh trim the distribution root instead, keeping the same set: src, the root meson files, LICENSE, and the smoke test that packagers use to verify a build. Since src is kept, the code generation tooling in src/build is removed on its own rather than by the keep list. The trimming runs before the generated files are added so the documentation source is replaced by the rendered man page and HTML rather than shipped alongside them.\n\nTrimming in a script rather than with export-ignore means git no longer guarantees the result, so check the full tarball path list in CI rather than just the generated files. Everything under src collapses to the directory since it changes too often to list, except the generated code, which stays listed so a failed generation is still caught. This catches a keep list that drifts as well as a missing dist marker, and the zero-size check widens to every file since none that ships is empty."
+    },
+    {
+        "commit": "cda454d4bac0c0412230a0b41513659a7d0d4205",
+        "date": "2026-08-13 12:39:12 +0700",
+        "subject": "Stop setting hot_standby in the user guide.",
+        "body": "The setting has been on by default since PostgreSQL 10, so the standby section and the upgrade section were setting it to what it already was. The upgrade section configured nothing else, so its configuration is gone rather than emptied.\n\nThe standby is still configured with the archive settings, which are there in case it is promoted to a primary, and the text that went with the configuration now says that and nothing about read-only connections being refused.\n\nThe setting is still worth knowing about even though it is not worth setting: a standby will not take read-only connections without it, and any cluster may be restored as a standby later. That is in the quickstart now, where the rest of the PostgreSQL configuration is done, rather than at the point a standby is created."
+    },
+    {
+        "commit": "bbdc4b9217a0e66f6a01c05f4edc04282cffb3fc",
+        "date": "2026-08-13 12:37:07 +0700",
+        "subject": "Document exception for dots in S3 bucket names when uri-style=path.",
+        "body": "Path-style URIs prepend the bucket to the URI rather than the host, so the certificate is matched against the endpoint alone and dots in the bucket name do not cause a host name mismatch."
+    },
+    {
+        "commit": "b20cf1a37c9327be1df03840d534336a35c9b777",
+        "date": "2026-08-13 12:25:18 +0700",
+        "subject": "Fix broken release link in news.xml."
+    },
+    {
+        "commit": "c46b65fa3de2e1d31a82a16b59fd7ee8f8ac9557",
+        "date": "2026-08-13 12:06:54 +0700",
+        "subject": "Begin v2.59.1 development."
+    },
+    {
         "commit": "f84c8357d49ea9452cd606531e9c4c322c41bc2e",
         "date": "2026-07-20 15:13:35 +0700",
         "subject": "v2.59.0: PostgreSQL 19 Support"
