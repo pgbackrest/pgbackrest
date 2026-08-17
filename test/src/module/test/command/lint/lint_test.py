@@ -1,7 +1,8 @@
 """Test Code Linter.
 
 The linter is made of the scan for content that could hide code, the line length check, the check that StringId macros encode what
-they claim to, and the check that every test module is declared, so all of them are tested here along with the command that walks
+they claim to, the check that a block macro is closed by the macro that matches it, and the check that every test module is
+declared, so all of them are tested here along with the lexer the block macro check reads C source with and the command that walks
 the repository and applies them."""
 
 ####################################################################################################################################
@@ -13,8 +14,10 @@ from contextlib import redirect_stdout
 from harness.test import *
 
 from command.lint.ascii import *
+from command.lint.lex import *
 from command.lint.line import *
 from command.lint.lint import *
+from command.lint.macro import *
 from command.lint.string_id import *
 from common.error import *
 from common.log import *
@@ -64,7 +67,7 @@ def _capture(function):
 
 ####################################################################################################################################
 def _lint(file_map, symlink=False):
-    """Lint a repository built from the files given, returning what was reported and the error raised, if any."""
+    """Lint a repository built from the files given, returning the number of errors found and what was reported."""
 
     # Every repository has a test definition, so supply one with no modules unless the test is providing its own
     file_map = {"test/define.yaml": _DEFINE_NONE, **file_map}
@@ -80,15 +83,7 @@ def _lint(file_map, symlink=False):
         if symlink:
             os.symlink("missing.txt", os.path.join(path, "dangling.txt"))
 
-        def run():
-            try:
-                cmd_lint(path)
-            except ToolError as error:
-                return str(error)
-
-            return None
-
-        return _capture(run)
+        return _capture(lambda: cmd_lint(path))
 
 
 ####################################################################################################################################
@@ -218,18 +213,164 @@ def test_lint_str_id_error():
 
 
 ####################################################################################################################################
+def test_lex():
+    """C source is lexed into tokens with the line each one is on and whether it is part of a directive."""
+
+    # Every token kind, with the space dropped since a rule reads code rather than layout
+    assert_equal(
+        [(token.kind, token.text) for token in lex("/* c */ x = \"s\" + 'c' + 0x1p-3; // done\n")],
+        [
+            ("comment", "/* c */"),
+            ("identifier", "x"),
+            ("punct", "="),
+            ("string", '"s"'),
+            ("punct", "+"),
+            ("char", "'c'"),
+            ("punct", "+"),
+            ("number", "0x1p-3"),
+            ("punct", ";"),
+            ("comment", "// done"),
+        ],
+    )
+
+    # A comment that spans lines does not put what follows it on the line it began on
+    assert_equal(
+        [(token.text, token.line) for token in lex("a\n/* two\nthree */ b\nc\n")],
+        [("a", 1), ("/* two\nthree */", 2), ("b", 3), ("c", 4)],
+    )
+
+    # A directive runs to the end of the line the splice has joined its continuations to, and every token is reported on the line it
+    # is on in the source as written rather than the line it ended up on after splicing
+    assert_equal(
+        [(token.text, token.line, token.directive) for token in lex("#define A \\\n    B\nc;\n")],
+        [("#", 1, True), ("define", 1, True), ("A", 1, True), ("B", 2, True), ("c", 3, False), (";", 3, False)],
+    )
+
+    # A "#" that is not the first thing on a line does not begin a directive
+    assert_equal([(token.text, token.directive) for token in lex("a # b\n")], [("a", False), ("#", False), ("b", False)])
+
+    # Source with nothing in it has no tokens
+    assert_equal(list(lex("")), [])
+
+
+####################################################################################################################################
+def test_lex_error():
+    """A character that is not part of any token is reported with the line it is on."""
+
+    with assert_raises(ToolError) as error:
+        list(lex("int a = 1;\n@\n"))
+
+    assert_equal(str(error.exception), "line 2: cannot lex '@'")
+
+    # The line is the line in the source as written, so a splice before the character does not shift it, and only what is on the
+    # line is reported since the rest of the file says nothing about what could not be read
+    with assert_raises(ToolError) as error:
+        list(lex("#define A \\\n    1\n@ and more than twenty characters\n"))
+
+    assert_equal(str(error.exception), "line 3: cannot lex '@ and more than twen'")
+
+
+####################################################################################################################################
+def test_lint_macro_pair():
+    """A block macro is closed by the macro that matches it."""
+
+    # Nesting that is correct, including the openers that share a closer with another opener
+    assert_equal(
+        _capture(
+            lambda: lint_macro(
+                "FUNCTION_TEST_BEGIN();\n"
+                "FUNCTION_TEST_END();\n"
+                "MEM_CONTEXT_TEMP_RESET_BEGIN(2)\n"
+                "{\n"
+                "    OBJ_NEW_BASE_EXTRA_BEGIN(Type, 1)\n"
+                "    {\n"
+                "    }\n"
+                "    OBJ_NEW_END();\n"
+                "}\n"
+                "MEM_CONTEXT_TEMP_END();\n"
+            )
+        ),
+        (0, ""),
+    )
+
+    # A closer that is an alias for the base closer, which is the case that expands identically and builds clean
+    result, output = _capture(lambda: lint_macro("MEM_CONTEXT_OBJ_BEGIN(this)\n{\n}\nMEM_CONTEXT_END();\n"))
+
+    assert_equal(result, 1)
+    assert_in(
+        "line 4: MEM_CONTEXT_OBJ_BEGIN() opened on line 1 is closed with MEM_CONTEXT_END() rather than MEM_CONTEXT_OBJ_END()",
+        output,
+    )
+
+    # A closer with nothing open and blocks that are never closed, which is what the compiler does report but only after the macros
+    # have been expanded, i.e. as braces that do not balance rather than as the macro that is missing
+    result, output = _capture(lambda: lint_macro("TRY_END();\nMEM_CONTEXT_BEGIN(x)\nMEM_CONTEXT_TEMP_BEGIN()\n"))
+
+    assert_equal(result, 3)
+    assert_in("line 1: TRY_END() closes a block that was never opened", output)
+    assert_in("line 3: MEM_CONTEXT_TEMP_BEGIN() is never closed with MEM_CONTEXT_TEMP_END()", output)
+    assert_in("line 2: MEM_CONTEXT_BEGIN() is never closed with MEM_CONTEXT_END()", output)
+
+    # What is left open is reported innermost first, which is the block that needs closing
+    assert_true(output.index("line 3:") < output.index("line 2:"))
+
+    # A macro named in a comment, in a string, or where it is defined is not a use of it
+    assert_equal(
+        _capture(
+            lambda: lint_macro(
+                "// Closed with FUNCTION_TEST_END()\n"
+                'const char *const text = "TRY_BEGIN";\n'
+                "#define OBJ_NEW_BEGIN(type) MEM_CONTEXT_NEW_BEGIN(type)\n"
+            )
+        ),
+        (0, ""),
+    )
+
+    # Source the lexer cannot read is one error and nothing more, since the check reads tokens
+    result, output = _capture(lambda: lint_macro("int a = @;\n"))
+
+    assert_equal(result, 1)
+    assert_in("line 1: cannot lex '@;'", output)
+
+
+####################################################################################################################################
+def test_lint_macro_define():
+    """A macro named like a block macro is classified as opening a block or as not opening one."""
+
+    # An opener, a closer, and a macro that is named like one but opens nothing, all classified
+    assert_equal(
+        _capture(lambda: lint_macro("#define TRY_BEGIN() ...\n#define TRY_END() ...\n#define BENCHMARK_BEGIN() ...\n")),
+        (0, ""),
+    )
+
+    # A macro that is named like neither, which is most of them
+    assert_equal(_capture(lambda: lint_macro("#define ANY 1\n")), (0, ""))
+
+    # A block macro added with a closer of its own, which the pairing check has no way to report: neither name is known, so both
+    # are skipped and every block they open passes unchecked
+    result, output = _capture(lambda: lint_macro("#define LOCK_BEGIN(x) \\\n    do {\n#define LOCK_END() \\\n    } while (0)\n"))
+
+    assert_equal(result, 2)
+    assert_in("line 1: LOCK_BEGIN() is not classified in test/lib/command/lint/macro.py", output)
+    assert_in("line 3: LOCK_END() is not classified in test/lib/command/lint/macro.py", output)
+
+    # A directive that is not a define, and a define with nothing after it, i.e. the file ends before the name
+    assert_equal(_capture(lambda: lint_macro('#include "x.h"\n#define\n')), (0, ""))
+
+
+####################################################################################################################################
 def test_lint_clean():
     """A repository with nothing to report passes silently."""
 
-    error, output = _lint(
+    result, output = _lint(
         {
             "README.md": b"clean text\twith a tab\n" + _LINE_LONG,
-            "src/x.c": b'#define ANY STRID5("any", 0x65c10)\n',
+            "src/x.c": b'#define ANY STRID5("any", 0x65c10)\nTRY_BEGIN()\n{\n}\nTRY_END();\n',
             "src/x.h": b'#define LZ4 STRID6("lz4", 0x2068c1)\n',
             "src/x.c.inc": b'#define ASC STRID5S("asc", 1, 0xe614)\n',
-            # Generated and vendored includes are not ours to fix, so the StringId check is not applied to them
-            "src/x.auto.c.inc": b'#define ANY STRID5("any", 0x1)\n',
-            "src/x.vendor.c.inc": b'#define ANY STRID5("any", 0x1)\n' + _LINE_LONG,
+            # Generated and vendored includes are not ours to fix, so the checks that read C source are not applied to them
+            "src/x.auto.c.inc": b'#define ANY STRID5("any", 0x1)\nMEM_CONTEXT_OBJ_BEGIN(this)\nMEM_CONTEXT_END();\n',
+            "src/x.vendor.c.inc": b'#define ANY STRID5("any", 0x1)\n#define LOCK_BEGIN(x) do {\n' + _LINE_LONG,
             # Documentation is exempt from the line length check by path and markdown by extension, as is vendored source above
             "doc/xml/user-guide.xml": _LINE_LONG,
             # A binary file that is on the skip list, which is a deliberate and reviewable decision
@@ -238,7 +379,7 @@ def test_lint_clean():
         symlink=True,
     )
 
-    assert_is_none(error)
+    assert_equal(result, 0)
     assert_equal(output, "")
 
 
@@ -246,38 +387,63 @@ def test_lint_clean():
 def test_lint_binary():
     """A binary file that is not on the skip list is an unscannable place to hide code."""
 
-    error, output = _lint({"stray.bin": b"\x00\x01\x02"})
+    result, output = _lint({"stray.bin": b"\x00\x01\x02"})
 
-    assert_equal(error, "1 linter error(s) in 'stray.bin' (see warnings above)")
+    assert_equal(result, 1)
     assert_in("unexpected binary file", output)
+    assert_in("1 linter error(s) in 'stray.bin'", output)
 
 
 ####################################################################################################################################
 def test_lint_error():
-    """Both checks are applied to C source and their errors are counted together."""
+    """Every check is applied to C source and their errors are counted together."""
 
-    error, output = _lint({"doc/x.md": b"line one\nit\xe2\x80\x99s\n"})
+    result, output = _lint({"doc/x.md": b"line one\nit\xe2\x80\x99s\n"})
 
-    assert_equal(error, "1 linter error(s) in 'doc/x.md' (see warnings above)")
+    assert_equal(result, 1)
     assert_in("line 2 contains disallowed character U+2019", output)
 
-    error, output = _lint({"src/x.c": b'#define ANY STRID5("any", 0x1)\n'})
+    # The warnings report the line they are on and nothing else, so the file they are for is named after them
+    assert_in("1 linter error(s) in 'doc/x.md'", output)
 
-    assert_equal(error, "1 linter error(s) in 'src/x.c' (see warnings above)")
+    result, output = _lint({"src/x.c": b'#define ANY STRID5("any", 0x1)\n'})
+
+    assert_equal(result, 1)
     assert_in("""should be 'STRID5("any", 0x65c10)'""", output)
 
-    # A file that is not exempt from the line length check, which is everything the exempt list above does not name
-    error, output = _lint({"src/x.h": _LINE_LONG})
+    result, output = _lint({"src/x.c": b"MEM_CONTEXT_OBJ_BEGIN(this)\n{\n}\nMEM_CONTEXT_END();\n"})
 
-    assert_equal(error, "1 linter error(s) in 'src/x.h' (see warnings above)")
+    assert_equal(result, 1)
+    assert_in("is closed with MEM_CONTEXT_END() rather than MEM_CONTEXT_OBJ_END()", output)
+
+    # The block macro check reads every character in the file, so it waits for the file to be ASCII rather than reporting the
+    # character the ASCII check has already reported as one the lexer cannot read
+    result, output = _lint({"src/x.c": b"TRY_BEGIN()\n// it\xe2\x80\x99s open\n"})
+
+    assert_equal(result, 1)
+    assert_in("line 2 contains disallowed character U+2019", output)
+    assert_not_in("TRY_BEGIN", output)
+
+    # A file that is not exempt from the line length check, which is everything the exempt list above does not name
+    result, output = _lint({"src/x.h": _LINE_LONG})
+
+    assert_equal(result, 1)
     assert_in("line 1 is 133 characters (maximum is 132)", output)
 
     # A file with both kinds of error reports what it needs fixed rather than what stopped the scan
-    error, output = _lint({"src/x.c": b'#define ANY STRID5("any", 0x1) // it\xe2\x80\x99s wrong\n'})
+    result, output = _lint({"src/x.c": b'#define ANY STRID5("any", 0x1) // it\xe2\x80\x99s wrong\n'})
 
-    assert_equal(error, "2 linter error(s) in 'src/x.c' (see warnings above)")
+    assert_equal(result, 2)
     assert_in("U+2019", output)
     assert_in("should be", output)
+
+    # A file with an error does not stop the scan, since the run continues either way and the rest of the repository has as much
+    # right to be reported as the first file that failed
+    result, output = _lint({"src/a.c": _LINE_LONG, "src/b.c": _LINE_LONG})
+
+    assert_equal(result, 2)
+    assert_in("1 linter error(s) in 'src/a.c'", output)
+    assert_in("1 linter error(s) in 'src/b.c'", output)
 
 
 ####################################################################################################################################
@@ -285,24 +451,25 @@ def test_lint_lib_shadow():
     """A module may appear in only one library, since a duplicate would hide the shadowed one from every tool."""
 
     # The same module in two libraries, which python would resolve to whichever library came first on the path
-    error, output = _lint({"build/lib/common/log.py": b"", "test/lib/common/log.py": b""})
+    result, output = _lint({"build/lib/common/log.py": b"", "test/lib/common/log.py": b""})
 
-    assert_equal(error, "module 'common/log.py' is in the build and test libraries")
+    assert_equal(result, 1)
+    assert_in("module 'common/log.py' is in the build and test libraries", output)
 
     # A library is the second component of the path, so a lib further down is not one
-    error, output = _lint({"test/src/lib/common/log.py": b"", "test/lib/common/log.py": b""})
+    result, output = _lint({"test/src/lib/common/log.py": b"", "test/lib/common/log.py": b""})
 
-    assert_is_none(error)
+    assert_equal((result, output), (0, ""))
 
     # A module in one library and a different module in another
-    error, output = _lint({"build/lib/common/log.py": b"", "test/lib/common/vm.py": b""})
+    result, output = _lint({"build/lib/common/log.py": b"", "test/lib/common/vm.py": b""})
 
-    assert_is_none(error)
+    assert_equal((result, output), (0, ""))
 
     # Something under a library that is not a module at all
-    error, output = _lint({"build/lib/common/log.py": b"", "test/lib/uncrustify.cfg": b""})
+    result, output = _lint({"build/lib/common/log.py": b"", "test/lib/uncrustify.cfg": b""})
 
-    assert_is_none(error)
+    assert_equal((result, output), (0, ""))
 
 
 ####################################################################################################################################
@@ -316,17 +483,18 @@ def test_lint_test_module():
         "test/src/module/test/common/vm_test.py": b"",
     }
 
-    error, output = _lint(file_map)
+    result, output = _lint(file_map)
 
-    assert_is_none(error)
+    assert_equal(result, 0)
     assert_equal(output, "")
 
     # A test module that was added but never declared, which is the case that has no other way to be reported
-    error, output = _lint({**file_map, "test/src/module/common/type/cTest.c": b""})
+    result, output = _lint({**file_map, "test/src/module/common/type/cTest.c": b""})
 
-    assert_equal(error, "test module 'test/src/module/common/type/cTest.c' is not defined in test/define.yaml")
+    assert_equal(result, 1)
+    assert_in("test module 'test/src/module/common/type/cTest.c' is not defined in test/define.yaml", output)
 
     # A file that is not where the test modules live is not a test module
-    error, output = _lint({**file_map, "test/src/harness/config.c": b""})
+    result, output = _lint({**file_map, "test/src/harness/config.c": b""})
 
-    assert_is_none(error)
+    assert_equal((result, output), (0, ""))

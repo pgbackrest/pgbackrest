@@ -169,7 +169,7 @@ def _repo_create(path, define=DEFINE):
 
 
 ####################################################################################################################################
-def _cmd_test(config, exec_result=None, file_list=None, job_fail=None, job_start=True, job_poll=0, coverage_status=0):
+def _cmd_test(config, exec_result=None, file_list=None, job_fail=None, job_start=True, job_poll=0, coverage_status=0, lint_error=0):
     """Run the command with everything it would run captured rather than run.
 
     Returns the status, the commands, the tests that were started, and what was written to the log."""
@@ -198,7 +198,7 @@ def _cmd_test(config, exec_result=None, file_list=None, job_fail=None, job_start
     try:
         with patch("command.test.test.exec_one", exec_fake), patch("command.test.test.TestJob", _Job):
             with patch("command.test.test.cmd_coverage", return_value=coverage_status) as coverage:
-                with patch("command.test.test.cmd_lint") as lint:
+                with patch("command.test.test.cmd_lint", return_value=lint_error) as lint:
                     with patch("command.test.test.container_remove") as container_remove, redirect_stdout(output):
                         try:
                             status = cmd_test(config)
@@ -477,6 +477,21 @@ def test_test_run():
         assert_equal(_cmd_test.lint.call_count, 1)
         assert_equal(started, [])
         assert_not_in("selected", output)
+
+        # What the linter found does not stop the run, so the tests are built and run and report on the same source before the run
+        # fails on it. A syntax error the linter could only report where the source stopped making sense to it is reported by the
+        # compiler at the line it is on, which the run never reaches when the linter stops it first.
+        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, module=["common"], vm_max=2), lint_error=3)
+
+        assert_equal(status, "3 linter error(s) (see warnings above)")
+        assert_equal(started, ["common/error", "common/exec"])
+        assert_in("TESTS COMPLETED SUCCESSFULLY", output)
+
+        # There is nothing to wait for when the linter is run on its own, so it fails as soon as it has run
+        status, command_list, started, output = _cmd_test(Config(path_repo, path_test, lint_only=True), lint_error=1)
+
+        assert_equal(status, "1 linter error(s) (see warnings above)")
+        assert_equal(started, [])
 
         # A test that fails is started again until it runs out of retries, and then the run has failed
         status, command_list, started, output = _cmd_test(
