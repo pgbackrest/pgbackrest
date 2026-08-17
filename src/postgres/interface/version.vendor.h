@@ -1701,7 +1701,7 @@ Types from src/include/access/xlog_internal.h
 
 #elif PG_VERSION >= PG_VERSION_19
 
-#define XLOG_PAGE_MAGIC 0xD120	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD121	/* can be used as WAL version indicator */
 
 #elif PG_VERSION >= PG_VERSION_18
 
