@@ -223,16 +223,35 @@ def _allow_list_inherit(xml_allow, inherit_map, name):
     """The list an allow list inherits, or the list itself when it inherits none.
 
     An option that allows what another option allows describes the values once and inherits them, the way the configuration
-    inherits the values themselves, since the same list written out twice is two lists to keep in step."""
+    inherits the values themselves, since the same list written out twice is two lists to keep in step.
+
+    A list documented under a command is inherited by naming the command as well. An option that a command documents differently
+    is documented once per command, so the option name alone does not say which of those lists is meant, and an option that only
+    the commands document has no list of its own for the name to find."""
 
     inherit = xml_node_attribute(xml_allow, "inherit")
 
     if inherit is None:
         return xml_allow
 
-    check(inherit in inherit_map, "%s inherits the allow list of option '%s', which does not describe one" % (name, inherit))
+    inherit_cmd = xml_node_attribute(xml_allow, "command")
 
-    return inherit_map[inherit]
+    check(
+        (inherit_cmd, inherit) in inherit_map,
+        "%s inherits the allow list of option '%s'%s, which does not describe one"
+        % (name, inherit, "" if inherit_cmd is None else " for command '%s'" % inherit_cmd),
+    )
+
+    return inherit_map[(inherit_cmd, inherit)]
+
+
+####################################################################################################################################
+def _allow_list_inherit_add(inherit_map, key, description):
+    """Record the list documented in help text so an option that allows the same values can inherit it."""
+
+    for _, xml_allow in _allow_list_find(description):
+        if len(xml_node_child_list(xml_allow, "allow-item")) > 0:
+            inherit_map[key] = xml_allow
 
 
 ####################################################################################################################################
@@ -324,9 +343,11 @@ def _allow_list(bld_hlp, bld_cfg):
     inherit_map = {}
 
     for opt_hlp in bld_hlp.opt_list:
-        for _, xml_allow in _allow_list_find(opt_hlp.description):
-            if len(xml_node_child_list(xml_allow, "allow-item")) > 0:
-                inherit_map[opt_hlp.name] = xml_allow
+        _allow_list_inherit_add(inherit_map, (None, opt_hlp.name), opt_hlp.description)
+
+    for cmd_hlp in bld_hlp.cmd_list:
+        for opt_hlp in cmd_hlp.opt_list or []:
+            _allow_list_inherit_add(inherit_map, (cmd_hlp.name, opt_hlp.name), opt_hlp.description)
 
     for opt in bld_cfg.opt_list:
         opt_hlp = _find(bld_hlp.opt_list, opt.name)
