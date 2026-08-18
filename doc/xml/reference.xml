@@ -2966,10 +2966,7 @@
                         <text>
                             <p>Migrate the stanza to the specified repository format. Migration applies to new backups and archives only, so backups and archives already in the repository are left at the format they were written with.</p>
 
-                            <allow-list caption="formats">
-                                <allow-item id="5">Format supported by all versions since <proper>1.00</proper></allow-item>
-                                <allow-item id="6">Adds no features yet and is reserved for features in development</allow-item>
-                            </allow-list>
+                            <allow-list inherit="repo-format" command="stanza-create"/>
 
                             <p>Once the info files have been migrated, a version of <backrest/> that does not support the new format is no longer able to read the stanza at all, including the parts of it that are still at the older format. The format cannot be downgraded.</p>
                         </text>
