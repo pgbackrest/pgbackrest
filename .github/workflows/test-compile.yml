@@ -1,0 +1,85 @@
+# Compile and run the unit tests on the runner itself rather than in a container, once per toolchain. The container jobs cover
+# what pgBackRest is normally built with, so what is tested here is whether it builds and runs somewhere else: gcc is the
+# baseline and clang is a second opinion from a different compiler.
+#
+# Only the unit tests that run without a container are run. The integration tests need containers by definition.
+name: compile
+
+on: workflow_call
+
+# Limit permissions on the repository
+permissions:
+  contents: read
+
+jobs:
+  # gcc and clang, each with the optional libraries present and absent. The runs are fast enough that the second variation is
+  # nearly free, and it is what catches code that only compiles when a feature is enabled.
+  toolchain:
+    runs-on: ubuntu-24.04
+
+    strategy:
+      # Let all the jobs run to completion even if one fails
+      fail-fast: false
+
+      matrix:
+        include:
+          - cc: gcc
+            lib: full
+
+          - cc: gcc
+            lib: minimal
+
+          - cc: clang
+            lib: full
+
+          - cc: clang
+            lib: minimal
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          path: pgbackrest
+
+      # The required libraries, the compression tools some tests shell out to, and what the harness needs. The optional libraries
+      # are added for the full variation and removed for the minimal one rather than just left out, since the runner image is not
+      # a fixed set of packages and one of them may already be there or arrive as a dependency of something installed here.
+      - name: Install
+        run: |
+          package="git pkg-config meson ninja-build python3-yaml python3-coverage zlib1g-dev libssl-dev libxml2-dev libpq-dev"
+          package="${package} libbz2-dev liblz4-dev liblz4-tool bzip2 ${{matrix.cc}}"
+          optional="libssh2-1-dev libsystemd-dev libzstd-dev"
+
+          if test "${{matrix.lib}}" = full; then
+              package="${package} ${optional} zstd"
+          fi
+
+          sudo apt-get update
+          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y ${package}
+
+          if test "${{matrix.lib}}" = minimal; then
+              DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get remove -y ${optional}
+          fi
+
+      # Removing a package is not proof that meson will not find the library, so check what it will actually see. Without this a
+      # library that reappears on a future runner image would turn the minimal variation into a second full one and nothing
+      # would say so.
+      - name: Check Libraries
+        run: |
+          for lib in libssh2 libsystemd libzstd; do
+              pkg-config --exists ${lib} && found=full || found=minimal
+
+              if test "${found}" != "${{matrix.lib}}"; then
+                  echo "${lib} is ${found} but the variation is ${{matrix.lib}}"
+                  exit 1
+              fi
+          done
+
+      # Coverage and valgrind are both off since neither is what this job is for and both cost time. The tests must not run as
+      # root: several of them expect an operation to be refused, and as root it succeeds and leaves the path behind, which
+      # breaks the run and every run after it on the same machine.
+      - name: Run Test
+        env:
+          CC: ${{matrix.cc}}
+        run: |
+          cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm-max=2 --no-coverage --no-valgrind
