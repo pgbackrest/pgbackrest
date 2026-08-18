@@ -117,6 +117,10 @@ testRun(void)
             // Full backup to repo 2
             if (hrnHostRepoTotal() == 2)
                 TEST_HOST_BR(repo, CFGCMD_BACKUP, .option = "--type=full --repo=2");
+
+            // Update repo 1 to format 6 when there is more than one repo
+            if (hrnHostRepoTotal() == 2)
+                TEST_HOST_BR(repo, CFGCMD_STANZA_UPGRADE, .option = "--repo1-format=6");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -458,7 +462,7 @@ testRun(void)
                 TEST_HOST_BR(repo, CFGCMD_STOP);
 
                 // Delete stanza
-                TEST_HOST_BR(repo, CFGCMD_STANZA_DELETE);
+                TEST_HOST_BR(repo, CFGCMD_STANZA_DELETE, .option = "--repo=1");
             }
 
             TEST_HOST_BR(
