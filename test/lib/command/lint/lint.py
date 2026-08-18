@@ -1,7 +1,14 @@
 """Code Linter.
 
 Scans every file in the repository for content that could hide code from review, checks that no line runs past the project line
-length, checks that StringId macros encode what they claim to, and checks that every test module is declared in define.yaml."""
+length, checks that StringId macros encode what they claim to, checks that a block macro is closed by the macro that matches it, and
+checks that every test module is declared in define.yaml.
+
+Everything found is reported as a warning and the number of them is returned rather than raised, so the run continues. A linter
+reads the source as it is written, which means a mistake in one place shows up wherever the source stopped making sense to it: a
+misspelled block macro is skipped rather than opening a block, so the next closer is reported instead, hundreds of lines from the
+line that needs fixing. The compiler places the same mistake exactly, so let the run reach it. Whatever runs the linter is
+responsible for failing once it has."""
 
 ####################################################################################################################################
 import os
@@ -9,9 +16,9 @@ import re
 
 from command.lint.ascii import lint_ascii
 from command.lint.line import lint_line
+from command.lint.macro import lint_macro
 from command.lint.string_id import lint_str_id
 from command.test.define import TEST_MODULE_PATH, test_def_file, test_def_parse
-from common.error import ToolError
 from common.log import *
 from common.storage import path_list_recurse
 
@@ -54,10 +61,11 @@ def _lint_line_apply(name):
 
 
 ####################################################################################################################################
-def _lint_str_id_apply(name):
-    """Should the StringId check be applied to this file?
+def _lint_c_apply(name):
+    """Should the checks that read C source be applied to this file?
 
-    It applies to C source, including hand-written .c.inc, but not to generated or vendored includes."""
+    They apply to C source, including hand-written .c.inc, but not to generated or vendored includes. Generated source cannot drift
+    from what generated it and vendored source is kept as it came, so neither is ours to fix."""
 
     if name.endswith(".c") or name.endswith(".h"):
         return True
@@ -67,8 +75,9 @@ def _lint_str_id_apply(name):
 
 ####################################################################################################################################
 def cmd_lint(path_repo):
-    """Lint every file in the repository."""
+    """Lint every file in the repository and return the number of errors found."""
 
+    result = 0
     lib_module = {}
 
     # File each test module declared in define.yaml lives in. A test module that is not declared is never built or run, and nothing
@@ -78,7 +87,8 @@ def cmd_lint(path_repo):
     for name in path_list_recurse(path_repo):
         # Everything where the test modules live is a test module, so it must be declared in define.yaml
         if name.startswith(TEST_MODULE_PATH) and name not in test_module:
-            raise ToolError("test module '%s' is not defined in test/define.yaml" % name)
+            log(WARN, "test module '%s' is not defined in test/define.yaml" % name)
+            result += 1
 
         # A module may appear in only one library. Python resolves a module name to the first library on the path that has it and
         # ignores the rest, so a duplicate would hide the shadowed module from every tool with no indication that it had.
@@ -88,7 +98,8 @@ def cmd_lint(path_repo):
             lib, module = match.groups()
 
             if module in lib_module:
-                raise ToolError("module '%s' is in the %s and %s libraries" % (module, lib_module[module], lib))
+                log(WARN, "module '%s' is in the %s and %s libraries" % (module, lib_module[module], lib))
+                result += 1
 
             lib_module[module] = lib
 
@@ -109,16 +120,27 @@ def cmd_lint(path_repo):
             log(WARN, "unexpected binary file (add to the linter skip list if intentional)")
             error_total = 1
         # Otherwise the file must be 7-bit ASCII text, with the line length check applied to everything that is not exempt and the
-        # StringId check applied to C source
+        # StringId and block macro checks applied to C source
         else:
-            error_total = lint_ascii(data)
+            error_ascii = lint_ascii(data)
+            error_total = error_ascii
             source = data.decode("utf-8", errors="replace")
 
             if _lint_line_apply(name):
                 error_total += lint_line(source)
 
-            if _lint_str_id_apply(name):
+            if _lint_c_apply(name):
                 error_total += lint_str_id(source)
 
+                # The block macro check reads every character in the file rather than scanning for a pattern, so it is applied only
+                # to source that is ASCII. What it would report about a character it cannot read is what the ASCII check above has
+                # already reported, in worse words.
+                if error_ascii == 0:
+                    error_total += lint_macro(source)
+
+        # Name the file the warnings above are for, since they report the line they are on and nothing else
         if error_total > 0:
-            raise ToolError("%u linter error(s) in '%s' (see warnings above)" % (error_total, name))
+            log(WARN, "%u linter error(s) in '%s'" % (error_total, name))
+            result += error_total
+
+    return result
