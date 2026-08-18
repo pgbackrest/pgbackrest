@@ -79,7 +79,7 @@ jsonTypeContainer(const JsonType type)
         FUNCTION_TEST_PARAM(STRING_ID, type);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(STRING_ID, !jsonTypeScalar(type));
+    FUNCTION_TEST_RETURN(BOOL, !jsonTypeScalar(type));
 }
 
 /**********************************************************************************************************************************/
