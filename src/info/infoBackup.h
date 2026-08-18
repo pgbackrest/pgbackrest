@@ -104,6 +104,7 @@ infoBackupPg(const InfoBackup *const this)
 
 FN_EXTERN InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
 
+// Set the repository format
 FN_EXTERN void infoBackupFormatSet(InfoBackup *this, unsigned int format);
 
 // Cipher spec for dependent files

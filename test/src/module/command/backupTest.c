@@ -3004,7 +3004,7 @@ testRun(void)
             HRN_STORAGE_PATH_REMOVE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_14)));
             HRN_STORAGE_PATH_CREATE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_11)), .noParentCreate = true);
 
-            // Upgrade stanza
+            // Upgrade stanza to format 6
             StringList *argList = strLstNew();
             hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
@@ -3023,6 +3023,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawBool(argList, cfgOptRepoSymlink, false);
+            // Do not specify type=full since the update to repo format 6 should force a full upgrade
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "1");
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);

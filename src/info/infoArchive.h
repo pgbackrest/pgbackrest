@@ -53,6 +53,7 @@ infoArchivePg(const InfoArchive *const this)
 
 FN_EXTERN InfoArchive *infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId);
 
+// Set the repository format
 FN_EXTERN void infoArchiveFormatSet(InfoArchive *this, unsigned int format);
 
 // Current archive id

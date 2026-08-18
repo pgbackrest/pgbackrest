@@ -63,6 +63,7 @@ infoFormat(const Info *const this)
     return THIS_PUB(Info)->format;
 }
 
+// Set the repository format, which is how a stanza is migrated to a newer format
 FN_EXTERN void infoFormatSet(Info *this, unsigned int format);
 
 // Cipher spec for the files that depend on this one, e.g. the manifest for backup.info. Never NULL, so it can be handed on
