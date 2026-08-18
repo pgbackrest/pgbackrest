@@ -79,13 +79,6 @@ infoPgCipherSpec(const InfoPg *const this)
     return infoCipherSpec(infoPgInfo(this));
 }
 
-// Return the repository format
-FN_INLINE_ALWAYS unsigned int
-infoPgFormat(const InfoPg *const this)
-{
-    return infoFormat(infoPgInfo(this));
-}
-
 // Return current pgId from the history
 FN_EXTERN unsigned int infoPgCurrentDataId(const InfoPg *this);
 
@@ -97,6 +90,13 @@ FN_EXTERN InfoPgData infoPgDataCurrent(const InfoPg *this);
 
 // Current history index
 FN_EXTERN unsigned int infoPgDataCurrentId(const InfoPg *this);
+
+// Repository format
+FN_INLINE_ALWAYS unsigned int
+infoPgFormat(const InfoPg *const this)
+{
+    return infoFormat(infoPgInfo(this));
+}
 
 // Total PostgreSQL data in the history
 FN_INLINE_ALWAYS unsigned int
