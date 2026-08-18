@@ -5,6 +5,11 @@
 </contributor>
 
 <!-- The order of other contributors is alpha by name -->
+<contributor id="aardvarkzed">
+    <contributor-name-display>aardvarkzed</contributor-name-display>
+    <contributor-id type="github">aardvarkzed</contributor-id>
+</contributor>
+
 <contributor id="abubakar.mohammed">
     <contributor-name-display>Abubakar Mohammed</contributor-name-display>
     <contributor-id type="github">abubakarm94</contributor-id>

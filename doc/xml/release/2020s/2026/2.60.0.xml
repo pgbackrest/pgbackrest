@@ -2,17 +2,14 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
-                <github-issue id="2818"/>
-                <github-pull-request id="2819"/>
+                <commit subject="Fix annotate and manifest commands on a remote encrypted repository."/>
 
                 <release-item-contributor-list>
-                    <release-item-ideator id="crajac66"/>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="andrew.pogrebnoi"/>
-                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-contributor id="douglas.j.hunley"/>
+                    <release-item-reviewer id="david.steele"/>
                 </release-item-contributor-list>
 
-                <p>Fix hang when the chunk buffer is smaller than the input buffer.</p>
+                <p>Fix <cmd>annotate</cmd> command on a remote encrypted repository.</p>
             </release-item>
         </release-bug-list>
 
@@ -52,22 +49,20 @@
 
                 <p>Reduce the manifest checks made when reconstructing <file>backup.info</file>.</p>
             </release-item>
+        </release-improvement-list>
 
+        <release-development-list>
             <release-item>
-                <github-issue id="2792"/>
-                <github-pull-request id="2824"/>
+                <github-pull-request id="2826"/>
 
                 <release-item-contributor-list>
-                    <release-item-ideator id="anton.glushakov"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="douglas.j.hunley"/>
                 </release-item-contributor-list>
 
-                <p>Compare a new backup label only against its own full backup set.</p>
+                <p>Pass a cipher spec rather than a type and passphrase.</p>
             </release-item>
-        </release-improvement-list>
 
-        <release-development-list>
             <release-item>
                 <github-pull-request id="2817"/>
 

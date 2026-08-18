@@ -437,6 +437,9 @@ cmdManifestRender(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Get the repo storage in case it is remote and encryption settings need to be pulled down
+        storageRepo();
+
         // Load backup.info and cipher
         const InfoBackup *const infoBackup = infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
 

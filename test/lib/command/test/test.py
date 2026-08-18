@@ -266,6 +266,13 @@ def _coverage(config, test_list):
 
 
 ####################################################################################################################################
+def _lint_check(error_lint):
+    """Fail the run when the linter found errors, which it reports as warnings rather than stopping the run itself."""
+
+    check(error_lint == 0, "%u linter error(s) (see warnings above)" % error_lint)
+
+
+####################################################################################################################################
 def cmd_test(config):
     """Run the tests."""
 
@@ -391,10 +398,14 @@ def cmd_test(config):
     _repo_copy(config)
 
     # Lint the repository copy, which is what the tests are built and run from. This runs once here rather than in the unit command
-    # so a run does not lint the same source again for every test.
-    cmd_lint(path_repo_copy)
+    # so a run does not lint the same source again for every test. What it finds is reported now and failed on at the end, so the
+    # build gets to report a syntax error at the line it is on rather than the linter reporting it wherever the source stopped
+    # making sense.
+    error_lint = cmd_lint(path_repo_copy)
 
     if config.lint_only:
+        _lint_check(error_lint)
+
         return 0
 
     # Determine which tests to run and what they need built
@@ -452,5 +463,8 @@ def cmd_test(config):
         + ("" if count_retry == 0 else ", %u RETRY(IES)" % count_retry)
         + ("" if not config.log_timestamp else " (%us)" % int(time.time() - time_begin)),
     )
+
+    # Fail on what the linter found, now that the tests have had their say about the same source
+    _lint_check(error_lint)
 
     return 1 if count_fail > 0 or (uncovered and not config.coverage_summary) else 0
