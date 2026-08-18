@@ -205,8 +205,8 @@ decodeToBinSizeBase64(const char *const source)
     const size_t sourceSize = strlen(source);
     size_t destinationSize = sourceSize / 4 * 3;
 
-    // Subtract last character if it is not present
-    if (source[sourceSize - 1] == 0x3d)
+    // Subtract last character if it is not present. An empty string is valid base64 and has no last character to check.
+    if (sourceSize != 0 && source[sourceSize - 1] == 0x3d)
     {
         destinationSize--;
 

@@ -89,6 +89,13 @@ testRun(void)
         TEST_RESULT_INT(destinationDecode[1], 0xFF, "check for overrun");
         TEST_RESULT_UINT(decodeToBinSize(encodingBase64, decode), 1, "check size");
 
+        // An empty string is valid base64 since zero is evenly divisible by four, and it has no last character to check
+        memset(destinationDecode, 0xFF, sizeof(destinationDecode));
+        decode = "";
+        decodeToBin(encodingBase64, decode, destinationDecode);
+        TEST_RESULT_INT(destinationDecode[0], 0xFF, "check for overrun");
+        TEST_RESULT_UINT(decodeToBinSize(encodingBase64, decode), 0, "check zero size");
+
         TEST_ERROR(
             decodeToBin(encodingBase64, "cc$=", destinationDecode), FormatError, "base64 invalid character found at position 2");
 
