@@ -53,6 +53,99 @@ typedef struct BackupFileResult
     Pack *pageChecksumResult;
 } BackupFileResult;
 
+// Create the block incremental filter, reading the prior block map when there is one. Errors are rethrown with the location of the
+// map because neither the read nor the map parse know where the map came from, which makes a mismatch between the manifest and the
+// repository very hard to diagnose.
+static IoFilter *
+backupFileBlockIncr(
+    const BackupFile *const file, const unsigned int blockIncrReference, const uint64_t bundleId, const uint64_t bundleOffset,
+    StorageReadMulti *const biMapRead, const CipherSpec *const cipherSpecBackup, const IoFilter *const compress,
+    const IoFilter *const encrypt)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, file);
+        FUNCTION_LOG_PARAM(UINT, blockIncrReference);
+        FUNCTION_LOG_PARAM(UINT64, bundleId);
+        FUNCTION_LOG_PARAM(UINT64, bundleOffset);
+        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, biMapRead);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecBackup);
+        FUNCTION_LOG_PARAM(IO_FILTER, compress);
+        FUNCTION_LOG_PARAM(IO_FILTER, encrypt);
+    FUNCTION_LOG_END();
+
+    ASSERT(file != NULL);
+    ASSERT(file->blockIncrSize != 0);
+
+    IoFilter *result;
+
+    // If there is no prior block map then create the filter without one
+    if (file->blockIncrMapPriorFile == NULL)
+    {
+        result = blockIncrNew(
+            file->blockIncrSuperSize, file->blockIncrSize, file->blockIncrChecksumSize, blockIncrReference, bundleId, bundleOffset,
+            NULL, compress, encrypt);
+    }
+    // Else read the prior block map and create the filter with it
+    else
+    {
+        ASSERT(biMapRead != NULL);
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            TRY_BEGIN()
+            {
+                Buffer *const blockMap = bufNew(0);
+                IoWrite *const blockMapWrite = ioBufferWriteNew(blockMap);
+
+                // Add a size filter before decryption so the size is measured as stored in the repository
+                ioFilterGroupAdd(ioWriteFilterGroup(blockMapWrite), ioSizeNew());
+
+                if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
+                {
+                    ioFilterGroupAdd(
+                        ioWriteFilterGroup(blockMapWrite), cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
+                }
+
+                ioWriteOpen(blockMapWrite);
+                ioCopyP(storageReadMultiIo(biMapRead), blockMapWrite, .limit = VARUINT64(file->blockIncrMapPriorSize));
+                ioWriteClose(blockMapWrite);
+
+                // The entire map must have been read. When it was not the map is smaller than the manifest expects and the parse
+                // below would fail without making it clear that data is missing.
+                const uint64_t blockMapSizeRead = pckReadU64P(
+                    ioFilterGroupResultP(ioWriteFilterGroup(blockMapWrite), SIZE_FILTER_TYPE));
+
+                if (blockMapSizeRead != file->blockIncrMapPriorSize)
+                {
+                    THROW_FMT(
+                        FileReadError, "expected %" PRIu64 " byte(s) but read %" PRIu64, file->blockIncrMapPriorSize,
+                        blockMapSizeRead);
+                }
+
+                // Create the filter in the prior context so the map read above can be freed
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = blockIncrNew(
+                        file->blockIncrSuperSize, file->blockIncrSize, file->blockIncrChecksumSize, blockIncrReference, bundleId,
+                        bundleOffset, blockMap, compress, encrypt);
+                }
+                MEM_CONTEXT_PRIOR_END();
+            }
+            CATCH_ANY()
+            {
+                THROWP_FMT(
+                    errorType(), "unable to read block map for '%s' from '%s' at offset %" PRIu64 " size %" PRIu64 ": %s",
+                    strZ(file->manifestFile), strZ(storagePathP(storageRepo(), file->blockIncrMapPriorFile)),
+                    file->blockIncrMapPriorOffset, file->blockIncrMapPriorSize, errorMessage());
+            }
+            TRY_END();
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN(IO_FILTER, result);
+}
+
 static List *
 backupFile(
     const String *const repoFile, const uint64_t bundleId, const bool bundleRaw, const unsigned int blockIncrReference,
@@ -284,33 +377,10 @@ backupFile(
                     // compressed/encrypted separately
                     if (file->blockIncrSize != 0)
                     {
-                        // Read prior block map
-                        Buffer *blockMap = NULL;
-
-                        if (file->blockIncrMapPriorFile != NULL)
-                        {
-                            blockMap = bufNew(0);
-                            IoWrite *const blockMapWrite = ioBufferWriteNew(blockMap);
-
-                            if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
-                            {
-                                ioFilterGroupAdd(
-                                    ioWriteFilterGroup(blockMapWrite),
-                                    cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
-                            }
-
-                            ioWriteOpen(blockMapWrite);
-                            ioCopyP(storageReadMultiIo(biMapRead), blockMapWrite, .limit = VARUINT64(file->blockIncrMapPriorSize));
-                            ioWriteClose(blockMapWrite);
-                            ioWriteFree(blockMapWrite);
-                        }
-
-                        // Add block incremental filter
                         ioFilterGroupAdd(
                             ioReadFilterGroup(readIo),
-                            blockIncrNew(
-                                file->blockIncrSuperSize, file->blockIncrSize, file->blockIncrChecksumSize, blockIncrReference,
-                                bundleId, bundleOffset, blockMap, compress, encrypt));
+                            backupFileBlockIncr(
+                                file, blockIncrReference, bundleId, bundleOffset, biMapRead, cipherSpecBackup, compress, encrypt));
 
                         repoChecksum = true;
                     }
