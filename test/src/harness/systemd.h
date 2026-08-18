@@ -5,13 +5,15 @@ Systemd Harness
 #define TEST_HARNESS_SYSTEMD_H
 
 #ifdef HAVE_LIBSYSTEMD
+
 #include <systemd/sd-daemon.h>
-#endif
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Check that sd_notify calls were made
 void hrnSystemDCheck(void);
+
+#endif
 
 #endif
