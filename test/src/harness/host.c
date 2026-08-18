@@ -797,6 +797,8 @@ hrnHostConfig(HrnHost *const this)
                     break;
                 }
 
+#ifdef HAVE_LIBSSH2
+
                 case STORAGE_SFTP_TYPE:
                 {
                     const String *const keyPrivate = strNewFmt("%s/" HRN_HOST_SFTP_KEY_PRIVATE, hrnPathRepo());
@@ -823,6 +825,8 @@ hrnHostConfig(HrnHost *const this)
 
                     break;
                 }
+
+#endif // HAVE_LIBSSH2
 
                 default:
                 {
