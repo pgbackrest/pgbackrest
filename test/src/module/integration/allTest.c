@@ -117,10 +117,6 @@ testRun(void)
             // Full backup to repo 2
             if (hrnHostRepoTotal() == 2)
                 TEST_HOST_BR(repo, CFGCMD_BACKUP, .option = "--type=full --repo=2");
-
-            // Update repo 1 to format 6 when there is more than one repo
-            if (hrnHostRepoTotal() == 2)
-                TEST_HOST_BR(repo, CFGCMD_STANZA_UPGRADE, .option = "--repo1-format=6");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -202,6 +198,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby full backup and expire");
         {
+            // Update repo 1 to format 6 when there is more than one repo
+            if (hrnHostRepoTotal() == 2)
+                TEST_HOST_BR(repo, CFGCMD_STANZA_UPGRADE, .option = "--repo1-format=6");
+
             // Check backups before the backup so we know how many will exist after
             const InfoBackup *infoBackup = infoBackupLoadFile(
                 hrnHostRepo1Storage(repo), STRDEF("backup/" HRN_STANZA "/backup.info"), hrnHostCipherSpec());
