@@ -24,7 +24,8 @@ cipherSpecNew(const CipherType type, const Buffer *const pass)
         FUNCTION_TEST_PARAM(BUFFER, pass);
     FUNCTION_TEST_END();
 
-    ASSERT(type == cipherTypeNone || (pass != NULL && !bufEmpty(pass)));
+    ASSERT((type == cipherTypeNone) == (pass == NULL));
+    ASSERT(pass == NULL || !bufEmpty(pass));
 
     OBJ_NEW_BEGIN(CipherSpec, .childQty = MEM_CONTEXT_QTY_MAX)
     {

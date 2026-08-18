@@ -52,6 +52,9 @@ cmdAnnotate(void)
         {
             TRY_BEGIN()
             {
+                // Get the repo storage in case it is remote and encryption settings need to be pulled down
+                storageRepoIdx(repoIdx);
+
                 // Attempt to load the backup info file
                 InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
                     storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
