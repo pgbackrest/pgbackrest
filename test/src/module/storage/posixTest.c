@@ -891,7 +891,7 @@ testRun(void)
         StorageInfo info = {0};
         const String *backupLabel = STRDEF("20181119-152138F");
         const String *latestLabel = STRDEF("latest");
-        int invalidLinkType = 9;
+        StorageLinkType invalidLinkType = 9;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("soft link success/fail");
