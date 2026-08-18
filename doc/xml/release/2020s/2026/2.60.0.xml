@@ -1,5 +1,18 @@
 <release date="XXXX-XX-XX" version="2.60.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <commit subject="Fix annotate and manifest commands on a remote encrypted repository."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="douglas.j.hunley"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix <cmd>annotate</cmd> command on a remote encrypted repository.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2783"/>
