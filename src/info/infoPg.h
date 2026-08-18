@@ -47,10 +47,11 @@ typedef enum
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN InfoPg *infoPgNew(InfoPgType type, const String *cipherPassSub);
+FN_EXTERN InfoPg *infoPgNew(InfoPgType type, const CipherSpec *cipherSpecSub);
 
 // Create new object and load contents from a file
-FN_EXTERN InfoPg *infoPgNewLoad(IoRead *read, InfoPgType type, InfoLoadNewCallback *callbackFunction, void *callbackData);
+FN_EXTERN InfoPg *infoPgNewLoad(
+    IoRead *read, InfoPgType type, const CipherSpec *cipherSpec, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -71,11 +72,11 @@ infoPgInfo(const InfoPg *const this)
     return THIS_PUB(InfoPg)->info;
 }
 
-// Return the cipher passphrase
-FN_INLINE_ALWAYS const String *
-infoPgCipherPass(const InfoPg *const this)
+// Cipher spec for dependent files
+FN_INLINE_ALWAYS const CipherSpec *
+infoPgCipherSpec(const InfoPg *const this)
 {
-    return infoCipherPass(infoPgInfo(this));
+    return infoCipherSpec(infoPgInfo(this));
 }
 
 // Return current pgId from the history

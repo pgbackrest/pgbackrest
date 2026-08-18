@@ -38,12 +38,14 @@ testRun(void)
 
         TEST_ASSIGN(infoPg, infoPgNew(infoPgBackup, NULL), "infoPgNew(cipherTypeNone, NULL)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
-        TEST_RESULT_STR(infoCipherPass(infoPgInfo(infoPg)), NULL, "  cipherPass NULL");
+        TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(infoPgInfo(infoPg))), cipherTypeNone, "  cipher spec none");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
 
-        TEST_ASSIGN(infoPg, infoPgNew(infoPgArchive, STRDEF("123xyz")), "infoPgNew(cipherTypeAes256Cbc, 123xyz)");
+        TEST_ASSIGN(
+            infoPg, infoPgNew(infoPgArchive, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
+            "infoPgNew(cipherTypeAes256Cbc, 123xyz)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
-        TEST_RESULT_STR_Z(infoCipherPass(infoPgInfo(infoPg)), "123xyz", "  cipherPass set");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(infoPgInfo(infoPg)))), "123xyz", "  cipherPass set");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -71,13 +73,14 @@ testRun(void)
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665999, "  system-id updated");
         TEST_RESULT_UINT(pgData.version, PG_VERSION_18, "  version updated");
         TEST_RESULT_UINT(pgData.catalogVersion, 0, "  catalog version not set for archive");
-        TEST_RESULT_STR(infoCipherPass(infoPgInfo(infoPg)), NULL, "  cipherPass not set");
+        TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(infoPgInfo(infoPg))), cipherTypeNone, "  cipher spec none");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(infoPgBackup, STRDEF("123xyz")), infoPgBackup, PG_VERSION_18, 6569239123849665679,
+                infoPgNew(infoPgBackup, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))), infoPgBackup,
+                PG_VERSION_18, 6569239123849665679,
                 hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgBackup");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
@@ -87,7 +90,7 @@ testRun(void)
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "  system-id set");
         TEST_RESULT_UINT(pgData.version, PG_VERSION_18, "  version set");
         TEST_RESULT_UINT(pgData.catalogVersion, 202506291, "  catalog version updated");
-        TEST_RESULT_STR_Z(infoCipherPass(infoPgInfo(infoPg)), "123xyz", "  cipherPass set");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(infoPgInfo(infoPg)))), "123xyz", "  cipherPass set");
     }
 
     // *****************************************************************************************************************************
@@ -117,7 +120,9 @@ testRun(void)
         InfoPg *infoPg = NULL;
 
         TEST_ASSIGN(
-            infoPg, infoPgNewLoad(ioBufferReadNew(contentLoad), infoPgArchive, harnessInfoLoadNewCallback, callbackContent),
+            infoPg,
+            infoPgNewLoad(
+                ioBufferReadNew(contentLoad), infoPgArchive, cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
             "load file");
         TEST_RESULT_STR_Z(
             callbackContent,
@@ -133,7 +138,7 @@ testRun(void)
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "    system-id set");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "    check pg data total");
         TEST_RESULT_STR_Z(infoPgArchiveId(infoPg, 0), "18-1", "    check pg archive id");
-        TEST_RESULT_STR(infoPgCipherPass(infoPg), NULL, "    no cipher passphrase");
+        TEST_RESULT_UINT(cipherSpecType(infoPgCipherSpec(infoPg)), cipherTypeNone, "    no cipher passphrase");
 
         Buffer *contentSave = bufNew(0);
 
@@ -167,7 +172,8 @@ testRun(void)
 
         callbackContent = strNew();
 
-        TEST_ASSIGN(infoPg, infoPgNewLoad(ioBufferReadNew(contentLoad), infoPgBackup, NULL, NULL), "load file");
+        TEST_ASSIGN(
+            infoPg, infoPgNewLoad(ioBufferReadNew(contentLoad), infoPgBackup, cipherSpecNewNone(), NULL, NULL), "load file");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 2, "    check pg data total");

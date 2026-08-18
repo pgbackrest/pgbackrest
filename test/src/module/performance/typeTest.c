@@ -302,7 +302,7 @@ testRun(void)
 
         MEM_CONTEXT_BEGIN(testContext)
         {
-            manifest = manifestNewLoad(ioBufferReadNew(contentSave));
+            manifest = manifestNewLoad(ioBufferReadNew(contentSave), cipherSpecNewNone());
         }
         MEM_CONTEXT_END();
 

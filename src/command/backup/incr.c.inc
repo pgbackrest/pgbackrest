@@ -46,7 +46,7 @@ backupBuildIncrPrior(const InfoBackup *const infoBackup)
             {
                 result = manifestLoadFile(
                     storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabelPrior)),
-                    cfgOptionStrId(cfgOptRepoCipherType), infoPgCipherPass(infoBackupPg(infoBackup)));
+                    infoBackupCipherSpec(infoBackup));
                 const ManifestData *const manifestPriorData = manifestData(result);
 
                 LOG_INFO_FMT(
@@ -144,7 +144,7 @@ backupBuildIncr(
             manifestBuildIncr(manifest, manifestPrior, (BackupType)cfgOptionStrId(cfgOptType), archiveStart);
 
             // Set the cipher subpass from prior manifest since we want a single subpass for the entire backup set
-            manifestCipherSubPassSet(manifest, manifestCipherSubPass(manifestPrior));
+            manifestCipherSpecSet(manifest, manifestCipherSpec(manifestPrior));
 
             // Incremental was built
             result = true;

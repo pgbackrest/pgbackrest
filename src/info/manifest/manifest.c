@@ -669,10 +669,11 @@ manifestBuildComplete(
 
 /**********************************************************************************************************************************/
 FN_EXTERN Manifest *
-manifestNewLoad(IoRead *const read)
+manifestNewLoad(IoRead *const read, const CipherSpec *const cipherSpec)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_LOG_END();
 
     ASSERT(read != NULL);
@@ -703,7 +704,7 @@ manifestNewLoad(IoRead *const read)
         }
         MEM_CONTEXT_END();
 
-        this->pub.info = infoNewLoad(read, manifestLoadCallback, &loadData);
+        this->pub.info = infoNewLoad(read, cipherSpec, manifestLoadCallback, &loadData);
         this->pub.data.backrestVersion = infoBackrestVersion(this->pub.info);
 
         // Add the label to the reference list in case the manifest was created before 2.42 when the explicit reference list was

@@ -236,7 +236,7 @@ testRun(void)
             ioBufferReadNewOpen(BUF(bufPtr(destination) + (bufUsed(destination) - (size_t)mapSize), (size_t)mapSize)), 3, 5);
 
         // Perform block delta
-        BlockDelta *blockDelta = blockDeltaNew(blockMap, 3, 5, NULL, cipherTypeNone, NULL, compressTypeGz);
+        BlockDelta *blockDelta = blockDeltaNew(blockMap, 3, 5, NULL, cipherSpecNewNone(), compressTypeGz);
         const BlockDeltaRead *blockDeltaRead = blockDeltaReadGet(blockDelta, 0);
         IoRead *read = ioBufferReadNewOpen(destination);
 
@@ -289,7 +289,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)),
-            "acefile", .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc, .cipherPass = "badpass",
+            "acefile", .compressType = compressTypeGz, .cipherSpec = TEST_CIPHER_SPEC_PASS("badpass"),
             .comment = "create a compressed encrypted repo file");
 
         List *fileList = lstNewP(sizeof(RestoreFile));
@@ -311,7 +311,7 @@ testRun(void)
         TEST_ERROR(
             restoreFile(
                 strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, compressTypeGz,
-                0, false, false, false, STRDEF("badpass"), NULL, fileList),
+                0, false, false, false, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("badpass")), NULL, fileList),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
             " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -2070,45 +2070,45 @@ testRun(void)
 
         TEST_RESULT_VOID(
             timelineVerify(
-                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, NULL, CFGOPTVAL_RESTORE_TYPE_DEFAULT, cipherTypeNone,
-                NULL),
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, NULL, CFGOPTVAL_RESTORE_TYPE_DEFAULT,
+                cipherSpecNewNone()),
             "follow current timeline because of version");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, STRDEF("latest"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             "follow latest timeline as requested");
         TEST_RESULT_VOID(
             timelineVerify(
-                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, NULL, cipherTypeNone, CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                NULL),
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, NULL, CFGOPTVAL_RESTORE_TYPE_DEFAULT,
+                cipherSpecNewNone()),
             "follow latest timeline because of version");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("current"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             "follow current timeline as requested");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("1"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             "follow requested timeline (same as current)");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("0x10"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             "follow requested hex timeline (same as current)");
         TEST_ERROR(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("bogus"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             DbMismatchError, "invalid target timeline 'bogus'");
 
         HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/00000009.history", "8");
         TEST_ERROR(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 8, 0xA1, STRDEF("9"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             FormatError,
             "invalid timeline '9' at '" TEST_PATH "/repo/archive/test1/17-1/00000009.history':"
             " invalid history line format '8'");
@@ -2121,27 +2121,27 @@ testRun(void)
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 10, 0x4FFFFFF, NULL, CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             "follow current timeline");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, NULL, CFGOPTVAL_RESTORE_TYPE_IMMEDIATE,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             "follow current timeline (based on type immediate)");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, NULL, CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             "follow latest timeline");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, STRDEF("10"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             "target timeline found");
         TEST_ERROR(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x6000000, STRDEF("10"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             DbMismatchError,
             "target timeline A forked from backup timeline 9 at 0/5000000 which is before backup lsn of 0/6000000\n"
             "HINT: was the target timeline created by accidentally promoting a standby?\n"
@@ -2155,7 +2155,7 @@ testRun(void)
         TEST_ERROR(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 6, 0x4FFFFFF, STRDEF("11"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherTypeNone, NULL),
+                cipherSpecNewNone()),
             DbMismatchError, "backup timeline 6, lsn 0/4ffffff is not in the history of target timeline B\n"
             "HINT: was the target timeline created by promoting from a timeline < latest?");
     }
@@ -2287,7 +2287,7 @@ testRun(void)
             // Store the file also to the encrypted repo
             HRN_STORAGE_PUT_Z(
                 storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_11_Z "\n",
-                .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
+                .cipherSpec = TEST_CIPHER_SPEC_PASS(TEST_CIPHER_PASS_ARCHIVE));
 
             // pg_tblspc
             HRN_MANIFEST_PATH_ADD(manifest, .name = MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC);
@@ -2307,8 +2307,9 @@ testRun(void)
 
         // Read the manifest, set a cipher passphrase and store it to the encrypted repo
         Manifest *manifestEncrypted = manifestLoadFile(
-            storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE), cipherTypeNone, NULL);
-        manifestCipherSubPassSet(manifestEncrypted, STRDEF(TEST_CIPHER_PASS_ARCHIVE));
+            storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE),
+            cipherSpecNewNone());
+        manifestCipherSpecSet(manifestEncrypted, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE)));
 
         // Open file for write
         IoWrite *write = storageWriteIo(
@@ -2319,19 +2320,21 @@ testRun(void)
         // Add encryption filter and save the encrypted manifest
         #define TEST_CIPHER_PASS_MANIFEST "backpass"
         cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(write), cfgOptionIdxStrId(cfgOptRepoCipherType, 1), cipherModeEncrypt,
-            STRDEF(TEST_CIPHER_PASS_MANIFEST));
+            ioWriteFilterGroup(write), cipherModeEncrypt,
+            cipherSpecNew(cfgOptionIdxStrId(cfgOptRepoCipherType, 1), BUFSTRDEF(TEST_CIPHER_PASS_MANIFEST)));
         manifestSave(manifestEncrypted, write);
 
         // Write backup.info to the encrypted repo
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n[cipher]\ncipher-pass=\""
-            TEST_CIPHER_PASS_MANIFEST "\"\n\n" TEST_RESTORE_BACKUP_INFO_DB, .cipherType = cipherTypeAes256Cbc);
+            TEST_CIPHER_PASS_MANIFEST "\"\n\n" TEST_RESTORE_BACKUP_INFO_DB, .cipherSpec = TEST_CIPHER_SPEC);
 
         // Write archive.info to the encrypted repo
-        InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_11, 6569239123849665679, STRDEF(TEST_CIPHER_PASS_ARCHIVE));
+        InfoArchive *infoArchive = infoArchiveNew(
+            PG_VERSION_11, 6569239123849665679, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE)));
         infoArchiveSaveFile(
-            infoArchive, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS));
+            infoArchive, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR,
+            cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)));
 
         TEST_RESULT_VOID(hrnCmdRestore(), "successful restore");
 
@@ -2376,7 +2379,8 @@ testRun(void)
 
         // Store archive.info to repo1 - repo1 will be selected because of the priority order
         infoArchive = infoArchiveNew(PG_VERSION_11, 6569239123849665679, NULL);
-        infoArchiveSaveFile(infoArchive, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL);
+        infoArchiveSaveFile(
+            infoArchive, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
 
         hrnCfgArgRawZ(argList, cfgOptTargetTimeline, "0xff");
         HRN_CFG_LOAD(cfgCmdRestore, argList);

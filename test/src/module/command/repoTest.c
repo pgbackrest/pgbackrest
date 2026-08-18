@@ -402,31 +402,30 @@ testRun(void)
         HRN_STORAGE_PUT(storageFixture, strZ(fileName), fileBuffer);
         HRN_STORAGE_PUT_Z(storageFixture, strZ(fileRawName), fileRawContent);
         HRN_STORAGE_PUT(
-            storageFixture, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE, archiveInfoFileBuffer,
-            .cipherType = cipherTypeAes256Cbc);
+            storageFixture, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE, archiveInfoFileBuffer, .cipherSpec = TEST_CIPHER_SPEC);
         HRN_STORAGE_PUT(
             storageFixture, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE ".copy", archiveInfoFileBuffer,
-            .cipherType = cipherTypeAes256Cbc);
+            .cipherSpec = TEST_CIPHER_SPEC);
         HRN_STORAGE_PUT(
-            storageFixture, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE, backupInfoFileBuffer, .cipherType = cipherTypeAes256Cbc);
+            storageFixture, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE, backupInfoFileBuffer, .cipherSpec = TEST_CIPHER_SPEC);
         HRN_STORAGE_PUT(
             storageFixture, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE ".copy", backupInfoFileBuffer,
-            .cipherType = cipherTypeAes256Cbc);
+            .cipherSpec = TEST_CIPHER_SPEC);
         HRN_STORAGE_PUT(
             storageFixture, STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            archiveFileBuffer, .cipherType = cipherTypeAes256Cbc, .cipherPass = "custom");
+            archiveFileBuffer, .cipherSpec = TEST_CIPHER_SPEC_PASS("custom"));
         HRN_STORAGE_PUT(
             storageFixture, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE, manifestFileBuffer,
-            .cipherType = cipherTypeAes256Cbc, .cipherPass = "custom");
+            .cipherSpec = TEST_CIPHER_SPEC_PASS("custom"));
         HRN_STORAGE_PUT(
             storageFixture, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE ".copy", manifestFileBuffer,
-            .cipherType = cipherTypeAes256Cbc, .cipherPass = "custom");
+            .cipherSpec = TEST_CIPHER_SPEC_PASS("custom"));
         HRN_STORAGE_PUT(
             storageFixture, STORAGE_PATH_BACKUP "/test/backup.history/2020/label.manifest.gz", manifestFileBuffer,
-            .cipherType = cipherTypeAes256Cbc, .cipherPass = "custom");
+            .cipherSpec = TEST_CIPHER_SPEC_PASS("custom"));
         HRN_STORAGE_PUT(
             storageFixture, STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label", backupLabelBuffer,
-            .cipherType = cipherTypeAes256Cbc, .cipherPass = "custom2");
+            .cipherSpec = TEST_CIPHER_SPEC_PASS("custom2"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when missing source");

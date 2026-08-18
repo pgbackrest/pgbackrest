@@ -1057,11 +1057,11 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}",
-            .cipherType = cipherTypeAes256Cbc);
+            .cipherSpec = TEST_CIPHER_SPEC);
 
         HRN_STORAGE_PUT(
             storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            buffer, .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
+            buffer, .compressType = compressTypeGz, .cipherSpec = TEST_CIPHER_SPEC_PASS(TEST_CIPHER_PASS_ARCHIVE));
 
         // Add encryption options
         argList = strLstNew();

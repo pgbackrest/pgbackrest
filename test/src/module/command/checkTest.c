@@ -753,10 +753,7 @@ testRun(void)
 
         // Version mismatch
         TEST_ERROR(
-            checkStanzaInfoPg(
-                storageRepoIdx(0), PG_VERSION_18, HRN_PG_SYSTEMID_18, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
-                cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),
-            FileInvalidError,
+            checkStanzaInfoPg(storageRepoIdx(0), PG_VERSION_18, HRN_PG_SYSTEMID_18, cfgCipherSpecMainIdx(0)), FileInvalidError,
             "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
@@ -766,10 +763,7 @@ testRun(void)
 
         // SystemId mismatch
         TEST_ERROR(
-            checkStanzaInfoPg(
-                storageRepoIdx(0), PG_VERSION_96, 6569239123849665699, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
-                cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),
-            FileInvalidError,
+            checkStanzaInfoPg(storageRepoIdx(0), PG_VERSION_96, 6569239123849665699, cfgCipherSpecMainIdx(0)), FileInvalidError,
             "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");

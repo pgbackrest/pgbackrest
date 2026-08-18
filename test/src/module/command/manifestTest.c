@@ -108,8 +108,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             hrnBackupPqScriptP(
-                PG_VERSION_14, backupTimeStart, .noArchiveCheck = true, .noWal = true, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS);
+                PG_VERSION_14, backupTimeStart, .noArchiveCheck = true, .noWal = true, .cipherSpecMain = TEST_CIPHER_SPEC);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup repo2");
         }
 
@@ -137,7 +136,7 @@ testRun(void)
             // Munge the pg_control checksum since it will vary by architecture
             Manifest *manifest = manifestLoadFile(
                 storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191002-070640F_20191003-105320D/" BACKUP_MANIFEST_FILE),
-                cipherTypeNone, NULL);
+                cipherSpecNewNone());
 
             ManifestFile file = manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
             file.checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
@@ -155,8 +154,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             hrnBackupPqScriptP(
-                PG_VERSION_14, backupTimeStart, .noArchiveCheck = true, .noWal = true, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS);
+                PG_VERSION_14, backupTimeStart, .noArchiveCheck = true, .noWal = true, .cipherSpecMain = TEST_CIPHER_SPEC);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup repo2");
         }
 

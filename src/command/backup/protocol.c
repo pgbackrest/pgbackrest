@@ -115,8 +115,7 @@ backupFileProtocol(PackRead *const param)
         const unsigned int blockIncrReference = (unsigned int)pckReadU64P(param);
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
         const int repoFileCompressLevel = pckReadI32P(param);
-        const CipherType cipherType = (CipherType)pckReadU64P(param);
-        const String *const cipherPass = pckReadStrP(param);
+        const CipherSpec *const cipherSpecBackup = cipherSpecNewPack(param);
         const PgPageSize pageSize = pckReadU32P(param);
         const String *const pgVersionForce = pckReadStrP(param);
 
@@ -163,7 +162,7 @@ backupFileProtocol(PackRead *const param)
 
         // Backup file
         const List *const resultList = backupFile(
-            repoFile, bundleId, bundleRaw, blockIncrReference, repoFileCompressType, repoFileCompressLevel, cipherType, cipherPass,
+            repoFile, bundleId, bundleRaw, blockIncrReference, repoFileCompressType, repoFileCompressLevel, cipherSpecBackup,
             pgVersionForce, pageSize, fileList);
 
         // Return result

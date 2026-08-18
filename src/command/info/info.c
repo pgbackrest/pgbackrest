@@ -132,7 +132,6 @@ typedef struct InfoRepoData
 {
     unsigned int key;                                               // User-defined repo key
     CipherType cipher;                                              // Encryption type
-    const String *cipherPass;                                       // Passphrase if the repo is encrypted (else NULL)
     int stanzaStatus;                                               // Status code of the stanza on this repo
     unsigned int backupIdx;                                         // Index of the next backup that may be a candidate for sorting
     InfoBackup *backupInfo;                                         // Contents of the backup.info file of the stanza on this repo
@@ -1478,7 +1477,7 @@ infoUpdateStanza(
                     // Attempt to load the backup info file
                     stanzaRepo->repoList[repoIdx].backupInfo = infoBackupLoadFile(
                         storage, strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaRepo->name), INFO_BACKUP_FILE),
-                        stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
+                        cfgCipherSpecMainIdx(repoIdx));
                 }
                 CATCH(FileMissingError)
                 {
@@ -1502,15 +1501,14 @@ infoUpdateStanza(
                 {
                     stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
                         storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaRepo->name), INFO_ARCHIVE_FILE),
-                        stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
+                        cfgCipherSpecMainIdx(repoIdx));
 
                     // If a specific backup exists on this repo then attempt to load the manifest
                     if (backupLabel != NULL)
                     {
                         stanzaRepo->repoList[repoIdx].manifest = manifestLoadFile(
                             storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
-                            stanzaRepo->repoList[repoIdx].cipher,
-                            infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
+                            infoBackupCipherSpec(stanzaRepo->repoList[repoIdx].backupInfo));
                     }
                 }
             }
@@ -1600,7 +1598,6 @@ infoRender(void)
             {
                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
                 .cipher = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
-                .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx),
                 .error = NULL,
             };
 
@@ -1673,7 +1670,6 @@ infoRender(void)
                             {
                                 .key = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoListIdx),
                                 .cipher = cfgOptionIdxStrId(cfgOptRepoCipherType, repoListIdx),
-                                .cipherPass = cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoListIdx),
                                 .error = NULL,
                             };
                         }

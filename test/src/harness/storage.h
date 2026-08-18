@@ -8,6 +8,7 @@ Helper functions for testing storage and related functions.
 
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
+#include "common/crypto/spec.h"
 #include "storage/storage.intern.h"
 
 /***********************************************************************************************************************************
@@ -19,8 +20,7 @@ typedef struct TestStorageGetParam
     bool remove;                                                    // Remove file after testing?
     bool nullOnMissing;                                             // NULL when file is missing
     CompressType compressType;                                      // Compression extension added to file name (limited gz and bz2)
-    CipherType cipherType;
-    const char *cipherPass;                                         // If pass=null but cipherType set, defaults to TEST_CIPHER_PASS
+    const CipherSpec *cipherSpec;                                   // Cipher spec the file is encrypted with
     const char *comment;                                            // Comment
 } TestStorageGetParam;
 
@@ -202,8 +202,7 @@ typedef struct HrnStoragePutParam
     mode_t modeFile;                                                // File mode if not the default
     time_t timeModified;                                            // Time file was last modified
     CompressType compressType;                                      // Limited to gz and bz2 (lz4 and zstd are not always available)
-    CipherType cipherType;
-    const char *cipherPass;
+    const CipherSpec *cipherSpec;                                   // Cipher spec to encrypt the file with
     const char *comment;                                            // Comment
 } HrnStoragePutParam;
 

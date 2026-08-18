@@ -5,7 +5,7 @@ Verify File
 #define COMMAND_VERIFY_FILE_H
 
 #include "common/compress/helper.h"
-#include "common/crypto/common.h"
+#include "common/crypto/spec.h"
 
 /***********************************************************************************************************************************
 File result
@@ -25,6 +25,6 @@ Functions
 // Verify a file in the pgBackRest repository
 FN_EXTERN VerifyResult verifyFile(
     const String *filePathName, uint64_t offset, const Variant *limit, CompressType compressType, const Buffer *fileChecksum,
-    uint64_t fileSize, const String *cipherPass);
+    uint64_t fileSize, const CipherSpec *cipherSpec);
 
 #endif

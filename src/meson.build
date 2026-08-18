@@ -123,6 +123,7 @@ src_pgbackrest = [
     'common/crypto/cipherBlock.c',
     'common/crypto/common.c',
     'common/crypto/hash.c',
+    'common/crypto/spec.c',
     'common/crypto/xxhash.c',
     'common/debug.c',
     'common/encode.c',

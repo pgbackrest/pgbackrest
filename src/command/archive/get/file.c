@@ -54,11 +54,11 @@ archiveGetFile(
                     storage, walDestination, .noCreatePath = true, .noSyncFile = true, .noSyncPath = true, .noAtomic = true);
 
                 // If there is a cipher then add the decrypt filter
-                if (actual->cipherType != cipherTypeNone)
+                if (cipherSpecType(actual->cipherSpecArchive) != cipherTypeNone)
                 {
                     ioFilterGroupAdd(
                         ioWriteFilterGroup(storageWriteIo(destination)),
-                        cipherBlockNewP(cipherModeDecrypt, actual->cipherType, BUFSTR(actual->cipherPassArchive)));
+                        cipherBlockNewP(cipherModeDecrypt, actual->cipherSpecArchive));
                     compressible = false;
                 }
 

@@ -56,11 +56,8 @@ cmdAnnotate(void)
                 storageRepoIdx(repoIdx);
 
                 // Attempt to load the backup info file
-                const CipherType repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
-
                 InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
-                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, repoCipherType,
-                    cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 
                 if (infoBackupLabelExists(infoBackup, backupLabel))
                 {
@@ -75,9 +72,7 @@ cmdAnnotate(void)
                     infoBackupDataAnnotationSet(infoBackup, backupLabel, cfgOptionKv(cfgOptAnnotation));
 
                     // Write the updated backup info
-                    infoBackupSaveFile(
-                        infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, repoCipherType,
-                        cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                    infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
                 }
             }
             CATCH_ANY()

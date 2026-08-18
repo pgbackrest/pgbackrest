@@ -96,12 +96,12 @@ hrnBackupScriptSet(const HrnBackupScript *const script, const unsigned int scrip
 
 /**********************************************************************************************************************************/
 static void
-backupProcess(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
+backupProcess(const BackupData *const backupData, Manifest *const manifest, const CipherSpec *const cipherSpecManifest)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(BACKUP_DATA, backupData);
         FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
-        FUNCTION_HARNESS_PARAM(STRING, cipherPassBackup);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpecManifest);
     FUNCTION_HARNESS_END();
 
     // If any file changes are scripted then make them
@@ -142,7 +142,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
         hrnBackupLocal.scriptSize = 0;
     }
 
-    backupProcess_SHIMMED(backupData, manifest, cipherPassBackup);
+    backupProcess_SHIMMED(backupData, manifest, cipherSpecManifest);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -216,8 +216,8 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         if (!param.noPriorWal)
         {
             InfoArchive *infoArchive = infoArchiveLoadFile(
-                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-                param.cipherPass == NULL ? NULL : STR(param.cipherPass));
+                storageRepo(), INFO_ARCHIVE_PATH_FILE_STR,
+                param.cipherSpecMain == NULL ? cipherSpecNewNone() : param.cipherSpecMain);
             const String *archiveId = infoArchiveId(infoArchive);
             StringList *walSegmentList = pgLsnRangeToWalSegmentList(
                 param.timeline, lsnStart - pgControl.walSegmentSize, param.noWal ? lsnStart - pgControl.walSegmentSize : lsnStop,
@@ -244,8 +244,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
 
                     // Encrypt with the archive passphrase, which is what archive-push writes WAL with
                     cipherBlockFilterGroupAdd(
-                        ioWriteFilterGroup(storageWriteIo(write)), param.cipherType == 0 ? cipherTypeNone : param.cipherType,
-                        cipherModeEncrypt, infoArchiveCipherPass(infoArchive));
+                        ioWriteFilterGroup(storageWriteIo(write)), cipherModeEncrypt, infoArchiveCipherSpec(infoArchive));
 
                     storagePutP(write, walBuffer);
                 }

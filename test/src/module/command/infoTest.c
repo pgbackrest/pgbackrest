@@ -1045,7 +1045,7 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n",
-            .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
+            .cipherSpec = TEST_CIPHER_SPEC,
             .comment = "write encrypted archive.info, stanza1, repo2");
         HRN_INFO_PUT(
             storageTest, TEST_PATH "/repo2/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
@@ -1072,7 +1072,7 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
             ",\"db-version\":\"9.5\"}\n",
-            .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
+            .cipherSpec = TEST_CIPHER_SPEC,
             .comment = "write encrypted backup.info, stanza1, repo2");
 
         // Add WAL on repo1 and encrypted repo2 for stanza1
@@ -1143,7 +1143,7 @@ testRun(void)
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
             TEST_MANIFEST_PATH_DEFAULT,
-            .cipherType = cipherTypeAes256Cbc, .cipherPass = "somepass",
+            .cipherSpec = TEST_CIPHER_SPEC_PASS("somepass"),
             .comment = "write encrypted manifest, stanza1, repo2");
 
         // Create a stanza on repo2 that is not on repo1
@@ -1159,7 +1159,7 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":6626363367545678089,\"db-version\":\"9.4\"}\n",
-            .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
+            .cipherSpec = TEST_CIPHER_SPEC,
             .comment = "write encrypted archive.info, repo2, stanza3");
         HRN_INFO_PUT(
             storageTest, TEST_PATH "/repo2/" STORAGE_PATH_BACKUP "/stanza3/" INFO_BACKUP_FILE,
@@ -1185,7 +1185,7 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
             ",\"db-version\":\"9.4\"}\n",
-            .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
+            .cipherSpec = TEST_CIPHER_SPEC,
             .comment = "write encrypted backup.info, repo2, stanza3");
 
         // Store some WAL in stanza on repo2 that is not on repo1
@@ -3069,7 +3069,7 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
             ",\"db-version\":\"9.5\"}\n",
-            .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS,
+            .cipherSpec = TEST_CIPHER_SPEC,
             .comment = "backup.info without current, repo2, stanza1");
 
         TEST_RESULT_STR_Z(

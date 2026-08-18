@@ -238,7 +238,8 @@ testRun(void)
 
         InfoPg *infoPg = NULL;
         TEST_ASSIGN(
-            infoPg, infoArchivePg(infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_ARCHIVE_INFO_BASE)))),
+            infoPg,
+            infoArchivePg(infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_ARCHIVE_INFO_BASE)), cipherSpecNewNone())),
             "infoPg from archive.info");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -268,7 +269,8 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg version mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -303,7 +305,8 @@ testRun(void)
             .comment = "manifest copy - invalid system-id");
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg system-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -337,7 +340,8 @@ testRun(void)
             .comment = "manifest copy - invalid db-id");
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg db-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -355,7 +359,8 @@ testRun(void)
             storageRepoWrite(), TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE
             INFO_COPY_EXT, TEST_INVALID_BACKREST_INFO, .comment = "invalid manifest copy");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
@@ -369,7 +374,8 @@ testRun(void)
             storageRepoWrite(), TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE,
             TEST_INVALID_BACKREST_INFO, .comment = "invalid manifest");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -395,7 +401,8 @@ testRun(void)
             .comment = "valid manifest");
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
         TEST_RESULT_UINT(backupResult.status, backupValid, "manifest usable");
         TEST_RESULT_LOG("P00 DETAIL: backup '20181119-152138F' manifest.copy does not match manifest");
@@ -485,7 +492,8 @@ testRun(void)
         // Create backup.info
         InfoBackup *backupInfo = NULL;
         TEST_ASSIGN(
-            backupInfo, infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_BACKUP_INFO_MULTI_HISTORY_BASE))),
+            backupInfo,
+            infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_BACKUP_INFO_MULTI_HISTORY_BASE)), cipherSpecNewNone()),
             "backup.info multi-history");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -504,7 +512,7 @@ testRun(void)
                         "db-version=\"11\"\n"
                         "\n"
                         "[db:history]\n"
-                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}")), cipherSpecNewNone()),
             "archive.info missing history");
 
         TEST_ERROR(
@@ -526,7 +534,7 @@ testRun(void)
                         "\n"
                         "[db:history]\n"
                         "1={\"db-id\":6625592122879095777,\"db-version\":\"9.6\"}\n"
-                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}")), cipherSpecNewNone()),
             "archive.info history system id mismatch");
 
         TEST_ERROR(
@@ -548,7 +556,7 @@ testRun(void)
                         "\n"
                         "[db:history]\n"
                         "1={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"18\"}\n"
-                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}")), cipherSpecNewNone()),
             "archive.info history version mismatch");
 
         TEST_ERROR(
@@ -570,7 +578,7 @@ testRun(void)
                         "\n"
                         "[db:history]\n"
                         "3={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"10\"}\n"
-                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
+                        "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}")), cipherSpecNewNone()),
             "archive.info history id mismatch");
 
         TEST_ERROR(
@@ -587,10 +595,12 @@ testRun(void)
         InfoBackup *backupInfo = NULL;
         InfoArchive *archiveInfo = NULL;
         TEST_ASSIGN(
-            backupInfo, infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_BACKUP_INFO_MULTI_HISTORY_BASE))),
+            backupInfo,
+            infoBackupNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_BACKUP_INFO_MULTI_HISTORY_BASE)), cipherSpecNewNone()),
             "backup.info multi-history");
         TEST_ASSIGN(
-            archiveInfo, infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE))),
+            archiveInfo,
+            infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE)), cipherSpecNewNone()),
             "archive.info multi-history");
         InfoPg *pgHistory = infoArchivePg(archiveInfo);
 
@@ -867,17 +877,17 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         HRN_INFO_PUT(
-            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .cipherType = cipherTypeAes256Cbc,
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .cipherSpec = TEST_CIPHER_SPEC,
             .comment = "encrypted backup.info");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_NO_CURRENT_BACKUP,
-            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted backup.info.copy");
+            .cipherSpec = TEST_CIPHER_SPEC, .comment = "encrypted backup.info.copy");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
-            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted archive.info");
+            .cipherSpec = TEST_CIPHER_SPEC, .comment = "encrypted archive.info");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
-            .cipherType = cipherTypeAes256Cbc, .comment = "encrypted archive.info.copy");
+            .cipherSpec = TEST_CIPHER_SPEC, .comment = "encrypted archive.info.copy");
 
         TEST_RESULT_VOID(cmdVerify(), "usable encrypted backup and archive info files");
         TEST_RESULT_LOG("");
@@ -899,20 +909,23 @@ testRun(void)
         String *filePathName = strNewZ(STORAGE_REPO_ARCHIVE "/testfile");
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), strZ(filePathName));
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeNone, HASH_TYPE_SHA1_ZERO_BUF, 0, NULL), verifyOk, "file ok");
+            verifyFile(filePathName, 0, NULL, compressTypeNone, HASH_TYPE_SHA1_ZERO_BUF, 0, cipherSpecNewNone()),
+            verifyOk, "file ok");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file size invalid in archive");
 
         HRN_STORAGE_PUT_Z(storageRepoWrite(), strZ(filePathName), fileContents);
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeNone, fileChecksum, 0, NULL), verifySizeInvalid, "file size invalid");
+            verifyFile(filePathName, 0, NULL, compressTypeNone, fileChecksum, 0, cipherSpecNewNone()),
+            verifySizeInvalid, "file size invalid");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file missing in archive");
 
         TEST_RESULT_UINT(
-            verifyFile(strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), 0, NULL, compressTypeNone, fileChecksum, 0, NULL),
+            verifyFile(
+                strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), 0, NULL, compressTypeNone, fileChecksum, 0, cipherSpecNewNone()),
             verifyFileMissing, "file missing");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -921,15 +934,19 @@ testRun(void)
         // Create a compressed encrypted repo file in backup
         filePathName = strCatZ(strNew(), STORAGE_REPO_BACKUP "/testfile");
         HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), strZ(filePathName), fileContents, .compressType = compressTypeGz, .cipherType = cipherTypeAes256Cbc,
-            .cipherPass = "pass");
+            storageRepoWrite(), strZ(filePathName), fileContents, .compressType = compressTypeGz,
+            .cipherSpec = TEST_CIPHER_SPEC_PASS("pass"));
 
         strCatZ(filePathName, ".gz");
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeGz, fileChecksum, fileSize, STRDEF("pass")),
+            verifyFile(
+                filePathName, 0, NULL, compressTypeGz, fileChecksum, fileSize,
+                cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("pass"))),
             verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeGz, bufNewDecode(encodingHex, STRDEF("aa")), fileSize, STRDEF("pass")),
+            verifyFile(
+                filePathName, 0, NULL, compressTypeGz, bufNewDecode(encodingHex, STRDEF("aa")), fileSize,
+                cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("pass"))),
             verifyChecksumMismatch, "file encrypted compressed checksum mismatch");
     }
 
@@ -2497,7 +2514,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         hrnBackupPqScriptP(
-            PG_VERSION_11, BACKUP_EPOCH + 200000, .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS);
+            PG_VERSION_11, BACKUP_EPOCH + 200000, .cipherSpecMain = TEST_CIPHER_SPEC);
         TEST_RESULT_VOID(hrnCmdBackup(), "backup");
         TEST_RESULT_LOG(
             "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"

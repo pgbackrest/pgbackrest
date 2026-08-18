@@ -11,6 +11,7 @@ Restore Command
 #include "command/restore/timeline.h"
 #include "common/regExp.h"
 #include "common/user.h"
+#include "config/config.h"
 #include "config/exec.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -58,24 +59,21 @@ cmdRestore(void)
 
         jobData.manifest = manifestLoadFile(
             storageRepoIdx(backupData.repoIdx),
-            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.repoCipherType,
-            backupData.backupCipherPass);
+            strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.cipherSpecManifest);
 
         // Verify that the selected timeline is valid for the backup -- including current and latest timelines
         if (manifestData(jobData.manifest)->backupOptionOnline)
         {
             const ManifestData *const data = manifestData(jobData.manifest);
             const InfoArchive *const archiveInfo = infoArchiveLoadFile(
-                storageRepoIdx(backupData.repoIdx), INFO_ARCHIVE_PATH_FILE_STR,
-                cfgOptionIdxStrId(cfgOptRepoCipherType, backupData.repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoCipherPass, backupData.repoIdx));
+                storageRepoIdx(backupData.repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(backupData.repoIdx));
 
             timelineVerify(
                 storageRepoIdx(backupData.repoIdx),
                 strNewFmt("%s-%u", strZ(pgVersionToStr(data->pgVersion)), data->pgId), data->pgVersion,
                 cvtZToUIntBase(strZ(strSubN(data->archiveStart, 0, 8)), 16), pgLsnFromStr(data->lsnStart),
                 cfgOptionStrNull(cfgOptTargetTimeline), cfgOptionSeq(cfgOptType),
-                cfgOptionIdxStrId(cfgOptRepoCipherType, backupData.repoIdx), infoArchiveCipherPass(archiveInfo));
+                infoArchiveCipherSpec(archiveInfo));
         }
 
         // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
@@ -91,8 +89,8 @@ cmdRestore(void)
         // Validate manifest. Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);
 
-        // Get the cipher subpass used to decrypt files in the backup
-        jobData.cipherSubPass = manifestCipherSubPass(jobData.manifest);
+        // Get the cipher spec used to decrypt files in the backup
+        jobData.cipherSpecBackup = manifestCipherSpec(jobData.manifest);
 
         // Validate the manifest
         restoreManifestValidate(jobData.manifest, backupData.backupSet);

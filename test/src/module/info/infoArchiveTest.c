@@ -38,14 +38,14 @@ testRun(void)
         // Load and test move function
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad)), "load new archive info");
+            TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone()), "load new archive info");
             TEST_RESULT_VOID(infoArchiveMove(info, memContextPrior()), "move info");
         }
         MEM_CONTEXT_TEMP_END();
 
         TEST_RESULT_STR_Z(infoArchiveId(info), "9.6-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
-        TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "no cipher sub");
+        TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(info)), cipherTypeNone, "no cipher sub");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("infoArchive save (in memory)");
@@ -64,7 +64,7 @@ testRun(void)
             info, infoArchiveNew(PG_VERSION_96, 6569239123849665679, NULL), "infoArchiveNew() - no sub cipher");
         TEST_RESULT_STR_Z(infoArchiveId(info), "9.6-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
-        TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "no cipher sub");
+        TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(info)), cipherTypeNone, "no cipher sub");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "history set");
 
         Buffer *contentCompare = bufNew(0);
@@ -79,18 +79,22 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoArchiveNew(
-                PG_VERSION_10, 6569239123849665999, STRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO")),
+                PG_VERSION_10, 6569239123849665999,
+                cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
             "infoArchiveNew() - cipher sub");
 
         contentSave = bufNew(0);
 
         TEST_RESULT_VOID(infoArchiveSave(info, ioBufferWriteNew(contentSave)), "save new with cipher");
 
-        TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentSave)), "load encrypted archive info");
+        TEST_ASSIGN(
+            info, infoArchiveNewLoad(ioBufferReadNew(contentSave), cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
+            "load encrypted archive info");
         TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), infoArchivePg(info), "infoPg set");
         TEST_RESULT_STR_Z(
-            infoArchiveCipherPass(info), "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
+            strNewBuf(cipherSpecPass(infoArchiveCipherSpec(info))),
+            "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "history set");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -121,7 +125,7 @@ testRun(void)
             "1={\"db-id\":6625592122879095702,\"db-version\":\"9.6\"}\n"
             "2={\"db-id\":6626363367545678089,\"db-version\":\"17\"}\n");
 
-        TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad)), "new archive info");
+        TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone()), "new archive info");
         TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 170000, 6626363367545678089), "17-2", "full match found");
 
         TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90600, 6625592122879095702), "9.6-1", "partial match found");
@@ -142,7 +146,7 @@ testRun(void)
         TEST_TITLE("load archive info file - error");
 
         TEST_ERROR(
-            infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), FileMissingError,
+            infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecNewNone()), FileMissingError,
             "unable to load info file '" TEST_PATH "/archive.info' or '" TEST_PATH "/archive.info.copy':\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/archive.info' for read\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/archive.info.copy' for read\n"
@@ -156,13 +160,18 @@ testRun(void)
 
         InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_10, 6569239123849665999, NULL);
         TEST_RESULT_VOID(
-            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), "save archive info");
+            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecNewNone()),
+            "save archive info");
 
-        TEST_ASSIGN(infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), "load main");
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecNewNone()),
+            "load main");
         TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
 
         HRN_STORAGE_REMOVE(storageTest, INFO_ARCHIVE_FILE, .errorOnMissing = true, .comment = "remove main so only copy exists");
-        TEST_ASSIGN(infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherTypeNone, NULL), "load copy");
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecNewNone()),
+            "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
     }
 }

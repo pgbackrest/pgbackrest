@@ -1781,6 +1781,8 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 1, " test ");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 1, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 1, "test");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 1, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, "xxx-cipher");
         strLstAddZ(argList, TEST_COMMAND_BACKUP);
         hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 1, "xxx");
         hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 1, "xxx");
@@ -1820,8 +1822,16 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceDefault, "buffer-size is source default");
         TEST_RESULT_Z(cfgOptionName(cfgOptBufferSize), "buffer-size", "buffer-size name");
 
+        // Cipher spec is built once per repo and then cached
+        const CipherSpec *const cipherSpecMain = cfgCipherSpecMain();
+
+        TEST_RESULT_UINT(cipherSpecType(cipherSpecMain), cipherTypeAes256Cbc, "repo1 cipher spec type");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecMain)), "xxx-cipher", "repo1 cipher spec pass");
+        TEST_RESULT_PTR(cfgCipherSpecMainIdx(0), cipherSpecMain, "repo1 cipher spec is cached");
+
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("global is a valid stanza prefix");
@@ -1841,6 +1851,7 @@ testRun(void)
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "parse config");
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/global/stanza", "default pg-path");
+        TEST_RESULT_UINT(cipherSpecType(cfgCipherSpecMainIdx(0)), cipherTypeNone, "no cipher spec when repo is not encrypted");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warnings for environment variables, command-line and config file options");

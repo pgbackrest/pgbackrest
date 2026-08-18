@@ -48,8 +48,7 @@ archivePushFileProtocol(PackRead *const param)
 
             ArchivePushFileRepoData repo = {.repoIdx = pckReadU32P(param)};
             repo.archiveId = pckReadStrP(param);
-            repo.cipherType = pckReadU64P(param);
-            repo.cipherPass = pckReadStrP(param);
+            repo.cipherSpecArchive = cipherSpecNewPack(param);
             pckReadObjEndP(param);
 
             lstAdd(repoList, &repo);

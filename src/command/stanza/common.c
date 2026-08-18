@@ -15,24 +15,32 @@ Stanza Commands Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-cipherPassGen(const CipherType cipherType)
+FN_EXTERN CipherSpec *
+cipherSpecGen(const CipherType cipherType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_ID, cipherType);
     FUNCTION_TEST_END();
 
-    String *result = NULL;
+    CipherSpec *result;
 
-    if (cipherType != cipherTypeNone)
+    if (cipherType == cipherTypeNone)
+        result = cipherSpecNewNone();
+    else
     {
-        uint8_t buffer[48];                                         // 48 is the amount of entropy needed to get a 64 base key
-        cryptoRandomBytes(buffer, sizeof(buffer));
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            uint8_t buffer[48];                                     // 48 is the amount of entropy needed to get a 64 base key
+            cryptoRandomBytes(buffer, sizeof(buffer));
 
-        result = strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)));
+            // The pass is the encoded text rather than the bytes it encodes, so it is stored and derived from as that text
+            result = cipherSpecNew(cipherType, BUFSTR(strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)))));
+            cipherSpecMove(result, memContextPrior());
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_TEST_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(CIPHER_SPEC, result);
 }
 
 /**********************************************************************************************************************************/

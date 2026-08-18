@@ -936,6 +936,10 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "passphrase");
         hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
         hrnCfgArgRawZ(argList, cfgOptLogPath, TEST_PATH);
         hrnCfgArgRawZ(argList, cfgOptLogLevelConsole, "off");
@@ -957,6 +961,16 @@ testRun(void)
         TEST_RESULT_INT(socketLocal.tcpKeepAliveIdle, 2222, "check socketLocal.tcpKeepAliveIdle");
         TEST_RESULT_INT(socketLocal.tcpKeepAliveInterval, 888, "check socketLocal.tcpKeepAliveInterval");
         TEST_RESULT_INT(getpriority(PRIO_PROCESS, (id_t)getpid()), 19, "check priority");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+
+        // Cipher spec is cached per repo since each repo has its own cipher type and passphrase
+        TEST_RESULT_UINT(cipherSpecType(cfgCipherSpecMainIdx(0)), cipherTypeNone, "repo1 cipher spec");
+
+        const CipherSpec *const cipherSpecMain = cfgCipherSpecMainIdx(1);
+
+        TEST_RESULT_UINT(cipherSpecType(cipherSpecMain), cipherTypeAes256Cbc, "repo2 cipher spec");
+        TEST_RESULT_PTR(cfgCipherSpecMainIdx(1), cipherSpecMain, "repo2 cipher spec is cached");
 
         cmdLockReleaseP();
 

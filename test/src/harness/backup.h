@@ -47,8 +47,7 @@ typedef struct HrnBackupPqScriptParam
     bool noArchiveCheck;                                            // Do not check archive
     bool walSwitch;                                                 // WAL switch is required
     CompressType walCompressType;                                   // Compress type for the archive files
-    CipherType cipherType;                                          // Cipher type
-    const char *cipherPass;                                         // Cipher pass
+    const CipherSpec *cipherSpecMain;                               // Cipher spec the repo is configured with
     unsigned int walTotal;                                          // Total WAL to write
     unsigned int timeline;                                          // Timeline to use for WAL files
     const String *pgVersionForce;                                   // PG version to use when control/catalog not found

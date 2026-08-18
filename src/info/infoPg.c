@@ -62,11 +62,11 @@ infoPgNewInternal(const InfoPgType type)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoPg *
-infoPgNew(const InfoPgType type, const String *const cipherPassSub)
+infoPgNew(const InfoPgType type, const CipherSpec *const cipherSpecSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, type);
-        FUNCTION_TEST_PARAM(STRING, cipherPassSub);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecSub);
     FUNCTION_LOG_END();
 
     InfoPg *this;
@@ -74,7 +74,7 @@ infoPgNew(const InfoPgType type, const String *const cipherPassSub)
     OBJ_NEW_BASE_BEGIN(InfoPg, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = infoPgNewInternal(type);
-        this->pub.info = infoNew(cipherPassSub);
+        this->pub.info = infoNew(cipherSpecSub);
     }
     OBJ_NEW_END();
 
@@ -155,11 +155,14 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
 }
 
 FN_EXTERN InfoPg *
-infoPgNewLoad(IoRead *const read, const InfoPgType type, InfoLoadNewCallback *const callbackFunction, void *const callbackData)
+infoPgNewLoad(
+    IoRead *const read, const InfoPgType type, const CipherSpec *const cipherSpec, InfoLoadNewCallback *const callbackFunction,
+    void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
         FUNCTION_LOG_PARAM(STRING_ID, type);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
@@ -185,7 +188,7 @@ infoPgNewLoad(IoRead *const read, const InfoPgType type, InfoLoadNewCallback *co
             .infoPg = this,
         };
 
-        this->pub.info = infoNewLoad(read, infoPgLoadCallback, &loadData);
+        this->pub.info = infoNewLoad(read, cipherSpec, infoPgLoadCallback, &loadData);
 
         CHECK(FormatError, !lstEmpty(this->pub.history), "history is missing");
         CHECK(FormatError, loadData.currentId > 0, "current id is missing");

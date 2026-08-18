@@ -92,7 +92,7 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
                 storageRepo, dbPgControl(dbGroup.standby).version, dbPgControl(dbGroup.standby).systemId,
-                cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                cfgCipherSpecMainIdx(repoIdx));
         }
 
         LOG_INFO("switch wal not performed because this is a standby");
@@ -137,12 +137,11 @@ checkPrimary(const DbGetResult dbGroup)
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
                 storageRepo, dbPgControl(dbGroup.primary).version, dbPgControl(dbGroup.primary).systemId,
-                cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                cfgCipherSpecMainIdx(repoIdx));
 
             // Attempt to load the archive info file and retrieve the archiveId
             const InfoArchive *const archiveInfo = infoArchiveLoadFile(
-                storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 
             repoArchiveId[repoIdx] = infoArchiveId(archiveInfo);
         }

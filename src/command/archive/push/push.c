@@ -230,13 +230,9 @@ archivePushCheck(const bool pgPathSet)
                 // Get the repo storage in case it is remote and encryption settings need to be pulled down
                 storageRepoIdx(repoIdx);
 
-                // Get cipher type
-                const CipherType repoCipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
-
                 // Attempt to load the archive info file
                 const InfoArchive *const info = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, repoCipherType,
-                    cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 
                 // Get archive id for the most recent version -- archive-push will only operate against the most recent version
                 const String *const archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
@@ -268,8 +264,7 @@ archivePushCheck(const bool pgPathSet)
                     {
                         .repoIdx = repoIdx,
                         .archiveId = strDup(archiveId),
-                        .cipherType = repoCipherType,
-                        .cipherPass = strDup(infoArchiveCipherPass(info)),
+                        .cipherSpecArchive = cipherSpecDup(infoArchiveCipherSpec(info)),
                     };
 
                     lstAdd(result.repoList, &archivePushFileRepoData);
@@ -493,8 +488,7 @@ archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
                 pckWriteObjBeginP(param);
                 pckWriteU32P(param, data->repoIdx);
                 pckWriteStrP(param, data->archiveId);
-                pckWriteU64P(param, data->cipherType);
-                pckWriteStrP(param, data->cipherPass);
+                cipherSpecPack(param, data->cipherSpecArchive);
                 pckWriteObjEndP(param);
             }
 

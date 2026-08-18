@@ -67,15 +67,13 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(read));
 
     // Add decrypt filter
-    if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
+    if (param.cipherSpec != NULL && cipherSpecType(param.cipherSpec) != cipherTypeNone)
     {
-        // Default to main cipher pass
-        if (param.cipherPass == NULL)
-            param.cipherPass = TEST_CIPHER_PASS;
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, param.cipherSpec));
 
-        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, param.cipherType, BUFSTRZ(param.cipherPass)));
-
-        strCatFmt(filter, "enc[%s,%s] ", zNewStrId(param.cipherType), param.cipherPass);
+        strCatFmt(
+            filter, "enc[%s,%s] ", zNewStrId(cipherSpecType(param.cipherSpec)),
+            strZ(strNewBuf(cipherSpecPass(param.cipherSpec))));
     }
 
     // Add decompress filter
@@ -394,14 +392,8 @@ hrnStoragePut(
     }
 
     // Add encrypted filter
-    if (param.cipherType != 0 && param.cipherType != cipherTypeNone)
-    {
-        // Default to main cipher pass
-        if (param.cipherPass == NULL)
-            param.cipherPass = TEST_CIPHER_PASS;
-
-        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, param.cipherType, BUFSTRZ(param.cipherPass)));
-    }
+    if (param.cipherSpec != NULL && cipherSpecType(param.cipherSpec) != cipherTypeNone)
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, param.cipherSpec));
 
     // Add file name
     printf(

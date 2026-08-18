@@ -336,7 +336,7 @@ typedef struct RestoreJobData
     Manifest *manifest;                                             // Backup manifest
     List *queueList;                                                // List of processing queues
     RegExp *zeroExp;                                                // Identify files that should be sparse zeroed
-    const String *cipherSubPass;                                    // Passphrase used to decrypt files in the backup
+    const CipherSpec *cipherSpecBackup;                             // Cipher spec used to decrypt files in the backup
     const String *rootReplaceUser;                                  // User to replace invalid users when root
     const String *rootReplaceGroup;                                 // Group to replace invalid group when root
 } RestoreJobData;
@@ -429,7 +429,7 @@ restoreJobCallback(void *const data, const unsigned int clientIdx)
                     pckWriteBoolP(param, cfgOptionBool(cfgOptDelta));
                     pckWriteBoolP(param, cfgOptionBool(cfgOptDelta) && cfgOptionBool(cfgOptForce));
                     pckWriteBoolP(param, file.bundleId != 0 && manifestData(jobData->manifest)->bundleRaw);
-                    pckWriteStrP(param, jobData->cipherSubPass);
+                    cipherSpecPack(param, jobData->cipherSpecBackup);
                     pckWriteStrLstP(param, manifestReferenceList(jobData->manifest));
 
                     fileAdded = true;

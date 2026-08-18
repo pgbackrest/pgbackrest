@@ -10,6 +10,7 @@ Object type
 typedef struct Info Info;
 typedef struct InfoSave InfoSave;
 
+#include "common/crypto/spec.h"
 #include "common/ini.h"
 #include "common/type/json.h"
 #include "storage/storage.h"
@@ -38,10 +39,12 @@ typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *i
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN Info *infoNew(const String *cipherPassSub);
+FN_EXTERN Info *infoNew(const CipherSpec *cipherSpecSub);
 
-// Create new object and load contents from a file
-FN_EXTERN Info *infoNewLoad(IoRead *read, InfoLoadNewCallback *callbackFunction, void *callbackData);
+// Create new object and load contents from a file. The cipher spec the file is read with supplies the type for the cipher spec
+// built from the pass stored in it.
+FN_EXTERN Info *infoNewLoad(
+    IoRead *read, const CipherSpec *cipherSpec, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -49,17 +52,19 @@ Getters/Setters
 typedef struct InfoPub
 {
     const String *backrestVersion;                                  // pgBackRest version
-    const String *cipherPass;                                       // Cipher passphrase if set
+    const CipherSpec *cipherSpec;                                   // Cipher spec for dependent files
 } InfoPub;
 
-// Cipher passphrase if set
-FN_INLINE_ALWAYS const String *
-infoCipherPass(const Info *const this)
+// Cipher spec for the files that depend on this one, e.g. the manifest for backup.info. Never NULL, so it can be handed on
+// without a check, and none when there is no pass.
+FN_INLINE_ALWAYS const CipherSpec *
+infoCipherSpec(const Info *const this)
 {
-    return THIS_PUB(Info)->cipherPass;
+    return THIS_PUB(Info)->cipherSpec;
 }
 
-FN_EXTERN void infoCipherPassSet(Info *this, const String *cipherPass);
+// Set cipher spec for dependent files. NULL means they are not encrypted.
+FN_EXTERN void infoCipherSpecSet(Info *this, const CipherSpec *cipherSpec);
 
 // pgBackRest version
 FN_INLINE_ALWAYS const String *

@@ -82,6 +82,8 @@ typedef struct Config
 
     ConfigOptionGroupData optionGroup[CFG_OPTION_GROUP_TOTAL];      // Option group data
     ConfigOptionData option[CFG_OPTION_TOTAL];                      // Option data
+
+    CipherSpec **cipherSpecMain;                                    // Main cipher spec for the cipher options by repo index
 } Config;
 
 /***********************************************************************************************************************************

@@ -7,6 +7,7 @@ sets the command and options and determines which options are valid for a comman
 #ifndef CONFIG_CONFIG_H
 #define CONFIG_CONFIG_H
 
+#include "common/crypto/spec.h"
 #include "common/log.h"
 #include "common/type/stringId.h"
 #include "common/type/stringList.h"
@@ -237,6 +238,21 @@ FN_EXTERN bool cfgOptionValid(ConfigOption optionId);
 // Is the option valid for the command and also has a value?
 FN_EXTERN bool cfgOptionTest(ConfigOption optionId);
 FN_EXTERN bool cfgOptionIdxTest(ConfigOption optionId, unsigned int optionIdx);
+
+/***********************************************************************************************************************************
+Cipher Functions
+
+Main cipher spec for a repository, built from the cipher options and cached per repo since the options cannot change while a command
+runs. This is the top of the chain. The info files are read with it and each of those carries the cipher spec for the files that
+depend on it, so nothing further down needs to consult the options again.
+***********************************************************************************************************************************/
+FN_EXTERN const CipherSpec *cfgCipherSpecMainIdx(unsigned int repoIdx);
+
+FN_INLINE_ALWAYS const CipherSpec *
+cfgCipherSpecMain(void)
+{
+    return cfgCipherSpecMainIdx(cfgOptionIdxDefault(cfgOptRepoCipherType));
+}
 
 /***********************************************************************************************************************************
 Option Source Enum
