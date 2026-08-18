@@ -336,7 +336,7 @@ tlsSessionRole(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING_ID, ioSessionRole(this->ioSession));
+    FUNCTION_TEST_RETURN_TYPE(IoSessionRole, ioSessionRole(this->ioSession));
 }
 
 /**********************************************************************************************************************************/

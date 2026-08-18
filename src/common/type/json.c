@@ -204,7 +204,7 @@ jsonReadTypeNext(JsonRead *const this)
             break;
     }
 
-    FUNCTION_TEST_RETURN(STRING_ID, result);
+    FUNCTION_TEST_RETURN_TYPE(JsonType, result);
 }
 
 /***********************************************************************************************************************************
@@ -222,7 +222,7 @@ jsonReadTypeNextIgnoreComma(JsonRead *const this)
     jsonReadConsumeWhiteSpace(this);
 
     if (*this->json != ',')
-        FUNCTION_TEST_RETURN(STRING_ID, jsonReadTypeNext(this));
+        FUNCTION_TEST_RETURN_TYPE(JsonType, jsonReadTypeNext(this));
 
     const char *const jsonBeforeComma = this->json;
     this->json++;
@@ -230,7 +230,7 @@ jsonReadTypeNextIgnoreComma(JsonRead *const this)
     const JsonType result = jsonReadTypeNext(this);
     this->json = jsonBeforeComma;
 
-    FUNCTION_TEST_RETURN(STRING_ID, result);
+    FUNCTION_TEST_RETURN_TYPE(JsonType, result);
 }
 
 /***********************************************************************************************************************************
