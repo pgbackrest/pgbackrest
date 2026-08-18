@@ -18,6 +18,7 @@
 
 - `REPOSITORY_FORMAT_5` and `REPOSITORY_FORMAT_6` name each format so that code which varies by format is explicit about the format it applies to (`src/version.h:35`).
 - `REPOSITORY_FORMAT_MIN`/`MAX` are the range that can be read; `REPOSITORY_FORMAT_DEFAULT` is what new repositories get when `repo-format` is not specified (`src/version.h:38`). All three are currently expressed in terms of the named formats, so `MIN` and `DEFAULT` diverge on their own when the default moves.
+- The range is asserted wherever a format is set from code, in `infoNew()` and `infoFormatSet()`, so a format outside it can only ever arrive from a file, which is where it is reported rather than asserted.
 
 ## Format Option
 
@@ -28,28 +29,34 @@
 
 ## Format Handling Rules
 
-- **Readers trust the per-file stored format.** Every manifest and info file already records `backrest-format`; the value is stored on load and written back out on save rather than compared against a constant (`src/info/info.c:209`).
+- **Readers trust the per-file stored format.** Every manifest and info file already records `backrest-format`; the value is stored on load and written back out on save rather than compared against a constant (`src/info/info.c:212`).
 - **The info file format is the write target.** `backup.info` / `archive.info` format determines the format of new WAL and of new backup sets. Individual backups within a stanza may be older formats until they expire.
 - **Backups adopt a new format only at a full backup.** A prior backup is a candidate for diff/incr only if it is at the format new backups are written with (`src/command/backup/incr.c.inc:42`), alongside the existing checks that a diff's prior must be full and that the prior must come from the same cluster. After an upgrade no prior matches, so the backup is changed to full at the new format by the path that already handles having no prior at all. The full backup is the single adoption boundary for the backup domain.
 - **A backup set is never mixed-format, and a backup never references a file at another format.** Refusing the diff/incr rather than continuing the set at its original format is the stricter of the two options, and deliberately so. Backup is complex enough that a format applying to some files in a manifest and not others would have to be reasoned about at every point that touches a file, in backup and again in restore, verify, and expire. Refusing keeps format a property of a whole backup set that downstream code can read once. The cost is one extra full backup per stanza at migration, paid once.
 - **A resumable backup at another format is not resumable** (`src/command/backup/resume.c.inc:243`). Its files were written at the format the aborted backup ran at, so reusing them would mix formats within the new backup by the same route the diff/incr rule closes. This joins the version, type, prior label, and compression checks already there, and like them it discards the resumable backup with a warning rather than failing.
-- A backup's entry in `backup:current` records the format its manifest was written with rather than the running binary's format (`src/info/infoBackup.c:475`).
+- A backup's entry in `backup:current` records the format its manifest was written with rather than the running binary's format (`src/info/infoBackup.c:476`).
 - Consequence: once the info files are format 6, binaries that only support format 5 cannot read the stanza at all, including its remaining format 5 backups. This is accepted; the info files gate everything.
 
 ## Migration
 
 - `stanza-upgrade --repo1-format=6` flips the write target on an existing stanza. It rewrites the two info files and nothing else, so a repository of any size migrates in the time it takes to write them.
-- The format is updated only when `repo-format` is explicitly given (`src/command/stanza/upgrade.c:67`). Otherwise the option default would downgrade a stanza that has already been migrated.
-- **Downgrade is refused** (`src/command/stanza/upgrade.c:78`). The info files are what stop a version that does not support a format from reading a stanza at all; lowering them would let that version past the gate and into backups and archives it cannot read.
-- The two info files are saved separately, so an upgrade interrupted between them leaves them at different formats. Re-running the upgrade brings the lagging file forward, which is what the version and system id it also carries have always done.
+- The format is updated only when `repo-format` is explicitly given (`src/command/stanza/upgrade.c:65`). Otherwise the option default would downgrade a stanza that has already been migrated.
+- **Downgrade is refused** (`src/command/stanza/upgrade.c:72`). The info files are what stop a version that does not support a format from reading a stanza at all; lowering them would let that version past the gate and into backups and archives it cannot read.
+- The downgrade check reads the format in `archive.info`. `archive.info` is saved first, so it is the file that leads when the two disagree and the one a downgrade has to be measured against.
+- The two info files are saved separately, so an upgrade interrupted between them leaves them at different formats. The upgrade therefore runs when either file differs from the requested format, not just when `archive.info` does, so re-running it brings the lagging file forward. That is what the version and system id they also carry have always done.
 - Old backup sets remain format 5 until expired; old archive-ids remain format 5 until expired.
 - The first backup after an upgrade is full even when diff or incr was requested, since no prior backup is at the new format. It warns and converts by the same path a stanza with no backups at all takes, so the extra cost of migrating is one full backup per stanza.
 
 ## Errors
 
-- A format above the supported range: `repository format N requires a newer version of pgBackRest`, with a hint naming the range this version supports (`src/info/info.c:194`). It does not name the version that would be needed, since a version cannot know which version added a format that did not exist when it was written.
-- A format below the supported range: `repository format N is no longer supported by pgBackRest`, with the same hint (`src/info/info.c:204`).
+- A format above the supported range: `repository format N requires a newer version of pgBackRest`, with a hint naming the range this version supports (`src/info/info.c:193`). It does not name the version that would be needed, since a version cannot know which version added a format that did not exist when it was written.
+- A format below the supported range: `repository format N is no longer supported by pgBackRest`, with the same hint (`src/info/info.c:203`).
 - A released version that predates format 6 reports `expected format 5 but found 6`, which fails cleanly at info load before any data is touched. That path needs no change and is what gates old binaries out of a migrated stanza.
+
+## Testing
+
+- `harnessInfoChecksumFormat()` builds an info file at a given format; `harnessInfoChecksum()` is left as the wrapper for the default format that existing tests already call, so only tests that care about format mention one.
+- The unit tests cover a stanza created at a non-default format, a `stanza-upgrade` with and without `repo-format`, a refused downgrade, both out-of-range load errors, a diff or incr converted to full because the prior is at another format, and a resumable backup discarded for the same reason.
 
 ## Default Format Bump
 
@@ -58,6 +65,6 @@
 
 ## Documentation Plan
 
-- The `repo-format` option reference carries a table of features per format version -- the one place users look to answer "what do I get at format 6". It is a stub until format 6 carries something.
+- The `repo-format` option reference is written for both commands and carries an allow list naming each format -- the one place users look to answer "what do I get at format 6". The format 6 entry says it adds no features yet and is a stub until it carries something.
 - Migration guidance (stanza-upgrade path, mixed-format stanzas, old-binary behavior) goes in the user guide.
 - Release notes announce the introduction and, later, the default flip.
