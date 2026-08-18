@@ -3014,7 +3014,9 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
             cmdStanzaUpgrade();
-            TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'test1' on repo1");
+            TEST_RESULT_LOG(
+                "P00   INFO: stanza-upgrade for stanza 'test1' on repo1\n"
+                "P00   INFO: upgrade repository format from 5 to 6");
 
             // Load options
             argList = strLstNew();

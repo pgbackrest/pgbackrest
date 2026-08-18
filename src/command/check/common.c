@@ -95,27 +95,46 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-checkStanzaInfo(const InfoPgData *const archiveInfo, const InfoPgData *const backupInfo)
+checkStanzaInfo(const InfoPg *const archiveInfoPg, const InfoPg *const backupInfoPg)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(INFO_PG_DATA, archiveInfo);
-        FUNCTION_TEST_PARAM_P(INFO_PG_DATA, backupInfo);
+        FUNCTION_TEST_PARAM(INFO_PG, archiveInfoPg);
+        FUNCTION_TEST_PARAM(INFO_PG, backupInfoPg);
     FUNCTION_TEST_END();
 
-    ASSERT(archiveInfo != NULL);
-    ASSERT(backupInfo != NULL);
+    ASSERT(archiveInfoPg != NULL);
+    ASSERT(backupInfoPg != NULL);
+
+    const InfoPgData archiveInfo = infoPgData(archiveInfoPg, infoPgDataCurrentId(archiveInfoPg));
+    const InfoPgData backupInfo = infoPgData(backupInfoPg, infoPgDataCurrentId(backupInfoPg));
 
     // Error if there is a mismatch between the archive and backup info files
-    if (archiveInfo->id != backupInfo->id || archiveInfo->systemId != backupInfo->systemId ||
-        archiveInfo->version != backupInfo->version)
+    if (archiveInfo.id != backupInfo.id || archiveInfo.systemId != backupInfo.systemId ||
+        archiveInfo.version != backupInfo.version)
     {
         THROW_FMT(
             FileInvalidError, "backup info file and archive info file do not match\n"
             "archive: id = %u, version = %s, system-id = %" PRIu64 "\n"
             "backup : id = %u, version = %s, system-id = %" PRIu64 "\n"
             "HINT: this may be a symptom of repository corruption!",
-            archiveInfo->id, strZ(pgVersionToStr(archiveInfo->version)), archiveInfo->systemId, backupInfo->id,
-            strZ(pgVersionToStr(backupInfo->version)), backupInfo->systemId);
+            archiveInfo.id, strZ(pgVersionToStr(archiveInfo.version)), archiveInfo.systemId, backupInfo.id,
+            strZ(pgVersionToStr(backupInfo.version)), backupInfo.systemId);
+    }
+
+    // Error if the info files are at different repository formats. The formats are written together but stored apart, so an
+    // upgrade interrupted between the two saves leaves them here.
+    if (infoPgFormat(archiveInfoPg) != infoPgFormat(backupInfoPg))
+    {
+        const unsigned int formatArchive = infoPgFormat(archiveInfoPg);
+        const unsigned int formatBackup = infoPgFormat(backupInfoPg);
+
+        THROW_FMT(
+            FileInvalidError,
+            "backup info file and archive info file are at different repository formats\n"
+            "archive: format = %u\n"
+            "backup : format = %u\n"
+            "HINT: run " CFGCMD_STANZA_UPGRADE " with --repo-format=%u to complete an interrupted upgrade.",
+            formatArchive, formatBackup, formatArchive > formatBackup ? formatArchive : formatBackup);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -141,10 +160,9 @@ checkStanzaInfoPg(
         const InfoArchive *const infoArchive = infoArchiveLoadFile(storage, INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain);
         const InfoPgData archiveInfoPg = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
         const InfoBackup *const infoBackup = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cipherSpecMain);
-        const InfoPgData backupInfoPg = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
-        // Check that the info files pg data match each other
-        checkStanzaInfo(&archiveInfoPg, &backupInfoPg);
+        // Check that the info files pg data and repository format match each other
+        checkStanzaInfo(infoArchivePg(infoArchive), infoBackupPg(infoBackup));
 
         // Check that the version and system id match the current database
         if (pgVersion != archiveInfoPg.version || pgSystemId != archiveInfoPg.systemId)

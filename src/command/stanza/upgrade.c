@@ -102,6 +102,15 @@ cmdStanzaUpgrade(void)
             {
                 const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
 
+                // Log the format the repository is migrating from, which is the lower of the two when an interrupted upgrade left
+                // them at different formats. This cannot be undone and a version that does not support the new format will no
+                // longer be able to read the stanza, so say so rather than migrating silently.
+                LOG_INFO_FMT(
+                    "upgrade repository format from %u to %u",
+                    infoArchiveFormat(infoArchive) < infoBackupFormat(infoBackup) ?
+                        infoArchiveFormat(infoArchive) : infoBackupFormat(infoBackup),
+                    format);
+
                 infoArchiveFormatSet(infoArchive, format);
                 infoBackupFormatSet(infoBackup, format);
 
@@ -109,11 +118,8 @@ cmdStanzaUpgrade(void)
                 infoBackupUpgrade = true;
             }
 
-            // Get the backup and archive info pg data and throw an error if the ids do not match before saving (even if only one
-            // needed to be updated)
-            backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
-            archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
-            checkStanzaInfo(&archiveInfo, &backupInfo);
+            // Throw an error if the info files do not match before saving (even if only one needed to be updated)
+            checkStanzaInfo(infoArchivePg(infoArchive), infoBackupPg(infoBackup));
 
             // Save archive info
             if (infoArchiveUpgrade)

@@ -502,9 +502,7 @@ verifyPgHistory(const InfoPg *const archiveInfoPg, const InfoPg *const backupInf
     {
         // Check archive.info and backup.info current PG data matches. If there is a mismatch, verify cannot continue since
         // the database is not considered accessible during the verify command so no way to tell which would be valid.
-        const InfoPgData archiveInfoPgData = infoPgData(archiveInfoPg, infoPgDataCurrentId(archiveInfoPg));
-        const InfoPgData backupInfoPgData = infoPgData(backupInfoPg, infoPgDataCurrentId(backupInfoPg));
-        checkStanzaInfo(&archiveInfoPgData, &backupInfoPgData);
+        checkStanzaInfo(archiveInfoPg, backupInfoPg);
 
         const unsigned int archiveInfoHistoryTotal = infoPgDataTotal(archiveInfoPg);
         const unsigned int backupInfoHistoryTotal = infoPgDataTotal(backupInfoPg);

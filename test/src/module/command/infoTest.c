@@ -502,38 +502,43 @@ testRun(void)
             STORAGE_REPO_ARCHIVE "/9.5-2/0000000100000000/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             .comment = "write WAL db2 timeline 1 repo1");
 
-        HRN_INFO_PUT(
-            storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
-            "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=3\n"
-            "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[backup:current]\n"
-            "20181116-154756F={\"backrest-format\":5,\"backrest-version\":\"2.04\","
-            "\"backup-archive-start\":null,\"backup-archive-stop\":null,"
-            "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159,\"backup-info-size\":26897030,"
-            "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1542383276,\"backup-timestamp-stop\":1542383289,"
-            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"
-            "\"option-backup-standby\":false,\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,"
-            "\"option-online\":true}\n"
-            "20201116-154900F={\"backrest-format\":5,\"backrest-version\":\"2.30\","
-            "\"backup-archive-start\":\"000000030000000000000001\",\"backup-archive-stop\":\"000000030000000000000001\","
-            "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159,\"backup-info-size\":26897033,"
-            "\"backup-info-size-delta\":26897033,\"backup-timestamp-start\":1605541676,\"backup-timestamp-stop\":1605541680,"
-            "\"backup-type\":\"full\",\"db-id\":3,\"option-archive-check\":true,\"option-archive-copy\":false,"
-            "\"option-backup-standby\":false,\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,"
-            "\"option-online\":true}\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.6\"}\n"
-            "2={\"db-catalog-version\":201510051,\"db-control-version\":960,\"db-system-id\":6569239123849665666"
-            ",\"db-version\":\"9.5\"}\n"
-            "3={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.6\"}\n");
+        // The repository was migrated to format 6 after the first backup, so each backup carries the format it was written
+        // with rather than the format of the info file
+        const Buffer *const backupInfoContent = harnessInfoChecksumFormat(
+            REPOSITORY_FORMAT_6,
+            STRDEF(
+                "[db]\n"
+                "db-catalog-version=201608131\n"
+                "db-control-version=960\n"
+                "db-id=3\n"
+                "db-system-id=6569239123849665679\n"
+                "db-version=\"9.6\"\n"
+                "\n"
+                "[backup:current]\n"
+                "20181116-154756F={\"backrest-format\":5,\"backrest-version\":\"2.04\","
+                "\"backup-archive-start\":null,\"backup-archive-stop\":null,"
+                "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159,\"backup-info-size\":26897030,"
+                "\"backup-info-size-delta\":26897030,\"backup-timestamp-start\":1542383276,\"backup-timestamp-stop\":1542383289,"
+                "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"
+                "\"option-backup-standby\":false,\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,"
+                "\"option-online\":true}\n"
+                "20201116-154900F={\"backrest-format\":6,\"backrest-version\":\"2.30\","
+                "\"backup-archive-start\":\"000000030000000000000001\",\"backup-archive-stop\":\"000000030000000000000001\","
+                "\"backup-info-repo-size\":3159776,\"backup-info-repo-size-delta\":3159,\"backup-info-size\":26897033,"
+                "\"backup-info-size-delta\":26897033,\"backup-timestamp-start\":1605541676,\"backup-timestamp-stop\":1605541680,"
+                "\"backup-type\":\"full\",\"db-id\":3,\"option-archive-check\":true,\"option-archive-copy\":false,"
+                "\"option-backup-standby\":false,\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,"
+                "\"option-online\":true}\n"
+                "\n"
+                "[db:history]\n"
+                "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
+                ",\"db-version\":\"9.6\"}\n"
+                "2={\"db-catalog-version\":201510051,\"db-control-version\":960,\"db-system-id\":6569239123849665666"
+                ",\"db-version\":\"9.5\"}\n"
+                "3={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
+                ",\"db-version\":\"9.6\"}\n"));
+
+        HRN_STORAGE_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, backupInfoContent);
 
         // Execute while backup and restore locks are held
         HRN_FORK_BEGIN()
@@ -636,7 +641,7 @@ testRun(void)
                                         "\"stop\":\"000000030000000000000001\""
                                     "},"
                                     "\"backrest\":{"
-                                        "\"format\":5,"
+                                        "\"format\":6,"
                                         "\"version\":\"2.30\""
                                     "},"
                                     "\"database\":{"

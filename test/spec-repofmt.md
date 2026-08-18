@@ -44,6 +44,8 @@
 - **Downgrade is refused** (`src/command/stanza/upgrade.c:72`). The info files are what stop a version that does not support a format from reading a stanza at all; lowering them would let that version past the gate and into backups and archives it cannot read.
 - The downgrade check reads the format in `archive.info`. `archive.info` is saved first, so it is the file that leads when the two disagree and the one a downgrade has to be measured against.
 - The two info files are saved separately, so an upgrade interrupted between them leaves them at different formats. The upgrade therefore runs when either file differs from the requested format, not just when `archive.info` does, so re-running it brings the lagging file forward. That is what the version and system id they also carry have always done.
+- An upgrade that changes the format says so (`src/command/stanza/upgrade.c:108`). The change cannot be undone and a version that does not support the new format can no longer read the stanza at all, which is too much to do silently. The format reported as the starting point is the lower of the two files, since that is the one that moves.
+- Info files at different formats are an error wherever they are checked together, which is `stanza-upgrade`, `check`, `stanza-create` on an existing stanza, and `verify` (`src/command/check/common.c:126`). The hint names the format to pass to `stanza-upgrade` to finish the job. `stanza-upgrade` sets the format on both files before the check, so an upgrade that is given the format still repairs the mismatch rather than reporting it.
 - Old backup sets remain format 5 until expired; old archive-ids remain format 5 until expired.
 - The first backup after an upgrade is full even when diff or incr was requested, since no prior backup is at the new format. It warns and converts by the same path a stanza with no backups at all takes, so the extra cost of migrating is one full backup per stanza.
 
@@ -57,6 +59,8 @@
 
 - `harnessInfoChecksumFormat()` builds an info file at a given format; `harnessInfoChecksum()` is left as the wrapper for the default format that existing tests already call, so only tests that care about format mention one.
 - The unit tests cover a stanza created at a non-default format, a `stanza-upgrade` with and without `repo-format`, a refused downgrade, both out-of-range load errors, a diff or incr converted to full because the prior is at another format, and a resumable backup discarded for the same reason.
+- They also cover the rules that are easy to lose: a format in a configuration file is warned about and does not migrate anything, `stanza-create` leaves the format of a stanza that already exists alone, a manifest is loaded and saved at the format it was written with, and the `info` command reports the format each backup carries rather than one format for all of them.
+- Every format between `REPOSITORY_FORMAT_MIN` and `MAX` is loaded as an option value and the format above `MAX` is rejected, so the allow list in `build/config.yaml` and the range in `version.h` cannot drift apart without a test failing.
 
 ## Default Format Bump
 

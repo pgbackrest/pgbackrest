@@ -1420,55 +1420,57 @@ testRun(void)
     {
         Manifest *manifest = NULL;
 
-        // Manifest with minimal features
-        const Buffer *contentLoad = harnessInfoChecksumZ(
-            "[backup]\n"
-            "backup-bundle=true\n"
-            "backup-bundle-raw=true\n"
-            "backup-label=\"20190808-163540F\"\n"
-            "backup-reference=\"20190808-163540F\"\n"
-            "backup-timestamp-copy-start=1565282141\n"
-            "backup-timestamp-start=1565282140\n"
-            "backup-timestamp-stop=1565282142\n"
-            "backup-type=\"full\"\n"
-            "\n"
-            "[backup:db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
-            "db-id=1\n"
-            "db-system-id=1000000000000000094\n"
-            "db-version=\"9.6\"\n"
-            "\n"
-            "[backup:option]\n"
-            "option-archive-check=true\n"
-            "option-archive-copy=true\n"
-            "option-compress=false\n"
-            "option-compress-type=\"none\"\n"
-            "option-hardlink=false\n"
-            "option-online=false\n"
-            "\n"
-            "[backup:target]\n"
-            "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
-            "\n"
-            "[cipher]\n"
-            "cipher-pass=\"somepass\"\n"
-            "\n"
-            "[target:file]\n"
-            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20190808-163540F\""
-            ",\"size\":4,\"timestamp\":1565282114}\n"
-            "\n"
-            "[target:file:default]\n"
-            "group=\"group1\"\n"
-            "mode=\"0600\"\n"
-            "user=\"user1\"\n"
-            "\n"
-            "[target:path]\n"
-            "pg_data={}\n"
-            "\n"
-            "[target:path:default]\n"
-            "group=\"group1\"\n"
-            "mode=\"0700\"\n"
-            "user=\"user1\"\n");
+        // Manifest with minimal features, written at a format other than the default so the format is read from the file
+        const Buffer *contentLoad = harnessInfoChecksumFormat(
+            REPOSITORY_FORMAT_6,
+            STRDEF(
+                "[backup]\n"
+                "backup-bundle=true\n"
+                "backup-bundle-raw=true\n"
+                "backup-label=\"20190808-163540F\"\n"
+                "backup-reference=\"20190808-163540F\"\n"
+                "backup-timestamp-copy-start=1565282141\n"
+                "backup-timestamp-start=1565282140\n"
+                "backup-timestamp-stop=1565282142\n"
+                "backup-type=\"full\"\n"
+                "\n"
+                "[backup:db]\n"
+                "db-catalog-version=201608131\n"
+                "db-control-version=960\n"
+                "db-id=1\n"
+                "db-system-id=1000000000000000094\n"
+                "db-version=\"9.6\"\n"
+                "\n"
+                "[backup:option]\n"
+                "option-archive-check=true\n"
+                "option-archive-copy=true\n"
+                "option-compress=false\n"
+                "option-compress-type=\"none\"\n"
+                "option-hardlink=false\n"
+                "option-online=false\n"
+                "\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
+                "\n"
+                "[cipher]\n"
+                "cipher-pass=\"somepass\"\n"
+                "\n"
+                "[target:file]\n"
+                "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20190808-163540F\""
+                ",\"size\":4,\"timestamp\":1565282114}\n"
+                "\n"
+                "[target:file:default]\n"
+                "group=\"group1\"\n"
+                "mode=\"0600\"\n"
+                "user=\"user1\"\n"
+                "\n"
+                "[target:path]\n"
+                "pg_data={}\n"
+                "\n"
+                "[target:path:default]\n"
+                "group=\"group1\"\n"
+                "mode=\"0700\"\n"
+                "user=\"user1\"\n"));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest move");
@@ -1488,6 +1490,7 @@ testRun(void)
         TEST_ERROR(
             manifestTargetFind(manifest, STRDEF("bogus")), AssertError, "unable to find 'bogus' in manifest target list");
         TEST_RESULT_STR_Z(manifestData(manifest)->backupLabel, "20190808-163540F", "check manifest data");
+        TEST_RESULT_UINT(manifestFormat(manifest), REPOSITORY_FORMAT_6, "check manifest format");
 
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpec(manifest))), "somepass", "check cipher subpass");
 
