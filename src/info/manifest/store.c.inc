@@ -202,10 +202,16 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     // User/group
     if (flag & (1 << manifestFilePackFlagUser))
-        cvtUInt64ToVarInt128((uintptr_t)file->user, buffer, &bufferPos, sizeof(buffer));
+    {
+        cvtUInt64ToVarInt128(
+            strLstFindIdxP(manifest->ownerList, file->user, .required = true), buffer, &bufferPos, sizeof(buffer));
+    }
 
     if (flag & (1 << manifestFilePackFlagGroup))
-        cvtUInt64ToVarInt128((uintptr_t)file->group, buffer, &bufferPos, sizeof(buffer));
+    {
+        cvtUInt64ToVarInt128(
+            strLstFindIdxP(manifest->ownerList, file->group, .required = true), buffer, &bufferPos, sizeof(buffer));
+    }
 
     // Repo size
     cvtUInt64ToVarInt128(file->sizeRepo, buffer, &bufferPos, sizeof(buffer));
@@ -333,12 +339,18 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
 
     // User/group
     if (flag & (1 << manifestFilePackFlagUser))
-        result.user = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
+    {
+        result.user = strLstGet(
+            manifest->ownerList, (unsigned int)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX));
+    }
     else if (!(flag & (1 << manifestFilePackFlagUserNull)))
         result.user = manifest->fileUserDefault;
 
     if (flag & (1 << manifestFilePackFlagGroup))
-        result.group = (const String *)(uintptr_t)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
+    {
+        result.group = strLstGet(
+            manifest->ownerList, (unsigned int)cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX));
+    }
     else if (!(flag & (1 << manifestFilePackFlagGroupNull)))
         result.group = manifest->fileGroupDefault;
 

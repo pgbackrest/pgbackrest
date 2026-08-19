@@ -808,7 +808,7 @@ pckReadType(PackRead *const this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING_ID, packTypeMapData[this->tagNextTypeMap].type);
+    FUNCTION_TEST_RETURN_TYPE(PackType, packTypeMapData[this->tagNextTypeMap].type);
 }
 
 /**********************************************************************************************************************************/

@@ -48,6 +48,11 @@ def _begin():
     COMMAND_LIST.clear()
     STATUS_MAP.clear()
 
+    # Start every test as if this were not a fork. The fork cache is keyed on the repository owner, so a test that does not set
+    # the owner itself would otherwise see whatever the environment has. This only makes a difference when the tests run outside
+    # a container, since docker exec does not pass the environment through.
+    os.environ.pop("GITHUB_REPOSITORY_OWNER", None)
+
     host_module.exec_result = _exec_result
     host_module.Exec = _Exec
 

@@ -458,7 +458,7 @@ testRun(void)
                 TEST_HOST_BR(repo, CFGCMD_STOP);
 
                 // Delete stanza
-                TEST_HOST_BR(repo, CFGCMD_STANZA_DELETE);
+                TEST_HOST_BR(repo, CFGCMD_STANZA_DELETE, .option = "--repo=1");
             }
 
             TEST_HOST_BR(

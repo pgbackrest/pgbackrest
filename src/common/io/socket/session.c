@@ -149,7 +149,7 @@ sckSessionRole(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING_ID, this->role);
+    FUNCTION_TEST_RETURN_TYPE(IoSessionRole, this->role);
 }
 
 /**********************************************************************************************************************************/

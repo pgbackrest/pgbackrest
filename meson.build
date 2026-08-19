@@ -197,7 +197,7 @@ if cc.compiles('''int main(void) {__builtin_types_compatible_p(char *, const cha
 endif
 
 # Find optional backtrace library
-lib_backtrace = cc.find_library('backtrace', required: false)
+lib_backtrace = cc.find_library('backtrace', required: false, has_headers: 'backtrace.h')
 
 if lib_backtrace.found()
     configuration.set('HAVE_LIBBACKTRACE', true, description: 'Is libbacktrace present?')

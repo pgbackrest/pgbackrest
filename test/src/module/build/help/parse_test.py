@@ -52,6 +52,7 @@ option:
       - latest
       - oldest
     command:
+      backup: {}
       restore: {}
 
   type:
@@ -75,8 +76,10 @@ option:
 """
 
 # Help for everything the configuration declares. Buffer size is documented in a configuration section, force and stanza on the
-# command line, and set and type only by the command that takes them. File buffer size allows what buffer size allows, so it
-# inherits the list rather than describing it again. Process has no help at all, since no user can give it.
+# command line, and set and type only by the commands that take them. File buffer size allows what buffer size allows, so it
+# inherits the list rather than describing it again, and restore inherits the list backup describes for set the same way, naming
+# the command since an option documented by more than one has a list per command. Process has no help at all, since no user can
+# give it.
 HELP = """<doc title="Reference">
     <config title="Configuration Reference">
         <description>Configuration description.</description>
@@ -162,7 +165,9 @@ HELP = """<doc title="Reference">
                         <summary>Set summary.</summary>
 
                         <text>
-                            <p>Set description. Allowed values are <allow-list/>.</p>
+                            <p>Set description.</p>
+
+                            <allow-list inherit="set" command="backup"/>
                         </text>
                     </option>
 
@@ -182,6 +187,19 @@ HELP = """<doc title="Reference">
                 <text>
                     <p>Backup description.</p>
                 </text>
+
+                <option-list>
+                    <option id="set" name="Set">
+                        <summary>Set summary.</summary>
+
+                        <text>
+                            <allow-list caption="sets">
+                                <allow-item id="latest">The latest.</allow-item>
+                                <allow-item id="oldest">The oldest.</allow-item>
+                            </allow-list>
+                        </text>
+                    </option>
+                </option-list>
             </command>
 
             <command id="help" name="Help">
@@ -265,7 +283,7 @@ def test_help_parse():
 
     # An option a command documents differently is under the command rather than in the option list
     assert_equal([opt.name for opt in cmd.opt_list], ["set", "type"])
-    assert_is_none(_find(bld_hlp.cmd_list, "backup").opt_list)
+    assert_is_none(_find(bld_hlp.cmd_list, "help").opt_list)
 
     # Options are sorted and are found wherever they were documented
     assert_equal([opt.name for opt in bld_hlp.opt_list], ["buffer-size", "buffer-size-file", "force", "stanza"])
@@ -343,10 +361,6 @@ def test_help_parse_allow_list():
     cmd_hlp = _find(bld_hlp.cmd_list, "restore")
 
     assert_in(
-        "<p>Set description. Allowed values are <id>latest</id> and <id>oldest</id>.</p>",
-        _render(_find(cmd_hlp.opt_list, "set").description),
-    )
-    assert_in(
         "<p>Type description. Allowed values are <id>full</id>, <id>diff</id>, and <id>incr</id>.</p>",
         _render(_find(cmd_hlp.opt_list, "type").description),
     )
@@ -354,10 +368,27 @@ def test_help_parse_allow_list():
     # An option that allows what another option allows renders the list it inherits rather than one of its own
     assert_in(buffer_size_list, _render(_find(bld_hlp.opt_list, "buffer-size-file").description))
 
+    # An option that more than one command documents renders the list the named command describes, in both places
+    set_list = (
+        "<p>The following sets are supported:</p>"
+        "<list><list-item><id>latest</id> - The latest.</list-item>"
+        "<list-item><id>oldest</id> - The oldest.</list-item></list>"
+    )
+
+    assert_in(set_list, _render(_find(_find(bld_hlp.cmd_list, "backup").opt_list, "set").description))
+    assert_in(set_list, _render(_find(cmd_hlp.opt_list, "set").description))
+
     # A list inherited from an option that describes none
     assert_equal(
         _error(HELP.replace('<allow-list inherit="buffer-size"/>', '<allow-list inherit="stanza"/>')),
         "option 'buffer-size-file' inherits the allow list of option 'stanza', which does not describe one",
+    )
+
+    # A list inherited from a command that describes none
+    assert_equal(
+        _error(HELP.replace('command="backup"', 'command="help"')),
+        "option 'set' for command 'restore' inherits the allow list of option 'set' for command 'help', which does not describe"
+        " one",
     )
 
     # A value that is documented but not allowed
@@ -387,7 +418,7 @@ def test_help_parse_allow_list():
     # An allow list that is not documented at all, since a value a user cannot read about is a value they cannot use
     assert_equal(
         _error(HELP.replace("Allowed values are <allow-list/>.", "")),
-        "option 'set' for command 'restore' must document its allow list",
+        "option 'type' for command 'restore' must document its allow list",
     )
 
 
@@ -404,7 +435,7 @@ def test_help_parse_error():
     # An option with no help of its own must be documented by every command that takes it
     assert_equal(
         _error(HELP.replace('<option id="set" name="Set">', '<option id="bogus" name="Bogus">')),
-        "option 'set' must have help for command 'restore'",
+        "option 'set' must have help for command 'backup'",
     )
 
     # Help for a command that does not exist, which is a leftover rather than something missing

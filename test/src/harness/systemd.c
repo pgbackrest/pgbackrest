@@ -11,6 +11,8 @@ Systemd Harness
 #include "harness/debug.h"
 #include "harness/systemd.h"
 
+#ifdef HAVE_LIBSYSTEMD
+
 static struct
 {
     bool ready;
@@ -20,8 +22,6 @@ static struct
 /***********************************************************************************************************************************
 Shim sd_notify to track notify state
 ***********************************************************************************************************************************/
-#ifdef HAVE_LIBSYSTEMD
-
 int
 sd_notify(int unset_environment, const char *state)
 {
@@ -49,8 +49,6 @@ sd_notify(int unset_environment, const char *state)
     FUNCTION_HARNESS_RETURN(INT, 1);
 }
 
-#endif
-
 /**********************************************************************************************************************************/
 void
 hrnSystemDCheck(void)
@@ -61,3 +59,5 @@ hrnSystemDCheck(void)
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
+
+#endif
