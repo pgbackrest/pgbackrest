@@ -24,6 +24,7 @@
 
 - Repo-indexed option `repo-format`, so `--repo1-format`, consistent with the other repo options.
 - **Command line only.** A format left in the configuration would migrate a stanza as a side effect of a `stanza-upgrade` run for an unrelated reason, such as a PostgreSQL version upgrade. A configuration file containing it warns and is ignored.
+- The environment is not covered. The environment parser accepts any option that is valid for the command (`src/config/parse.c:2029`) and records it as `cfgSourceConfig`, which `stanza-upgrade` reads as a format having been asked for, so `PGBACKREST_REPO1_FORMAT=6` left in a cron or service environment migrates on the next run. This is documented in the option reference rather than fixed, since what the environment may set is a rule for every option rather than for this one.
 - Valid only for `stanza-create` and `stanza-upgrade` (see Migration); every other command derives the format from repository state. Not required after creation since the repository is self-describing.
 - Allowed values: 5, 6. Default remains 5. The allow list is duplicated between `build/config.yaml` and `version.h` and must be kept in sync; a comment in each says so.
 
