@@ -1674,6 +1674,28 @@ testRun(void)
         TEST_ERROR(backupTime(backupData, true), KernelError, "PostgreSQL clock has not advanced to the next second after 3 tries");
 
         dbFree(backupData->dbPrimary);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info files that do not agree on repository format");
+
+        // Migrate archive.info only, which is the state an upgrade interrupted between the two saves leaves behind
+        InfoArchive *const infoArchive = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
+        infoArchiveFormatSet(infoArchive, REPOSITORY_FORMAT_6);
+        infoArchiveSaveFile(infoArchive, storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
+
+        HRN_PQ_SCRIPT_SET(
+            // Connect to primary
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", false, NULL, NULL));
+
+        TEST_ERROR(
+            backupInit(
+                infoBackupNew(
+                    PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT, NULL)),
+            FileInvalidError,
+            "backup info file and archive info file are at different repository formats\n"
+            "archive: format = 6\n"
+            "backup : format = 5\n"
+            "HINT: run stanza-upgrade with --repo-format=6 to complete an interrupted upgrade.");
     }
 
     // *****************************************************************************************************************************
