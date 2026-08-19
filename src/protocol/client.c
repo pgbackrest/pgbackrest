@@ -345,7 +345,7 @@ protocolClientNew(const String *const name, const String *const service, IoRead 
             .name = strDup(name),
             .errorPrefix = strNewFmt("raised from %s", strZ(name)),
             .keepAliveTime = timeMSec(),
-            .sessionList = lstNewP(sizeof(ProtocolClientSession)),
+            .sessionList = lstNewP(sizeof(ProtocolClientSession *)),
         };
 
         // Read, parse, and check the protocol greeting

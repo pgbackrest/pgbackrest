@@ -392,6 +392,10 @@ def test_container_revision():
 def test_vm_build():
     """A base image is pulled from the cache when it is there and built and pushed when it is not."""
 
+    # Start as if this were not a fork so the cases below that do not set the owner push to the pgbackrest cache. This only makes
+    # a difference when the tests run outside a container, since docker exec does not pass the environment through.
+    os.environ.pop("GITHUB_REPOSITORY_OWNER", None)
+
     with tempfile.TemporaryDirectory() as path:
         _repo_write(path)
 

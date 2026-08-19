@@ -37,7 +37,9 @@ testRun(void)
     if (testBegin("memAllocInternal(), memReAllocInternal(), and memFreeInternal()"))
     {
         // Test too large allocation -- only test this on 64-bit systems since 32-bit systems tend to work with any value that
-        // valgrind will accept
+        // valgrind will accept. Skipped for Fil-C, where an allocation is either satisfied or a hard error, so malloc() never
+        // returns NULL and the error cannot be provoked.
+#ifndef __FILC__
         if (TEST_64BIT())
         {
             TEST_ERROR(memAllocInternal((size_t)5629499534213120), MemoryError, "unable to allocate 5629499534213120 bytes");
@@ -50,6 +52,7 @@ testRun(void)
                 "unable to reallocate 5629499534213120 bytes");
             memFreeInternal(buffer);
         }
+#endif // __FILC__
 
         // Memory allocation
         void *buffer = memAllocInternal(sizeof(size_t));
