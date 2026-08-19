@@ -3723,6 +3723,32 @@ testRun(void)
             // File that gets truncated to zero during the backup
             HRN_STORAGE_PUT(storagePgWrite(), "truncate-to-zero", BUFSTRDEF("DATA"), .timeModified = backupTimeStart);
 
+            // Error when the prior block map is not where the manifest says it is. Truncate the file that contains the map so the
+            // read comes up short, then restore it before running the backup for real.
+            const String *const blockIncrGrowFile = STRDEF(
+                STORAGE_REPO_BACKUP "/20191103-165320F/pg_data/block-incr-grow" BACKUP_BLOCK_INCR_EXT);
+            const Buffer *const blockIncrGrowBuffer = storageGetP(storageNewReadP(storageRepo(), blockIncrGrowFile));
+
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), strZ(blockIncrGrowFile), "");
+
+            hrnBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
+                .errorAfterCopyStart = true);
+            TEST_ERROR(
+                hrnCmdBackup(), FileReadError,
+                "raised from local-1 shim protocol: unable to read block map for 'pg_data/block-incr-grow' from '" TEST_PATH
+                "/repo/backup/test1/20191103-165320F/pg_data/block-incr-grow.pgbi' at offset 24576 size 24: expected 24 byte(s) but"
+                " read 0");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: last backup label = 20191103-165320F, version = " PROJECT_VERSION "\n"
+                "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DC213000000000, lsn = 5dc2130/0\n"
+                "P00   INFO: check archive for segment 0000000105DC213000000000\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (1.4MB, [PCT]) checksum [SHA1]");
+
+            HRN_STORAGE_PUT(storageRepoWrite(), strZ(blockIncrGrowFile), blockIncrGrowBuffer);
+
             // Run backup
             HRN_BACKUP_SCRIPT_SET(
                 {.op = hrnBackupScriptOpUpdate, .file = storagePathP(storagePg(), STRDEF("truncate-to-zero")),
@@ -3735,6 +3761,7 @@ testRun(void)
                 "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DC213000000000, lsn = 5dc2130/0\n"
                 "P00   INFO: check archive for segment 0000000105DC213000000000\n"
+                "P00   INFO: backup '20191103-165320F_20191106-002640D' cannot be resumed: resume only valid for full backup\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (1.4MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (128KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
