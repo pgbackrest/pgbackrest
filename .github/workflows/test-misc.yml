@@ -19,9 +19,11 @@ jobs:
         with:
           path: pgbackrest
 
+      - name: Update Apt
+        uses: ./pgbackrest/.github/action/apt
+
       - name: Install
         run: |
-          sudo apt-get update
           DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y zlib1g-dev libssl-dev \
             libxml2-dev libpq-dev pkg-config meson liblz4-dev libzstd-dev libbz2-dev
 
@@ -51,10 +53,12 @@ jobs:
         with:
           path: pgbackrest
 
+      - name: Update Apt
+        uses: ./pgbackrest/.github/action/apt
+
       # The formatters and the PyYAML the harness needs to load. Nothing else is required since the check only reads the source.
       - name: Install
         run: |
-          sudo apt-get update
           DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y uncrustify black \
             python3-yaml
 

@@ -1,0 +1,47 @@
+name: apt
+description: >-
+  Steer apt away from a runner mirror that has gone slow and bound how long it is allowed to wait, then refresh the package
+  index. The settings are written to /etc/apt/apt.conf.d so they also apply to the apt-get install the caller runs afterward,
+  which downloads from the same mirrors. Remove this action once the runner image bounds acquisition on its own.
+
+runs:
+  using: composite
+  steps:
+    - name: apt
+      shell: bash
+      run: |
+        # The runner image lists azure.archive.ubuntu.com ahead of archive.ubuntu.com and has been serving from it at a crawl.
+        # apt abandons a mirror that has stopped sending but not one that is merely slow, so no timeout below can help while it
+        # is still first in the list. Drop it and use the mirrors that follow. The result is only installed when something is
+        # left, so a mirrorlist that changes shape or drops the entry upstream leaves the runner on its own configuration.
+        mirror=/etc/apt/apt-mirrors.txt
+
+        if test -f "${mirror}"; then
+            sed '/azure\.archive\.ubuntu\.com/d' "${mirror}" > /tmp/apt-mirrors.txt
+
+            if test -s /tmp/apt-mirrors.txt; then
+                sudo cp /tmp/apt-mirrors.txt "${mirror}"
+            fi
+
+            cat "${mirror}"
+        fi
+
+        # Bound the connection level waits and leave a single retry for a transient failure. The runner image intends to set the
+        # retry count but writes a key that apt does not read, so what is in effect is apt's default of three, which multiplies
+        # across the many index files a refresh fetches. Dropping the translation indexes removes about a third of those files
+        # and nothing here reads them.
+        printf 'Acquire::Retries "1";\nAcquire::http::Timeout "15";\nAcquire::https::Timeout "15";\nAcquire::Languages "none";\n' |
+            sudo tee /etc/apt/apt.conf.d/99-pgbackrest > /dev/null
+
+        # Refresh the index under a total bound, which is the part apt has no setting for. A mirror delivering a few bytes per
+        # second resets apt's inactivity timeout indefinitely, so without this the job hangs until the workflow timeout rather
+        # than failing. A fresh attempt may be served by a different backend, so retry before giving up.
+        for attempt in 1 2 3; do
+            if sudo timeout 120 apt-get update; then
+                exit 0
+            fi
+
+            echo "apt-get update attempt ${attempt} of 3 timed out or failed"
+        done
+
+        exit 1
