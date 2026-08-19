@@ -52,6 +52,11 @@ jobs:
   compile:
     uses: ./.github/workflows/test-compile.yml
 
+    # Allow pushing the Fil-C prefix to the GHCR cache
+    permissions:
+      contents: read
+      packages: write
+
   dist:
     uses: ./.github/workflows/test-dist.yml
 
