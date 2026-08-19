@@ -156,7 +156,7 @@ cmdRestore(void)
                 {
                     sizeRestored = restoreJobResult(
                         jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeRestored,
-                        &currentPercentComplete);
+                        &currentPercentComplete, &wasChecksumPageErrors);
                 }
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
@@ -261,6 +261,15 @@ cmdRestore(void)
         // Restore info
         LOG_INFO_FMT(
             "restore size = %s, file total = %u", strZ(strSizeFormat(sizeRestored)), manifestFileTotal(jobData.manifest));
+
+        if(wasChecksumPageErrors)
+        {
+            if (cfgOptionBool(cfgOptChecksumPageError))
+            {
+                THROW_FMT(ChecksumError, "invalid page checksums found in file(s)");
+            }
+            LOG_WARN_FMT( "invalid page checksums found in file(s)");
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

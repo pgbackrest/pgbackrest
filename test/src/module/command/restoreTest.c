@@ -2194,13 +2194,14 @@ testRun(void)
         OBJ_NEW_END();
 
         unsigned int currentPercentComplete = 4567;
+        bool wasChecksumPageErrors = false;
 
         lockInit(TEST_PATH_STR, cfgOptionStr(cfgOptExecId));
         TEST_RESULT_VOID(cmdLockAcquireP(), "acquire restore lock");
 
         TEST_RESULT_UINT(
             restoreJobResult(manifest, job, NULL, 0, 0,
-                             &currentPercentComplete), 0, "log noop result");
+                             &currentPercentComplete, &wasChecksumPageErrors), 0, "log noop result");
         TEST_RESULT_VOID(cmdLockReleaseP(), "release restore lock");
 
         TEST_RESULT_LOG("P00 DETAIL: restore file pg_data/test (0B, 100.00%)");

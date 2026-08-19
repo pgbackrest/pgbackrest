@@ -255,7 +255,7 @@ cmdBackup(void)
         backupManifestSaveCopy(manifest, cipherSpecManifest, false);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, cipherSpecManifest);
+        StringList *const warnList = backupProcess(backupData, manifest, cipherSpecManifest);
 
         // Check that the clusters are alive and correctly configured after the backup
         backupDbPing(backupData, true);
@@ -299,6 +299,10 @@ cmdBackup(void)
             "%s backup size = %s, file total = %u", zNewStrId(manifestData(manifest)->backupType),
             strZ(strSizeFormat(infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
             manifestFileTotal(manifest));
+
+        // Print warnings if any
+        for (unsigned int warnIdx = 0; warnIdx < strLstSize(warnList); warnIdx++)
+            LOG_WARN(strZ(strLstGet(warnList, warnIdx)));
     }
     MEM_CONTEXT_TEMP_END();
 

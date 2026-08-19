@@ -95,7 +95,7 @@ hrnBackupScriptSet(const HrnBackupScript *const script, const unsigned int scrip
 }
 
 /**********************************************************************************************************************************/
-static void
+static StringList *
 backupProcess(const BackupData *const backupData, Manifest *const manifest, const CipherSpec *const cipherSpecManifest)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -103,6 +103,8 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
         FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
         FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpecManifest);
     FUNCTION_HARNESS_END();
+
+    StringList *warnList = strLstNew();
 
     // If any file changes are scripted then make them
     if (hrnBackupLocal.scriptSize != 0)
@@ -142,9 +144,9 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
         hrnBackupLocal.scriptSize = 0;
     }
 
-    backupProcess_SHIMMED(backupData, manifest, cipherSpecManifest);
+    warnList = backupProcess_SHIMMED(backupData, manifest, cipherSpecManifest);
 
-    FUNCTION_HARNESS_RETURN_VOID();
+    FUNCTION_HARNESS_RETURN(STRING_LIST, warnList);
 }
 
 /**********************************************************************************************************************************/

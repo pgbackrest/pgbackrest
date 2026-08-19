@@ -60,6 +60,7 @@ Option constants
 #define CFGOPT_BETA                                                 "beta"
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
+#define CFGOPT_CHECKSUM_PAGE_ERROR                                  "checksum-page-error"
 #define CFGOPT_CMD                                                  "cmd"
 #define CFGOPT_CMD_SSH                                              "cmd-ssh"
 #define CFGOPT_COMPRESS                                             "compress"
@@ -145,7 +146,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            199
+#define CFG_OPTION_TOTAL                                            200
 
 /***********************************************************************************************************************************
 Option value constants
@@ -498,6 +499,7 @@ typedef enum
     cfgOptBeta,
     cfgOptBufferSize,
     cfgOptChecksumPage,
+    cfgOptChecksumPageError,
     cfgOptCmd,
     cfgOptCmdSsh,
     cfgOptCompress,

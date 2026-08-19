@@ -1161,6 +1161,18 @@ option:
     command-role:
       main: {}
 
+  checksum-page-error:
+    type: boolean
+    command:
+      backup:
+        default: false
+      restore:
+        default: true
+      expire:
+        default: true
+    command-role:
+      main: {}
+
   page-header-check:
     section: global
     type: boolean

@@ -100,7 +100,7 @@ Log the results of a job and throw errors
 static void
 backupJobResult(
     Manifest *const manifest, const String *const host, const Storage *const storagePg, StringList *const fileRemove,
-    ProtocolParallelJob *const job, const PgPageSize pageSize, const uint64_t sizeTotal,
+    StringList *const warnList, ProtocolParallelJob *const job, const PgPageSize pageSize, const uint64_t sizeTotal,
     uint64_t *const sizeProgress, unsigned int *const currentPercentComplete)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -108,6 +108,7 @@ backupJobResult(
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(STRING_LIST, fileRemove);
+        FUNCTION_LOG_PARAM(STRING_LIST, warnList);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, job);
         FUNCTION_LOG_PARAM(ENUM, pageSize);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
@@ -118,6 +119,7 @@ backupJobResult(
     ASSERT(manifest != NULL);
     ASSERT(storagePg != NULL);
     ASSERT(fileRemove != NULL);
+    ASSERT(warnList != NULL);
     ASSERT(job != NULL);
 
     // The job was successful
@@ -229,10 +231,9 @@ backupJobResult(
                             if (!pckReadBoolP(checksumPageResult))
                             {
                                 checksumPageErrorList = NULL;
-
-                                // ??? Update formatting after migration
-                                LOG_WARN_FMT(
-                                    "page misalignment in file %s: file size %" PRIu64 " is not divisible by page size %u",
+                                strLstAddFmt(
+                                    warnList, "page misalignment in file %s: file size %" PRIu64
+                                               " is not divisible by page size %u",
                                     strZ(fileLog), copySize, pageSize);
                             }
                             else
@@ -276,10 +277,16 @@ backupJobResult(
                                 // Make message plural when appropriate
                                 const char *const plural = errorTotalMin > 1 ? "s" : "";
 
-                                // ??? Update formatting after migration
-                                LOG_WARN_FMT(
-                                    "invalid page checksum%s found in file %s at page%s %s", plural, strZ(fileLog), plural,
-                                    strZ(error));
+                                if (cfgOptionBool(cfgOptChecksumPageError))
+                                {
+                                    THROW_FMT(
+                                        ChecksumError,
+                                        "invalid page checksum%s found in file %s at page%s %s", plural, strZ(fileLog), plural,
+                                        strZ(error));
+                                }
+                                strLstAddFmt(
+                                    warnList, "invalid page checksum%s found in file %s at page%s %s", plural, strZ(fileLog),
+                                    plural, strZ(error));
                             }
                         }
                     }
@@ -767,7 +774,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
 /***********************************************************************************************************************************
 Process the backup manifest
 ***********************************************************************************************************************************/
-static void
+static StringList *
 backupProcess(const BackupData *const backupData, Manifest *const manifest, const CipherSpec *const cipherSpecManifest)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -778,6 +785,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
 
     ASSERT(manifest != NULL);
 
+    StringList *warnList = strLstNew();
     uint64_t sizeTotal = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -913,7 +921,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
                         manifest,
                         backupStandby && protocolParallelJobProcessId(job) > 1 ? backupData->hostStandby : backupData->hostPrimary,
                         protocolParallelJobProcessId(job) > 1 ? storagePgIdx(pgIdx) : backupData->storagePrimary,
-                        fileRemove, job, jobData.pageSize, sizeTotal, &sizeProgress, &currentPercentComplete);
+                        fileRemove, warnList, job, jobData.pageSize, sizeTotal, &sizeProgress, &currentPercentComplete);
                 }
 
                 // A keep-alive is required here for the remote holding open the backup connection
@@ -994,5 +1002,5 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(STRING_LIST, warnList);
 }
