@@ -386,7 +386,8 @@ testRun(void)
             "pg_data={\"path\":\"/var/lib/pgsql/12/data\",\"type\":\"path\"}\n"
             "\n"
             "[backrest]\n"
-            "backrest-checksum=\"31706010d1aa7e850191b4de9e76dc1ed13fb855\"\n");
+            "backrest-checksum=\"ec7b178fd6d568bf592f16c36329ef6b533a2232\"\n"
+            "backrest-format=5\n");
 
         const Buffer *backupLabelBuffer = BUFSTRDEF("BACKUP-LABEL");
 

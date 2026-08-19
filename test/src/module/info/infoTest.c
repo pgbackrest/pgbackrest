@@ -142,6 +142,20 @@ testRun(void)
             ChecksumError, "invalid checksum, actual 'fe989a75dcf7a0261e57d210707c0db741462763' but expected 'BOGUS'");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
+        // Format not found
+        // -------------------------------------------------------------------------------------------------------------------------
+        contentLoad = BUFSTRDEF(
+            "[backrest]\n"
+            "backrest-checksum=\"BOGUS\"\n"
+            "backrest-version=\"2.17\"\n");
+
+        TEST_ERROR(
+            infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
+            FormatError,
+            "repository format not found\n"
+            "HINT: is this a valid pgBackRest info file?");
+        TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
+
         // Crypto expected
         // -------------------------------------------------------------------------------------------------------------------------
         contentLoad = BUFSTRDEF(

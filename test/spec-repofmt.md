@@ -54,6 +54,7 @@
 
 - A format above the supported range: `repository format N requires a newer version of pgBackRest`, with a hint naming the range this version supports (`src/info/info.c:193`). It does not name the version that would be needed, since a version cannot know which version added a format that did not exist when it was written.
 - A format below the supported range: `repository format N is no longer supported by pgBackRest`, with the same hint (`src/info/info.c:203`).
+- A file with no format at all: `repository format not found`, with a hint asking whether it is an info file (`src/info/info.c:267`). The key was never required before, which was harmless while the format was a constant supplied on save, and is not now that a file is written back at the format it was read with.
 - A released version that predates format 6 reports `expected format 5 but found 6`, which fails cleanly at info load before any data is touched. That path needs no change and is what gates old binaries out of a migrated stanza.
 
 ## Testing
