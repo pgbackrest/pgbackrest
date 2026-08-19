@@ -116,9 +116,17 @@ storageTestManifestNewBuildList(THIS_VOID, const String *path, StorageInfoLevel 
             info.mode = 0600;
             info.timeModified = 1595627966;
 
+            // Multiple owners to check performance of the list lookups. Test owner is repeated here to make it more frequent.
+            const String *const ownerList[] =
+            {
+                STRDEF("test"), STRDEF("test"), STRDEF("test"), STRDEF("postgres"), STRDEF("root"),
+            };
+
             for (unsigned int fileIdx = 0; fileIdx < this->fileTotal; fileIdx++)
             {
                 info.name = strNewFmt("%u", 1000000000 + fileIdx);
+                info.user = ownerList[fileIdx % LENGTH_OF(ownerList)];
+                info.group = ownerList[fileIdx % LENGTH_OF(ownerList)];
                 storageLstAdd(result, &info);
                 MEM_CONTEXT_TEMP_RESET(10000);
             }
