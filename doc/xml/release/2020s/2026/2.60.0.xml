@@ -49,6 +49,18 @@
 
                 <p>Reduce the manifest checks made when reconstructing <file>backup.info</file>.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2830"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Add context to block map read errors during backup.</p>
+            </release-item>
         </release-improvement-list>
 
         <release-development-list>
