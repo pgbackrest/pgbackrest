@@ -65,7 +65,12 @@ cmdStanzaUpgrade(void)
             if (cfgOptionIdxSource(cfgOptRepoFormat, repoIdx) != cfgSourceDefault)
             {
                 const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
-                const unsigned int formatRepo = infoArchiveFormat(infoArchive);
+                const unsigned int formatArchive = infoArchiveFormat(infoArchive);
+                const unsigned int formatBackup = infoBackupFormat(infoBackup);
+
+                // Compare against the higher of the two since an upgrade interrupted between the two saves leaves them at
+                // different formats, and the file that is ahead must not be downgraded to bring it in line with the one behind
+                const unsigned int formatRepo = formatArchive > formatBackup ? formatArchive : formatBackup;
 
                 // Error when the format would be downgraded. Backups and archives written at a newer format would no longer be
                 // gated by the info files, so an older version could read the info files and then fail on newer files.
@@ -79,7 +84,7 @@ cmdStanzaUpgrade(void)
                         formatRepo, format, formatRepo, format);
                 }
 
-                formatUpgrade = format != formatRepo || format != infoBackupFormat(infoBackup);
+                formatUpgrade = format != formatArchive || format != formatBackup;
             }
 
             // Since the file save of archive.info and backup.info are not atomic, then check and update each separately.

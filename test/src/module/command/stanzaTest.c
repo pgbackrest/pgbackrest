@@ -1122,6 +1122,25 @@ testRun(void)
         infoArchiveFormatSet(infoArchivePrior, REPOSITORY_FORMAT_5);
         infoArchiveSaveFile(infoArchivePrior, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
 
+        // A downgrade is measured against the file that is ahead, so requesting the format the archive info is at does not put
+        // the backup info back to it
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        hrnCfgArgRawZ(argList, cfgOptRepoFormat, "5");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_ERROR(
+            cmdStanzaUpgrade(), FormatError,
+            "unable to downgrade repository format from 6 to 5\n"
+            "HINT: backups and archives already written at format 6 would not be readable by a version that only supports"
+            " format 5.");
+        TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        hrnCfgArgRawZ(argList, cfgOptRepoFormat, "6");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive info behind backup info");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
