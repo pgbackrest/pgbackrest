@@ -1,15 +1,10 @@
 ####################################################################################################################################
 # Make externed functions/variables static when unity is enabled
 ####################################################################################################################################
-arg_unity = []
-
 if get_option('unity') == 'on'
     configuration.set('FN_EXTERN', 'static', description: 'Function is static for unity build')
     configuration.set('VR_EXTERN_DECLARE', 'static', description: 'Variable declaration is static for unity build')
     configuration.set('VR_EXTERN_DEFINE', 'static', description: 'Variable definition is static for unity build')
-
-    # Add args to builds to prevent non-pgbackrest binaries failing due to unused functions
-    arg_unity += '-Wno-unused-function'
 else
     configuration.set(
         'FN_EXTERN', 'extern __attribute__((visibility ("internal")))',
