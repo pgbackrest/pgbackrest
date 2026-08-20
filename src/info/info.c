@@ -261,14 +261,10 @@ infoNewLoad(
             }
             TRY_END();
 
-            // The format defines how everything else is read, so a file without one is not an info file this version can use. The
-            // format is zero until the key is found and the value stored, so if we got here then the key was not found.
-            if (infoFormat(this) == 0)
-                THROW(FormatError, "repository format not found\nHINT: is this a valid " PROJECT_NAME " info file?");
-
             INFO_CHECKSUM_END(checksumActualFilter);
 
-            // Verify the checksum
+            // Verify the checksum first so a file that is empty or not an info file at all is reported as a checksum failure
+            // rather than as a missing format
             const String *const checksumActual = strNewEncode(
                 encodingHex, pckReadBinP(pckReadNew(ioFilterResult(checksumActualFilter))));
 
@@ -280,6 +276,11 @@ infoNewLoad(
                     ChecksumError, "invalid checksum, actual '%s' but expected '%s'", strZ(checksumActual),
                     strZ(checksumExpected));
             }
+
+            // The format defines how everything else is read, so a file without one is not an info file this version can use. The
+            // format is zero until the key is found and the value stored, so if we got here then the key was not found.
+            if (infoFormat(this) == 0)
+                THROW(FormatError, "repository format not found\nHINT: is this a valid " PROJECT_NAME " info file?");
         }
         MEM_CONTEXT_TEMP_END();
 

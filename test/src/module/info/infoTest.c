@@ -142,11 +142,11 @@ testRun(void)
             ChecksumError, "invalid checksum, actual 'fe989a75dcf7a0261e57d210707c0db741462763' but expected 'BOGUS'");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
-        // Format not found
+        // Format not found. The checksum must be valid since it is verified before the format is checked.
         // -------------------------------------------------------------------------------------------------------------------------
         contentLoad = BUFSTRDEF(
             "[backrest]\n"
-            "backrest-checksum=\"BOGUS\"\n"
+            "backrest-checksum=\"be4f04bf9a8346d387bb254c48aeee2cbb5d46d0\"\n"
             "backrest-version=\"2.17\"\n");
 
         TEST_ERROR(
