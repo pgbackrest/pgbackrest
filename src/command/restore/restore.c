@@ -146,6 +146,8 @@ cmdRestore(void)
             .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeRestored),
             .size = VARUINT64(sizeTotal));
 
+        bool wasChecksumPageErrors = false;
+
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             do
@@ -268,7 +270,7 @@ cmdRestore(void)
             {
                 THROW_FMT(ChecksumError, "invalid page checksums found in file(s)");
             }
-            LOG_WARN_FMT( "invalid page checksums found in file(s)");
+            LOG_WARN_FMT("invalid page checksums found in file(s)");
         }
     }
     MEM_CONTEXT_TEMP_END();
