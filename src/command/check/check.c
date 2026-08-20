@@ -91,7 +91,7 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
-                storageRepo, dbPgControl(dbGroup.standby).version, dbPgControl(dbGroup.standby).systemId,
+                repoIdx, storageRepo, dbPgControl(dbGroup.standby).version, dbPgControl(dbGroup.standby).systemId,
                 cfgCipherSpecMainIdx(repoIdx));
         }
 
@@ -136,7 +136,7 @@ checkPrimary(const DbGetResult dbGroup)
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
-                storageRepo, dbPgControl(dbGroup.primary).version, dbPgControl(dbGroup.primary).systemId,
+                repoIdx, storageRepo, dbPgControl(dbGroup.primary).version, dbPgControl(dbGroup.primary).systemId,
                 cfgCipherSpecMainIdx(repoIdx));
 
             // Attempt to load the archive info file and retrieve the archiveId

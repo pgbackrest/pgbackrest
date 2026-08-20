@@ -95,9 +95,10 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-checkStanzaInfo(const InfoPg *const archiveInfoPg, const InfoPg *const backupInfoPg)
+checkStanzaInfo(const unsigned int repoIdx, const InfoPg *const archiveInfoPg, const InfoPg *const backupInfoPg)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
         FUNCTION_TEST_PARAM(INFO_PG, archiveInfoPg);
         FUNCTION_TEST_PARAM(INFO_PG, backupInfoPg);
     FUNCTION_TEST_END();
@@ -133,8 +134,9 @@ checkStanzaInfo(const InfoPg *const archiveInfoPg, const InfoPg *const backupInf
             "backup info file and archive info file are at different repository formats\n"
             "archive: format = %u\n"
             "backup : format = %u\n"
-            "HINT: run " CFGCMD_STANZA_UPGRADE " with --repo-format=%u to complete an interrupted upgrade.",
-            formatArchive, formatBackup, formatArchive > formatBackup ? formatArchive : formatBackup);
+            "HINT: run " CFGCMD_STANZA_UPGRADE " with --%s=%u to complete an interrupted upgrade.",
+            formatArchive, formatBackup, cfgOptionIdxName(cfgOptRepoFormat, repoIdx),
+            formatArchive > formatBackup ? formatArchive : formatBackup);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -143,9 +145,11 @@ checkStanzaInfo(const InfoPg *const archiveInfoPg, const InfoPg *const backupInf
 /**********************************************************************************************************************************/
 FN_EXTERN void
 checkStanzaInfoPg(
-    const Storage *const storage, const unsigned int pgVersion, const uint64_t pgSystemId, const CipherSpec *const cipherSpecMain)
+    const unsigned int repoIdx, const Storage *const storage, const unsigned int pgVersion, const uint64_t pgSystemId,
+    const CipherSpec *const cipherSpecMain)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
         FUNCTION_TEST_PARAM(STORAGE, storage);
         FUNCTION_TEST_PARAM(UINT, pgVersion);
         FUNCTION_TEST_PARAM(UINT64, pgSystemId);
@@ -162,7 +166,7 @@ checkStanzaInfoPg(
         const InfoBackup *const infoBackup = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cipherSpecMain);
 
         // Check that the info files pg data and repository format match each other
-        checkStanzaInfo(infoArchivePg(infoArchive), infoBackupPg(infoBackup));
+        checkStanzaInfo(repoIdx, infoArchivePg(infoArchive), infoBackupPg(infoBackup));
 
         // Check that the version and system id match the current database
         if (pgVersion != archiveInfoPg.version || pgSystemId != archiveInfoPg.systemId)

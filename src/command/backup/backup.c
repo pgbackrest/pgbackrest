@@ -170,7 +170,7 @@ backupInit(const InfoBackup *const infoBackup)
 
         // Error if the info files do not agree with each other. A stanza left half migrated by an interrupted upgrade should be
         // repaired before more is written into it, and backup is the command that will run against it next.
-        checkStanzaInfo(infoArchivePg(result->archiveInfo), infoBackupPg(infoBackup));
+        checkStanzaInfo(cfgOptionGroupIdxDefault(cfgOptGrpRepo), infoArchivePg(result->archiveInfo), infoBackupPg(infoBackup));
     }
 
     FUNCTION_LOG_RETURN(BACKUP_DATA, result);

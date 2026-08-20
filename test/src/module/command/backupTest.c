@@ -1695,7 +1695,7 @@ testRun(void)
             "backup info file and archive info file are at different repository formats\n"
             "archive: format = 6\n"
             "backup : format = 5\n"
-            "HINT: run stanza-upgrade with --repo-format=6 to complete an interrupted upgrade.");
+            "HINT: run stanza-upgrade with --repo1-format=6 to complete an interrupted upgrade.");
     }
 
     // *****************************************************************************************************************************

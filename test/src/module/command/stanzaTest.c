@@ -1103,7 +1103,7 @@ testRun(void)
             "backup info file and archive info file are at different repository formats\n"
             "archive: format = 6\n"
             "backup : format = 5\n"
-            "HINT: run stanza-upgrade with --repo-format=6 to complete an interrupted upgrade.");
+            "HINT: run stanza-upgrade with --repo1-format=6 to complete an interrupted upgrade.");
         TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
 
         // Requesting the format brings the lagging file forward

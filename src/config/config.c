@@ -541,11 +541,13 @@ cfgOptionIdxName(const ConfigOption optionId, const unsigned int optionIdx)
 
     ASSERT(optionId < CFG_OPTION_TOTAL);
     ASSERT(cfgInited());
-    ASSERT_DECLARE(const bool group = configLocal->option[optionId].group);
-    ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
+    ASSERT_DECLARE(const bool group = cfgParseOptionGroup(optionId));
+    ASSERT_DECLARE(
+        const unsigned int indexTotal = group ? configLocal->optionGroup[cfgParseOptionGroupId(optionId)].indexTotal : 0);
     ASSERT((!group && optionIdx == 0) || (group && optionIdx < indexTotal));
 
-    // If an indexed option
+    // If an indexed option that is valid for the command. Group data is only set for valid options so the name is generated and
+    // cached here, where the group index total is known to be stable.
     ConfigOptionData *const option = &configLocal->option[optionId];
 
     if (option->group)
@@ -569,6 +571,15 @@ cfgOptionIdxName(const ConfigOption optionId, const unsigned int optionIdx)
         }
 
         FUNCTION_TEST_RETURN_CONST(STRINGZ, strZ(option->indexName[optionIdx]));
+    }
+
+    // Else if an indexed option that is not valid for the command. Error messages may need to name an option the command does not
+    // accept itself, e.g. a hint that points at a repository option, so build the name from the parse rules.
+    if (cfgParseOptionGroup(optionId))
+    {
+        FUNCTION_TEST_RETURN_CONST(
+            STRINGZ,
+            cfgParseOptionKeyIdxName(optionId, cfgOptionGroupIdxToKey(cfgParseOptionGroupId(optionId), optionIdx) - 1));
     }
 
     // Else not indexed

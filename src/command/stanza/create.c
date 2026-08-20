@@ -99,7 +99,8 @@ cmdStanzaCreate(void)
             {
                 // Error if there is a mismatch between the archive and backup info files or the database version/system Id matches
                 // current database
-                checkStanzaInfoPg(storageRepoReadStanza, pgControl.version, pgControl.systemId, cfgCipherSpecMainIdx(repoIdx));
+                checkStanzaInfoPg(
+                    repoIdx, storageRepoReadStanza, pgControl.version, pgControl.systemId, cfgCipherSpecMainIdx(repoIdx));
 
                 // The files are valid - upgrade
                 const String *sourceFile = NULL;

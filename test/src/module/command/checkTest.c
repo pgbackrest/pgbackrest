@@ -676,7 +676,7 @@ testRun(void)
         InfoBackup *backupInfo = infoBackupNew(
             PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL);
 
-        TEST_RESULT_VOID(checkStanzaInfo(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), "stanza info files match");
+        TEST_RESULT_VOID(checkStanzaInfo(0, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), "stanza info files match");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkStanzaInfo() - corrupted backup file: system id");
@@ -685,7 +685,7 @@ testRun(void)
             PG_VERSION_96, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL);
 
         TEST_ERROR(
-            checkStanzaInfo(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
+            checkStanzaInfo(0, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
             "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 9.6, system-id = 6569239123849665999\n"
@@ -698,7 +698,7 @@ testRun(void)
             PG_VERSION_18, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT, NULL);
 
         TEST_ERROR(
-            checkStanzaInfo(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
+            checkStanzaInfo(0, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
             "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 18, system-id = 6569239123849665999\n"
@@ -711,7 +711,7 @@ testRun(void)
             PG_VERSION_18, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT, NULL);
 
         TEST_ERROR(
-            checkStanzaInfo(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
+            checkStanzaInfo(0, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
             "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 18, system-id = 6569239123849665679\n"
@@ -723,7 +723,7 @@ testRun(void)
         infoBackupPgSet(backupInfo, PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96));
 
         TEST_ERROR(
-            checkStanzaInfo(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
+            checkStanzaInfo(0, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
             "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
             "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
@@ -737,22 +737,30 @@ testRun(void)
         infoArchiveFormatSet(archiveInfo, REPOSITORY_FORMAT_6);
 
         TEST_ERROR(
-            checkStanzaInfo(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
+            checkStanzaInfo(0, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
             "backup info file and archive info file are at different repository formats\n"
             "archive: format = 6\n"
             "backup : format = 5\n"
-            "HINT: run stanza-upgrade with --repo-format=6 to complete an interrupted upgrade.");
+            "HINT: run stanza-upgrade with --repo1-format=6 to complete an interrupted upgrade.");
 
-        // The upgrade is always to the newer format, whichever file is behind
+        // The upgrade is always to the newer format, whichever file is behind. Add a second repository to check that the hint
+        // names the repository the mismatch was found in rather than sending the user to migrate repo1.
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
         infoArchiveFormatSet(archiveInfo, REPOSITORY_FORMAT_5);
         infoBackupFormatSet(backupInfo, REPOSITORY_FORMAT_6);
 
         TEST_ERROR(
-            checkStanzaInfo(infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
+            checkStanzaInfo(1, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
             "backup info file and archive info file are at different repository formats\n"
             "archive: format = 5\n"
             "backup : format = 6\n"
-            "HINT: run stanza-upgrade with --repo-format=6 to complete an interrupted upgrade.");
+            "HINT: run stanza-upgrade with --repo2-format=6 to complete an interrupted upgrade.");
 
         infoBackupFormatSet(backupInfo, REPOSITORY_FORMAT_DEFAULT);
 
@@ -777,7 +785,7 @@ testRun(void)
 
         // Version mismatch
         TEST_ERROR(
-            checkStanzaInfoPg(storageRepoIdx(0), PG_VERSION_18, HRN_PG_SYSTEMID_18, cfgCipherSpecMainIdx(0)), FileInvalidError,
+            checkStanzaInfoPg(0, storageRepoIdx(0), PG_VERSION_18, HRN_PG_SYSTEMID_18, cfgCipherSpecMainIdx(0)), FileInvalidError,
             "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
@@ -787,7 +795,7 @@ testRun(void)
 
         // SystemId mismatch
         TEST_ERROR(
-            checkStanzaInfoPg(storageRepoIdx(0), PG_VERSION_96, 6569239123849665699, cfgCipherSpecMainIdx(0)), FileInvalidError,
+            checkStanzaInfoPg(0, storageRepoIdx(0), PG_VERSION_96, 6569239123849665699, cfgCipherSpecMainIdx(0)), FileInvalidError,
             "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");

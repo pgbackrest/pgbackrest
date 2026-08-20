@@ -134,7 +134,7 @@ cmdStanzaUpgrade(void)
             }
 
             // Throw an error if the info files do not match before saving (even if only one needed to be updated)
-            checkStanzaInfo(infoArchivePg(infoArchive), infoBackupPg(infoBackup));
+            checkStanzaInfo(repoIdx, infoArchivePg(infoArchive), infoBackupPg(infoBackup));
 
             // Save archive info
             if (infoArchiveUpgrade)

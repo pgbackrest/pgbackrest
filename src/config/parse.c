@@ -1389,6 +1389,33 @@ cfgParseOptionKeyIdxName(const ConfigOption optionId, const unsigned int keyIdx)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
+cfgParseOptionGroup(const ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    FUNCTION_TEST_RETURN(BOOL, parseRuleOption[optionId].group);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN unsigned int
+cfgParseOptionGroupId(const ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT(parseRuleOption[optionId].group);
+
+    FUNCTION_TEST_RETURN(UINT, parseRuleOption[optionId].groupId);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN bool
 cfgParseOptionSecure(const ConfigOption optionId)
 {
     FUNCTION_TEST_BEGIN();
