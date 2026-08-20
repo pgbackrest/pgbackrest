@@ -107,16 +107,6 @@ cmdStanzaUpgrade(void)
             {
                 const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
 
-                // The option cannot be set in a configuration file, so a format that did not come from the command line came
-                // from the environment. A format left there migrates a stanza without appearing in the command that ran, which
-                // is worth saying out loud.
-                if (cfgOptionIdxSource(cfgOptRepoFormat, repoIdx) == cfgSourceConfig)
-                {
-                    LOG_WARN(
-                        "repository format set in the environment rather than on the command line, so any stanza upgraded from"
-                        " this environment will be migrated");
-                }
-
                 // Log the format the repository is migrating from, which is the lower of the two when an interrupted upgrade left
                 // them at different formats. This cannot be undone and a version that does not support the new format will no
                 // longer be able to read the stanza, so say so rather than migrating silently.

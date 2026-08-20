@@ -1181,7 +1181,8 @@ testRun(void)
         infoBackupSaveFile(infoBackupReset, storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone());
 
         // The option cannot be set in a configuration file but it can be set in the environment, where it migrates a stanza
-        // without appearing in the command that ran, so warn when it does
+        // without appearing in the command that ran. That is how the environment works for every option so it is allowed, but the
+        // migration must still happen.
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
         hrnCfgEnvKeyRawZ(cfgOptRepoFormat, 1, "6");
@@ -1190,8 +1191,6 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format from the environment");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
-            "P00   WARN: repository format set in the environment rather than on the command line, so any stanza upgraded from"
-            " this environment will be migrated\n"
             "P00   INFO: upgrade repository format from 5 to 6");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoFormat, 1);
