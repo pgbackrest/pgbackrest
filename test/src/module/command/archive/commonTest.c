@@ -58,6 +58,22 @@ testRun(void)
 
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT, .comment = "segment and global error cleared");
 
+        // The get queue is cleared without disturbing the push queue, which is written by archive-push when both commands run
+        // async on the same host
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.error");
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/global.error");
+        HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/global.error");
+
+        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000001.error\nglobal.error\n");
+
+        TEST_RESULT_VOID(archiveAsyncErrorClear(archiveModeGet, segment), "clear error in get queue");
+
+        TEST_STORAGE_LIST_EMPTY(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_IN, .comment = "segment and global error cleared from get queue");
+        TEST_STORAGE_LIST(
+            storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, "global.error\n", .remove = true,
+            .comment = "push queue error not cleared");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check ok file");
 

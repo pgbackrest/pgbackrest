@@ -61,12 +61,14 @@ archiveAsyncErrorClear(const ArchiveMode archiveMode, const String *const archiv
 
     ASSERT(archiveFile != NULL);
 
-    String *const errorFile = strNewFmt(STORAGE_SPOOL_ARCHIVE_OUT "/%s" STATUS_EXT_ERROR, strZ(archiveFile));
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *const spoolQueue = archiveAsyncSpoolQueue(archiveMode);
 
-    storageRemoveP(storageSpoolWrite(), errorFile);
-    storageRemoveP(storageSpoolWrite(), STRDEF(STORAGE_SPOOL_ARCHIVE_OUT "/" STATUS_FILE_GLOBAL_ERROR));
-
-    strFree(errorFile);
+        storageRemoveP(storageSpoolWrite(), strNewFmt("%s/%s" STATUS_EXT_ERROR, strZ(spoolQueue), strZ(archiveFile)));
+        storageRemoveP(storageSpoolWrite(), strNewFmt("%s/" STATUS_FILE_GLOBAL_ERROR, strZ(spoolQueue)));
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
