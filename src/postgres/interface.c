@@ -248,16 +248,14 @@ pgControlCrcValidate(const Buffer *const controlFile, const PgInterface *const i
 Update the CRC in pg_control
 ***********************************************************************************************************************************/
 static void
-pgControlCrcUpdate(Buffer *const controlFile, const unsigned int pgVersion, const size_t crcOffset)
+pgControlCrcUpdate(Buffer *const controlFile, const size_t crcOffset)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, controlFile);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(SIZE, crcOffset);
     FUNCTION_LOG_END();
 
     ASSERT(controlFile != NULL);
-    ASSERT(pgVersion != 0);
     ASSERT(crcOffset != 0);
 
     *((uint32_t *)(bufPtr(controlFile) + crcOffset)) = crc32cOne(bufPtrConst(controlFile), crcOffset);
@@ -445,7 +443,7 @@ pgControlCheckpointInvalidate(Buffer *const buffer, const String *const pgVersio
     const size_t crcOffset = pgControlCrcValidate(buffer, interface, pgVersionForce);
 
     pgInterfaceVersion(pgControl.version)->controlCheckpointInvalidate(bufPtr(buffer));
-    pgControlCrcUpdate(buffer, interface->version, crcOffset);
+    pgControlCrcUpdate(buffer, crcOffset);
 
     FUNCTION_LOG_RETURN_VOID();
 }

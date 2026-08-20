@@ -235,7 +235,7 @@ cmdBackup(void)
             compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
-        if (!backupBuildIncr(infoBackup, manifest, manifestPrior, backupStartResult.walSegmentName))
+        if (!backupBuildIncr(manifest, manifestPrior, backupStartResult.walSegmentName))
             manifestCipherSpecSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType)));
 
         // Set delta if it is not already set and the manifest requires it
