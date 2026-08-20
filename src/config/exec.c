@@ -41,8 +41,11 @@ cfgExecParam(
                 continue;
             }
 
-            // Loop through option indexes
-            const unsigned int optionIdxTotal = cfgOptionGroup(optionId) ? cfgOptionGroupIdxTotal(cfgOptionGroupId(optionId)) : 1;
+            // Loop through option indexes. The group is read from the parse rules rather than the config because an option that
+            // is valid for the specified command may not be valid for the command being run, and in that case the config has no
+            // group data for it.
+            const unsigned int optionIdxTotal =
+                cfgParseOptionGroup(optionId) ? cfgOptionGroupIdxTotal(cfgParseOptionGroupId(optionId)) : 1;
 
             for (unsigned int optionIdx = 0; optionIdx < optionIdxTotal; optionIdx++)
             {

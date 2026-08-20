@@ -113,6 +113,12 @@ FN_EXTERN const char *cfgParseOptionName(ConfigOption optionId);
 // Option name from id and key
 FN_EXTERN const char *cfgParseOptionKeyIdxName(ConfigOption optionId, unsigned int keyIdx);
 
+// Is the option in a group? Unlike cfgOptionGroup() this works for an option that is not valid for the current command
+FN_EXTERN bool cfgParseOptionGroup(ConfigOption optionId);
+
+// Option group id
+FN_EXTERN unsigned int cfgParseOptionGroupId(ConfigOption optionId);
+
 // Does the option need to be protected from showing up in logs, command lines, etc?
 FN_EXTERN bool cfgParseOptionSecure(ConfigOption optionId);
 

@@ -2142,9 +2142,14 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/path/to/2");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCmd), TEST_PROJECT_EXE, "--cmd not provided; cmd is defaulted to " TEST_PROJECT_EXE);
+
+        // An option that is not valid for the command is still named with its index since the name comes from the parse rules when
+        // the config has no group data for it
+        TEST_RESULT_Z(cfgOptionIdxName(cfgOptPgPort, 1), "pg2-port", "name of option not valid for command");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
