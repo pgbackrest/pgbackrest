@@ -438,12 +438,13 @@ testRun(void)
         TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 100, 100), "new client");
         TEST_ERROR(
             ioClientOpen(client), HostConnectError,
-            "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
+            "unable to connect to 'localhost:" STRINGIFY(HRN_SERVER_PORT_BOGUS) " (127.0.0.1)': [111] Connection refused\n"
             "[RETRY DETAIL OMITTED]");
 
         // This address should not be in use in a test environment -- if it is the test will fail
         TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), HRN_SERVER_PORT_BOGUS, 100, 100), "new client");
-        TEST_ERROR(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:34342'");
+        TEST_ERROR(
+            ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:" STRINGIFY(HRN_SERVER_PORT_BOGUS) "'");
 
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef TEST_CONTAINER_REQUIRED
@@ -647,7 +648,7 @@ testRun(void)
             "new client");
         TEST_ERROR(
             ioClientOpen(client), HostConnectError,
-            "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
+            "unable to connect to 'localhost:" STRINGIFY(HRN_SERVER_PORT_BOGUS) " (127.0.0.1)': [111] Connection refused\n"
             "[RETRY DETAIL OMITTED]");
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -28,11 +28,13 @@ Port constants
 // Maximum number of ports allowed for each test
 #define HRN_SERVER_PORT_MAX                                         768
 
-// Bogus port to be used where the port does not matter or must fail
-#define HRN_SERVER_PORT_BOGUS                                       34342
+// Bogus port to be used where the port does not matter or must fail. This port must be below the ephemeral port range (32768-60999
+// on Linux) so the kernel cannot select it as the source port for a connection to the same port. When that happens the socket
+// connects to itself, i.e. a TCP simultaneous open, and the connection succeeds rather than being refused.
+#define HRN_SERVER_PORT_BOGUS                                       1023
 
 // Minimum port to be assigned to a test
-#define HRN_SERVER_PORT_MIN                                         (HRN_SERVER_PORT_BOGUS + 1)
+#define HRN_SERVER_PORT_MIN                                         34343
 
 /***********************************************************************************************************************************
 Path and prefix for test certificates

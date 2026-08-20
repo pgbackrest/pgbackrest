@@ -376,7 +376,8 @@ testRun(void)
 
         TEST_ERROR_FMT(
             httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
-            "unable to connect to 'localhost:34342 (127.0.0.1)': [" STRINGIFY(ECONNREFUSED) "] Connection refused\n"
+            "unable to connect to 'localhost:" STRINGIFY(HRN_SERVER_PORT_BOGUS) " (127.0.0.1)': [" STRINGIFY(ECONNREFUSED)
+            "] Connection refused\n"
             "[RETRY DETAIL OMITTED]");
 
         HRN_FORK_BEGIN()
