@@ -9,8 +9,8 @@ permissions:
   contents: read
 
 jobs:
-  # Run meson unity build to check for errors, unused functions, unused parameters, and externed functions
-  unity:
+  # Run meson builds to check for errors, unused functions, unused parameters, and externed functions
+  lint:
     runs-on: ubuntu-24.04
 
     steps:
@@ -25,14 +25,14 @@ jobs:
       - name: Install
         run: |
           DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y zlib1g-dev libssl-dev \
-            libxml2-dev libpq-dev pkg-config meson liblz4-dev libzstd-dev libbz2-dev
+            libxml2-dev libpq-dev pkg-config meson liblz4-dev libzstd-dev libbz2-dev libssh2-1-dev
 
       - name: Build
         run: |
           meson setup --unity=on -Dwerror=true build ${GITHUB_WORKSPACE?}/pgbackrest
           ninja -vC build
 
-      # Check that the unity build leaves main as the only symbol. FN_EXTERN and friends are defined as static for the unity
+      # Check that a unity build leaves main as the only symbol. FN_EXTERN and friends are defined as static for the unity
       # build, so any other symbol is a function or variable that escaped that treatment. The object is checked rather than the
       # linked binary because the binary also has whatever the C runtime, the static libbacktrace archive, and the copy
       # relocations for shared library variables put there, none of which is what is being tested and all of which vary by
@@ -45,9 +45,9 @@ jobs:
 
       # Check for unused parameters. The FUNCTION_LOG_PARAM*() macros reference each parameter they log, which counts as a use and
       # hides parameters the function never touches, so append overrides to debug.h that compile the macros out. Nothing is lost
-      # by that here since this build is never run. Debug is enabled because a release build compiles out asserts, which would
-      # report parameters used only by an assert, and unused function warnings are disabled because the *ToLog() functions have
-      # nothing left to call them once the parameter macros are gone.
+      # by that here since this build is never run. Asserts are compiled out of a release build as well, so a parameter that
+      # only an assert reads is reported too and must be marked with a void cast to show that ignoring it is intended. Unused
+      # function warnings are disabled because the *ToLog() functions have nothing left to call them once the macros are gone.
       - name: Check Unused Parameter
         run: |
           cat >> ${GITHUB_WORKSPACE?}/pgbackrest/src/common/debug.h <<'EOF'
@@ -62,7 +62,7 @@ jobs:
           #define FUNCTION_LOG_PARAM_PP(typeMacroPrefix, param)
           EOF
 
-          meson setup --unity=on -Ddebug=true -Dwerror=true -Dc_args=-Wno-unused-function build-unused-param \
+          meson setup --unity=on -Dwerror=true -Dc_args=-Wno-unused-function build-unused-param \
             ${GITHUB_WORKSPACE?}/pgbackrest
           ninja -vC build-unused-param
 
