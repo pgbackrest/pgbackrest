@@ -17,7 +17,8 @@
 ## Format Constants
 
 - `REPOSITORY_FORMAT_5` and `REPOSITORY_FORMAT_6` name each format so that code which varies by format is explicit about the format it applies to (`src/version.h:35`).
-- `REPOSITORY_FORMAT_MIN`/`MAX` are the range that can be read; `REPOSITORY_FORMAT_DEFAULT` is what new repositories get when `repo-format` is not specified (`src/version.h:38`). All three are currently expressed in terms of the named formats, so `MIN` and `DEFAULT` diverge on their own when the default moves.
+- `REPOSITORY_FORMAT_MIN`/`MAX` are the range that can be read (`src/version.h:38`). Both are expressed in terms of the named formats, so `MIN` moves on its own when the oldest readable format changes.
+- What new repositories get is the default of `repo-format` rather than a constant, since nothing in `src` needs to name it. Tests do, so `REPOSITORY_FORMAT_DEFAULT` is defined in the info harness (`test/src/harness/info.h:13`) and must match that default.
 - The range is asserted wherever a format is set from code, in `infoNew()` and `infoFormatSet()`, so a format outside it can only ever arrive from a file, which is where it is reported rather than asserted.
 
 ## Format Option

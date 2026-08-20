@@ -13,6 +13,7 @@ Test Backup Command
 #include "harness/backup.h"
 #include "harness/blockIncr.h"
 #include "harness/config.h"
+#include "harness/info.h"
 #include "harness/manifest.h"
 #include "harness/pack.h"
 #include "harness/postgres.h"

@@ -7,6 +7,12 @@ Harness for Generating Test Info Files
 #include "harness/storage.h"
 
 /***********************************************************************************************************************************
+Format that new repositories are created with, i.e. the default of the repo-format option in build/config.yaml. Only tests need to
+know this since the option supplies it everywhere else.
+***********************************************************************************************************************************/
+#define REPOSITORY_FORMAT_DEFAULT                                   REPOSITORY_FORMAT_5
+
+/***********************************************************************************************************************************
 Write info to a file and add the checksum
 ***********************************************************************************************************************************/
 #define HRN_INFO_PUT(storage, file, info, ...)                                                                                     \
