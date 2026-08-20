@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  # Run meson unity build to check for errors, unused functions, and externed functions
+  # Run meson unity build to check for errors, unused functions, unused parameters, and externed functions
   unity:
     runs-on: ubuntu-24.04
 
@@ -42,6 +42,29 @@ jobs:
           diff - <(nm -gj --defined-only build/src/pgbackrest.p/*.o) <<'EOF'
           main
           EOF
+
+      # Check for unused parameters. The FUNCTION_LOG_PARAM*() macros reference each parameter they log, which counts as a use and
+      # hides parameters the function never touches, so append overrides to debug.h that compile the macros out. Nothing is lost
+      # by that here since this build is never run. Debug is enabled because a release build compiles out asserts, which would
+      # report parameters used only by an assert, and unused function warnings are disabled because the *ToLog() functions have
+      # nothing left to call them once the parameter macros are gone.
+      - name: Check Unused Parameter
+        run: |
+          cat >> ${GITHUB_WORKSPACE?}/pgbackrest/src/common/debug.h <<'EOF'
+
+          #undef FUNCTION_LOG_PARAM
+          #define FUNCTION_LOG_PARAM(typeMacroPrefix, param)
+
+          #undef FUNCTION_LOG_PARAM_P
+          #define FUNCTION_LOG_PARAM_P(typeMacroPrefix, param)
+
+          #undef FUNCTION_LOG_PARAM_PP
+          #define FUNCTION_LOG_PARAM_PP(typeMacroPrefix, param)
+          EOF
+
+          meson setup --unity=on -Ddebug=true -Dwerror=true -Dc_args=-Wno-unused-function build-unused-param \
+            ${GITHUB_WORKSPACE?}/pgbackrest
+          ninja -vC build-unused-param
 
   # Check that code is correctly formatted
   code-format:
