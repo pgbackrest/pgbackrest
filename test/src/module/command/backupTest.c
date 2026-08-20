@@ -1090,21 +1090,38 @@ testRun(void)
     {
         TEST_TITLE("block incremental config map");
 
+        // Configure repo2 rather than repo1 so the index in the option name must come from the repo key
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
         TEST_ERROR(
             backupBlockIncrMapSize(cfgOptRepoBlockSizeMap, 0, STRDEF("0")), OptionInvalidValueError,
-            "'0' is not valid for 'repo1-block-size-map' option");
+            "'0' is not valid for 'repo2-block-size-map' option");
         TEST_ERROR(
             backupBlockIncrMapSize(cfgOptRepoBlockSizeMap, 0, STRDEF("Z")), OptionInvalidValueError,
-            "'Z' is not valid for 'repo1-block-size-map' option");
+            "'Z' is not valid for 'repo2-block-size-map' option");
         TEST_ERROR(
             backupBlockIncrMapSize(cfgOptRepoBlockSizeMap, 0, STRDEF("5GiB")), OptionInvalidValueError,
-            "'5GiB' is not valid for 'repo1-block-size-map' option");
+            "'5GiB' is not valid for 'repo2-block-size-map' option");
         TEST_ERROR(
             backupBlockIncrMapChecksumSize(cfgOptRepoBlockChecksumSizeMap, 0, VARSTRDEF("Z")), OptionInvalidValueError,
-            "'Z' is not valid for 'repo1-block-checksum-size-map' option");
+            "'Z' is not valid for 'repo2-block-checksum-size-map' option");
         TEST_ERROR(
             backupBlockIncrMapChecksumSize(cfgOptRepoBlockChecksumSizeMap, 0, VARSTRDEF("5")), OptionInvalidValueError,
-            "'5' is not valid for 'repo1-block-checksum-size-map' option");
+            "'5' is not valid for 'repo2-block-checksum-size-map' option");
+
+        // A key of the checksum size map is reported against the checksum size map rather than the size map
+        hrnCfgArgKeyRawBool(argList, cfgOptRepoBundle, 2, true);
+        hrnCfgArgKeyRawBool(argList, cfgOptRepoBlock, 2, true);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoBlockChecksumSizeMap, 2, "Z=16");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_ERROR(
+            backupBlockIncrMap(), OptionInvalidValueError, "'Z' is not valid for 'repo2-block-checksum-size-map' option");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full backup with zero block");
