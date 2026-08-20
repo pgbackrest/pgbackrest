@@ -19,7 +19,7 @@ FN_EXTERN ProtocolServerResult *
 dbOpenProtocol(PackRead *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(PACK_READ, param);
+        (void)param;
     FUNCTION_LOG_END();
 
     ASSERT(param == NULL);

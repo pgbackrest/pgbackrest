@@ -129,7 +129,7 @@ FN_EXTERN ProtocolServerResult *
 storageRemoteFeatureProtocol(PackRead *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(PACK_READ, param);
+        (void)param;
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -460,7 +460,7 @@ FN_EXTERN ProtocolServerResult *
 storageRemoteReadProtocol(PackRead *const param, void *const fileRead)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(PACK_READ, param);
+        (void)param;
         FUNCTION_LOG_PARAM(STORAGE_READ, fileRead);
     FUNCTION_LOG_END();
 
@@ -526,7 +526,7 @@ FN_EXTERN ProtocolServerResult *
 storageRemoteReadMultiProtocol(PackRead *const param, void *const fileRead)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(PACK_READ, param);
+        (void)param;
         FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, fileRead);
     FUNCTION_LOG_END();
 
@@ -619,7 +619,7 @@ FN_EXTERN ProtocolServerResult *
 storageRemoteWriteCloseProtocol(PackRead *const param, void *const fileWrite)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(PACK_READ, param);
+        (void)param;
         FUNCTION_LOG_PARAM(STORAGE_WRITE, fileWrite);
     FUNCTION_LOG_END();
 

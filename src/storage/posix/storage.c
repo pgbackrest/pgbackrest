@@ -42,7 +42,7 @@ storagePosixInfo(THIS_VOID, const String *const file, const StorageInfoLevel lev
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
+        (void)this;
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(BOOL, param.followLink);
@@ -122,7 +122,7 @@ storagePosixLinkCreate(
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
+        (void)this;
         FUNCTION_LOG_PARAM(STRING, target);
         FUNCTION_LOG_PARAM(STRING, linkPath);
         FUNCTION_LOG_PARAM(ENUM, param.linkType);
@@ -509,7 +509,7 @@ storagePosixPathSync(THIS_VOID, const String *const path, const StorageInterface
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
+        (void)this;
         FUNCTION_LOG_PARAM(STRING, path);
         (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
@@ -554,7 +554,7 @@ storagePosixRemove(THIS_VOID, const String *const file, const StorageInterfaceRe
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
+        (void)this;
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
     FUNCTION_LOG_END();
