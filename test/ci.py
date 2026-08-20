@@ -151,13 +151,11 @@ def test_run(config):
 def command_run(config):
     """Prepare the runner and then run what was asked for on it."""
 
+    # The package index is refreshed by the workflow rather than here. Keeping apt from waiting forever on a slow mirror means
+    # rewriting the mirror list the runner image ships, which is about the runner rather than about the run.
     step(
         "install common packages",
-        [
-            # A stale package index is not worth failing the run over since the install below will report what is missing
-            "sudo apt-get -qq update || true",
-            "sudo DEBIAN_FRONTEND=noninteractive apt-get install -y meson python3-yaml",
-        ],
+        ["sudo DEBIAN_FRONTEND=noninteractive apt-get install -y meson python3-yaml"],
     )
 
     # The test path is a tmpfs so the tests are not limited by the runner's disk, which is slow and shared

@@ -41,10 +41,16 @@ testRun(void)
             "archive-get:async\n",
             "exec archive-get -> archive-get:async");
 
+        // Replace an option that is valid for the specified command but not for the command being run. The replacement is at an
+        // index above the first to be sure every index of the group is searched.
+        KeyValue *const optionReplacePg = kvNew();
+        kvPut(optionReplacePg, VARSTRDEF("pg2-socket-path"), VARSTRDEF("/socket2"));
+
         TEST_RESULT_STRLST_Z(
-            cfgExecParam(cfgCmdBackup, cfgCmdRoleMain, NULL, false, false),
+            cfgExecParam(cfgCmdBackup, cfgCmdRoleMain, optionReplacePg, false, false),
             "--archive-timeout=5\n--buffer-size=64KiB\n--no-config\n--exec-id=1-test\n--log-subprocess\n--reset-neutral-umask\n"
-            "--pg1-path=" TEST_PATH "/db path\n--pg2-path=/db2\n--repo1-path=" TEST_PATH "/repo\n--stanza=test1\nbackup\n",
+            "--pg1-path=" TEST_PATH "/db path\n--pg2-path=/db2\n--pg2-socket-path=/socket2\n--repo1-path=" TEST_PATH "/repo\n"
+            "--stanza=test1\nbackup\n",
             "exec archive-get -> backup");
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -43,6 +43,9 @@ jobs:
         with:
           path: pgbackrest
 
+      - name: Update Apt
+        uses: ./pgbackrest/.github/action/apt
+
       # The required libraries, the compression tools some tests shell out to, and what the harness needs. The optional libraries
       # are added for the full variation and removed for the minimal one rather than just left out, since the runner image is not
       # a fixed set of packages and one of them may already be there or arrive as a dependency of something installed here.
@@ -56,7 +59,6 @@ jobs:
               package="${package} ${optional} zstd"
           fi
 
-          sudo apt-get update
           DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y ${package}
 
           if test "${{matrix.lib}}" = minimal; then
@@ -131,11 +133,13 @@ jobs:
         with:
           path: pgbackrest
 
+      - name: Update Apt
+        uses: ./pgbackrest/.github/action/apt
+
       # bison and flex are needed to build PostgreSQL below. No -dev packages are installed since nothing built by the host
       # toolchain can be linked into a Fil-C binary.
       - name: Install
         run: |
-          sudo apt-get update
           DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y meson ninja-build \
             python3-yaml python3-coverage pkg-config bison flex liblz4-tool bzip2 zstd
 

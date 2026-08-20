@@ -27,10 +27,12 @@ jobs:
         with:
           path: pgbackrest
 
+      - name: Update Apt
+        uses: ./pgbackrest/.github/action/apt
+
       # The build environment for the binary the documentation runs. The runner already provides git and python3.
       - name: Install
         run: |
-          sudo apt-get update
           DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y meson gcc pkg-config \
             libssl-dev libxml2-dev libpq-dev liblz4-dev libzstd-dev libbz2-dev zlib1g-dev
 

@@ -37,6 +37,9 @@ jobs:
         with:
           path: pgbackrest
 
+      - name: Update Apt
+        uses: ./pgbackrest/.github/action/apt
+
       # Log in so base images can be pushed to the cache. Best effort -- pull is anonymous and push is skipped when the token is
       # read-only (e.g. pull requests from forks).
       - name: Login to GHCR
