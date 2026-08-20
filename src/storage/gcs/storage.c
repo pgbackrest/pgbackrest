@@ -1111,7 +1111,7 @@ storageGcsPathRemove(THIS_VOID, const String *const path, const bool recurse, co
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
         FUNCTION_LOG_PARAM(STRING, path);
-        FUNCTION_LOG_PARAM(BOOL, recurse);
+        (void)recurse;                                              // There are no paths so removal is always recursive
         (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
