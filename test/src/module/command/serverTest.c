@@ -167,7 +167,7 @@ testRun(void)
                         // signal sent in response to the notification cannot arrive before the exit in progress flag is set.
                         if (pid != getpid())
                         {
-                            const int result = exitSafe(0, false, signalTypeNone);
+                            const int result = exitSafe(0, false);
 
                             HRN_FORK_CHILD_NOTIFY_PUT();
                             exit(result);
@@ -280,7 +280,7 @@ testRun(void)
                         // signal sent in response to the notification cannot arrive before the exit in progress flag is set.
                         if (pid != getpid())
                         {
-                            const int result = exitSafe(0, false, signalTypeNone);
+                            const int result = exitSafe(0, false);
 
                             HRN_FORK_CHILD_NOTIFY_PUT();
                             exit(result);

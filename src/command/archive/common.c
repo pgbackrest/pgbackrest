@@ -350,12 +350,11 @@ walIsSegment(const String *const walSegment)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-walSegmentNext(const String *const walSegment, const size_t walSegmentSize, const unsigned int pgVersion)
+walSegmentNext(const String *const walSegment, const size_t walSegmentSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(SIZE, walSegmentSize);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
     FUNCTION_LOG_END();
 
     ASSERT(walSegment != NULL);
@@ -389,13 +388,11 @@ walSegmentNext(const String *const walSegment, const size_t walSegmentSize, cons
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
-walSegmentRange(
-    const String *const walSegmentBegin, const size_t walSegmentSize, const unsigned int pgVersion, const unsigned int range)
+walSegmentRange(const String *const walSegmentBegin, const size_t walSegmentSize, const unsigned int range)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSegmentBegin);
         FUNCTION_LOG_PARAM(SIZE, walSegmentSize);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
     FUNCTION_LOG_END();
 
     ASSERT(range > 0);
@@ -412,7 +409,7 @@ walSegmentRange(
 
             for (unsigned int rangeIdx = 0; rangeIdx < range - 1; rangeIdx++)
             {
-                String *const next = walSegmentNext(current, walSegmentSize, pgVersion);
+                String *const next = walSegmentNext(current, walSegmentSize);
 
                 strLstAdd(result, next);
 

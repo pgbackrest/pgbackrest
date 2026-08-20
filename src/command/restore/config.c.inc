@@ -201,12 +201,9 @@ restoreRecoveryConf(const unsigned int pgVersion, const String *const restoreLab
 
 // Helper to write recovery options into recovery.conf
 static void
-restoreRecoveryWriteConf(
-    const Manifest *const manifest, const StorageInfo *const fileInfo, const unsigned int pgVersion,
-    const String *const restoreLabel)
+restoreRecoveryWriteConf(const StorageInfo *const fileInfo, const unsigned int pgVersion, const String *const restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STORAGE_INFO, fileInfo);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(STRING, restoreLabel);
@@ -234,12 +231,9 @@ restoreRecoveryWriteConf(
 
 // Helper to write recovery options into postgresql.auto.conf
 static void
-restoreRecoveryWriteAutoConf(
-    const Manifest *const manifest, const StorageInfo *const fileInfo, const unsigned int pgVersion,
-    const String *const restoreLabel)
+restoreRecoveryWriteAutoConf(const StorageInfo *const fileInfo, const unsigned int pgVersion, const String *const restoreLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STORAGE_INFO, fileInfo);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(STRING, restoreLabel);
@@ -400,9 +394,9 @@ restoreRecoveryWrite(const Manifest *const manifest, const StorageInfo *const fi
 
             // Write recovery file based on PostgreSQL version
             if (pgVersion >= PG_VERSION_RECOVERY_GUC)
-                restoreRecoveryWriteAutoConf(manifest, fileInfo, pgVersion, restoreLabel);
+                restoreRecoveryWriteAutoConf(fileInfo, pgVersion, restoreLabel);
             else
-                restoreRecoveryWriteConf(manifest, fileInfo, pgVersion, restoreLabel);
+                restoreRecoveryWriteConf(fileInfo, pgVersion, restoreLabel);
         }
     }
     MEM_CONTEXT_TEMP_END();

@@ -227,13 +227,10 @@ infoPgAdd(InfoPg *const this, const InfoPgData *const infoPgData)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoPg *
-infoPgSet(
-    InfoPg *const this, const InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId,
-    const unsigned int pgCatalogVersion)
+infoPgSet(InfoPg *const this, const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_PG, this);
-        FUNCTION_LOG_PARAM(STRING_ID, type);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);

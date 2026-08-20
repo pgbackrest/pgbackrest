@@ -97,19 +97,19 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command end does not log when level is too low");
 
-        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end");
+        TEST_RESULT_VOID(cmdEnd(NULL), "command end");
         harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command end with error");
 
-        TEST_RESULT_VOID(cmdEnd(25, STRDEF("aborted with exception [025]")), "command end");
+        TEST_RESULT_VOID(cmdEnd(STRDEF("aborted with exception [025]")), "command end");
         TEST_RESULT_LOG("P00   INFO: restore command end: aborted with exception [025]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command end with time");
 
-        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end");
+        TEST_RESULT_VOID(cmdEnd(NULL), "command end");
         hrnLogReplaceAdd("\\([0-9]+ms\\)", "[0-9]+", "TIME", false);
         TEST_RESULT_LOG(
             "P00   INFO: restore command end: completed successfully ([TIME]ms)");
@@ -122,7 +122,7 @@ testRun(void)
 
         harnessLogLevelSet(logLevelDetail);
 
-        TEST_RESULT_VOID(cmdEnd(0, NULL), "command end");
+        TEST_RESULT_VOID(cmdEnd(NULL), "command end");
         TEST_RESULT_LOG(
             "P00 DETAIL: statistics: {\"test\":{\"total\":1}}\n"
             "P00   INFO: restore command end: completed successfully");

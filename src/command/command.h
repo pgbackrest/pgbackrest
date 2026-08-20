@@ -20,7 +20,7 @@ FN_EXTERN void cmdBegin(void);
 FN_EXTERN const String *cmdOption(void);
 
 // End the command
-FN_EXTERN void cmdEnd(int code, const String *errorMessage);
+FN_EXTERN void cmdEnd(const String *errorMessage);
 
 // Execute an async process. This function will only return in the calling process and the implementation is platform dependent.
 FN_EXTERN void cmdAsyncExec(const char *command, const StringList *commandExec);

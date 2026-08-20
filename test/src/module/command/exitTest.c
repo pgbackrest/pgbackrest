@@ -29,7 +29,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitInit() and exitOnSignal()"))
     {
-        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command");
+        TEST_RESULT_INT(exitSafe(0, false), 0, "exit with no command");
         TEST_RESULT_VOID(exitOnSignal(signalTypeTerm), "ignore signal when exit in progress");
         HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
 
@@ -66,10 +66,10 @@ testRun(void)
         hrnCfgArgRawNegate(argList, cfgOptLogTimestamp);
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
-        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no error");
+        TEST_RESULT_INT(exitSafe(0, false), 0, "exit with no error");
         TEST_RESULT_LOG("P00   INFO: archive-push command end: completed successfully");
 
-        TEST_RESULT_INT(exitSafe(1, false, signalTypeNone), 1, "exit with no error");
+        TEST_RESULT_INT(exitSafe(1, false), 1, "exit with no error");
         TEST_RESULT_LOG("P00   INFO: archive-push command end: completed successfully");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -79,7 +79,7 @@ testRun(void)
         }
         CATCH_FATAL()
         {
-            exitSafe(0, true, signalTypeNone);
+            exitSafe(0, true);
             TEST_RESULT_LOG(
                 "P00  ERROR: [122]: test error message\n"
                 "P00   INFO: archive-push command end: aborted with exception [122]");
@@ -100,9 +100,9 @@ testRun(void)
         }
         CATCH_FATAL()
         {
-            exitSafe(0, true, signalTypeNone);
+            exitSafe(0, true);
             TEST_RESULT_LOG(
-                "P00  DEBUG:     " TEST_PGB_PATH "/src/command/exit::exitSafe: (result: 0, error: true, signalType: 0)\n"
+                "P00  DEBUG:     " TEST_PGB_PATH "/src/command/exit::exitSafe: (result: 0, error: true)\n"
                 "P00  ERROR: [122]: test debug error message\n"
                 "            --------------------------------------------------------------------\n"
                 "            If SUBMITTING AN ISSUE please provide the following information:\n"
@@ -128,7 +128,7 @@ testRun(void)
         }
         CATCH_FATAL()
         {
-            exitSafe(0, true, signalTypeNone);
+            exitSafe(0, true);
             TEST_RESULT_LOG(
                 "P00 ASSERT: [025]: test assert message\n"
                 "            --------------------------------------------------------------------\n"

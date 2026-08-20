@@ -178,11 +178,9 @@ Stop the backup
 // Helper to write a file from a string to the repository and update the manifest
 static void
 backupFilePut(
-    const BackupData *const backupData, Manifest *const manifest, const String *const name, const time_t timestamp,
-    const String *const content)
+    Manifest *const manifest, const String *const name, const time_t timestamp, const String *const content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(TIME, timestamp);
@@ -310,8 +308,8 @@ backupStop(BackupData *const backupData, Manifest *const manifest)
             LOG_INFO_FMT("backup stop archive = %s, lsn = %s", strZ(result.walSegmentName), strZ(result.lsn));
 
             // Save files returned by stop backup
-            backupFilePut(backupData, manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
-            backupFilePut(backupData, manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
+            backupFilePut(manifest, STRDEF(PG_FILE_BACKUPLABEL), result.timestamp, dbBackupStopResult.backupLabel);
+            backupFilePut(manifest, STRDEF(PG_FILE_TABLESPACEMAP), result.timestamp, dbBackupStopResult.tablespaceMap);
         }
         MEM_CONTEXT_TEMP_END();
     }

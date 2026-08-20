@@ -955,8 +955,7 @@ storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceN
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE_SFTP,
         storageWriteSftpNew(
-            this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
-            param.syncFile, param.atomic, param.truncate));
+            this, file, param.modeFile, param.modePath, param.createPath, param.syncFile, param.atomic));
 }
 
 /**********************************************************************************************************************************/

@@ -196,10 +196,9 @@ cmdBegin(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-cmdEnd(const int code, const String *const errorMessage)
+cmdEnd(const String *const errorMessage)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, code);
         FUNCTION_LOG_PARAM(STRING, errorMessage);
     FUNCTION_LOG_END();
 

@@ -17,8 +17,7 @@ typedef struct StorageWriteSftp StorageWriteSftp;
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageWriteSftp *storageWriteSftpNew(
-    StorageSftp *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,
-    time_t timeModified, bool createPath, bool syncFile, bool atomic, bool truncate);
+    StorageSftp *storage, const String *name, mode_t modeFile, mode_t modePath, bool createPath, bool syncFile, bool atomic);
 
 /***********************************************************************************************************************************
 Macros for function logging
