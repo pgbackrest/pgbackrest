@@ -1093,27 +1093,21 @@ testRun(void)
             infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone())),
             REPOSITORY_FORMAT_DEFAULT, "backup info back at default format");
 
-        // An upgrade that does not request a format leaves the mismatch in place, so it is reported instead
+        // An upgrade that does not request a format brings the lagging file forward since the higher of the two formats is the
+        // only target that does not downgrade a file
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
-        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
-
-        TEST_ERROR(
-            cmdStanzaUpgrade(), FileInvalidError,
-            "backup info file and archive info file are at different repository formats\n"
-            "archive: format = 6\n"
-            "backup : format = 5\n"
-            "HINT: run stanza-upgrade with --repo1-format=6 to complete an interrupted upgrade.");
-        TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
-
-        // Requesting the format brings the lagging file forward
-        hrnCfgArgRawZ(argList, cfgOptRepoFormat, "6");
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format mismatch between info files");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   WARN: repository format mismatch from an interrupted stanza-upgrade will be repaired\n"
             "P00   INFO: upgrade repository format from 5 to 6");
+
+        TEST_RESULT_UINT(
+            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone())),
+            REPOSITORY_FORMAT_6, "backup info brought forward to format 6");
 
         // The lagging file is normally backup.info since archive.info is saved first, but the format the upgrade reports is the
         // lower of the two whichever file it is
@@ -1144,6 +1138,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive info behind backup info");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   WARN: repository format mismatch from an interrupted stanza-upgrade will be repaired\n"
             "P00   INFO: upgrade repository format from 5 to 6");
 
         TEST_RESULT_UINT(
