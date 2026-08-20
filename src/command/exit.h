@@ -25,6 +25,6 @@ Functions
 FN_EXTERN void exitInit(void);
 
 // Do cleanup and return result code
-FN_EXTERN int exitSafe(int result, bool error, SignalType signalType);
+FN_EXTERN int exitSafe(int result, bool error);
 
 #endif

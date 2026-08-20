@@ -532,16 +532,13 @@ archiveGetCheck(const StringList *const archiveRequestList)
 Clean the queue and prepare a list of WAL segments that the async process should get
 ***********************************************************************************************************************************/
 static StringList *
-queueNeed(
-    const String *const walSegment, const bool found, const uint64_t queueSize, const size_t walSegmentSize,
-    const unsigned int pgVersion)
+queueNeed(const String *const walSegment, const bool found, const uint64_t queueSize, const size_t walSegmentSize)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSegment);
         FUNCTION_LOG_PARAM(BOOL, found);
         FUNCTION_LOG_PARAM(UINT64, queueSize);
         FUNCTION_LOG_PARAM(SIZE, walSegmentSize);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
     FUNCTION_LOG_END();
 
     ASSERT(walSegment != NULL);
@@ -553,7 +550,7 @@ queueNeed(
         // Determine the first WAL segment for the async process to get. If the WAL segment requested by PostgreSQL was not found
         // then use that. If the segment was found but the queue is not full then start with the next segment.
         const String *const walSegmentFirst =
-            found ? walSegmentNext(walSegment, walSegmentSize, pgVersion) : walSegment;
+            found ? walSegmentNext(walSegment, walSegmentSize) : walSegment;
 
         // Determine how many WAL segments should be in the queue. The queue total must be at least 2 or it doesn't make sense to
         // have async turned on at all.
@@ -564,7 +561,7 @@ queueNeed(
 
         // Build the ideal queue -- the WAL segments we want in the queue after the async process has run
         const StringList *const idealQueue = strLstSort(
-            walSegmentRange(walSegmentFirst, walSegmentSize, pgVersion, walSegmentQueueTotal), sortOrderAsc);
+            walSegmentRange(walSegmentFirst, walSegmentSize, walSegmentQueueTotal), sortOrderAsc);
 
         // Get the list of files actually in the queue
         const StringList *const actualQueue = strLstSort(
@@ -812,8 +809,7 @@ cmdArchiveGet(void)
                     // Clean the current queue using the list of WAL that we ideally want in the queue. queueNeed() will return the
                     // list of WAL needed to fill the queue and this will be passed to the async process.
                     const StringList *const queue = queueNeed(
-                        walSegment, found, cfgOptionUInt64(cfgOptArchiveGetQueueMax), pgControl.walSegmentSize,
-                        pgControl.version);
+                        walSegment, found, cfgOptionUInt64(cfgOptArchiveGetQueueMax), pgControl.walSegmentSize);
 
                     for (unsigned int queueIdx = 0; queueIdx < strLstSize(queue); queueIdx++)
                         strLstAdd(commandExec, strLstGet(queue, queueIdx));

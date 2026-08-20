@@ -595,7 +595,7 @@ verifyCreateArchiveIdRange(
         // Initialize the range if it has not yet been initialized and continue to next
         if (walRange == NULL ||
             !strEq(
-                walSegmentNext(walRange->stop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version),
+                walSegmentNext(walRange->stop, (size_t)archiveIdResult->pgWalInfo.size),
                 walSegment))
         {
             // Add the initialized wal range to the range list

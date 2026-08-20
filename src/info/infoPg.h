@@ -116,7 +116,7 @@ FN_EXTERN void infoPgSave(InfoPg *this, IoWrite *write, InfoSaveCallback *callba
 
 // Set the InfoPg object data based on values passed
 FN_EXTERN InfoPg *infoPgSet(
-    InfoPg *this, InfoPgType type, const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion);
+    InfoPg *this, const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion);
 
 /***********************************************************************************************************************************
 Macros for function logging

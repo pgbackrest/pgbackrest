@@ -34,9 +34,9 @@ ioSinkProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
     THIS(IoSink);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(IO_SINK, this);
-        FUNCTION_LOG_PARAM(BUFFER, input);
-        FUNCTION_LOG_PARAM(BUFFER, output);
+        (void)this;
+        (void)input;
+        (void)output;
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);

@@ -1891,7 +1891,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
-            restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel), OptionInvalidError,
+            restoreRecoveryWriteAutoConf(&fileInfo, PG_VERSION_12, restoreLabel), OptionInvalidError,
             "'standby_mode' setting is not valid for PostgreSQL >= 12\n"
             "HINT: use --type=standby instead of --recovery-option=standby_mode=on.");
 
@@ -1907,7 +1907,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptType, "none");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(&fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET_EMPTY(storagePg(), PG_FILE_POSTGRESQLAUTOCONF, .comment = "check postgresql.auto.conf");
         TEST_STORAGE_LIST(
@@ -1927,7 +1927,7 @@ testRun(void)
             "# DO NOT MODIFY\n"
             "\t recovery_target_action='promote'\n\n");
 
-        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(&fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -1950,7 +1950,7 @@ testRun(void)
             "# DO NOT MODIFY\n"
             "\t recovery_target_action='promote'\n\n");
 
-        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(&fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,
@@ -1985,7 +1985,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "restore-command=my_restore_command");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        restoreRecoveryWriteAutoConf(manifest, &fileInfo, PG_VERSION_12, restoreLabel);
+        restoreRecoveryWriteAutoConf(&fileInfo, PG_VERSION_12, restoreLabel);
 
         TEST_STORAGE_GET(
             storagePg(), PG_FILE_POSTGRESQLAUTOCONF,

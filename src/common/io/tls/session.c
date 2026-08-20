@@ -110,13 +110,12 @@ Returns:
 // Helper to process error conditions
 static int
 tlsSessionResultProcess(
-    TlsSession *const this, const int errorTls, const long unsigned int errorTlsDetail, const int errorSys, const bool closeOk)
+    TlsSession *const this, const int errorTls, const long unsigned int errorTlsDetail, const bool closeOk)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_SESSION, this);
         FUNCTION_LOG_PARAM(INT, errorTls);
         FUNCTION_LOG_PARAM(UINT64, errorTlsDetail);
-        FUNCTION_LOG_PARAM(INT, errorSys);
         FUNCTION_LOG_PARAM(BOOL, closeOk);
     FUNCTION_LOG_END();
 
@@ -184,12 +183,11 @@ tlsSessionResult(TlsSession *const this, int result, const bool closeOk)
     // Process errors
     if (result <= 0)
     {
-        // Get TLS error and store errno in case of syscall error
+        // Get TLS error
         const int errorTls = SSL_get_error(this->session, result);
         const long unsigned int errorTlsDetail = ERR_get_error();
-        const int errorSys = errno;
 
-        result = tlsSessionResultProcess(this, errorTls, errorTlsDetail, errorSys, closeOk);
+        result = tlsSessionResultProcess(this, errorTls, errorTlsDetail, closeOk);
     }
 
     FUNCTION_LOG_RETURN(INT, result);

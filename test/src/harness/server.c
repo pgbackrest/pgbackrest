@@ -406,7 +406,7 @@ hrnServerHost(void)
 unsigned int
 hrnServerPortNext(void)
 {
-    CHECK(AssertError, testIdx() < 32, "test max exceeds limit of 32");
+    CHECK(AssertError, testIdx() < HRN_SERVER_TEST_MAX, "test max exceeds limit of " STRINGIFY(HRN_SERVER_TEST_MAX));
     CHECK(
         AssertError, hrnServerLocal.portOffsetNext < HRN_SERVER_PORT_MAX,
         "requested port exceeds limit of " STRINGIFY(HRN_SERVER_PORT_MAX));

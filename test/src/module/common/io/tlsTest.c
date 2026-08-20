@@ -438,12 +438,13 @@ testRun(void)
         TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 100, 100), "new client");
         TEST_ERROR(
             ioClientOpen(client), HostConnectError,
-            "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
+            "unable to connect to 'localhost:" STRINGIFY(HRN_SERVER_PORT_BOGUS) " (127.0.0.1)': [111] Connection refused\n"
             "[RETRY DETAIL OMITTED]");
 
         // This address should not be in use in a test environment -- if it is the test will fail
         TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), HRN_SERVER_PORT_BOGUS, 100, 100), "new client");
-        TEST_ERROR(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:34342'");
+        TEST_ERROR(
+            ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:" STRINGIFY(HRN_SERVER_PORT_BOGUS) "'");
 
         // -------------------------------------------------------------------------------------------------------------------------
 #ifdef TEST_CONTAINER_REQUIRED
@@ -647,7 +648,7 @@ testRun(void)
             "new client");
         TEST_ERROR(
             ioClientOpen(client), HostConnectError,
-            "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
+            "unable to connect to 'localhost:" STRINGIFY(HRN_SERVER_PORT_BOGUS) " (127.0.0.1)': [111] Connection refused\n"
             "[RETRY DETAIL OMITTED]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1239,9 +1240,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("uncovered errors");
 
-                TEST_RESULT_INT(tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_WRITE, 0, 0, false), 0, "write ready");
+                TEST_RESULT_INT(tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_WRITE, 0, false), 0, "write ready");
                 TEST_ERROR(
-                    tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 336031996, 0, false), ServiceError,
+                    tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 336031996, false), ServiceError,
                     "TLS error [4:336031996] "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
                     "no details available");
@@ -1249,10 +1250,10 @@ testRun(void)
                     "unknown protocol");
 #endif
                 TEST_ERROR(
-                    tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 0, 0, false), ServiceError,
+                    tlsSessionResultProcess(tlsSession, SSL_ERROR_WANT_X509_LOOKUP, 0, false), ServiceError,
                     "TLS error [4:0] no details available");
                 TEST_ERROR(
-                    tlsSessionResultProcess(tlsSession, SSL_ERROR_ZERO_RETURN, 0, 0, false), ProtocolError, "unexpected TLS eof");
+                    tlsSessionResultProcess(tlsSession, SSL_ERROR_ZERO_RETURN, 0, false), ProtocolError, "unexpected TLS eof");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("first protocol exchange");

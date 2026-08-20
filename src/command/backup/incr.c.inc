@@ -123,17 +123,14 @@ backupBuildIncrPrior(const InfoBackup *const infoBackup)
 }
 
 static bool
-backupBuildIncr(
-    const InfoBackup *const infoBackup, Manifest *const manifest, Manifest *const manifestPrior, const String *const archiveStart)
+backupBuildIncr(Manifest *const manifest, Manifest *const manifestPrior, const String *const archiveStart)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
         FUNCTION_LOG_PARAM(STRING, archiveStart);
     FUNCTION_LOG_END();
 
-    ASSERT(infoBackup != NULL);
     ASSERT(manifest != NULL);
 
     bool result = false;

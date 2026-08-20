@@ -7,7 +7,6 @@ SFTP Storage File Write
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "common/user.h"
 #include "storage/sftp/write.h"
 #include "storage/write.h"
 
@@ -342,22 +341,17 @@ static const StorageWriteInterface storageWriteSftpInterface =
 
 FN_EXTERN StorageWriteSftp *
 storageWriteSftpNew(
-    StorageSftp *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
-    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool atomic,
-    const bool truncate)
+    StorageSftp *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const bool createPath,
+    const bool syncFile, const bool atomic)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_SFTP, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
-        FUNCTION_LOG_PARAM(STRING, user);
-        FUNCTION_LOG_PARAM(STRING, group);
-        FUNCTION_LOG_PARAM(TIME, timeModified);
         FUNCTION_LOG_PARAM(BOOL, createPath);
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, atomic);
-        FUNCTION_LOG_PARAM(BOOL, truncate);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);

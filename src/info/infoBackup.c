@@ -385,7 +385,7 @@ infoBackupPgSet(
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
     FUNCTION_LOG_END();
 
-    this->pub.infoPg = infoPgSet(infoBackupPg(this), infoPgBackup, pgVersion, pgSystemId, pgCatalogVersion);
+    this->pub.infoPg = infoPgSet(infoBackupPg(this), pgVersion, pgSystemId, pgCatalogVersion);
     this->pub.updated = true;
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);

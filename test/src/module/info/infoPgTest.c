@@ -53,7 +53,7 @@ testRun(void)
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(infoPgArchive, REPOSITORY_FORMAT_DEFAULT, NULL), infoPgArchive, PG_VERSION_18, 6569239123849665679,
+                infoPgNew(infoPgArchive, REPOSITORY_FORMAT_DEFAULT, NULL), PG_VERSION_18, 6569239123849665679,
                 hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgArchive");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
@@ -65,7 +65,7 @@ testRun(void)
         TEST_RESULT_UINT(pgData.catalogVersion, 0, "  catalog version not set for archive");
 
         TEST_ASSIGN(
-            infoPg, infoPgSet(infoPg, infoPgArchive, PG_VERSION_18, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_18)),
+            infoPg, infoPgSet(infoPg, PG_VERSION_18, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgArchive second db");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 2, "  2 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
@@ -80,10 +80,8 @@ testRun(void)
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(
-                    infoPgBackup, REPOSITORY_FORMAT_DEFAULT, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
-                infoPgBackup, PG_VERSION_18, 6569239123849665679,
-                hrnPgCatalogVersion(PG_VERSION_18)),
+                infoPgNew(infoPgBackup, REPOSITORY_FORMAT_DEFAULT, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
+                PG_VERSION_18, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgBackup");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");

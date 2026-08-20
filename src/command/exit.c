@@ -123,12 +123,11 @@ exitErrorDetail(void)
 }
 
 FN_EXTERN int
-exitSafe(int result, const bool error, const SignalType signalType)
+exitSafe(int result, const bool error)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INT, result);
         FUNCTION_LOG_PARAM(BOOL, error);
-        FUNCTION_LOG_PARAM(ENUM, signalType);
     FUNCTION_LOG_END();
 
     // Report error if one was thrown
@@ -163,7 +162,7 @@ exitSafe(int result, const bool error, const SignalType signalType)
         if (result != 0 && error)
             errorMessage = strNewFmt("aborted with exception [%03d]", result);
 
-        cmdEnd(result, errorMessage);
+        cmdEnd(errorMessage);
         strFree(errorMessage);
     }
 

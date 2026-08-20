@@ -101,7 +101,7 @@ storageReadGcs(THIS_VOID, Buffer *const buffer, const bool block)
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_GCS, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
-        FUNCTION_LOG_PARAM(BOOL, block);
+        (void)block;                                                // Blocking is handled by the caller
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);

@@ -148,7 +148,7 @@ main(int argListSize, const char *argList[])
                     if (cfgOptionBool(cfgOptExpireAuto))
                     {
                         // Switch to expire command
-                        cmdEnd(0, NULL);
+                        cmdEnd(NULL);
                         cfgCommandSet(cfgCmdExpire, cfgCmdRoleMain);
                         cfgLoadLogFile();
                         cmdBegin();
@@ -288,12 +288,12 @@ main(int argListSize, const char *argList[])
     CATCH_FATAL()
     {
         error = true;
-        result = exitSafe(result, true, 0);
+        result = exitSafe(result, true);
     }
     TRY_END();
 
     // Free protocol objects
     protocolFree();
 
-    FUNCTION_LOG_RETURN(INT, error ? result : exitSafe(result, false, 0));
+    FUNCTION_LOG_RETURN(INT, error ? result : exitSafe(result, false));
 }

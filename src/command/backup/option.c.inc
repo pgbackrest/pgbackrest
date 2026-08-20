@@ -47,11 +47,11 @@ static const ManifestBlockIncrMap manifestBlockIncrMap =
 
 // Convert map size
 static unsigned int
-backupBlockIncrMapSize(const ConfigOption optionId, const unsigned int optionKeyIdx, const String *const value)
+backupBlockIncrMapSize(const ConfigOption optionId, const unsigned int optionIdx, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
-        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);
+        FUNCTION_TEST_PARAM(UINT, optionIdx);
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
@@ -69,7 +69,7 @@ backupBlockIncrMapSize(const ConfigOption optionId, const unsigned int optionKey
     {
         THROW_FMT(
             OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(value),
-            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+            cfgOptionIdxName(optionId, optionIdx));
     }
     TRY_END();
 
@@ -80,11 +80,11 @@ backupBlockIncrMapSize(const ConfigOption optionId, const unsigned int optionKey
 
 // Convert map checksum size
 static unsigned int
-backupBlockIncrMapChecksumSize(const ConfigOption optionId, const unsigned int optionKeyIdx, const Variant *const value)
+backupBlockIncrMapChecksumSize(const ConfigOption optionId, const unsigned int optionIdx, const Variant *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
-        FUNCTION_TEST_PARAM(UINT, optionKeyIdx);
+        FUNCTION_TEST_PARAM(UINT, optionIdx);
         FUNCTION_TEST_PARAM(VARIANT, value);
     FUNCTION_TEST_END();
 
@@ -103,7 +103,7 @@ backupBlockIncrMapChecksumSize(const ConfigOption optionId, const unsigned int o
     {
         THROW_FMT(
             OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(varStr(value)),
-            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+            cfgOptionIdxName(optionId, optionIdx));
     }
 
     FUNCTION_TEST_RETURN(UINT, result);
@@ -190,9 +190,9 @@ backupBlockIncrMap(void)
                 ManifestBlockIncrChecksumSizeMap manifestBuildBlockIncrChecksumSizeMap =
                 {
                     .blockSize = backupBlockIncrMapSize(
-                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockChecksumSizeMap), varStr(mapKey)),
+                        cfgOptRepoBlockChecksumSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockChecksumSizeMap), varStr(mapKey)),
                     .checksumSize = backupBlockIncrMapChecksumSize(
-                        cfgOptRepoBlockSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockChecksumSizeMap),
+                        cfgOptRepoBlockChecksumSizeMap, cfgOptionIdxDefault(cfgOptRepoBlockChecksumSizeMap),
                         kvGet(manifestBlockIncrChecksumSizeKv, mapKey)),
                 };
 

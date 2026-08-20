@@ -25,14 +25,25 @@ typedef enum
 /***********************************************************************************************************************************
 Port constants
 ***********************************************************************************************************************************/
+// Maximum number of tests that can run in parallel
+#define HRN_SERVER_TEST_MAX                                         32
+
 // Maximum number of ports allowed for each test
-#define HRN_SERVER_PORT_MAX                                         768
+#define HRN_SERVER_PORT_MAX                                         64
 
-// Bogus port to be used where the port does not matter or must fail
-#define HRN_SERVER_PORT_BOGUS                                       34342
+// Lowest port in the ephemeral port range on Linux. The ports used by the tests must be below this since the kernel assigns ports
+// at or above it to outgoing connections.
+#define HRN_SERVER_PORT_EPHEMERAL_MIN                               32768
 
-// Minimum port to be assigned to a test
-#define HRN_SERVER_PORT_MIN                                         (HRN_SERVER_PORT_BOGUS + 1)
+// Bogus port to be used where the port does not matter or must fail. This port must also be below the ephemeral port range so the
+// kernel cannot select it as the source port for a connection to the same port. When that happens the socket connects to itself,
+// i.e. a TCP simultaneous open, and the connection succeeds rather than being refused.
+#define HRN_SERVER_PORT_BOGUS                                       1023
+
+// Minimum port to be assigned to a test. The range assigned to the tests ends exactly where the ephemeral port range begins so a
+// port that a test needs to bind can never be in use as the source port of an outgoing connection.
+#define HRN_SERVER_PORT_MIN                                                                                                        \
+    (HRN_SERVER_PORT_EPHEMERAL_MIN - (HRN_SERVER_PORT_MAX * HRN_SERVER_TEST_MAX))
 
 /***********************************************************************************************************************************
 Path and prefix for test certificates

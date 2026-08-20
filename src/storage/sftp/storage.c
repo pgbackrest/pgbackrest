@@ -871,7 +871,7 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        (void)param;
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -955,8 +955,7 @@ storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceN
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE_SFTP,
         storageWriteSftpNew(
-            this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
-            param.syncFile, param.atomic, param.truncate));
+            this, file, param.modeFile, param.modePath, param.createPath, param.syncFile, param.atomic));
 }
 
 /**********************************************************************************************************************************/

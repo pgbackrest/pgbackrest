@@ -92,10 +92,9 @@ FN_EXTERN bool walIsSegment(const String *walSegment);
 FN_EXTERN String *walPath(const String *walFile, const String *pgPath, const String *command);
 
 // Get the next WAL segment given a WAL segment and WAL segment size
-FN_EXTERN String *walSegmentNext(const String *walSegment, size_t walSegmentSize, unsigned int pgVersion);
+FN_EXTERN String *walSegmentNext(const String *walSegment, size_t walSegmentSize);
 
 // Build a list of WAL segments based on a beginning WAL and number of WAL in the range (inclusive)
-FN_EXTERN StringList *walSegmentRange(
-    const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range);
+FN_EXTERN StringList *walSegmentRange(const String *walSegmentBegin, size_t walSegmentSize, unsigned int range);
 
 #endif

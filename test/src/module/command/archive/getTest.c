@@ -36,7 +36,7 @@ testRun(void)
         TEST_TITLE("path missing");
 
         TEST_ERROR(
-            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_18),
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize),
             PathMissingError, "unable to list file info for missing path '" TEST_PATH "/spool/archive/test1/in'");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN);
 
         TEST_RESULT_STRLST_Z(
-            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_18),
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize),
             "000000010000000100000001\n000000010000000100000002\n", "queue size smaller than min");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ testRun(void)
         queueSize = (16 * 1024 * 1024) * 3;
 
         TEST_RESULT_STRLST_Z(
-            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_18),
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize),
             "000000010000000100000001\n000000010000000100000002\n000000010000000100000003\n", "empty queue");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000B00000000.ok");
 
         TEST_RESULT_STRLST_Z(
-            queueNeed(STRDEF("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11),
+            queueNeed(STRDEF("000000010000000A00000FFD"), true, queueSize, walSegmentSize),
             "000000010000000B00000000\n000000010000000B00000001\n000000010000000B00000002\n", "queue has wal");
 
         TEST_STORAGE_LIST(
