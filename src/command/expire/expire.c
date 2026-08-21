@@ -116,7 +116,8 @@ checkChecksumErrors(
             if (shouldFail)
             {
                 THROW_FMT(
-                    ChecksumError, "oldest retained backup %s contains invalid page checksums",
+                    ChecksumError, "oldest retained backup %s contains invalid page checksums,"
+                    "use info --set command to get details about errors in the backup",
                     strZ(backupLabel));
             }
             LOG_WARN_FMT(
