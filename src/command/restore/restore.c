@@ -146,7 +146,7 @@ cmdRestore(void)
             .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeRestored),
             .size = VARUINT64(sizeTotal));
 
-        bool wasChecksumPageErrors = false;
+        unsigned int checksumErrorFileTotal = 0;
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
@@ -158,7 +158,7 @@ cmdRestore(void)
                 {
                     sizeRestored = restoreJobResult(
                         jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeRestored,
-                        &currentPercentComplete, &wasChecksumPageErrors);
+                        &checksumErrorFileTotal, &currentPercentComplete);
                 }
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
@@ -264,13 +264,18 @@ cmdRestore(void)
         LOG_INFO_FMT(
             "restore size = %s, file total = %u", strZ(strSizeFormat(sizeRestored)), manifestFileTotal(jobData.manifest));
 
-        if(wasChecksumPageErrors)
+        if(checksumErrorFileTotal > 0)
         {
-            if (cfgOptionBool(cfgOptChecksumPageError))
+            if (cfgOptionBool(checksumErrorFileTotal))
             {
-                THROW_FMT(ChecksumError, "invalid page checksums found in file(s)");
+                THROW_FMT(
+                    ChecksumError,
+                    CFGCMD_RESTORE " command encountered page checksum error(s) in %u file(s), check the log file for details",
+                    checksumErrorFileTotal);
             }
-            LOG_WARN_FMT("invalid page checksums found in file(s)");
+            LOG_WARN_FMT(
+                CFGCMD_RESTORE " command encountered page checksum error(s) in %u file(s), check the log file for details",
+                checksumErrorFileTotal);
         }
     }
     MEM_CONTEXT_TEMP_END();
