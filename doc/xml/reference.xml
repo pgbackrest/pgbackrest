@@ -2966,6 +2966,8 @@
                         <text>
                             <p>Migrate the stanza to the specified repository format. Migration applies to new backups and archives only, so backups and archives already in the repository are left at the format they were written with.</p>
 
+                            <p>The first backup after a migration is a full backup even when a differential or incremental backup is requested, since no backup in the repository was written at the new format.</p>
+
                             <allow-list inherit="repo-format" command="stanza-create"/>
 
                             <p>Once the info files have been migrated, a version of <backrest/> that does not support the new format is no longer able to read the stanza at all, including the parts of it that are still at the older format. The format cannot be downgraded.</p>
