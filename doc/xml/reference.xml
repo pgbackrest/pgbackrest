@@ -2243,7 +2243,7 @@
                         <summary>Error on Invalid Page Checksums.</summary>
 
                         <text>
-                            <p>Disabled by default. If this option is enabled with the <br-option>checksum-page</br-option>, a first failure in checksum validation will abort a backup.</p>
+                            <p>If this option is enabled with the <br-option>checksum-page</br-option>, a first failure in checksum validation will abort a backup.</p>
                         </text>
 
                         <example>n</example>
@@ -2351,7 +2351,7 @@
                         <summary>Error on Invalid Page Checksums.</summary>
 
                         <text>
-                            <p>Enabled by default. And the <cmd>expire</cmd> will stop and issue an error before any changes if the oldest retained backup would contain checksum errors. If this option is disabled, the <cmd>expire</cmd> will proceed and issue a warning if there are checksum errors in the oldest retained backup.</p>
+                            <p>If enabled, the <cmd>expire</cmd> will stop and issue an error before any changes if the oldest retained backup would contain checksum errors. If this option is disabled, the <cmd>expire</cmd> will proceed and issue a warning if there are checksum errors in the oldest retained backup.</p>
 
                             <p>If the <br-option>--set</br-option> is used, the <cmd>expire</cmd> will proceed even if this option is enabled. It will emit a warning if the oldest retained backup contains checksum errors.</p>
                         </text>
