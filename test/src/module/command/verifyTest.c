@@ -2381,8 +2381,10 @@ testRun(void)
             "P00 DETAIL: path '11-2/0000000500000007' does not contain any valid WAL to be processed\n"
             "P00 DETAIL: path '11-2/0000000500000008' does not contain any valid WAL to be processed\n"
             "P00 DETAIL: path '11-2/0000000500000009' does not contain any valid WAL to be processed\n"
-            "P00 DETAIL: expected format 5 but found 1234\n"
-            "P00 DETAIL: expected format 5 but found 1234");
+            "P00 DETAIL: repository format 1234 requires a newer version of pgBackRest\n"
+            "            HINT: pgBackRest " PROJECT_VERSION " supports repository format 5 to 6.\n"
+            "P00 DETAIL: repository format 1234 requires a newer version of pgBackRest\n"
+            "            HINT: pgBackRest " PROJECT_VERSION " supports repository format 5 to 6.");
     }
 
     if (testBegin("cmdBackup() and verifyProcess()"))

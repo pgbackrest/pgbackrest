@@ -78,10 +78,12 @@ testRun(void)
     {
         Info *info = NULL;
 
-        TEST_ASSIGN(info, infoNew(cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))), "infoNew(cipher)");
+        TEST_ASSIGN(
+            info, infoNew(REPOSITORY_FORMAT_DEFAULT, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
+            "infoNew(cipher)");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(info))), "123xyz", "    cipherPass is set");
 
-        TEST_ASSIGN(info, infoNew(NULL), "infoNew(NULL)");
+        TEST_ASSIGN(info, infoNew(REPOSITORY_FORMAT_DEFAULT, NULL), "infoNew(NULL)");
         TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(info)), cipherTypeNone, "    cipher spec is none");
     }
 
@@ -98,8 +100,22 @@ testRun(void)
 
         TEST_ERROR(
             infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
-            FormatError, "expected format 5 but found 4");
+            FormatError,
+            "repository format 4 is no longer supported by pgBackRest\n"
+            "HINT: pgBackRest " PROJECT_VERSION " supports repository format 5 to 6.");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
+
+        // Format newer than supported
+        // -------------------------------------------------------------------------------------------------------------------------
+        contentLoad = BUFSTRDEF(
+            "[backrest]\n"
+            "backrest-format=7\n");
+
+        TEST_ERROR(
+            infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
+            FormatError,
+            "repository format 7 requires a newer version of pgBackRest\n"
+            "HINT: pgBackRest " PROJECT_VERSION " supports repository format 5 to 6.");
 
         // Checksum not found
         // -------------------------------------------------------------------------------------------------------------------------
@@ -124,6 +140,20 @@ testRun(void)
         TEST_ERROR(
             infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
             ChecksumError, "invalid checksum, actual 'fe989a75dcf7a0261e57d210707c0db741462763' but expected 'BOGUS'");
+        TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
+
+        // Format not found. The checksum must be valid since it is verified before the format is checked.
+        // -------------------------------------------------------------------------------------------------------------------------
+        contentLoad = BUFSTRDEF(
+            "[backrest]\n"
+            "backrest-checksum=\"be4f04bf9a8346d387bb254c48aeee2cbb5d46d0\"\n"
+            "backrest-version=\"2.17\"\n");
+
+        TEST_ERROR(
+            infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
+            FormatError,
+            "repository format not found\n"
+            "HINT: is this a valid pgBackRest info file?");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
 
         // Crypto expected
@@ -181,6 +211,35 @@ testRun(void)
 
         TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNewZ("1")), "info save");
         TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
+        TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_DEFAULT, "    check format");
+
+        // The format is read from the file rather than assumed, and written back out as read
+        // -------------------------------------------------------------------------------------------------------------------------
+        contentLoad = harnessInfoChecksumFormat(
+            REPOSITORY_FORMAT_6,
+            STRDEF(
+                "[c]\n"
+                "key=1\n"
+                "\n"
+                "[d]\n"
+                "key=1\n"));
+
+        callbackContent = strNew();
+
+        TEST_ASSIGN(
+            info, infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
+            "info format 6");
+        TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_6, "    check format");
+
+        contentSave = bufNew(0);
+
+        TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNewZ("1")), "info save");
+        TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "    check save preserves format");
+
+        // Set the format
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(infoFormatSet(info, REPOSITORY_FORMAT_5), "set format");
+        TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_5, "    check format");
 
         // File with content and cipher
         // -------------------------------------------------------------------------------------------------------------------------

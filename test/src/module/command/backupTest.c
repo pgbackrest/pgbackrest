@@ -13,6 +13,7 @@ Test Backup Command
 #include "harness/backup.h"
 #include "harness/blockIncr.h"
 #include "harness/config.h"
+#include "harness/info.h"
 #include "harness/manifest.h"
 #include "harness/pack.h"
 #include "harness/postgres.h"
@@ -1518,7 +1519,10 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_96, HRN_PG_SYSTEMID_96, hrnPgCatalogVersion(PG_VERSION_96), NULL)), "backup init");
+            backupInit(
+                infoBackupNew(
+                    PG_VERSION_96, HRN_PG_SYSTEMID_96, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL)),
+            "backup init");
 
         TEST_RESULT_LOG(
             "P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary");
@@ -1538,13 +1542,17 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_11, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_11), NULL)),
+            backupInit(
+                infoBackupNew(
+                    PG_VERSION_11, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_11), REPOSITORY_FORMAT_DEFAULT, NULL)),
             BackupMismatchError,
             "PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match stanza version 11, system-id"
             " " HRN_PG_SYSTEMID_11_Z "\n"
             "HINT: is this the correct stanza?");
         TEST_ERROR(
-            backupInit(infoBackupNew(PG_VERSION_10, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_10), NULL)),
+            backupInit(
+                infoBackupNew(
+                    PG_VERSION_10, HRN_PG_SYSTEMID_11, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT, NULL)),
             BackupMismatchError,
             "PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match stanza version 10, system-id"
             " " HRN_PG_SYSTEMID_11_Z "\n"
@@ -1581,7 +1589,10 @@ testRun(void)
 
         TEST_RESULT_VOID(
             dbFree(
-                backupInit(infoBackupNew(PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), NULL))->dbPrimary),
+                backupInit(
+                    infoBackupNew(
+                        PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT,
+                        NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
@@ -1608,7 +1619,10 @@ testRun(void)
 
         TEST_RESULT_VOID(
             dbFree(
-                backupInit(infoBackupNew(PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), NULL))->dbPrimary),
+                backupInit(
+                    infoBackupNew(
+                        PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT,
+                        NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
 
@@ -1621,7 +1635,10 @@ testRun(void)
 
         TEST_RESULT_VOID(
             dbFree(
-                backupInit(infoBackupNew(PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), NULL))->dbPrimary),
+                backupInit(
+                    infoBackupNew(
+                        PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT,
+                        NULL))->dbPrimary),
             "backup init");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptChecksumPage), false, "check checksum-page");
     }
@@ -1669,12 +1686,34 @@ testRun(void)
             HRN_PQ_SCRIPT_TIME_QUERY(1, 1575392589999));
 
         BackupData *backupData = backupInit(
-            infoBackupNew(PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), NULL));
+            infoBackupNew(PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT, NULL));
 
         TEST_RESULT_INT(backupTime(backupData, true), 1575392588, "multiple tries for sleep");
         TEST_ERROR(backupTime(backupData, true), KernelError, "PostgreSQL clock has not advanced to the next second after 3 tries");
 
         dbFree(backupData->dbPrimary);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info files that do not agree on repository format");
+
+        // Migrate archive.info only, which is the state an upgrade interrupted between the two saves leaves behind
+        InfoArchive *const infoArchive = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
+        infoArchiveFormatSet(infoArchive, REPOSITORY_FORMAT_6);
+        infoArchiveSaveFile(infoArchive, storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
+
+        HRN_PQ_SCRIPT_SET(
+            // Connect to primary
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", false, NULL, NULL));
+
+        TEST_ERROR(
+            backupInit(
+                infoBackupNew(
+                    PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT, NULL)),
+            FileInvalidError,
+            "backup info file and archive info file are at different repository formats\n"
+            "archive: format = 6\n"
+            "backup : format = 5\n"
+            "HINT: run stanza-upgrade with --repo1-format=6 to complete an interrupted upgrade.");
     }
 
     // *****************************************************************************************************************************
@@ -1724,6 +1763,7 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
+            manifest->pub.info = infoNew(REPOSITORY_FORMAT_DEFAULT, NULL);
             manifest->pub.data.backupType = backupTypeFull;
             manifest->pub.data.backrestVersion = strNewZ("BOGUS");
         }
@@ -1745,7 +1785,7 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifestResume = manifestNewInternal();
-            manifestResume->pub.info = infoNew(NULL);
+            manifestResume->pub.info = infoNew(REPOSITORY_FORMAT_DEFAULT, NULL);
             manifestResume->pub.data.backupType = backupTypeFull;
             manifestResume->pub.data.backupLabel = strNewZ("20191003-105320F");
             manifestResume->pub.data.backupTimestampStart = 1482182860;
@@ -1772,6 +1812,27 @@ testRun(void)
         TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
 
         manifest->pub.data.backrestVersion = STRDEF(PROJECT_VERSION);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cannot resume when repository format has changed");
+
+        infoFormatSet(manifestResume->pub.info, REPOSITORY_FORMAT_6);
+
+        manifestSave(
+            manifestResume,
+            storageWriteIo(
+                storageNewWriteP(
+                    storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
+
+        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20191003-105320F' cannot be resumed:"
+            " new repository format 5 does not match resumable repository format 6");
+
+        TEST_STORAGE_LIST_EMPTY(storageRepo(), STORAGE_REPO_BACKUP, .comment = "check backup path removed");
+
+        infoFormatSet(manifestResume->pub.info, REPOSITORY_FORMAT_DEFAULT);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when backup labels do not match (resumable is null)");
@@ -2155,6 +2216,30 @@ testRun(void)
             strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1"))), backupCount + 1,
             "new backup repo2");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("diff changed to full when no prior backup is at the repository format");
+
+        // Set log level to warn so only the conversion is logged
+        harnessLogLevelSet(logLevelWarn);
+
+        // Upgrade the format of the repo, which leaves every backup in it at the prior format
+        InfoBackup *infoBackup = infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
+        infoBackupFormatSet(infoBackup, REPOSITORY_FORMAT_6);
+        infoBackupSaveFile(infoBackup, storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
+
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR3");
+
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+        TEST_RESULT_LOG("P00   WARN: no prior backup exists, diff backup has been changed to full");
+
+        // The new full backup adopts the upgraded format
+        infoBackup = infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
+
+        TEST_RESULT_UINT(
+            infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backrestFormat, REPOSITORY_FORMAT_6,
+            "new backup at upgraded format");
+
         // Cleanup
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
         harnessLogLevelReset();
@@ -2215,8 +2300,8 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), backupTimeStart, true, false, false, false, NULL,
-                NULL, NULL);
+                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), REPOSITORY_FORMAT_DEFAULT, backupTimeStart, true,
+                false, false, false, NULL, NULL, NULL);
 
             manifestResume->pub.data.backupType = backupTypeFull;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
@@ -2295,8 +2380,8 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), backupTimeStart, true, false, false, false, NULL,
-                NULL, NULL);
+                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), REPOSITORY_FORMAT_DEFAULT, backupTimeStart, true,
+                false, false, false, NULL, NULL, NULL);
 
             manifestResume->pub.data.backupType = backupTypeFull;
             manifestResume->pub.data.backupOptionCompressType = compressTypeGz;
@@ -2457,8 +2542,8 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), backupTimeStart, true, false, false, false, NULL,
-                NULL, NULL);
+                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), REPOSITORY_FORMAT_DEFAULT, backupTimeStart, true,
+                false, false, false, NULL, NULL, NULL);
 
             manifestResume->pub.data.backupOptionCompressType = compressTypeGz;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart - 100000);
@@ -2959,16 +3044,19 @@ testRun(void)
             HRN_STORAGE_PATH_REMOVE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_14)));
             HRN_STORAGE_PATH_CREATE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_11)), .noParentCreate = true);
 
-            // Upgrade stanza
+            // Upgrade stanza to format 6
             StringList *argList = strLstNew();
             hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRawZ(argList, cfgOptRepoFormat, "6");
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawBool(argList, cfgOptOnline, false);
             HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
             cmdStanzaUpgrade();
-            TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'test1' on repo1");
+            TEST_RESULT_LOG(
+                "P00   INFO: stanza-upgrade for stanza 'test1' on repo1\n"
+                "P00   INFO: upgrade repository format from 5 to 6");
 
             // Load options
             argList = strLstNew();
@@ -2977,7 +3065,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawBool(argList, cfgOptRepoSymlink, false);
-            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            // Do not specify type=full since the update to repo format 6 should force a full upgrade
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "1");
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
@@ -3059,6 +3147,7 @@ testRun(void)
 #pragma GCC diagnostic pop
 
             TEST_RESULT_LOG(
+                "P00   WARN: no prior backup exists, incr backup has been changed to full\n"
                 "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DB5DE000000000, lsn = 5db5de0/0\n"
                 "P00   INFO: check archive for segment 0000000105DB5DE000000000\n"

@@ -23,9 +23,10 @@ This prevents churn in headers and checksums in the unit tests. We purposefully 
 here as a cross-check of that code.
 ***********************************************************************************************************************************/
 Buffer *
-harnessInfoChecksum(const String *info)
+harnessInfoChecksumFormat(const unsigned int format, const String *info)
 {
     FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(UINT, format);
         FUNCTION_HARNESS_PARAM(STRING, info);
     FUNCTION_HARNESS_END();
 
@@ -42,7 +43,7 @@ harnessInfoChecksum(const String *info)
         result = bufNew(strSize(info) + 256);
 
         bufCat(result, BUFSTRDEF("[backrest]\nbackrest-format="));
-        bufCat(result, BUFSTR(jsonFromVar(VARUINT(REPOSITORY_FORMAT))));
+        bufCat(result, BUFSTR(jsonFromVar(VARUINT(format))));
         bufCat(result, BUFSTRDEF("\nbackrest-version="));
         bufCat(result, BUFSTR(jsonFromVar(VARSTRDEF(PROJECT_VERSION))));
         bufCat(result, BUFSTRDEF("\n\n"));
@@ -101,6 +102,18 @@ harnessInfoChecksumZ(const char *info)
     ASSERT(info != NULL);
 
     FUNCTION_HARNESS_RETURN(BUFFER, harnessInfoChecksum(STR(info)));
+}
+
+Buffer *
+harnessInfoChecksum(const String *const info)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRING, info);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(info != NULL);
+
+    FUNCTION_HARNESS_RETURN(BUFFER, harnessInfoChecksumFormat(REPOSITORY_FORMAT_DEFAULT, info));
 }
 
 /***********************************************************************************************************************************

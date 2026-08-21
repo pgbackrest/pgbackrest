@@ -213,9 +213,9 @@ Constructors
 ***********************************************************************************************************************************/
 // Build a new manifest for a PostgreSQL data directory
 FN_EXTERN Manifest *manifestNewBuild(
-    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, time_t timestampStart, bool online,
-    bool checksumPage, bool bundle, bool blockIncr, const ManifestBlockIncrMap *blockIncrMap, const StringList *excludeList,
-    const Pack *tablespaceList);
+    const Storage *storagePg, unsigned int pgVersion, unsigned int pgCatalogVersion, unsigned int format, time_t timestampStart,
+    bool online, bool checksumPage, bool bundle, bool blockIncr, const ManifestBlockIncrMap *blockIncrMap,
+    const StringList *excludeList, const Pack *tablespaceList);
 
 // Load a manifest from IO
 FN_EXTERN Manifest *manifestNewLoad(IoRead *read, const CipherSpec *cipherSpec);
@@ -235,6 +235,13 @@ typedef struct ManifestPub
     List *targetList;                                               // List of targets
     StringList *referenceList;                                      // List of file references
 } ManifestPub;
+
+// Repository format
+FN_INLINE_ALWAYS unsigned int
+manifestFormat(const Manifest *const this)
+{
+    return infoFormat(THIS_PUB(Manifest)->info);
+}
 
 // Get cipher spec for the files this manifest describes, set the pass they are encrypted with
 FN_INLINE_ALWAYS const CipherSpec *

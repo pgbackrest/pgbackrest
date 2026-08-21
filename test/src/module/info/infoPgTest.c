@@ -36,13 +36,14 @@ testRun(void)
     {
         InfoPg *infoPg = NULL;
 
-        TEST_ASSIGN(infoPg, infoPgNew(infoPgBackup, NULL), "infoPgNew(cipherTypeNone, NULL)");
+        TEST_ASSIGN(infoPg, infoPgNew(infoPgBackup, REPOSITORY_FORMAT_DEFAULT, NULL), "infoPgNew(cipherTypeNone, NULL)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
         TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(infoPgInfo(infoPg))), cipherTypeNone, "  cipher spec none");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
 
         TEST_ASSIGN(
-            infoPg, infoPgNew(infoPgArchive, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
+            infoPg,
+            infoPgNew(infoPgArchive, REPOSITORY_FORMAT_DEFAULT, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
             "infoPgNew(cipherTypeAes256Cbc, 123xyz)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(infoPgInfo(infoPg)))), "123xyz", "  cipherPass set");
@@ -52,7 +53,8 @@ testRun(void)
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(infoPgArchive, NULL), PG_VERSION_18, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_18)),
+                infoPgNew(infoPgArchive, REPOSITORY_FORMAT_DEFAULT, NULL), PG_VERSION_18, 6569239123849665679,
+                hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgArchive");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
@@ -78,8 +80,8 @@ testRun(void)
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(infoPgBackup, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))), PG_VERSION_18,
-                6569239123849665679, hrnPgCatalogVersion(PG_VERSION_18)),
+                infoPgNew(infoPgBackup, REPOSITORY_FORMAT_DEFAULT, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
+                PG_VERSION_18, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgBackup");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");

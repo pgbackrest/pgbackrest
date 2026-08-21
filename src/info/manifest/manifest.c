@@ -76,14 +76,15 @@ manifestNewInternal(void)
 
 FN_EXTERN Manifest *
 manifestNewBuild(
-    const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const time_t timestampStart,
-    const bool online, const bool checksumPage, const bool bundle, const bool blockIncr, const ManifestBlockIncrMap *blockIncrMap,
-    const StringList *const excludeList, const Pack *const tablespaceList)
+    const Storage *const storagePg, const unsigned int pgVersion, const unsigned int pgCatalogVersion, const unsigned int format,
+    const time_t timestampStart, const bool online, const bool checksumPage, const bool bundle, const bool blockIncr,
+    const ManifestBlockIncrMap *blockIncrMap, const StringList *const excludeList, const Pack *const tablespaceList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storagePg);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT, pgCatalogVersion);
+        FUNCTION_LOG_PARAM(UINT, format);
         FUNCTION_LOG_PARAM(TIME, timestampStart);
         FUNCTION_LOG_PARAM(BOOL, online);
         FUNCTION_LOG_PARAM(BOOL, checksumPage);
@@ -102,7 +103,7 @@ manifestNewBuild(
     OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         this = manifestNewInternal();
-        this->pub.info = infoNew(NULL);
+        this->pub.info = infoNew(format, NULL);
         this->pub.data.backrestVersion = strNewZ(PROJECT_VERSION);
         this->pub.data.pgVersion = pgVersion;
         this->pub.data.pgCatalogVersion = pgCatalogVersion;

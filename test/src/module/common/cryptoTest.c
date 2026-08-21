@@ -80,7 +80,7 @@ testRun(void)
 
         // Initialization of object
         // -------------------------------------------------------------------------------------------------------------------------
-        // Build from a duplicate to show the copy carries the type and pass of the original
+        // Build from a duplicate to show the copy contains the type and pass of the original
         TEST_RESULT_UINT(cipherSpecType(cipherSpecDup(cipherSpecNewNone())), cipherTypeNone, "dup of none");
 
         const CipherSpec *const cipherSpec = cipherSpecDup(cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF(TEST_PASS)));
@@ -88,7 +88,7 @@ testRun(void)
         TEST_RESULT_UINT(cipherSpecType(cipherSpec), cipherTypeAes256Cbc, "dup type");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpec)), TEST_PASS, "dup pass");
 
-        // A pack carries nothing but the type when there is no cipher
+        // A pack contains nothing but the type when there is no cipher
         PackWrite *packWrite = pckWriteNewP();
 
         cipherSpecPack(packWrite, cipherSpecNewNone());
@@ -97,7 +97,7 @@ testRun(void)
         TEST_RESULT_UINT(
             cipherSpecType(cipherSpecNewPack(pckReadNew(pckWriteResult(packWrite)))), cipherTypeNone, "unpack none");
 
-        // Else it carries the type and pass
+        // Else it contains the type and pass
         packWrite = pckWriteNewP();
 
         cipherSpecPack(packWrite, cipherSpecNew(cipherTypeAes256Cbc, testPass));

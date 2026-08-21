@@ -1952,6 +1952,8 @@ testRun(void)
         TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 2, "pg2 is index 2");
         TEST_RESULT_Z(cfgOptionIdxName(cfgOptPgPath, 0), "pg1-path", "pg1-path option name");
         TEST_RESULT_Z(cfgOptionIdxName(cfgOptPgPath, 1), "pg2-path", "pg2-path option name");
+        TEST_RESULT_Z(
+            cfgOptionIdxName(cfgOptRepoFormat, 1), "repo2-format", "repo2-format option name when not valid for command");
         TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpPg, 1), "pg2", "pg2 group display");
         TEST_RESULT_Z(cfgOptionGroupName(cfgOptGrpPg, 0), "pg1", "pg1 group display (cached)");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/db", "default pg-path");

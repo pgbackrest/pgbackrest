@@ -39,7 +39,7 @@ typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *i
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN Info *infoNew(const CipherSpec *cipherSpecSub);
+FN_EXTERN Info *infoNew(unsigned int format, const CipherSpec *cipherSpecSub);
 
 // Create new object and load contents from a file. The cipher spec the file is read with supplies the type for the cipher spec
 // built from the pass stored in it.
@@ -51,9 +51,19 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct InfoPub
 {
+    unsigned int format;                                            // Repository format the file was written with
     const String *backrestVersion;                                  // pgBackRest version
     const CipherSpec *cipherSpec;                                   // Cipher spec for dependent files
 } InfoPub;
+
+// Repository format
+FN_INLINE_ALWAYS unsigned int
+infoFormat(const Info *const this)
+{
+    return THIS_PUB(Info)->format;
+}
+
+FN_EXTERN void infoFormatSet(Info *this, unsigned int format);
 
 // Cipher spec for the files that depend on this one, e.g. the manifest for backup.info. Never NULL, so it can be handed on
 // without a check, and none when there is no pass.

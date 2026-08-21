@@ -57,11 +57,13 @@ infoArchiveNewInternal(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoArchive *
-infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const CipherSpec *const cipherSpecSub)
+infoArchiveNew(
+    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int format, const CipherSpec *const cipherSpecSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
+        FUNCTION_LOG_PARAM(UINT, format);
         FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecSub);
     FUNCTION_LOG_END();
 
@@ -74,7 +76,7 @@ infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const Ci
         this = infoArchiveNewInternal();
 
         // Initialize the pg data
-        this->pub.infoPg = infoPgNew(infoPgArchive, cipherSpecSub);
+        this->pub.infoPg = infoPgNew(infoPgArchive, format, cipherSpecSub);
         infoArchivePgSet(this, pgVersion, pgSystemId);
     }
     OBJ_NEW_END();
@@ -200,6 +202,22 @@ infoArchivePgSet(InfoArchive *const this, const unsigned int pgVersion, const ui
     this->pub.infoPg = infoPgSet(infoArchivePg(this), pgVersion, pgSystemId, 0);
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+infoArchiveFormatSet(InfoArchive *const this, const unsigned int format)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_LOG_PARAM(UINT, format);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    infoFormatSet(infoPgInfo(infoArchivePg(this)), format);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

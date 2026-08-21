@@ -2,7 +2,7 @@
 Cipher Spec
 
 Everything needed to encrypt or decrypt, kept together so that adding to it does not mean changing every function and protocol
-message that carries it.
+message that contains it.
 
 The passphrase (pass) contains the bytes the key is derived from. There is no pass when the type is none, and the pass is never
 logged.

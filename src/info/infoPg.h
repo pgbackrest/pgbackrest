@@ -47,7 +47,7 @@ typedef enum
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN InfoPg *infoPgNew(InfoPgType type, const CipherSpec *cipherSpecSub);
+FN_EXTERN InfoPg *infoPgNew(InfoPgType type, unsigned int format, const CipherSpec *cipherSpecSub);
 
 // Create new object and load contents from a file
 FN_EXTERN InfoPg *infoPgNewLoad(
@@ -90,6 +90,13 @@ FN_EXTERN InfoPgData infoPgDataCurrent(const InfoPg *this);
 
 // Current history index
 FN_EXTERN unsigned int infoPgDataCurrentId(const InfoPg *this);
+
+// Repository format
+FN_INLINE_ALWAYS unsigned int
+infoPgFormat(const InfoPg *const this)
+{
+    return infoFormat(infoPgInfo(this));
+}
 
 // Total PostgreSQL data in the history
 FN_INLINE_ALWAYS unsigned int

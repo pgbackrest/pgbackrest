@@ -59,6 +59,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("443"),                                                                                             // val/str
     PARSE_RULE_STRPUB("4MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("4PiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("5"),                                                                                               // val/str
     PARSE_RULE_STRPUB("512KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("5432"),                                                                                            // val/str
     PARSE_RULE_STRPUB("5MiB"),                                                                                            // val/str
@@ -197,6 +198,7 @@ typedef enum
     parseRuleValStrQT_443_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_4MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_4PiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_5_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_512KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_5432_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_5MiB_QT,                                                                                       // val/str/enum
@@ -301,6 +303,7 @@ static const int parseRuleValueInt[] =
     1,                                                                                                                    // val/int
     2,                                                                                                                    // val/int
     3,                                                                                                                    // val/int
+    5,                                                                                                                    // val/int
     6,                                                                                                                    // val/int
     9,                                                                                                                    // val/int
     12,                                                                                                                   // val/int
@@ -330,6 +333,7 @@ static const uint8_t parseRuleValueIntStrMap[] =
     parseRuleValStrQT_1_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_2_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_3_QT,                                                                                        // val/int/strmap
+    parseRuleValStrQT_5_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_6_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_9_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_12_QT,                                                                                       // val/int/strmap
@@ -359,6 +363,7 @@ typedef enum
     parseRuleValInt1,                                                                                                // val/int/enum
     parseRuleValInt2,                                                                                                // val/int/enum
     parseRuleValInt3,                                                                                                // val/int/enum
+    parseRuleValInt5,                                                                                                // val/int/enum
     parseRuleValInt6,                                                                                                // val/int/enum
     parseRuleValInt9,                                                                                                // val/int/enum
     parseRuleValInt12,                                                                                               // val/int/enum
@@ -6013,6 +6018,38 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                               // opt/repo-cipher-type
         ),                                                                                                   // opt/repo-cipher-type
     ),                                                                                                       // opt/repo-cipher-type
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                             // opt/repo-format
+    (                                                                                                             // opt/repo-format
+        PARSE_RULE_OPTION_NAME("repo-format"),                                                                    // opt/repo-format
+        PARSE_RULE_OPTION_TYPE(Integer),                                                                          // opt/repo-format
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                         // opt/repo-format
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                   // opt/repo-format
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                         // opt/repo-format
+                                                                                                                  // opt/repo-format
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                            // opt/repo-format
+        (                                                                                                         // opt/repo-format
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/repo-format
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/repo-format
+        ),                                                                                                        // opt/repo-format
+                                                                                                                  // opt/repo-format
+        PARSE_RULE_OPTIONAL                                                                                       // opt/repo-format
+        (                                                                                                         // opt/repo-format
+            PARSE_RULE_OPTIONAL_GROUP                                                                             // opt/repo-format
+            (                                                                                                     // opt/repo-format
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                    // opt/repo-format
+                (                                                                                                 // opt/repo-format
+                    PARSE_RULE_VAL_INT(5),                                                                        // opt/repo-format
+                    PARSE_RULE_VAL_INT(6),                                                                        // opt/repo-format
+                ),                                                                                                // opt/repo-format
+                                                                                                                  // opt/repo-format
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                       // opt/repo-format
+                (                                                                                                 // opt/repo-format
+                    PARSE_RULE_VAL_INT(5),                                                                        // opt/repo-format
+                ),                                                                                                // opt/repo-format
+            ),                                                                                                    // opt/repo-format
+        ),                                                                                                        // opt/repo-format
+    ),                                                                                                            // opt/repo-format
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                         // opt/repo-gcs-bucket
     (                                                                                                         // opt/repo-gcs-bucket
@@ -12070,6 +12107,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoBundleLimit,                                                                                      // opt-resolve-order
     cfgOptRepoBundleSize,                                                                                       // opt-resolve-order
     cfgOptRepoCipherType,                                                                                       // opt-resolve-order
+    cfgOptRepoFormat,                                                                                           // opt-resolve-order
     cfgOptRepoGcsUserProject,                                                                                   // opt-resolve-order
     cfgOptRepoHardlink,                                                                                         // opt-resolve-order
     cfgOptRepoLocal,                                                                                            // opt-resolve-order

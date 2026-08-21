@@ -117,6 +117,9 @@ testRun(void)
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 3, "6");
+        // Request a format for repo1 as well, where the stanza already exists
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 1, "6");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 4, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "87654321");
@@ -150,7 +153,8 @@ testRun(void)
             bufEq(cipherSpecPass(infoArchiveCipherSpec(infoArchive)), cipherSpecPass(infoBackupCipherSpec(infoBackup))), false,
             "cipher sub different for archive and backup");
 
-        // Confirm non-encrypted repo created successfully
+        // Confirm non-encrypted repo created successfully. This repo was created with an explicit format so also confirm that the
+        // requested format was stored rather than the default.
         TEST_ASSIGN(
             infoArchive,
             infoArchiveLoadFile(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone()),
@@ -158,6 +162,7 @@ testRun(void)
         TEST_RESULT_UINT(
             cipherSpecType(infoArchiveCipherSpec(infoArchive)), cipherTypeNone,
             "archive cipher sub not set on non-encrypted repo");
+        TEST_RESULT_UINT(infoArchiveFormat(infoArchive), REPOSITORY_FORMAT_6, "archive info at requested format");
 
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFile(storageRepoIdx(2), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
@@ -165,6 +170,16 @@ testRun(void)
         TEST_RESULT_UINT(
             cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeNone,
             "backup cipher sub not set on non-encrypted repo");
+        TEST_RESULT_UINT(infoBackupFormat(infoBackup), REPOSITORY_FORMAT_6, "backup info at requested format");
+
+        // The stanza on repo1 already existed, so the format requested for it was ignored. A stanza is migrated with
+        // stanza-upgrade rather than with this command, which sets the format only for a stanza it creates.
+        TEST_RESULT_UINT(infoArchiveFormat(infoArchive) != REPOSITORY_FORMAT_DEFAULT, true, "requested format is not the default");
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone()),
+            "load archive info from repo1");
+        TEST_RESULT_UINT(
+            infoArchiveFormat(infoArchive), REPOSITORY_FORMAT_DEFAULT, "archive info on existing stanza still at default format");
 
         // Confirm other repo encrypted with different password
         TEST_ASSIGN(
@@ -990,6 +1005,214 @@ testRun(void)
                 storageGetP(storageNewReadP(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR)),
                 storageGetP(storageNewReadP(storageHrn, STRDEF("test.info")))),
             true, "test and stanza backup info files are equal");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-upgrade - repository format");
+
+        // The format is left alone when repo-format is not specified, since the option default would otherwise downgrade a
+        // repository that has already been upgraded
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format not requested");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: stanza 'db' on repo1 is already up to date");
+
+        TEST_RESULT_UINT(
+            infoArchiveFormat(infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone())),
+            REPOSITORY_FORMAT_DEFAULT, "archive info still at default format");
+
+        // A format in a configuration file is warned about and ignored, which is why the option is command line only. A format
+        // left in the configuration would otherwise migrate a stanza as a side effect of an upgrade run for another reason.
+        HRN_STORAGE_PUT_Z(
+            storageTest, "repo-format.conf",
+            "[global]\n"
+            "repo1-format=6\n");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/repo-format.conf");
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_RESULT_LOG("P00   WARN: configuration file contains command-line only option 'repo1-format'");
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format in configuration file");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: stanza 'db' on repo1 is already up to date");
+
+        TEST_RESULT_UINT(
+            infoArchiveFormat(infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone())),
+            REPOSITORY_FORMAT_DEFAULT, "archive info still at default format");
+
+        // Upgrade the format
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        hrnCfgArgRawZ(argList, cfgOptRepoFormat, "6");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format 6");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: upgrade repository format from 5 to 6");
+
+        TEST_RESULT_UINT(
+            infoArchiveFormat(infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone())),
+            REPOSITORY_FORMAT_6, "archive info at format 6");
+        TEST_RESULT_UINT(
+            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone())),
+            REPOSITORY_FORMAT_6, "backup info at format 6");
+
+        // Requesting the format the repository is already at does nothing
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format 6 again");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: stanza 'db' on repo1 is already up to date");
+
+        // The save of archive.info and backup.info is not atomic, so an upgrade interrupted between the two leaves the info files
+        // at different formats. Running the upgrade again brings the lagging file forward.
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
+            "[db]\n"
+            "db-catalog-version=202211111\n"
+            "db-control-version=1300\n"
+            "db-id=2\n"
+            "db-system-id=" HRN_PG_SYSTEMID_15_Z "\n"
+            "db-version=\"15\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"9.6\"}\n"
+            "2={\"db-catalog-version\":202211111,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
+            ",\"db-version\":\"15\"}\n",
+            .comment = "put backup info at prior format to simulate an interrupted upgrade");
+
+        TEST_RESULT_UINT(
+            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone())),
+            REPOSITORY_FORMAT_DEFAULT, "backup info back at default format");
+
+        // An upgrade that does not request a format brings the lagging file forward since the higher of the two formats is the
+        // only target that does not downgrade a file
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format mismatch between info files");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   WARN: repository format mismatch from an interrupted stanza-upgrade will be repaired\n"
+            "P00   INFO: upgrade repository format from 5 to 6");
+
+        TEST_RESULT_UINT(
+            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone())),
+            REPOSITORY_FORMAT_6, "backup info brought forward to format 6");
+
+        // The lagging file is normally backup.info since archive.info is saved first, but the format the upgrade reports is the
+        // lower of the two whichever file it is
+        InfoArchive *const infoArchivePrior = infoArchiveLoadFile(
+            storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
+        infoArchiveFormatSet(infoArchivePrior, REPOSITORY_FORMAT_5);
+        infoArchiveSaveFile(infoArchivePrior, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
+
+        // A downgrade is measured against the file that is ahead, so requesting the format the archive info is at does not put
+        // the backup info back to it
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        hrnCfgArgRawZ(argList, cfgOptRepoFormat, "5");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_ERROR(
+            cmdStanzaUpgrade(), FormatError,
+            "unable to downgrade repository format from 6 to 5\n"
+            "HINT: backups and archives already written at format 6 would not be readable by a version that only supports"
+            " format 5.");
+        TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        hrnCfgArgRawZ(argList, cfgOptRepoFormat, "6");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive info behind backup info");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   WARN: repository format mismatch from an interrupted stanza-upgrade will be repaired\n"
+            "P00   INFO: upgrade repository format from 5 to 6");
+
+        TEST_RESULT_UINT(
+            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone())),
+            REPOSITORY_FORMAT_6, "backup info brought forward to format 6");
+        TEST_RESULT_UINT(
+            infoArchiveFormat(infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone())),
+            REPOSITORY_FORMAT_6, "archive info still at format 6");
+
+        // The format cannot be downgraded
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        hrnCfgArgRawZ(argList, cfgOptRepoFormat, "5");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_ERROR(
+            cmdStanzaUpgrade(), FormatError,
+            "unable to downgrade repository format from 6 to 5\n"
+            "HINT: backups and archives already written at format 6 would not be readable by a version that only supports"
+            " format 5.");
+        TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-upgrade - repository format from the environment");
+
+        // Put the repository back to the default format so it can be migrated again. This is done directly since the command
+        // refuses to downgrade.
+        InfoArchive *const infoArchiveReset = infoArchiveLoadFile(
+            storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
+        infoArchiveFormatSet(infoArchiveReset, REPOSITORY_FORMAT_DEFAULT);
+        infoArchiveSaveFile(infoArchiveReset, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
+
+        InfoBackup *const infoBackupReset = infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone());
+        infoBackupFormatSet(infoBackupReset, REPOSITORY_FORMAT_DEFAULT);
+        infoBackupSaveFile(infoBackupReset, storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone());
+
+        // The option cannot be set in a configuration file but it can be set in the environment, where it migrates a stanza
+        // without appearing in the command that ran. That is how the environment works for every option so it is allowed, but the
+        // migration must still happen.
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        hrnCfgEnvKeyRawZ(cfgOptRepoFormat, 1, "6");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format from the environment");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: upgrade repository format from 5 to 6");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoFormat, 1);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-upgrade - every format that can be read can be requested");
+
+        // The allow list for repo-format in build/config.yaml and REPOSITORY_FORMAT_MIN/MAX in version.h are declared separately,
+        // so make sure they match
+        for (unsigned int format = REPOSITORY_FORMAT_MIN; format <= REPOSITORY_FORMAT_MAX; format++)
+        {
+            argList = strLstDup(argListBase);
+            hrnCfgArgKeyRawFmt(argList, cfgOptRepoFormat, 1, "%u", format);
+            HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+            TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptRepoFormat, 0), format, "format allowed");
+        }
+
+        const unsigned int formatUnsupported = REPOSITORY_FORMAT_MAX + 1;
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgKeyRawFmt(argList, cfgOptRepoFormat, 1, "%u", formatUnsupported);
+
+        TEST_ERROR_FMT(
+            hrnCfgLoadP(cfgCmdStanzaUpgrade, argList), OptionInvalidValueError,
+            "'%u' is not allowed for 'repo1-format' option\n"
+            "HINT: allowed values are '5', '6'", formatUnsupported);
     }
 
     // *****************************************************************************************************************************

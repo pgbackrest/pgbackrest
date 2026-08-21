@@ -61,11 +61,18 @@ testRun(void)
 
         // Create the same content by creating a new object
         TEST_ASSIGN(
-            info, infoArchiveNew(PG_VERSION_96, 6569239123849665679, NULL), "infoArchiveNew() - no sub cipher");
+            info, infoArchiveNew(
+                PG_VERSION_96, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, NULL), "infoArchiveNew() - no sub cipher");
         TEST_RESULT_STR_Z(infoArchiveId(info), "9.6-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
         TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(info)), cipherTypeNone, "no cipher sub");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "history set");
+        TEST_RESULT_UINT(infoArchiveFormat(info), REPOSITORY_FORMAT_DEFAULT, "format set");
+
+        // Set the format and put it back so the save below is not affected
+        TEST_RESULT_VOID(infoArchiveFormatSet(info, REPOSITORY_FORMAT_6), "set format");
+        TEST_RESULT_UINT(infoArchiveFormat(info), REPOSITORY_FORMAT_6, "format updated");
+        TEST_RESULT_VOID(infoArchiveFormatSet(info, REPOSITORY_FORMAT_DEFAULT), "reset format");
 
         Buffer *contentCompare = bufNew(0);
 
@@ -79,7 +86,7 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoArchiveNew(
-                PG_VERSION_10, 6569239123849665999,
+                PG_VERSION_10, 6569239123849665999, REPOSITORY_FORMAT_DEFAULT,
                 cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
             "infoArchiveNew() - cipher sub");
 
@@ -158,7 +165,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("save and load archive info file");
 
-        InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_10, 6569239123849665999, NULL);
+        InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_10, 6569239123849665999, REPOSITORY_FORMAT_DEFAULT, NULL);
         TEST_RESULT_VOID(
             infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecNewNone()),
             "save archive info");

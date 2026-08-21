@@ -63,7 +63,8 @@ testRun(void)
         Buffer *contentCompare = bufNew(0);
 
         TEST_ASSIGN(
-            infoBackup, infoBackupNew(PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96), NULL),
+            infoBackup, infoBackupNew(
+                PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL),
             "infoBackupNew() - no cipher sub");
         TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentCompare)), "save backup info from new");
         TEST_RESULT_STR(strNewBuf(contentCompare), strNewBuf(contentSave), "check save");
@@ -72,6 +73,13 @@ testRun(void)
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackup->pub.infoPg, "infoPg set");
         TEST_RESULT_UINT(cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeNone, "cipher sub not set");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 0, "infoBackupDataTotal returns 0");
+        TEST_RESULT_UINT(infoBackupFormat(infoBackup), REPOSITORY_FORMAT_DEFAULT, "format set");
+
+        // Setting the format marks the info as updated so it will be saved
+        TEST_RESULT_BOOL(infoBackup->pub.updated, false, "not updated after load");
+        TEST_RESULT_VOID(infoBackupFormatSet(infoBackup, REPOSITORY_FORMAT_6), "set format");
+        TEST_RESULT_UINT(infoBackupFormat(infoBackup), REPOSITORY_FORMAT_6, "format updated");
+        TEST_RESULT_BOOL(infoBackup->pub.updated, true, "updated after format set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check cipher pass");
@@ -79,7 +87,7 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupNew(
-                PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10),
+                PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT,
                 cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
             "infoBackupNew() - cipher sub");
 
@@ -330,7 +338,7 @@ testRun(void)
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 1, "backup added to current");
         TEST_ASSIGN(backupData, infoBackupData(infoBackup, 0), "get added backup");
         TEST_RESULT_STR_Z(backupData.backupLabel, "20190818-084502F", "backup label set");
-        TEST_RESULT_UINT(backupData.backrestFormat, REPOSITORY_FORMAT, "backrest format");
+        TEST_RESULT_UINT(backupData.backrestFormat, REPOSITORY_FORMAT_DEFAULT, "backrest format");
         TEST_RESULT_STR_Z(backupData.backrestVersion, PROJECT_VERSION, "backuprest version");
         TEST_RESULT_INT(backupData.backupPgId, 1, "pg id");
         TEST_RESULT_STR(backupData.backupArchiveStart, NULL, "archive start NULL");
@@ -440,7 +448,7 @@ testRun(void)
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 2, "backup added to current");
         TEST_ASSIGN(backupData, infoBackupData(infoBackup, 1), "get added backup");
         TEST_RESULT_STR_Z(backupData.backupLabel, "20190818-084502F_20190820-084502I", "backup label set");
-        TEST_RESULT_UINT(backupData.backrestFormat, REPOSITORY_FORMAT, "backrest format");
+        TEST_RESULT_UINT(backupData.backrestFormat, REPOSITORY_FORMAT_DEFAULT, "backrest format");
         TEST_RESULT_STR_Z(backupData.backrestVersion, PROJECT_VERSION, "backuprest version");
         TEST_RESULT_STR_Z(backupData.backupArchiveStart, "000000030000028500000089", "archive start set");
         TEST_RESULT_STR_Z(backupData.backupArchiveStop, "000000030000028500000090", "archive stop set");
@@ -899,7 +907,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("save and load backup info file");
 
-        InfoBackup *infoBackup = infoBackupNew(PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), NULL);
+        InfoBackup *infoBackup = infoBackupNew(
+            PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT, NULL);
         TEST_RESULT_VOID(
             infoBackupSaveFile(
                 infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()), "save backup info");

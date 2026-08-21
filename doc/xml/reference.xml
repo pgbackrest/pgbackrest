@@ -2920,6 +2920,23 @@
 
                         <example>n</example>
                     </option>
+
+                    <option id="repo-format" name="Repository Format">
+                        <summary>Repository format.</summary>
+
+                        <text>
+                            <p>The repository format determines the on-disk format and related features available in the repository. Each info file and manifest records the format it was written with, so a repository may contain more than one format while backups and archives written at an older format expire.</p>
+
+                            <allow-list caption="formats">
+                                <allow-item id="5">Format supported by all versions since <proper>1.00</proper></allow-item>
+                                <allow-item id="6">Adds no features yet and is reserved for features in development</allow-item>
+                            </allow-list>
+
+                            <p>An existing stanza is migrated to a newer format with the <cmd>stanza-upgrade</cmd> command rather than with this command, which sets the format only for a stanza it creates.</p>
+                        </text>
+
+                        <example>6</example>
+                    </option>
                 </option-list>
             </command>
 
@@ -2941,6 +2958,26 @@
                         </text>
 
                         <example>n</example>
+                    </option>
+
+                    <option id="repo-format" name="Repository Format">
+                        <summary>Repository format.</summary>
+
+                        <text>
+                            <p>Migrate the stanza to the specified repository format. Migration applies to new backups and archives only, so backups and archives already in the repository are left at the format they were written with.</p>
+
+                            <p>The first backup after a migration is a full backup even when a differential or incremental backup is requested, since no backup in the repository was written at the new format.</p>
+
+                            <allow-list inherit="repo-format" command="stanza-create"/>
+
+                            <p>Once the info files have been migrated, a version of <backrest/> that does not support the new format is no longer able to read the stanza at all, including the parts of it that are still at the older format. The format cannot be downgraded.</p>
+
+                            <p>This option cannot be set in a configuration file but it can be set in the environment, where it applies to every <cmd>stanza-upgrade</cmd> run until it is removed.</p>
+
+                            <admonition type="caution">Set this option for the run that migrates the stanza. A format left in the environment migrates every stanza that is upgraded from that environment.</admonition>
+                        </text>
+
+                        <example>6</example>
                     </option>
                 </option-list>
             </command>

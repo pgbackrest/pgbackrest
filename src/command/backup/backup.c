@@ -167,6 +167,10 @@ backupInit(const InfoBackup *const infoBackup)
     {
         result->archiveInfo = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMain());
         result->archiveId = infoArchiveId(result->archiveInfo);
+
+        // Error if the info files do not agree with each other. A stanza left half migrated by an interrupted upgrade should be
+        // repaired before more is written into it, and backup is the command that will run against it next.
+        checkStanzaInfo(cfgOptionGroupIdxDefault(cfgOptGrpRepo), infoArchivePg(result->archiveInfo), infoBackupPg(infoBackup));
     }
 
     FUNCTION_LOG_RETURN(BACKUP_DATA, result);
@@ -225,9 +229,10 @@ cmdBackup(void)
         const ManifestBlockIncrMap blockIncrMap = backupBlockIncrMap();
 
         Manifest *const manifest = manifestNewBuild(
-            backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart, cfgOptionBool(cfgOptOnline),
-            cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle), cfgOptionBool(cfgOptRepoBlock), &blockIncrMap,
-            strLstNewVarLst(cfgOptionLst(cfgOptExclude)), backupStartResult.tablespaceList);
+            backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, infoBackupFormat(infoBackup), timestampStart,
+            cfgOptionBool(cfgOptOnline), cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle),
+            cfgOptionBool(cfgOptRepoBlock), &blockIncrMap, strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
+            backupStartResult.tablespaceList);
 
         // Validate the manifest using the copy start time
         manifestBuildValidate(

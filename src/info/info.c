@@ -94,11 +94,14 @@ BUFFER_STRDEF_STATIC(INFO_CHECKSUM_END_BUF, "}}");
 
 /**********************************************************************************************************************************/
 FN_EXTERN Info *
-infoNew(const CipherSpec *const cipherSpecSub)
+infoNew(const unsigned int format, const CipherSpec *const cipherSpecSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, format);
         FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecSub);
     FUNCTION_LOG_END();
+
+    ASSERT(format >= REPOSITORY_FORMAT_MIN && format <= REPOSITORY_FORMAT_MAX);
 
     OBJ_NEW_BEGIN(Info, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -106,6 +109,7 @@ infoNew(const CipherSpec *const cipherSpecSub)
 
         // Cipher used to encrypt/decrypt subsequent dependent files. Value may be NULL.
         infoCipherSpecSet(this, cipherSpecSub);
+        this->pub.format = format;
         this->pub.backrestVersion = STRDEF(PROJECT_VERSION);
     }
     OBJ_NEW_END();
@@ -179,15 +183,33 @@ infoNewLoad(
                         // Process backrest section
                         if (strEqZ(value->section, INFO_SECTION_BACKREST))
                         {
-                            // Validate format
+                            // Validate and store format
                             if (strEqZ(value->key, INFO_KEY_FORMAT))
                             {
-                                if (varUInt64(jsonToVar(value->value)) != REPOSITORY_FORMAT)
+                                const uint64_t format = varUInt64(jsonToVar(value->value));
+
+                                // A format newer than this version can read requires an upgrade. Do not suggest a version since
+                                // this version cannot know which version added the format.
+                                if (format > REPOSITORY_FORMAT_MAX)
                                 {
                                     THROW_FMT(
-                                        FormatError, "expected format %d but found %" PRIu64, REPOSITORY_FORMAT,
-                                        varUInt64(jsonToVar(value->value)));
+                                        FormatError,
+                                        "repository format %" PRIu64 " requires a newer version of " PROJECT_NAME "\n"
+                                        "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format %d to %d.",
+                                        format, REPOSITORY_FORMAT_MIN, REPOSITORY_FORMAT_MAX);
                                 }
+
+                                // A format older than this version can read requires an older version to migrate the repository
+                                if (format < REPOSITORY_FORMAT_MIN)
+                                {
+                                    THROW_FMT(
+                                        FormatError,
+                                        "repository format %" PRIu64 " is no longer supported by " PROJECT_NAME "\n"
+                                        "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format %d to %d.",
+                                        format, REPOSITORY_FORMAT_MIN, REPOSITORY_FORMAT_MAX);
+                                }
+
+                                this->pub.format = (unsigned int)format;
                             }
                             // Store pgBackRest version
                             else if (strEqZ(value->key, INFO_KEY_VERSION))
@@ -241,7 +263,8 @@ infoNewLoad(
 
             INFO_CHECKSUM_END(checksumActualFilter);
 
-            // Verify the checksum
+            // Verify the checksum first so a file that is empty or not an info file at all is reported as a checksum failure
+            // rather than as a missing format
             const String *const checksumActual = strNewEncode(
                 encodingHex, pckReadBinP(pckReadNew(ioFilterResult(checksumActualFilter))));
 
@@ -253,6 +276,11 @@ infoNewLoad(
                     ChecksumError, "invalid checksum, actual '%s' but expected '%s'", strZ(checksumActual),
                     strZ(checksumExpected));
             }
+
+            // The format defines how everything else is read, so a file without one is not an info file this version can use. The
+            // format is zero until the key is found and the value stored, so if we got here then the key was not found.
+            if (infoFormat(this) == 0)
+                THROW(FormatError, "repository format not found\nHINT: is this a valid " PROJECT_NAME " info file?");
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -371,7 +399,7 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
 
         // Add version and format
         callbackFunction(callbackData, STRDEF(INFO_SECTION_BACKREST), &data);
-        infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_FORMAT, jsonFromVar(VARUINT(REPOSITORY_FORMAT)));
+        infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_FORMAT, jsonFromVar(VARUINT(infoFormat(this))));
         infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_VERSION, jsonFromVar(VARSTRDEF(PROJECT_VERSION)));
 
         // Add cipher passphrase if defined
@@ -405,6 +433,22 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+FN_EXTERN void
+infoFormatSet(Info *const this, const unsigned int format)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+        FUNCTION_TEST_PARAM(UINT, format);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(format >= REPOSITORY_FORMAT_MIN && format <= REPOSITORY_FORMAT_MAX);
+
+    this->pub.format = format;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 FN_EXTERN void
 infoCipherSpecSet(Info *const this, const CipherSpec *const cipherSpec)
 {
