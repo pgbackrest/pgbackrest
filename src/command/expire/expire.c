@@ -105,7 +105,7 @@ checkChecksumErrors(
 
     ASSERT(infoBackup != NULL);
 
-    if (infoBackupDataTotal(infoBackup) > 0)
+    if (infoBackupDataTotal(infoBackup) > 0 && (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun)))
     {
         const InfoBackupData *const backupData = infoBackupDataByLabel(infoBackup, backupLabel);
 
