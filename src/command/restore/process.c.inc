@@ -233,7 +233,7 @@ restoreJobResult(
 
                 String *const log = strCatZ(strNew(), "restore");
 
-                if (file.checksumPage && file.checksumPageError)
+                if (file.checksumPage && file.checksumPageError && result == restoreResultCopy)
                 {
                     LOG_WARN_FMT(
                         "invalid page checksum(s) found in file %s", strZ(restoreFilePgPath(manifest, file.name)));
