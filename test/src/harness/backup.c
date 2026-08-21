@@ -243,7 +243,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
                         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilterP(param.walCompressType, 1));
 
                     // Encrypt with the archive passphrase, which is what archive-push writes WAL with
-                    cipherBlockFilterGroupAdd(
+                    cipherBlockFilterGroupAddP(
                         ioWriteFilterGroup(storageWriteIo(write)), cipherModeEncrypt, infoArchiveCipherSpec(infoArchive));
 
                     storagePutP(write, walBuffer);

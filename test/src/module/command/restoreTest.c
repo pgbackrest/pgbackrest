@@ -311,7 +311,8 @@ testRun(void)
         TEST_ERROR(
             restoreFile(
                 strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, compressTypeGz,
-                0, false, false, false, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("badpass")), NULL, fileList),
+                0, false, false, false, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("badpass"), .digest = hashTypeSha1), NULL,
+                fileList),
             ChecksumError,
             "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
             " 'ffffffffffffffffffffffffffffffffffffffff'");
@@ -2309,7 +2310,7 @@ testRun(void)
         Manifest *manifestEncrypted = manifestLoadFile(
             storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE),
             cipherSpecNewNone());
-        manifestCipherSpecSet(manifestEncrypted, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE)));
+        manifestCipherSpecSet(manifestEncrypted, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE)));
 
         // Open file for write
         IoWrite *write = storageWriteIo(
@@ -2319,9 +2320,10 @@ testRun(void)
 
         // Add encryption filter and save the encrypted manifest
         #define TEST_CIPHER_PASS_MANIFEST "backpass"
-        cipherBlockFilterGroupAdd(
+        cipherBlockFilterGroupAddP(
             ioWriteFilterGroup(write), cipherModeEncrypt,
-            cipherSpecNew(cfgOptionIdxStrId(cfgOptRepoCipherType, 1), BUFSTRDEF(TEST_CIPHER_PASS_MANIFEST)));
+            cipherSpecNewP(
+                cfgOptionIdxStrId(cfgOptRepoCipherType, 1), BUFSTRDEF(TEST_CIPHER_PASS_MANIFEST), .digest = hashTypeSha1));
         manifestSave(manifestEncrypted, write);
 
         // Write backup.info to the encrypted repo
@@ -2332,10 +2334,10 @@ testRun(void)
         // Write archive.info to the encrypted repo
         InfoArchive *infoArchive = infoArchiveNew(
             PG_VERSION_11, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT,
-            cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE)));
+            cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE)));
         infoArchiveSaveFile(
             infoArchive, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR,
-            cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)));
+            cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)));
 
         TEST_RESULT_VOID(hrnCmdRestore(), "successful restore");
 

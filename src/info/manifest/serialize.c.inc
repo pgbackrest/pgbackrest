@@ -1039,7 +1039,6 @@ manifestLoadFileCallback(void *const data, const unsigned int try)
 
             // Attempt to load the file
             IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-            cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, loadData->cipherSpec);
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {

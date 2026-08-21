@@ -381,8 +381,8 @@ testRun(void)
         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
-        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
-        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
         ioFilterGroupAdd(filterGroup, compressFilterP(compressTypeGz, 3));
         ioFilterGroupAdd(filterGroup, decompressFilterP(compressTypeGz));
 

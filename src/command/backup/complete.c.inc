@@ -25,7 +25,7 @@ backupManifestSaveCopy(Manifest *const manifest, const CipherSpec *const cipherS
                         STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestData(manifest)->backupLabel))));
 
             // Add encryption filter if required
-            cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpecManifest);
+            cipherBlockFilterGroupAddP(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpecManifest);
 
             // Save file
             manifestSave(manifest, write);
@@ -101,7 +101,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                         IoFilterGroup *const filterGroup = ioReadFilterGroup(storageReadIo(read));
 
                         // Decrypt with archive key if encrypted
-                        cipherBlockFilterGroupAdd(
+                        cipherBlockFilterGroupAddP(
                             filterGroup, cipherModeDecrypt, infoArchiveCipherSpec(backupData->archiveInfo));
 
                         // Compress/decompress if archive and backup do not have the same compression settings
@@ -118,7 +118,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
                         }
 
                         // Encrypt with backup key if encrypted
-                        cipherBlockFilterGroupAdd(
+                        cipherBlockFilterGroupAddP(
                             filterGroup, cipherModeEncrypt, manifestCipherSpec(manifest));
 
                         // Add size filter last to calculate repo size
@@ -201,7 +201,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         StorageRead *const manifestRead = storageNewReadP(
             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)));
 
-        cipherBlockFilterGroupAdd(
+        cipherBlockFilterGroupAddP(
             ioReadFilterGroup(storageReadIo(manifestRead)), cipherModeDecrypt, infoBackupCipherSpec(infoBackup));
 
         StorageWrite *const manifestWrite = storageNewWriteP(
@@ -212,7 +212,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilterP(compressTypeGz, 9));
 
-        cipherBlockFilterGroupAdd(
+        cipherBlockFilterGroupAddP(
             ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherModeEncrypt, infoBackupCipherSpec(infoBackup));
 
         storageCopyP(manifestRead, manifestWrite);

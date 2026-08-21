@@ -2,9 +2,11 @@
 Test Block Cipher
 ***********************************************************************************************************************************/
 #include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 #include "common/io/filter/filter.h"
 #include "common/io/io.h"
 #include "common/type/json.h"
+#include "version.h"
 
 /***********************************************************************************************************************************
 Data for testing
@@ -72,21 +74,26 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("CipherBlock"))
     {
-        // Cipher error
+        // Cipher and digest errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(
-            cipherBlockNewP(cipherModeEncrypt, cipherSpecNew(strIdFromZ(BOGUS_STR), testPass)), AssertError,
+            cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(strIdFromZ(BOGUS_STR), testPass)), AssertError,
             "unable to load cipher 'BOGUS'");
+        TEST_ERROR(
+            cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass, .digest = strIdFromZ(BOGUS_STR))),
+            AssertError, "unable to load digest 'BOGUS'");
 
         // Initialization of object
         // -------------------------------------------------------------------------------------------------------------------------
-        // Build from a duplicate to show the copy contains the type and pass of the original
+        // Build from a duplicate to show the copy contains the type, digest, and pass of the original
         TEST_RESULT_UINT(cipherSpecType(cipherSpecDup(cipherSpecNewNone())), cipherTypeNone, "dup of none");
 
-        const CipherSpec *const cipherSpec = cipherSpecDup(cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF(TEST_PASS)));
+        const CipherSpec *const cipherSpec = cipherSpecDup(cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_PASS)));
 
-        TEST_RESULT_UINT(cipherSpecType(cipherSpec), cipherTypeAes256Cbc, "dup type");
-        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpec)), TEST_PASS, "dup pass");
+        TEST_RESULT_UINT(cipherSpecDigest(cipherSpec), hashTypeSha256, "dup default digest");
+        TEST_RESULT_UINT(
+            cipherSpecDigest(cipherSpecDup(cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_PASS), .digest = hashTypeSha1))),
+            hashTypeSha1, "dup digest");
 
         // A pack contains nothing but the type when there is no cipher
         PackWrite *packWrite = pckWriteNewP();
@@ -97,16 +104,166 @@ testRun(void)
         TEST_RESULT_UINT(
             cipherSpecType(cipherSpecNewPack(pckReadNew(pckWriteResult(packWrite)))), cipherTypeNone, "unpack none");
 
-        // Else it contains the type and pass
+        // Else it contains the type, digest, and pass. Pack a digest that is not the default so that a pack which loses the digest
+        // cannot pass by falling back to the default.
         packWrite = pckWriteNewP();
 
-        cipherSpecPack(packWrite, cipherSpecNew(cipherTypeAes256Cbc, testPass));
+        cipherSpecPack(packWrite, cipherSpecNewP(cipherTypeAes256Cbc, testPass, .digest = hashTypeSha1));
         pckWriteEndP(packWrite);
 
         const CipherSpec *const cipherSpecUnpack = cipherSpecNewPack(pckReadNew(pckWriteResult(packWrite)));
 
         TEST_RESULT_UINT(cipherSpecType(cipherSpecUnpack), cipherTypeAes256Cbc, "unpack type");
+        TEST_RESULT_UINT(cipherSpecDigest(cipherSpecUnpack), hashTypeSha1, "unpack digest");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecUnpack)), TEST_PASS, "unpack pass");
+
+        // Format header
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write a header and read the format back from it");
+
+        Buffer *headerBuffer = bufNew(TEST_BUFFER_SIZE);
+        IoWrite *headerWrite = ioBufferWriteNew(headerBuffer);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(headerWrite),
+            cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .format = REPOSITORY_FORMAT_6));
+        ioWriteOpen(headerWrite);
+        ioWrite(headerWrite, testPlainText);
+        ioWriteClose(headerWrite);
+
+        TEST_RESULT_BOOL(
+            memcmp(bufPtrConst(headerBuffer), CIPHER_BLOCK_HEADER_MAGIC "006_", CIPHER_BLOCK_MAGIC_SIZE) == 0, true,
+            "header names the format");
+
+        // The format is not given on decrypt, so it comes from the header and is what the pass derives with
+        Buffer *headerResult = bufNew(TEST_BUFFER_SIZE);
+        IoWrite *headerRead = ioBufferWriteNew(headerResult);
+        IoFilterGroup *headerFilterGroup = ioWriteFilterGroup(headerRead);
+
+        ioFilterGroupAdd(
+            headerFilterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true));
+        ioWriteOpen(headerRead);
+        ioWrite(headerRead, headerBuffer);
+        ioWriteClose(headerRead);
+
+        TEST_RESULT_STR_Z(strNewBuf(headerResult), TEST_PLAINTEXT, "content decrypted with the digest the header called for");
+        TEST_RESULT_UINT(
+            cipherBlockFormat(ioFilterGroupResultP(headerFilterGroup, CIPHER_BLOCK_FILTER_TYPE)), REPOSITORY_FORMAT_6,
+            "filter reports the format");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a file that begins with the magic was written before there was a header");
+
+        headerBuffer = bufNew(TEST_BUFFER_SIZE);
+        headerWrite = ioBufferWriteNew(headerBuffer);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(headerWrite),
+            cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass, .digest = hashTypeSha1)));
+        ioWriteOpen(headerWrite);
+        ioWrite(headerWrite, testPlainText);
+        ioWriteClose(headerWrite);
+
+        headerResult = bufNew(TEST_BUFFER_SIZE);
+        headerRead = ioBufferWriteNew(headerResult);
+        headerFilterGroup = ioWriteFilterGroup(headerRead);
+
+        ioFilterGroupAdd(
+            headerFilterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true));
+        ioWriteOpen(headerRead);
+        ioWrite(headerRead, headerBuffer);
+        ioWriteClose(headerRead);
+
+        TEST_RESULT_STR_Z(strNewBuf(headerResult), TEST_PLAINTEXT, "content decrypted");
+        TEST_RESULT_UINT(
+            cipherBlockFormat(ioFilterGroupResultP(headerFilterGroup, CIPHER_BLOCK_FILTER_TYPE)), REPOSITORY_FORMAT_5,
+            "filter reports the format before the header");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a format given on decrypt must be the one the header names");
+
+        headerBuffer = bufNew(TEST_BUFFER_SIZE);
+        headerWrite = ioBufferWriteNew(headerBuffer);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(headerWrite),
+            cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .format = REPOSITORY_FORMAT_6));
+        ioWriteOpen(headerWrite);
+        ioWrite(headerWrite, testPlainText);
+        ioWriteClose(headerWrite);
+
+        IoWrite *const headerMismatch = ioBufferWriteNew(bufNew(TEST_BUFFER_SIZE));
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(headerMismatch),
+            cipherBlockNewP(
+                cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true,
+                .format = REPOSITORY_FORMAT_5));
+        ioWriteOpen(headerMismatch);
+
+        TEST_ERROR(
+            ioWrite(headerMismatch, headerBuffer), FormatError, "expected repository format 5 but found 6");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a format given on decrypt that the header agrees with is accepted");
+
+        headerResult = bufNew(TEST_BUFFER_SIZE);
+        headerRead = ioBufferWriteNew(headerResult);
+
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(headerRead),
+            cipherBlockNewP(
+                cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true,
+                .format = REPOSITORY_FORMAT_6));
+        ioWriteOpen(headerRead);
+        ioWrite(headerRead, headerBuffer);
+        ioWriteClose(headerRead);
+
+        TEST_RESULT_STR_Z(strNewBuf(headerResult), TEST_PLAINTEXT, "content decrypted");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("damaged headers");
+
+        // Decrypt the buffer above after damaging a byte of the header, which is the same buffer for each case
+        #define TEST_HEADER_DAMAGE(damageIdx, damageChar, errorType, errorMessage)                                                 \
+            do                                                                                                                     \
+            {                                                                                                                      \
+                Buffer *const damaged = bufDup(headerBuffer);                                                                      \
+                bufPtr(damaged)[damageIdx] = damageChar;                                                                           \
+                                                                                                                                   \
+                IoWrite *const write = ioBufferWriteNew(bufNew(TEST_BUFFER_SIZE));                                                 \
+                ioFilterGroupAdd(                                                                                                  \
+                    ioWriteFilterGroup(write),                                                                                     \
+                    cipherBlockNewP(                                                                                               \
+                        cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true));                        \
+                ioWriteOpen(write);                                                                                                \
+                                                                                                                                   \
+                TEST_ERROR(ioWrite(write, damaged), errorType, errorMessage);                                                      \
+            }                                                                                                                      \
+            while (0)
+
+        // Where the format should be, so this version cannot tell what it is looking at
+        TEST_HEADER_DAMAGE(CIPHER_BLOCK_HEADER_MAGIC_SIZE, 'X', FormatError, "invalid cipher header");
+
+        // The byte held back for later, which must be the one this version writes
+        TEST_HEADER_DAMAGE(CIPHER_BLOCK_MAGIC_SIZE - 1, 'X', FormatError, "invalid cipher header");
+
+        // A format newer than this version can read, reported before anything is decrypted
+        TEST_HEADER_DAMAGE(
+            CIPHER_BLOCK_MAGIC_SIZE - 2, '7', FormatError,
+            "repository format 7 requires a newer version of " PROJECT_NAME "\n"
+            "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format 5 to 6.");
+
+        // A format older than this version can read
+        TEST_HEADER_DAMAGE(
+            CIPHER_BLOCK_MAGIC_SIZE - 2, '4', FormatError,
+            "repository format 4 is no longer supported by " PROJECT_NAME "\n"
+            "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format 5 to 6.");
+
+        // Neither a header nor the magic, which is what a file that was never encrypted looks like from here
+        TEST_HEADER_DAMAGE(0, 'X', CryptoError, "cipher header invalid");
+
+        #undef TEST_HEADER_DAMAGE
 
         CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(cipherBlockNewP(cipherModeEncrypt, cipherSpec));
         TEST_RESULT_UINT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");
@@ -123,7 +280,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *encryptBuffer = bufNew(TEST_BUFFER_SIZE);
 
-        IoFilter *blockEncryptFilter = cipherBlockNewP(cipherModeEncrypt, cipherSpecNew(cipherTypeAes256Cbc, testPass));
+        IoFilter *blockEncryptFilter = cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass));
         blockEncryptFilter = cipherBlockNewPack(ioFilterParamList(blockEncryptFilter));
         CipherBlock *blockEncrypt = (CipherBlock *)ioFilterDriver(blockEncryptFilter);
 
@@ -174,7 +331,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         Buffer *decryptBuffer = bufNew(TEST_BUFFER_SIZE);
 
-        IoFilter *blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, testPass));
+        IoFilter *blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass));
         blockDecryptFilter = cipherBlockNewPack(ioFilterParamList(blockDecryptFilter));
         CipherBlock *blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
@@ -194,7 +351,7 @@ testRun(void)
 
         // Decrypt in small chunks to test buffering
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, testPass));
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass));
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
@@ -235,7 +392,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("encrypt zero byte file with no magic");
 
-        blockEncryptFilter = cipherBlockNewP(cipherModeEncrypt, cipherSpecNew(cipherTypeAes256Cbc, testPass), .raw = true);
+        blockEncryptFilter = cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .raw = true);
         blockEncrypt = (CipherBlock *)ioFilterDriver(blockEncryptFilter);
 
         bufUsedZero(encryptBuffer);
@@ -248,13 +405,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on decrypt expecting magic");
 
-        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, testPass));
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass));
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, encryptBuffer, decryptBuffer), CryptoError, "cipher header invalid");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("decrypt zero byte file with no magic");
 
-        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, testPass), .raw = true);
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .raw = true);
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
@@ -268,7 +425,7 @@ testRun(void)
 
         // Invalid cipher header
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, testPass));
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass));
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         TEST_ERROR(
@@ -279,7 +436,7 @@ testRun(void)
 
         // Invalid encrypted data cannot be flushed
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, testPass));
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass));
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
@@ -293,7 +450,7 @@ testRun(void)
 
         // File with no header should not flush
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, testPass));
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass));
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
@@ -304,7 +461,7 @@ testRun(void)
 
         // File with header only should error
         // -------------------------------------------------------------------------------------------------------------------------
-        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, testPass));
+        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass));
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
@@ -319,13 +476,13 @@ testRun(void)
         IoFilterGroup *filterGroup = ioFilterGroupNew();
 
         TEST_RESULT_PTR(
-            cipherBlockFilterGroupAdd(
+            cipherBlockFilterGroupAddP(
                 filterGroup, cipherModeEncrypt, cipherSpecNewNone()), filterGroup, "   no filter add");
         TEST_RESULT_UINT(ioFilterGroupSize(filterGroup), 0, "    check no filter add");
 
         TEST_RESULT_VOID(
-            cipherBlockFilterGroupAdd(
-                filterGroup, cipherModeEncrypt, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("X"))), "   filter add");
+            cipherBlockFilterGroupAddP(
+                filterGroup, cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("X"))), "   filter add");
         TEST_RESULT_UINT(ioFilterGroupSize(filterGroup), 1, "    check filter add");
     }
 

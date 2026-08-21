@@ -189,7 +189,8 @@ infoPgNewLoad(
             .infoPg = this,
         };
 
-        this->pub.info = infoNewLoad(read, cipherSpec, infoPgLoadCallback, &loadData);
+        // The archive.info and backup.info files are the only users of this object and both contain a header
+        this->pub.info = infoNewLoadP(read, cipherSpec, infoPgLoadCallback, &loadData, .header = true);
 
         CHECK(FormatError, !lstEmpty(this->pub.history), "history is missing");
         CHECK(FormatError, loadData.currentId > 0, "current id is missing");
