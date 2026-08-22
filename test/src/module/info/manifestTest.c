@@ -1453,6 +1453,7 @@ testRun(void)
                 "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
                 "\n"
                 "[cipher]\n"
+                "cipher-digest=\"sha256\"\n"
                 "cipher-pass=\"somepass\"\n"
                 "\n"
                 "[target:file]\n"
@@ -1478,7 +1479,10 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(
-                manifest, manifestNewLoad(ioBufferReadNew(contentLoad), cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
+                manifest,
+                manifestNewLoad(
+                    ioBufferReadNew(harnessInfoEncrypt(contentLoad, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")))),
+                    cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
                 "load manifest");
             TEST_RESULT_VOID(manifestMove(manifest, memContextPrior()), "move manifest");
         }
@@ -1781,7 +1785,7 @@ testRun(void)
 
         TEST_RESULT_UINT(cipherSpecType(manifestCipherSpec(manifest)), cipherTypeNone, "check cipher subpass");
         TEST_RESULT_VOID(
-            manifestCipherSpecSet(manifest, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("supersecret"))),
+            manifestCipherSpecSet(manifest, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("supersecret"))),
             "cipher subpass set");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpec(manifest))), "supersecret", "check cipher subpass");
 

@@ -3,14 +3,20 @@ Info Handler
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/format.h"
 #include "common/ini.h"
+#include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 #include "common/io/filter/filter.h"
+#include "common/io/io.h"
 #include "common/log.h"
 #include "common/type/convert.h"
 #include "common/type/json.h"
@@ -121,17 +127,20 @@ infoNew(const unsigned int format, const CipherSpec *const cipherSpecSub)
 #define INFO_SECTION_BACKREST                                       "backrest"
 #define INFO_KEY_CHECKSUM                                           "backrest-checksum"
 #define INFO_SECTION_CIPHER                                         "cipher"
+#define INFO_KEY_CIPHER_DIGEST                                      "cipher-digest"
 #define INFO_KEY_CIPHER_PASS                                        "cipher-pass"
 
 FN_EXTERN Info *
 infoNewLoad(
-    IoRead *const read, const CipherSpec *const cipherSpec, InfoLoadNewCallback *const callbackFunction, void *const callbackData)
+    IoRead *const read, const CipherSpec *const cipherSpec, InfoLoadNewCallback *const callbackFunction,
+    void *const callbackData, const InfoNewLoadParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
         FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
+        FUNCTION_LOG_PARAM(BOOL, param.header);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_CALLBACK();
@@ -150,11 +159,20 @@ infoNewLoad(
             String *const sectionLast = strNew();                               // The last section seen during load
             IoFilter *const checksumActualFilter = cryptoHashNew(hashTypeSha1); // Checksum calculated from the file
             const String *checksumExpected = NULL;                              // Checksum found in ini file
+            HashType cipherDigest = hashTypeSha1;                               // Digest the stored pass derives with
 
             INFO_CHECKSUM_BEGIN(checksumActualFilter);
 
             TRY_BEGIN()
             {
+                // The content is decrypted as it is parsed. A file that may contain a header is read with one, which the cipher
+                // consumes and reports the format of once the read is done.
+                if (cipherSpecType(cipherSpec) != cipherTypeNone)
+                {
+                    ioFilterGroupAdd(
+                        ioReadFilterGroup(read), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .header = param.header));
+                }
+
                 Ini *const ini = iniNewP(read, .strict = true);
 
                 MEM_CONTEXT_TEMP_RESET_BEGIN()
@@ -186,30 +204,10 @@ infoNewLoad(
                             // Validate and store format
                             if (strEqZ(value->key, INFO_KEY_FORMAT))
                             {
-                                const uint64_t format = varUInt64(jsonToVar(value->value));
+                                const unsigned int format = jsonReadUInt(jsonReadNew(value->value));
+                                repoFormatValidate(format);
 
-                                // A format newer than this version can read requires an upgrade. Do not suggest a version since
-                                // this version cannot know which version added the format.
-                                if (format > REPOSITORY_FORMAT_MAX)
-                                {
-                                    THROW_FMT(
-                                        FormatError,
-                                        "repository format %" PRIu64 " requires a newer version of " PROJECT_NAME "\n"
-                                        "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format %d to %d.",
-                                        format, REPOSITORY_FORMAT_MIN, REPOSITORY_FORMAT_MAX);
-                                }
-
-                                // A format older than this version can read requires an older version to migrate the repository
-                                if (format < REPOSITORY_FORMAT_MIN)
-                                {
-                                    THROW_FMT(
-                                        FormatError,
-                                        "repository format %" PRIu64 " is no longer supported by " PROJECT_NAME "\n"
-                                        "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format %d to %d.",
-                                        format, REPOSITORY_FORMAT_MIN, REPOSITORY_FORMAT_MAX);
-                                }
-
-                                this->pub.format = (unsigned int)format;
+                                this->pub.format = format;
                             }
                             // Store pgBackRest version
                             else if (strEqZ(value->key, INFO_KEY_VERSION))
@@ -233,14 +231,23 @@ infoNewLoad(
                         // Process cipher section
                         else if (strEqZ(value->section, INFO_SECTION_CIPHER))
                         {
+                            // Store the digest the pass derives with. A file written before the digest was stored has none, so the
+                            // default is what every repository derived with then.
+                            if (strEqZ(value->key, INFO_KEY_CIPHER_DIGEST))
+                            {
+                                cipherDigest = jsonReadStrId(jsonReadNew(value->value));
+                            }
                             // No validation needed for cipher-pass, just store it
-                            if (strEqZ(value->key, INFO_KEY_CIPHER_PASS))
+                            else if (strEqZ(value->key, INFO_KEY_CIPHER_PASS))
                             {
                                 MEM_CONTEXT_OBJ_BEGIN(this)
                                 {
-                                    // The dependent files are encrypted with the same cipher type as this one
-                                    this->pub.cipherSpec = cipherSpecNew(
-                                        cipherSpecType(cipherSpec), BUFSTR(varStr(jsonToVar(value->value))));
+                                    // The dependent files are encrypted with the same cipher type as this one and derive with the
+                                    // digest stored with the pass. The digest is read before this since the keys come out in order
+                                    // and digest sorts before pass.
+                                    this->pub.cipherSpec = cipherSpecNewP(
+                                        cipherSpecType(cipherSpec), BUFSTR(varStr(jsonToVar(value->value))),
+                                        .digest = cipherDigest);
                                 }
                                 MEM_CONTEXT_OBJ_END();
                             }
@@ -281,6 +288,22 @@ infoNewLoad(
             // format is zero until the key is found and the value stored, so if we got here then the key was not found.
             if (infoFormat(this) == 0)
                 THROW(FormatError, "repository format not found\nHINT: is this a valid " PROJECT_NAME " info file?");
+
+            // Only a cipher that read a header reports a format, so a result here means the file had one. The header is written
+            // from the same format as the content, so a file where they disagree has been damaged or put together from parts of two
+            // files.
+            PackRead *const cipherResult = ioFilterGroupResultP(ioReadFilterGroup(read), CIPHER_BLOCK_FILTER_TYPE);
+
+            if (cipherResult != NULL)
+            {
+                const unsigned int formatHeader = cipherBlockFormat(cipherResult);
+
+                if (this->pub.format != formatHeader)
+                {
+                    THROW_FMT(
+                        FormatError, "repository format %u does not match header format %u", this->pub.format, formatHeader);
+                }
+            }
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -406,6 +429,17 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
         if (cipherSpecType(infoCipherSpec(this)) != cipherTypeNone)
         {
             callbackFunction(callbackData, STRDEF(INFO_SECTION_CIPHER), &data);
+
+            // Store the digest the pass derives with so that a pass outlives the format of the file it is stored in. A pass in a
+            // file written before this could be stored derives with SHA-1, which is what a reader assumes when it finds no digest.
+            if (infoFormat(this) >= REPOSITORY_FORMAT_6)
+            {
+                char digestZ[STRID_MAX + 1];
+                strIdToZ(cipherSpecDigest(infoCipherSpec(this)), digestZ);
+
+                infoSaveValue(&data, INFO_SECTION_CIPHER, INFO_KEY_CIPHER_DIGEST, jsonFromVar(VARSTRZ(digestZ)));
+            }
+
             infoSaveValue(
                 &data, INFO_SECTION_CIPHER, INFO_KEY_CIPHER_PASS,
                 jsonFromVar(VARSTR(strNewBuf(cipherSpecPass(infoCipherSpec(this))))));

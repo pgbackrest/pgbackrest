@@ -94,7 +94,7 @@ historyLoad(
     {
         const String *const historyFile = strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%08X.history", strZ(archiveId), timeline);
         StorageRead *const storageRead = storageNewReadP(storageRepo, historyFile);
-        cipherBlockFilterGroupAdd(ioReadFilterGroup(storageReadIo(storageRead)), cipherModeDecrypt, cipherSpecArchive);
+        cipherBlockFilterGroupAddP(ioReadFilterGroup(storageReadIo(storageRead)), cipherModeDecrypt, cipherSpecArchive);
         const Buffer *const history = storageGetP(storageRead);
 
         TRY_BEGIN()

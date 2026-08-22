@@ -2929,7 +2929,7 @@
 
                             <allow-list caption="formats">
                                 <allow-item id="5">Format supported by all versions since <proper>1.00</proper></allow-item>
-                                <allow-item id="6">Adds no features yet and is reserved for features in development</allow-item>
+                                <allow-item id="6">Derives repository encryption keys with <id>SHA-256</id> rather than <id>SHA-1</id></allow-item>
                             </allow-list>
 
                             <p>An existing stanza is migrated to a newer format with the <cmd>stanza-upgrade</cmd> command rather than with this command, which sets the format only for a stanza it creates.</p>

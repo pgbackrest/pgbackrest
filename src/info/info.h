@@ -41,10 +41,22 @@ Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Info *infoNew(unsigned int format, const CipherSpec *cipherSpecSub);
 
-// Create new object and load contents from a file. The cipher spec the file is read with supplies the type for the cipher spec
-// built from the pass stored in it.
+// Create new object and load contents from a file. Decryption is added here rather than by the caller because a file that contains
+// a header cannot be decrypted until the header has been read. The cipher spec supplies the type and pass; the digest comes from
+// the format the file turns out to be at. The same spec supplies the type for the cipher spec built from the pass stored in the
+// file.
+typedef struct InfoNewLoadParam
+{
+    VAR_PARAM_HEADER;
+    bool header;                                                    // Does the file begin with a header?
+} InfoNewLoadParam;
+
+#define infoNewLoadP(read, cipherSpec, callbackFunction, callbackData, ...)                                                        \
+    infoNewLoad(read, cipherSpec, callbackFunction, callbackData, (InfoNewLoadParam){VAR_PARAM_INIT, __VA_ARGS__})
+
 FN_EXTERN Info *infoNewLoad(
-    IoRead *read, const CipherSpec *cipherSpec, InfoLoadNewCallback *callbackFunction, void *callbackData);
+    IoRead *read, const CipherSpec *cipherSpec, InfoLoadNewCallback *callbackFunction, void *callbackData,
+    InfoNewLoadParam param);
 
 /***********************************************************************************************************************************
 Getters/Setters

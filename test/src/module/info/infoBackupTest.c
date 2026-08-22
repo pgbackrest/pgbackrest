@@ -87,18 +87,24 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupNew(
-                PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT,
-                cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
+                PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_6,
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
             "infoBackupNew() - cipher sub");
+
+        const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
 
         contentSave = bufNew(0);
 
-        TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentSave)), "save new with cipher sub");
+        IoWrite *write = ioBufferWriteNew(contentSave);
+        cipherBlockFilterGroupAddP(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec, .format = REPOSITORY_FORMAT_6);
+
+        TEST_RESULT_VOID(infoBackupSave(infoBackup, write), "save new with cipher sub");
+        TEST_RESULT_STR_Z(
+            strNewZN((const char *)bufPtrConst(contentSave), 8), "PGBR006_", "header names the format");
 
         infoBackup = NULL;
         TEST_ASSIGN(
-            infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave), cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
-            "load backup info with cipher sub");
+            infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave), cipherSpec), "load backup info with cipher sub");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackupPg(infoBackup), "infoPg set");
         TEST_RESULT_STR_Z(
             strNewBuf(cipherSpecPass(infoBackupCipherSpec(infoBackup))),

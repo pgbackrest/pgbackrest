@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Test Stanza Commands
 ***********************************************************************************************************************************/
+#include "common/crypto/cipherBlock.h"
+#include "common/io/bufferWrite.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
@@ -23,6 +25,7 @@ testRun(void)
     Storage *storageHrn = storagePosixNewP(HRN_PATH_STR, .write = true);
 
     #define TEST_STANZA                                             "db"
+    #define TEST_WAL_MIGRATE                                        "archive/db/15-1/000000010000000000000001"
     #define TEST_STANZA_OTHER                                       "otherstanza"
 
     StringList *argListBase = strLstNew();
@@ -137,7 +140,7 @@ testRun(void)
         TEST_ASSIGN(
             infoArchive,
             infoArchiveLoadFile(
-                storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
+                storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
             "load archive info from encrypted repo2");
         TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(infoArchive)), cipherTypeAes256Cbc, "cipher sub set");
 
@@ -145,7 +148,7 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupLoadFile(
-                storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
+                storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("12345678"))),
             "load backup info from encrypted repo2");
         TEST_RESULT_UINT(cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeAes256Cbc, "cipher sub set");
 
@@ -185,14 +188,14 @@ testRun(void)
         TEST_ASSIGN(
             infoArchive,
             infoArchiveLoadFile(
-                storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
+                storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load archive info from encrypted repo4");
         TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(infoArchive)), cipherTypeAes256Cbc, "cipher sub set");
 
         TEST_ASSIGN(
             infoBackup,
             infoBackupLoadFile(
-                storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
+                storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load backup info from encrypted repo4");
         TEST_RESULT_UINT(cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeAes256Cbc, "cipher sub set");
 
@@ -1189,6 +1192,68 @@ testRun(void)
             "P00   INFO: upgrade repository format from 5 to 6");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoFormat, 1);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-upgrade - a file encrypted before a format migration is readable after it");
+
+        // A stanza on an encrypted repository at the format before the digest could be stored
+        argList = strLstNew();
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawZ(argList, cfgOptStanza, TEST_STANZA);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo-migrate");
+        hrnCfgArgRawZ(argList, cfgOptPgVersionForce, "15");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 1, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, "12345678");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create on encrypted repo");
+        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+
+        const CipherSpec *const cipherSpecMain = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("12345678"));
+        const InfoArchive *infoArchiveMigrate = NULL;
+
+        TEST_ASSIGN(
+            infoArchiveMigrate, infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain),
+            "load archive info before migration");
+
+        // Write a file with the archive sub-pass, which is how everything below the info files is encrypted
+        Buffer *const walBuffer = bufNew(0);
+        IoWrite *const walWrite = ioBufferWriteNew(walBuffer);
+
+        cipherBlockFilterGroupAddP(
+            ioWriteFilterGroup(walWrite), cipherModeEncrypt, infoArchiveCipherSpec(infoArchiveMigrate));
+        ioWriteOpen(walWrite);
+        ioWrite(walWrite, BUFSTRDEF("WAL BEFORE MIGRATION"));
+        ioWriteClose(walWrite);
+
+        HRN_STORAGE_PUT(storageRepoIdxWrite(0), TEST_WAL_MIGRATE, walBuffer, .comment = "wal written at format 5");
+
+        // Migrate the repository
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 1, "6");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format 6 on encrypted repo");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: upgrade repository format from 5 to 6");
+
+        // The pass is unchanged by the migration, so a file it encrypted before the migration must still be readable. The digest
+        // the pass derives with cannot follow the format of the info file storing it or this read would fail.
+        TEST_ASSIGN(
+            infoArchiveMigrate, infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain),
+            "load archive info after migration");
+        TEST_RESULT_UINT(infoArchiveFormat(infoArchiveMigrate), REPOSITORY_FORMAT_6, "archive info at format 6");
+
+        StorageRead *const walRead = storageNewReadP(storageRepoIdx(0), STRDEF(TEST_WAL_MIGRATE));
+
+        cipherBlockFilterGroupAddP(
+            ioReadFilterGroup(storageReadIo(walRead)), cipherModeDecrypt, infoArchiveCipherSpec(infoArchiveMigrate));
+
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(walRead)), "WAL BEFORE MIGRATION", "wal from before the migration is still readable");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-upgrade - every format that can be read can be requested");

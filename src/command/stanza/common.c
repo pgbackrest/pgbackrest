@@ -6,6 +6,7 @@ Stanza Commands Handler
 #include "command/check/common.h"
 #include "command/stanza/common.h"
 #include "common/debug.h"
+#include "common/format.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "db/helper.h"
@@ -16,10 +17,11 @@ Stanza Commands Handler
 
 /**********************************************************************************************************************************/
 FN_EXTERN CipherSpec *
-cipherSpecGen(const CipherType cipherType)
+cipherSpecGen(const CipherType cipherType, const unsigned int format)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_ID, cipherType);
+        FUNCTION_TEST_PARAM(UINT, format);
     FUNCTION_TEST_END();
 
     CipherSpec *result;
@@ -33,8 +35,12 @@ cipherSpecGen(const CipherType cipherType)
             uint8_t buffer[48];                                     // 48 is the amount of entropy needed to get a 64 base key
             cryptoRandomBytes(buffer, sizeof(buffer));
 
-            // The pass is the encoded text rather than the bytes it encodes, so it is stored and derived from as that text
-            result = cipherSpecNew(cipherType, BUFSTR(strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)))));
+            // The pass is the base64 text rather than the bytes it encodes, since the text is what gets stored and what the key
+            // derives from. A new pass derives with the digest its format calls for and that digest is stored with it, so a
+            // reader derives the same key.
+            result = cipherSpecNewP(
+                cipherType, BUFSTR(strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)))),
+                .digest = repoFormatDigest(format));
             cipherSpecMove(result, memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();

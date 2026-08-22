@@ -6,13 +6,17 @@ Harness for Loading Test Configurations
 #include <string.h>
 
 #include "common/assert.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
+#include "common/format.h"
 #include "common/io/bufferRead.h"
+#include "common/io/bufferWrite.h"
 #include "common/io/filter/filter.h"
 #include "common/type/json.h"
 #include "info/info.h"
 #include "version.h"
 
+#include "harness/config.h"
 #include "harness/debug.h"
 #include "harness/info.h"
 
@@ -114,6 +118,83 @@ harnessInfoChecksum(const String *const info)
     ASSERT(info != NULL);
 
     FUNCTION_HARNESS_RETURN(BUFFER, harnessInfoChecksumFormat(REPOSITORY_FORMAT_DEFAULT, info));
+}
+
+/**********************************************************************************************************************************/
+void
+hrnInfoPut(const Storage *const storage, const char *const file, const char *const info, HrnInfoPutParam param)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STORAGE, storage);
+        FUNCTION_HARNESS_PARAM(STRINGZ, file);
+        FUNCTION_HARNESS_PARAM(STRINGZ, info);
+        FUNCTION_HARNESS_PARAM(UINT, param.format);
+        FUNCTION_HARNESS_PARAM(BOOL, param.header);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, param.cipherSpec);
+        FUNCTION_HARNESS_PARAM(STRINGZ, param.comment);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(info != NULL);
+
+    // Default to the format a new repository is created at
+    if (param.format == 0)
+        param.format = REPOSITORY_FORMAT_DEFAULT;
+
+    const Buffer *content = harnessInfoChecksumFormat(param.format, STR(info));
+
+    // Encrypt the way the format stores the file. A file that contains a header gets it in place of the magic the cipher writes,
+    // and from format 6 the pass derives with SHA-256 rather than SHA-1.
+    if (param.cipherSpec != NULL && cipherSpecType(param.cipherSpec) != cipherTypeNone)
+    {
+        const bool header = param.header && param.format >= REPOSITORY_FORMAT_6;
+        Buffer *const encrypted = bufNew(0);
+
+        if (header)
+            bufCat(encrypted, BUFSTR(strNewFmt("PGBR%03u_", param.format)));
+
+        IoWrite *const write = ioBufferWriteNew(encrypted);
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(write),
+            cipherBlockNewP(
+                cipherModeEncrypt,
+                cipherSpecNewP(
+                    cipherSpecType(param.cipherSpec), cipherSpecPass(param.cipherSpec),
+                    .digest = param.format >= REPOSITORY_FORMAT_6 ? hashTypeSha256 : hashTypeSha1),
+                .raw = header));
+
+        ioWriteOpen(write);
+        ioWrite(write, content);
+        ioWriteClose(write);
+
+        content = encrypted;
+    }
+
+    hrnStoragePut(storage, file, content, "put info", (HrnStoragePutParam){VAR_PARAM_INIT, .comment = param.comment});
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+Buffer *
+harnessInfoEncrypt(const Buffer *const content, const CipherSpec *const cipherSpec)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(BUFFER, content);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpec);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(content != NULL);
+    ASSERT(cipherSpec != NULL);
+
+    Buffer *const result = bufNew(0);
+    IoWrite *const write = ioBufferWriteNew(result);
+    ioFilterGroupAdd(ioWriteFilterGroup(write), cipherBlockNewP(cipherModeEncrypt, cipherSpec));
+
+    ioWriteOpen(write);
+    ioWrite(write, content);
+    ioWriteClose(write);
+
+    FUNCTION_HARNESS_RETURN(BUFFER, result);
 }
 
 /***********************************************************************************************************************************

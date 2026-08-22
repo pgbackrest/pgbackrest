@@ -250,10 +250,8 @@ infoArchiveLoadFileCallback(void *const data, const unsigned int try)
             // Construct filename based on try
             const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
 
-            // Attempt to load the file
+            // Attempt to load the file. Decryption is added during load since the header has to be read before the digest is known.
             IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-            cipherBlockFilterGroupAdd(
-                ioReadFilterGroup(read), cipherModeDecrypt, loadData->cipherSpec);
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
@@ -340,7 +338,8 @@ infoArchiveSaveFile(
         // Write output into a buffer since it needs to be saved to storage twice
         Buffer *const buffer = bufNew(ioBufferSize());
         IoWrite *const write = ioBufferWriteNew(buffer);
-        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec);
+        cipherBlockFilterGroupAddP(
+            ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec, .format = infoArchiveFormat(infoArchive));
         infoArchiveSave(infoArchive, write);
 
         // Save the file and make a copy
