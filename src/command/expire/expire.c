@@ -90,6 +90,45 @@ expireBackup(InfoBackup *const infoBackup, const String *const backupLabel, cons
 }
 
 /***********************************************************************************************************************************
+Checks the given backup for checksum errors and throws an error or logs a warning depending on shouldFail
+***********************************************************************************************************************************/
+static void
+checkChecksumErrors(
+    const InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx, bool shouldFail)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_LOG_PARAM(STRING, backupLabel);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
+        FUNCTION_LOG_PARAM(BOOL, shouldFail);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoBackup != NULL);
+
+    if (infoBackupDataTotal(infoBackup) > 0 && (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun)))
+    {
+        const InfoBackupData *const backupData = infoBackupDataByLabel(infoBackup, backupLabel);
+
+        if (backupData->backupError != NULL && varBool(backupData->backupError))
+        {
+            ASSERT(backupData->optionChecksumPage);
+
+            const String *message = strNewFmt(
+                "oldest retained backup %s contains invalid page checksum(s)\n"
+                "HINT: use info --set command to get details about errors in the backup.",
+                strZ(backupLabel));
+
+            if (shouldFail)
+                THROW(ChecksumError, strZ(message));
+
+            LOG_WARN_FMT("%s: %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), strZ(message));
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Function to expire a selected backup (and all its dependents) regardless of retention rules.
 ***********************************************************************************************************************************/
 static unsigned int
@@ -253,6 +292,16 @@ expireFullBackup(InfoBackup *const infoBackup, const unsigned int repoIdx)
             // If there are more full backups then the number to retain, then expire the oldest ones
             if (strLstSize(currentBackupList) > fullRetention)
             {
+                // If checksum-page-error is set, check the would-be-oldest retained backup and abort with an error if it has
+                // checksum errors.
+                if (cfgOptionBool(cfgOptChecksumPageError))
+                {
+                    const String *const oldestRetainedBackupLabel =
+                        strLstGet(currentBackupList, strLstSize(currentBackupList) - fullRetention);
+                    
+                    checkChecksumErrors(infoBackup, oldestRetainedBackupLabel, repoIdx, true);
+                }
+                
                 // Expire all backups that depend on the full backup
                 for (unsigned int fullIdx = 0; fullIdx < strLstSize(currentBackupList) - fullRetention; fullIdx++)
                 {
@@ -1183,6 +1232,10 @@ cmdExpire(void)
                 removeExpiredBackup(infoBackup, adhocBackupLabel, repoIdx);
                 removeExpiredArchive(infoBackup, timeBasedFullRetention, repoIdx);
                 removeExpiredHistory(infoBackup, repoIdx);
+
+                // Check the oldest retained backup for page checksum errors and issue a warning if any
+                if (infoBackupDataTotal(infoBackup) > 0)
+                    checkChecksumErrors(infoBackup, infoBackupData(infoBackup, 0).backupLabel, repoIdx, false);
             }
             CATCH_ANY()
             {

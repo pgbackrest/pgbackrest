@@ -1913,10 +1913,11 @@ testRun(void)
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
         unsigned int currentPercentComplete = 0;
+        unsigned int warningTotal = 0;
 
         TEST_ERROR(
             backupJobResult(
-                (Manifest *)1, NULL, storageTest, strLstNew(), job, pgPageSize8, 0, NULL, &currentPercentComplete),
+                (Manifest *)1, NULL, storageTest, strLstNew(), &warningTotal, job, pgPageSize8, 0, NULL, &currentPercentComplete),
             AssertError, "error message");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1952,7 +1953,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             backupJobResult(
-                manifest, STRDEF("host"), storageTest, strLstNew(), job, pgPageSize8, 0, &sizeProgress,
+                manifest, STRDEF("host"), storageTest, strLstNew(), &warningTotal, job, pgPageSize8, 0, &sizeProgress,
                 &currentPercentComplete),
             "log noop result");
         TEST_RESULT_VOID(cmdLockReleaseP(), "release backup lock");
@@ -2642,7 +2643,8 @@ testRun(void)
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105D9759000000000:0000000105D9759000000000\n"
                 "P00   INFO: new backup label = 20191003-105321F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 7");
+                "P00   INFO: full backup size = [SIZE], file total = 7\n"
+                "P00   WARN: backup command encountered 2 warning(s), check the log file for details");
 
             // Check repo directory
             TEST_RESULT_STR_Z(
@@ -3172,7 +3174,8 @@ testRun(void)
                 "P00 DETAIL: copy segment 0000000105DB5DE000000001 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB5DE000000002 to backup\n"
                 "P00   INFO: new backup label = 20191027-181320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 13");
+                "P00   INFO: full backup size = [SIZE], file total = 13\n"
+                "P00   WARN: backup command encountered 3 warning(s), check the log file for details");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191027-181320F")),
@@ -3313,7 +3316,8 @@ testRun(void)
                 "P00 DETAIL: wrote 'tablespace_map' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000002C05DB8EB000000000:0000002C05DB8EB000000001\n"
                 "P00   INFO: new backup label = 20191027-181320F_20191030-014640I\n"
-                "P00   INFO: incr backup size = [SIZE], file total = 8");
+                "P00   INFO: incr backup size = [SIZE], file total = 8\n"
+                "P00   WARN: backup command encountered 2 warning(s), check the log file for details");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3422,7 +3426,8 @@ testRun(void)
                 "P00 DETAIL: copy segment 0000000105DB8EB000000000 to backup\n"
                 "P00 DETAIL: copy segment 0000000105DB8EB000000001 to backup\n"
                 "P00   INFO: new backup label = 20191030-014640F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 14");
+                "P00   INFO: full backup size = [SIZE], file total = 14\n"
+                "P00   WARN: backup command encountered 1 warning(s), check the log file for details");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3724,7 +3729,8 @@ testRun(void)
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC08C000000000:0000000105DC08C000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 11");
+                "P00   INFO: full backup size = [SIZE], file total = 11\n"
+                "P00   WARN: backup command encountered 1 warning(s), check the log file for details");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -4324,7 +4330,8 @@ testRun(void)
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC9B4000000000:0000000105DC9B4000000001\n"
                 "P00   INFO: new backup label = 20191111-192000F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 5");
+                "P00   INFO: full backup size = [SIZE], file total = 5\n"
+                "P00   WARN: backup command encountered 1 warning(s), check the log file for details");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(

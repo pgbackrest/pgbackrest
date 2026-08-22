@@ -2239,6 +2239,16 @@
                 </text>
 
                 <option-list>
+                    <option id="checksum-page-error" name="Error on Invalid Page Checksums">
+                        <summary>Error on Invalid Page Checksums.</summary>
+
+                        <text>
+                            <p>If this option is enabled with the <br-option>checksum-page</br-option>, a first failure in checksum validation will abort a backup.</p>
+                        </text>
+
+                        <example>n</example>
+                    </option>
+
                     <option id="type" name="Type">
                         <summary>Backup type.</summary>
 
@@ -2337,6 +2347,18 @@
                 </text>
 
                 <option-list>
+                    <option id="checksum-page-error" name="Error on Invalid Page Checksums">
+                        <summary>Error on Invalid Page Checksums.</summary>
+
+                        <text>
+                            <p>If enabled, the <cmd>expire</cmd> will stop and issue an error before any changes if the oldest retained backup would contain checksum errors. If this option is disabled, the <cmd>expire</cmd> will proceed and issue a warning if there are checksum errors in the oldest retained backup.</p>
+
+                            <p>If the <br-option>--set</br-option> is used, the <cmd>expire</cmd> will proceed even if this option is enabled. It will emit a warning if the oldest retained backup contains checksum errors.</p>
+                        </text>
+
+                        <example>n</example>
+                    </option>
+
                     <option id="archive-expire-before" name="Expire Archive Before">
                         <summary>Remove WAL archive earlier than the specified WAL segment.</summary>
 
@@ -2571,6 +2593,18 @@
                 </text>
 
                 <option-list>
+                    <option id="checksum-page-error" name="Error on Invalid Page Checksums">
+                        <summary>Error on Invalid Page Checksums.</summary>
+
+                        <text>
+                            <p>If any file contains checksum errors, an error will be emitted at the end of the <cmd>restore</cmd> if this option is enabled (default). And a warning if the option is disabled.</p>
+
+                            <p>A warning will be emitted for each file with checksum errors despite the setting of this option.</p>
+                        </text>
+
+                        <example>n</example>
+                    </option>
+
                     <option id="set" name="Set">
                         <summary>Backup set to restore.</summary>
 

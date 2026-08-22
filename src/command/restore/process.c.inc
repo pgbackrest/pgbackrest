@@ -202,7 +202,7 @@ restoreFilePgPath(const Manifest *const manifest, const String *const manifestNa
 static uint64_t
 restoreJobResult(
     const Manifest *const manifest, ProtocolParallelJob *const job, RegExp *const zeroExp, const uint64_t sizeTotal,
-    uint64_t sizeRestored, unsigned int *const currentPercentComplete)
+    uint64_t sizeRestored, unsigned int *const checksumErrorFileTotal, unsigned int *const currentPercentComplete)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -210,6 +210,7 @@ restoreJobResult(
         FUNCTION_LOG_PARAM(REGEXP, zeroExp);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM(UINT64, sizeRestored);
+        FUNCTION_LOG_PARAM_P(UINT, checksumErrorFileTotal);
         FUNCTION_LOG_PARAM_P(UINT, currentPercentComplete);
     FUNCTION_LOG_END();
 
@@ -231,6 +232,14 @@ restoreJobResult(
                 const uint64_t blockIncrDeltaSize = pckReadU64P(jobResult);
 
                 String *const log = strCatZ(strNew(), "restore");
+
+                if (file.checksumPage && file.checksumPageError && result == restoreResultCopy)
+                {
+                    LOG_WARN_FMT(
+                        "invalid page checksum(s) found in file %s", strZ(restoreFilePgPath(manifest, file.name)));
+                    
+                    (*checksumErrorFileTotal)++;
+                }
 
                 // Note if file was zeroed (i.e. selective restore)
                 if (zeroed)

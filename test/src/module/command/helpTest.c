@@ -221,6 +221,8 @@ testRun(void)
             "\n"
             "  --archive-mode                      preserve or disable archiving on restored\n"
             "                                      cluster [default=preserve]\n"
+            "  --checksum-page-error               error on Invalid Page Checksums\n"
+            "                                      [default=y]\n"
             "  --db-exclude                        restore excluding the specified databases\n"
             "  --db-include                        restore only specified databases\n"
             "                                      [current=db1, db2]\n"

@@ -260,7 +260,7 @@ cmdBackup(void)
         backupManifestSaveCopy(manifest, cipherSpecManifest, false);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, cipherSpecManifest);
+        unsigned int const warningTotal = backupProcess(backupData, manifest, cipherSpecManifest);
 
         // Check that the clusters are alive and correctly configured after the backup
         backupDbPing(backupData, true);
@@ -304,6 +304,10 @@ cmdBackup(void)
             "%s backup size = %s, file total = %u", zNewStrId(manifestData(manifest)->backupType),
             strZ(strSizeFormat(infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
             manifestFileTotal(manifest));
+
+        if (warningTotal > 0)
+            LOG_WARN_FMT(CFGCMD_BACKUP " command encountered %u warning(s), check the log file for details", warningTotal);
+
     }
     MEM_CONTEXT_TEMP_END();
 
