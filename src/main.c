@@ -19,6 +19,7 @@ Main
 #include "command/expire/expire.h"
 #include "command/help/help.h"
 #include "command/info/info.h"
+#include "command/list/list.h"
 #include "command/local/local.h"
 #include "command/lock.h"
 #include "command/manifest/manifest.h"
@@ -179,6 +180,12 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdInfo:
                     cmdInfo();
+                    break;
+
+                // List command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdList:
+                    cmdList();
                     break;
 
                 // Manifest command

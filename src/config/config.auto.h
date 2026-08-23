@@ -17,6 +17,7 @@ Command constants
 #define CFGCMD_EXPIRE                                               "expire"
 #define CFGCMD_HELP                                                 "help"
 #define CFGCMD_INFO                                                 "info"
+#define CFGCMD_LIST                                                 "list"
 #define CFGCMD_MANIFEST                                             "manifest"
 #define CFGCMD_REPO_GET                                             "repo-get"
 #define CFGCMD_REPO_LS                                              "repo-ls"
@@ -32,7 +33,7 @@ Command constants
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           22
+#define CFG_COMMAND_TOTAL                                           23
 
 /***********************************************************************************************************************************
 Option group constants
@@ -450,6 +451,7 @@ typedef enum
     cfgCmdExpire,
     cfgCmdHelp,
     cfgCmdInfo,
+    cfgCmdList,
     cfgCmdManifest,
     cfgCmdRepoGet,
     cfgCmdRepoLs,

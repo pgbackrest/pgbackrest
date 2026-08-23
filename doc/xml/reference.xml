@@ -2747,6 +2747,40 @@
                 </option-list>
             </command>
 
+            <command id="list" name="Backup List">
+                <summary>List backups.</summary>
+
+                <text>
+                    <p>The <cmd>list</cmd> command outputs a table of the backups in the repository, one row per backup, grouped by stanza. It is a compact alternative to the <cmd>info</cmd> command for answering the question of which backups exist and how big they are. This format is intended to be read by a human and is subject to change with any release, so use <cmd>info</cmd> with <br-option>--output=json</br-option> for machine-readable output.</p>
+
+                    <p>Output is limited to a single stanza with the <br-option>--stanza</br-option> option, to a single repository with the <br-option>--repo</br-option> option, and to a single backup type with the <br-option>--type</br-option> option. Within each stanza the backups are displayed oldest to newest.</p>
+
+                    <p>The '<id>Repo</id>' is the repository the backup resides in and the '<id>Version</id>' is the <postgres/> version the backup was made from. The '<id>ID</id>' is the backup label, which is what the <br-option>--set</br-option> option of the <cmd>restore</cmd> command expects.</p>
+
+                    <p>The '<id>Recovery Time</id>' is the time the backup completed, which is the earliest time that can be recovered to with this backup. The '<id>Mode</id>' is the backup type, i.e. <id>full</id>, <id>diff</id>, or <id>incr</id>, and the '<id>WAL Mode</id>' is <id>STREAM</id> when the WAL required for consistency was copied into the backup (see <br-option>--archive-copy</br-option>) and <id>ARCHIVE</id> when it must be read from the archive. The '<id>TLI</id>' is the timeline the backup was made on followed by the timeline of the backup it depends on, or <id>0</id> when it depends on none.</p>
+
+                    <p>The '<id>Time</id>' is how long the backup ran. The '<id>Data</id>' is the uncompressed size of the data actually copied by this backup, which for a <id>diff</id> or <id>incr</id> backup is less than the size of the database, and the '<id>Zratio</id>' is that size divided by the space the backup occupies in the repository. The '<id>Start LSN</id>' and '<id>Stop LSN</id>' delimit the WAL range required to make the database consistent when restoring.</p>
+
+                    <p>The '<id>Status</id>' is <id>OK</id> unless errors were detected during the backup, in which case it is <id>ERROR</id>. A status of <id>-</id> means the backup was made by a version of <backrest/> that did not record whether errors were detected.</p>
+                </text>
+
+                <option-list>
+                    <option id="type" name="Type">
+                        <summary>Filter on backup type.</summary>
+
+                        <text>
+                            <allow-list caption="backup types">
+                                <allow-item id="full">Output only full backups.</allow-item>
+                                <allow-item id="diff">Output only differential backups.</allow-item>
+                                <allow-item id="incr">Output only incremental backups.</allow-item>
+                            </allow-list>
+                        </text>
+
+                        <example>full</example>
+                    </option>
+                </option-list>
+            </command>
+
             <command id="help" name="Help">
                 <summary>Get help.</summary>
 

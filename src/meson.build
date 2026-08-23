@@ -79,6 +79,7 @@ src_pgbackrest = [
     'command/expire/expire.c',
     'command/help/help.c',
     'command/info/info.c',
+    'command/list/list.c',
     'command/local/local.c',
     'command/lock.c',
     'command/manifest/manifest.c',

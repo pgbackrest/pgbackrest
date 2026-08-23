@@ -89,6 +89,12 @@ command:
     log-file: false
     log-level-default: DEBUG
 
+  list:
+    command-role:
+      remote: {}
+    log-file: false
+    log-level-default: DEBUG
+
   manifest:
     command-role:
       remote: {}
@@ -431,6 +437,8 @@ option:
       expire: {}
       info:
         required: false
+      list:
+        required: false
       manifest: {}
       repo-get:
         required: false
@@ -526,6 +534,12 @@ option:
           - incr
         default: incr
       info:
+        required: false
+        allow-list:
+          - full
+          - diff
+          - incr
+      list:
         required: false
         allow-list:
           - full
@@ -860,6 +874,7 @@ option:
     command:
       +role: any
       -command: info
+      -command: list
       -command: manifest
       -command: server
       -command: server-ping
@@ -1648,6 +1663,7 @@ option:
           remote: {}
       expire: {}
       info: {}
+      list: {}
       manifest: {}
       repo-get: {}
       repo-ls: {}

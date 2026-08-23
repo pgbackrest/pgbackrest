@@ -56,6 +56,7 @@ testRun(void)
         "    expire          expire backups that exceed retention\n"
         "    help            get help\n"
         "    info            retrieve information about backups\n"
+        "    list            list backups\n"
         "    repo-get        get a file from a repository\n"
         "    repo-ls         list files in a repository\n"
         "    restore         restore a database cluster\n"
