@@ -7,6 +7,7 @@ List Command
 #include <unistd.h>
 
 #include "command/list/list.h"
+#include "command/lock.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/log.h"
@@ -29,6 +30,9 @@ STRING_STATIC(LIST_WAL_MODE_STREAM_STR,                             "STREAM");
 // Errors were or were not detected during the backup
 STRING_STATIC(LIST_STATUS_ERROR_STR,                                "ERROR");
 STRING_STATIC(LIST_STATUS_OK_STR,                                   "OK");
+
+// A backup is running but has not reported how far it has got
+STRING_STATIC(LIST_STATUS_RUNNING_STR,                              "RUNNING");
 
 // Space before the first column of a row
 #define LIST_INDENT_SIZE                                            1
@@ -86,7 +90,8 @@ typedef enum
 // A backup as it will be output, i.e. one row of the table
 typedef struct ListBackup
 {
-    const String *label;                                            // Label the backups are ordered by
+    const String *label;                                            // Label the backups are ordered by, NULL when still running
+    bool inProgress;                                                // Is the backup still running, i.e. not yet in backup.info?
     unsigned int repoKey;                                           // Repo the backup was found in, which orders duplicate labels
     const String *valueList[LIST_COLUMN_TOTAL];                     // Value output in each column
 } ListBackup;
@@ -97,6 +102,11 @@ typedef struct ListStanza
     const String *name;                                             // Stanza name, which must be first to allow for list sorting
     List *backupList;                                               // Backups found for the stanza on all repos
 } ListStanza;
+
+#define FUNCTION_LOG_LIST_STANZA_TYPE                                                                                              \
+    ListStanza *
+#define FUNCTION_LOG_LIST_STANZA_FORMAT(value, buffer, bufferSize)                                                                 \
+    objNameToLog(value, "ListStanza", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Order the backups of a stanza oldest to newest, which the label does since it begins with the time the backup started. The same
@@ -115,10 +125,21 @@ listBackupComparator(const void *const item1, const void *const item2)
 
     const ListBackup *const backup1 = item1;
     const ListBackup *const backup2 = item2;
-    const int result = strCmp(backup1->label, backup2->label);
+
+    // A backup that is still running is ordered after every backup that has completed, since it is the newest of them
+    int result = LST_COMPARATOR_CMP(backup1->inProgress, backup2->inProgress);
 
     if (result != 0)
         FUNCTION_TEST_RETURN(INT, result);
+
+    // A backup that is still running has no label to order by, so the repo orders those on its own
+    if (!backup1->inProgress)
+    {
+        result = strCmp(backup1->label, backup2->label);
+
+        if (result != 0)
+            FUNCTION_TEST_RETURN(INT, result);
+    }
 
     FUNCTION_TEST_RETURN(INT, LST_COMPARATOR_CMP(backup1->repoKey, backup2->repoKey));
 }
@@ -267,28 +288,75 @@ listBackupAdd(
 }
 
 /***********************************************************************************************************************************
-Add the backups a repo has for a stanza to the stanza, which is added to the stanza list when another repo has not added it already
+Add a row for a backup that is running, which backup.info does not know about yet. All that a running backup reports is how large
+it will be and how far it has got, so that is all the row can say about it.
 ***********************************************************************************************************************************/
 static void
-listStanzaAdd(
-    List *const stanzaList, const String *const stanzaName, const InfoBackup *const infoBackup, const unsigned int repoIdx)
+listProgressAdd(List *const backupList, const String *const stanzaName, const unsigned int repoIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, backupList);
+        FUNCTION_TEST_PARAM(STRING, stanzaName);
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ASSERT(backupList != NULL);
+    ASSERT(stanzaName != NULL);
+
+    // The backup lock is held for the length of a backup, and by expire as well, so a valid lock means one of them is running
+    const LockReadResult lockResult = cmdLockRead(lockTypeBackup, stanzaName, repoIdx);
+
+    if (lockResult.status == lockReadStatusValid)
+    {
+        ListBackup backup =
+        {
+            .inProgress = true,
+            .repoKey = cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx),
+        };
+
+        // Nothing a completed backup records is known yet, so every column starts out unknown
+        for (unsigned int columnIdx = 0; columnIdx < LIST_COLUMN_TOTAL; columnIdx++)
+            backup.valueList[columnIdx] = LIST_VALUE_UNKNOWN_STR;
+
+        backup.valueList[listColumnRepo] = strNewZ(cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
+
+        // Size of the backup, which is what it will be when it finishes rather than what has been copied so far
+        if (lockResult.data.size != NULL)
+            backup.valueList[listColumnData] = strSizeFormat(varUInt64(lockResult.data.size));
+
+        // How far the backup has got, which expire does not report and neither does a backup that has not got far enough to know
+        if (lockResult.data.percentComplete != NULL)
+            backup.valueList[listColumnStatus] = strNewPct(varUInt(lockResult.data.percentComplete), 10000);
+        else
+            backup.valueList[listColumnStatus] = LIST_STATUS_RUNNING_STR;
+
+        lstAdd(backupList, &backup);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Get the stanza from the stanza list, adding it when neither another repo nor a prior stanza name has added it already
+***********************************************************************************************************************************/
+static ListStanza *
+listStanzaGet(List *const stanzaList, const String *const stanzaName)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, stanzaList);
         FUNCTION_TEST_PARAM(STRING, stanzaName);
-        FUNCTION_TEST_PARAM(INFO_BACKUP, infoBackup);
-        FUNCTION_TEST_PARAM(UINT, repoIdx);
     FUNCTION_TEST_END();
 
     FUNCTION_AUDIT_HELPER();
 
     ASSERT(stanzaList != NULL);
     ASSERT(stanzaName != NULL);
-    ASSERT(infoBackup != NULL);
 
-    ListStanza *stanzaData = lstFind(stanzaList, &stanzaName);
+    ListStanza *result = lstFind(stanzaList, &stanzaName);
 
-    if (stanzaData == NULL)
+    if (result == NULL)
     {
         const ListStanza stanzaAdd =
         {
@@ -296,8 +364,28 @@ listStanzaAdd(
             .backupList = lstNewP(sizeof(ListBackup), .comparator = listBackupComparator),
         };
 
-        stanzaData = lstAdd(stanzaList, &stanzaAdd);
+        result = lstAdd(stanzaList, &stanzaAdd);
     }
+
+    FUNCTION_TEST_RETURN(LIST_STANZA, result);
+}
+
+/***********************************************************************************************************************************
+Add the backups a repo has for a stanza
+***********************************************************************************************************************************/
+static void
+listStanzaAdd(List *const backupList, const InfoBackup *const infoBackup, const unsigned int repoIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, backupList);
+        FUNCTION_TEST_PARAM(INFO_BACKUP, infoBackup);
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ASSERT(backupList != NULL);
+    ASSERT(infoBackup != NULL);
 
     for (unsigned int backupIdx = 0; backupIdx < infoBackupDataTotal(infoBackup); backupIdx++)
     {
@@ -307,7 +395,7 @@ listStanzaAdd(
         if (cfgOptionTest(cfgOptType) && cfgOptionStrId(cfgOptType) != backupData.backupType)
             continue;
 
-        listBackupAdd(stanzaData->backupList, infoBackup, &backupData, repoIdx);
+        listBackupAdd(backupList, infoBackup, &backupData, repoIdx);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -477,12 +565,15 @@ listRender(void)
             {
                 const String *const stanzaName = strLstGet(stanzaNameList, stanzaIdx);
 
-                // A stanza that has no backup.info on this repo has nothing to list here, which is the case for a stanza that has
-                // not been created on this repo and for one that was requested but does not exist at all
+                // The stanza is added before its backups are read, since a backup may be running for a stanza that has none yet
+                List *const backupList = listStanzaGet(stanzaList, stanzaName)->backupList;
+
+                // A stanza that has no backup.info on this repo has no completed backups to list here, which is the case for a
+                // stanza that has not been created on this repo and for one that was requested but does not exist at all
                 TRY_BEGIN()
                 {
                     listStanzaAdd(
-                        stanzaList, stanzaName,
+                        backupList,
                         infoBackupLoadFile(
                             storageRepo, strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaName), INFO_BACKUP_FILE),
                             cfgCipherSpecMainIdx(repoIdx)),
@@ -495,6 +586,10 @@ listRender(void)
                         strZ(stanzaName));
                 }
                 TRY_END();
+
+                // A backup that is running has no type, so it is not listed when the output was filtered on one
+                if (!cfgOptionTest(cfgOptType))
+                    listProgressAdd(backupList, stanzaName, repoIdx);
             }
         }
 

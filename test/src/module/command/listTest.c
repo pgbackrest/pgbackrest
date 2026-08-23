@@ -4,6 +4,7 @@ Test List Command
 #include "storage/posix/storage.h"
 
 #include "harness/config.h"
+#include "harness/fork.h"
 #include "harness/info.h"
 
 /***********************************************************************************************************************************
@@ -331,6 +332,156 @@ testRun(void)
             " repo1  15       20260819-010003F_20260820-010004D  2026-02-03 03:04:52+0000  diff  "
             "STREAM    1/1  24m:52s  135GB    2.71  2F7A2/CC000130  2F7A3/D3F87C68  ERROR\n",
             "type option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backups that are running");
+
+        // A stanza that has no backups at all, so the only thing to list for it is the backup that is running
+        HRN_STORAGE_PATH_CREATE(
+            storageTest, TEST_PATH "/repo2/" STORAGE_PATH_BACKUP "/beta", .comment = "create stanza path - beta, repo2");
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                // Backup running on repo1 that has reported how large it is and how far it has got
+                const String *const lockFileName = cmdLockFileName(STRDEF("demo"), lockTypeBackup, 1);
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
+                TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup lock - demo, repo1");
+                TEST_RESULT_VOID(
+                    lockWriteP(
+                        lockFileName, .percentComplete = VARUINT(7846), .sizeComplete = VARUINT64(2479000),
+                        .size = VARUINT64(3159000)),
+                    "write lock data");
+
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
+
+                lockReleaseP();
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_CHILD_BEGIN()
+            {
+                // The same backup running on repo2, which orders after the one on repo1
+                const String *const lockFileName = cmdLockFileName(STRDEF("demo"), lockTypeBackup, 2);
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
+                TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup lock - demo, repo2");
+                TEST_RESULT_VOID(
+                    lockWriteP(
+                        lockFileName, .percentComplete = VARUINT(759), .sizeComplete = VARUINT64(24000),
+                        .size = VARUINT64(3159000)),
+                    "write lock data");
+
+                HRN_FORK_CHILD_NOTIFY_PUT();
+                HRN_FORK_CHILD_NOTIFY_GET();
+
+                lockReleaseP();
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_CHILD_BEGIN()
+            {
+                // Expire running on repo2, which reports neither a size nor how far it has got
+                const String *const lockFileName = cmdLockFileName(STRDEF("beta"), lockTypeBackup, 2);
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
+                TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create expire lock - beta, repo2");
+                TEST_RESULT_VOID(lockWriteP(lockFileName), "write lock data");
+
+                HRN_FORK_CHILD_NOTIFY_PUT();
+                HRN_FORK_CHILD_NOTIFY_GET();
+
+                lockReleaseP();
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                // Wait for the children to acquire their locks
+                HRN_FORK_PARENT_NOTIFY_GET(0);
+                HRN_FORK_PARENT_NOTIFY_GET(1);
+                HRN_FORK_PARENT_NOTIFY_GET(2);
+
+                HRN_CFG_LOAD(cfgCmdList, argListRepo);
+
+                TEST_RESULT_STR_Z(
+                    listRender(),
+                    "STANZA 'alpha'\n"
+                    "------------------------------------------------------------------------------------------"
+                    "----------------------------------------\n"
+                    " Repo   Version  ID                Recovery Time             Mode  WAL Mode  TLI  Time  "
+                    "Data  Zratio  Start LSN  Stop LSN   Status\n"
+                    "------------------------------------------------------------------------------------------"
+                    "----------------------------------------\n"
+                    " repo2  15       20260810-010001F  2026-01-21 12:53:30+0000  full  ARCHIVE   1/0   10s   "
+                    "2KB    2.00  1/1000028  1/10000F8  OK\n"
+                    "\n"
+                    "STANZA 'beta'\n"
+                    "------------------------------------------------------------------------------------------"
+                    "---------------\n"
+                    " Repo   Version  ID  Recovery Time  Mode  WAL Mode  TLI  Time  Data  Zratio  Start LSN  "
+                    "Stop LSN  Status\n"
+                    "------------------------------------------------------------------------------------------"
+                    "---------------\n"
+                    " repo2  -        -   -              -     -         -       -     -       -  -          - "
+                    "        RUNNING\n"
+                    "\n"
+                    "STANZA 'demo'\n"
+                    "------------------------------------------------------------------------------------------"
+                    "-------------------------------------------------------------------------\n"
+                    " Repo   Version  ID                                 Recovery Time             Mode  WAL "
+                    "Mode  TLI  Time     Data     Zratio  Start LSN       Stop LSN        Status\n"
+                    "------------------------------------------------------------------------------------------"
+                    "-------------------------------------------------------------------------\n"
+                    " repo1  15       20260819-010003F                   2026-02-02 03:45:00+0000  full  "
+                    "ARCHIVE   1/0    1h:5m  372.5GB    3.03  2F728/88000130  2F729/F957E7E8  OK\n"
+                    " repo2  15       20260819-010003F                   2026-02-02 03:45:00+0000  full  "
+                    "ARCHIVE   1/0    1h:5m  372.5GB    3.03  2F728/88000130  2F729/F957E7E8  OK\n"
+                    " repo1  15       20260819-010003F_20260820-010004D  2026-02-03 03:04:52+0000  diff  "
+                    "STREAM    1/1  24m:52s    135GB    2.71  2F7A2/CC000130  2F7A3/D3F87C68  ERROR\n"
+                    " repo1  15       20260819-010003F_20260821-010005I  2026-02-04 02:44:03+0000  incr  "
+                    "ARCHIVE   1/1    4m:3s    7.2GB       -  2F7C8/A80780E8  2F7C8/B9D71858  OK\n"
+                    " repo1  9.6      20260822-010006F                   2026-02-05 02:40:30+0000  full  "
+                    "ARCHIVE   -        30s      1KB    2.00  -               -               -\n"
+                    " repo1  9.6      20260822-010006F_20260822-020009I  2026-02-06 02:42:00+0000  incr  "
+                    "ARCHIVE   1/0    2m:0s      1KB    2.00  -               -               OK\n"
+                    " repo1  -        20260823-010007F_20260823-020008I  2026-02-07 02:41:00+0000  incr  "
+                    "ARCHIVE   2/0    1m:0s      1KB    2.00  -               -               OK\n"
+                    " repo1  -        -                                  -                         -     -     "
+                    "    -          -      3MB       -  -               -               78.46%\n"
+                    " repo2  -        -                                  -                         -     -     "
+                    "    -          -      3MB       -  -               -               7.59%\n",
+                    "backups running");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("type option excludes backups that are running");
+
+                HRN_CFG_LOAD(cfgCmdList, argListType);
+
+                TEST_RESULT_STR_Z(
+                    listRender(),
+                    "STANZA 'demo'\n"
+                    "------------------------------------------------------------------------------------------"
+                    "-----------------------------------------------------------------------\n"
+                    " Repo   Version  ID                                 Recovery Time             Mode  WAL "
+                    "Mode  TLI  Time     Data   Zratio  Start LSN       Stop LSN        Status\n"
+                    "------------------------------------------------------------------------------------------"
+                    "-----------------------------------------------------------------------\n"
+                    " repo1  15       20260819-010003F_20260820-010004D  2026-02-03 03:04:52+0000  diff  "
+                    "STREAM    1/1  24m:52s  135GB    2.71  2F7A2/CC000130  2F7A3/D3F87C68  ERROR\n",
+                    "type option");
+
+                // Allow the children to release their locks
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
+                HRN_FORK_PARENT_NOTIFY_PUT(1);
+                HRN_FORK_PARENT_NOTIFY_PUT(2);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
     }
 
     // *****************************************************************************************************************************

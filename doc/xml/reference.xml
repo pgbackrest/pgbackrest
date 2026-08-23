@@ -2762,6 +2762,8 @@
                     <p>The '<id>Time</id>' is how long the backup ran. The '<id>Data</id>' is the uncompressed size of the data actually copied by this backup, which for a <id>diff</id> or <id>incr</id> backup is less than the size of the database, and the '<id>Zratio</id>' is that size divided by the space the backup occupies in the repository. The '<id>Start LSN</id>' and '<id>Stop LSN</id>' delimit the WAL range required to make the database consistent when restoring.</p>
 
                     <p>The '<id>Status</id>' is <id>OK</id> unless errors were detected during the backup, in which case it is <id>ERROR</id>. A status of <id>-</id> means the backup was made by a version of <backrest/> that did not record whether errors were detected.</p>
+
+                    <p>A backup that is still running is listed after the backups that have completed, with how far it has got in the '<id>Status</id>' column and the size it will be in the '<id>Data</id>' column. Nothing else about it is recorded until it completes, so the rest of its columns are <id>-</id>. A '<id>Status</id>' of <id>RUNNING</id> means no progress has been reported, which is the case while a backup is starting and for the whole of an <cmd>expire</cmd>, since the two share a lock. A running backup has no type, so it is not listed when <br-option>--type</br-option> is set.</p>
                 </text>
 
                 <option-list>

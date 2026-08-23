@@ -860,6 +860,7 @@ option:
       backup: {}
       expire: {}
       info: {}
+      list: {}
       restore: {}
       stanza-create: {}
       stanza-delete: {}

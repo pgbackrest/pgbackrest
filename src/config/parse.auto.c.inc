@@ -2873,6 +2873,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                       // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(Expire)                                                                       // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(Info)                                                                         // opt/lock-path
+            PARSE_RULE_OPTION_COMMAND(List)                                                                         // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/lock-path
@@ -2903,6 +2904,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                       // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(Expire)                                                                       // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(Info)                                                                         // opt/lock-path
+            PARSE_RULE_OPTION_COMMAND(List)                                                                         // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/lock-path
