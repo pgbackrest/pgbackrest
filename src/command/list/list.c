@@ -23,10 +23,6 @@ Constants
 // Value shown for data the backup does not record, e.g. the LSN range of a backup made before it was stored in backup.info
 STRING_STATIC(LIST_VALUE_UNKNOWN_STR,                               "-");
 
-// WAL required for consistency is either copied into the backup or read from the archive
-STRING_STATIC(LIST_WAL_MODE_ARCHIVE_STR,                            "ARCHIVE");
-STRING_STATIC(LIST_WAL_MODE_STREAM_STR,                             "STREAM");
-
 // Errors were or were not detected during the backup
 STRING_STATIC(LIST_STATUS_ERROR_STR,                                "ERROR");
 STRING_STATIC(LIST_STATUS_OK_STR,                                   "OK");
@@ -56,11 +52,12 @@ static const ListColumn listColumnList[] =
     {.header = "Version"},
     {.header = "ID"},
     {.header = "Recovery Time"},
-    {.header = "Mode"},
-    {.header = "WAL Mode"},
+    {.header = "Type"},
+    {.header = "Cipher"},
     {.header = "TLI"},
     {.header = "Time", .alignRight = true},
-    {.header = "Data", .alignRight = true},
+    {.header = "DB size", .alignRight = true},
+    {.header = "Backup size", .alignRight = true},
     {.header = "Zratio", .alignRight = true},
     {.header = "Start LSN"},
     {.header = "Stop LSN"},
@@ -76,11 +73,12 @@ typedef enum
     listColumnVersion,
     listColumnId,
     listColumnRecoveryTime,
-    listColumnMode,
-    listColumnWalMode,
+    listColumnType,
+    listColumnCipher,
     listColumnTli,
     listColumnTime,
-    listColumnData,
+    listColumnDbSize,
+    listColumnBackupSize,
     listColumnZratio,
     listColumnLsnStart,
     listColumnLsnStop,
@@ -255,13 +253,15 @@ listBackupAdd(
 
     // The backup completed when it stopped, which is the earliest time it can recover to
     backup.valueList[listColumnRecoveryTime] = strNewTimeP("%Y-%m-%d %H:%M:%S%z", backupData->backupTimestampStop);
-    backup.valueList[listColumnMode] = strNewStrId(backupData->backupType);
-    backup.valueList[listColumnWalMode] =
-        backupData->optionArchiveCopy ? LIST_WAL_MODE_STREAM_STR : LIST_WAL_MODE_ARCHIVE_STR;
+    backup.valueList[listColumnType] = strNewStrId(backupData->backupType);
+
+    // The backup does not record how it was encrypted, so the cipher currently configured for the repo is what it is
+    backup.valueList[listColumnCipher] = strNewStrId(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
     backup.valueList[listColumnTli] = listTimeline(infoBackup, backupData);
     backup.valueList[listColumnTime] = listDurationFormat(
         (uint64_t)(backupData->backupTimestampStop - backupData->backupTimestampStart));
-    backup.valueList[listColumnData] = strSizeFormat(backupData->backupInfoSizeDelta);
+    backup.valueList[listColumnDbSize] = strSizeFormat(backupData->backupInfoSize);
+    backup.valueList[listColumnBackupSize] = strSizeFormat(backupData->backupInfoRepoSizeDelta);
 
     // The ratio of what the backup copied to the space it occupies in the repo, which cannot be calculated when the backup
     // occupies no space
@@ -321,10 +321,11 @@ listProgressAdd(List *const backupList, const String *const stanzaName, const un
             backup.valueList[columnIdx] = LIST_VALUE_UNKNOWN_STR;
 
         backup.valueList[listColumnRepo] = strNewZ(cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
+        backup.valueList[listColumnCipher] = strNewStrId(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
 
         // Size of the backup, which is what it will be when it finishes rather than what has been copied so far
         if (lockResult.data.size != NULL)
-            backup.valueList[listColumnData] = strSizeFormat(varUInt64(lockResult.data.size));
+            backup.valueList[listColumnDbSize] = strSizeFormat(varUInt64(lockResult.data.size));
 
         // How far the backup has got, which expire does not report and neither does a backup that has not got far enough to know
         if (lockResult.data.percentComplete != NULL)
