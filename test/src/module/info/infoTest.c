@@ -344,7 +344,8 @@ testRun(void)
         // The content on its own, which is how a caller that wants the file rather than the values in it reads an info file
         IoRead *const infoRead = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6));
 
-        ioFilterGroupAdd(ioReadFilterGroup(infoRead), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .header = true));
+        ioFilterGroupAdd(
+            ioReadFilterGroup(infoRead), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .header = cipherBlockHeaderFormat));
         ioReadOpen(infoRead);
 
         TEST_RESULT_STR(strNewBuf(ioReadBuf(infoRead)), strNewBuf(contentLoad), "info content read");

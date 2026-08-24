@@ -141,7 +141,8 @@ testRun(void)
         IoFilterGroup *headerFilterGroup = ioWriteFilterGroup(headerRead);
 
         ioFilterGroupAdd(
-            headerFilterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true));
+            headerFilterGroup, cipherBlockNewP(
+                cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = cipherBlockHeaderFormat));
         ioWriteOpen(headerRead);
         ioWrite(headerRead, headerBuffer);
         ioWriteClose(headerRead);
@@ -169,7 +170,8 @@ testRun(void)
         headerFilterGroup = ioWriteFilterGroup(headerRead);
 
         ioFilterGroupAdd(
-            headerFilterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true));
+            headerFilterGroup, cipherBlockNewP(
+                cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = cipherBlockHeaderFormat));
         ioWriteOpen(headerRead);
         ioWrite(headerRead, headerBuffer);
         ioWriteClose(headerRead);
@@ -197,7 +199,7 @@ testRun(void)
         ioFilterGroupAdd(
             ioWriteFilterGroup(headerMismatch),
             cipherBlockNewP(
-                cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true,
+                cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = cipherBlockHeaderFormat,
                 .format = REPOSITORY_FORMAT_5));
         ioWriteOpen(headerMismatch);
 
@@ -213,7 +215,7 @@ testRun(void)
         ioFilterGroupAdd(
             ioWriteFilterGroup(headerRead),
             cipherBlockNewP(
-                cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true,
+                cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = cipherBlockHeaderFormat,
                 .format = REPOSITORY_FORMAT_6));
         ioWriteOpen(headerRead);
         ioWrite(headerRead, headerBuffer);
@@ -235,7 +237,8 @@ testRun(void)
                 ioFilterGroupAdd(                                                                                                  \
                     ioWriteFilterGroup(write),                                                                                     \
                     cipherBlockNewP(                                                                                               \
-                        cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = true));                        \
+                        cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass),                                          \
+                        .header = cipherBlockHeaderFormat));                                                                       \
                 ioWriteOpen(write);                                                                                                \
                                                                                                                                    \
                 TEST_ERROR(ioWrite(write, damaged), errorType, errorMessage);                                                      \
@@ -392,7 +395,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("encrypt zero byte file with no magic");
 
-        blockEncryptFilter = cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .raw = true);
+        blockEncryptFilter = cipherBlockNewP(
+            cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = cipherBlockHeaderNone);
         blockEncrypt = (CipherBlock *)ioFilterDriver(blockEncryptFilter);
 
         bufUsedZero(encryptBuffer);
@@ -411,7 +415,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("decrypt zero byte file with no magic");
 
-        blockDecryptFilter = cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .raw = true);
+        blockDecryptFilter = cipherBlockNewP(
+            cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass), .header = cipherBlockHeaderNone);
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);

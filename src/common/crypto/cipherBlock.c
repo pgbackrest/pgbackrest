@@ -549,8 +549,7 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, mode);
         FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
-        FUNCTION_LOG_PARAM(BOOL, param.raw);
-        FUNCTION_LOG_PARAM(BOOL, param.header);
+        FUNCTION_LOG_PARAM(ENUM, param.header);
         FUNCTION_LOG_PARAM(UINT, param.format);
     FUNCTION_LOG_END();
 
@@ -558,11 +557,11 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
     ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
     ASSERT(cipherSpecPass(cipherSpec) != NULL && !bufEmpty(cipherSpecPass(cipherSpec)));
 
-    // The header takes the place of the magic, so a file that contains one is never also raw
-    ASSERT(!param.raw || (!param.header && param.format == 0));
+    // A file with nothing in front of the content has no format either, since the format is written in the header
+    ASSERT(param.header != cipherBlockHeaderNone || param.format == 0);
 
-    // On encrypt the format defines whether a header is written, so a header is only ever requested on decrypt
-    ASSERT(mode == cipherModeDecrypt || !param.header);
+    // A writer knows the format and the format defines the header, so only a reader asks for the format framing
+    ASSERT(mode == cipherModeDecrypt || param.header != cipherBlockHeaderFormat);
 
     // A format is written in the digits the header gives it, so one that does not fit would be written as a different format
     ASSERT(param.format < 1000);
@@ -584,7 +583,7 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
     // in that case the lookup waits until the header has been read.
     const EVP_MD *digest = NULL;
 
-    if (!param.header)
+    if (param.header != cipherBlockHeaderFormat)
     {
         // A format defines the digest, otherwise it comes from the spec
         digest = cipherBlockDigest(param.format != 0 ? repoFormatDigest(param.format) : cipherSpecDigest(cipherSpec));
@@ -595,8 +594,9 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
         *this = (CipherBlock)
         {
             .mode = mode,
-            .raw = param.raw,
-            .headerFormat = mode == cipherModeEncrypt ? param.format >= REPOSITORY_FORMAT_6 : param.header,
+            .raw = param.header == cipherBlockHeaderNone,
+            .headerFormat = mode == cipherModeEncrypt ?
+                param.format >= REPOSITORY_FORMAT_6 : param.header == cipherBlockHeaderFormat,
             .format = param.format,
             .cipher = cipher,
             .digest = digest,
@@ -614,8 +614,7 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
 
         pckWriteU64P(packWrite, mode);
         cipherSpecPack(packWrite, cipherSpec);
-        pckWriteBoolP(packWrite, param.raw);
-        pckWriteBoolP(packWrite, param.header);
+        pckWriteU32P(packWrite, param.header);
         pckWriteU32P(packWrite, param.format);
         pckWriteEndP(packWrite);
 
@@ -630,7 +629,7 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
             .inputSame = cipherBlockInputSame,
 
             // Only a filter that reads a header has a format to report
-            .result = param.header ? cipherBlockResult : NULL));
+            .result = param.header == cipherBlockHeaderFormat ? cipherBlockResult : NULL));
 }
 
 FN_EXTERN IoFilter *
@@ -643,12 +642,10 @@ cipherBlockNewPack(const Pack *const paramList)
         PackRead *const paramListPack = pckReadNew(paramList);
         const CipherMode cipherMode = (CipherMode)pckReadU64P(paramListPack);
         const CipherSpec *const cipherSpec = cipherSpecNewPack(paramListPack);
-        const bool raw = pckReadBoolP(paramListPack);
-        const bool header = pckReadBoolP(paramListPack);
+        const CipherBlockHeader header = (CipherBlockHeader)pckReadU32P(paramListPack);
         const unsigned int format = pckReadU32P(paramListPack);
 
-        result = ioFilterMove(
-            cipherBlockNewP(cipherMode, cipherSpec, .raw = raw, .header = header, .format = format), memContextPrior());
+        result = ioFilterMove(cipherBlockNewP(cipherMode, cipherSpec, .header = header, .format = format), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

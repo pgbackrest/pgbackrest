@@ -149,7 +149,9 @@ storageGetProcess(IoWrite *const destination)
 
                 // Add the decryption filter. An info file is read with a header, which the cipher consumes.
                 ioFilterGroupAdd(
-                    ioReadFilterGroup(source), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .header = fileIsInfo));
+                    ioReadFilterGroup(source), cipherBlockNewP(
+                        cipherModeDecrypt, cipherSpec,
+                        .header = fileIsInfo ? cipherBlockHeaderFormat : cipherBlockHeaderMagic));
             }
         }
 

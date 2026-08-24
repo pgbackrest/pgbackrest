@@ -160,7 +160,7 @@ hrnInfoPut(const Storage *const storage, const char *const file, const char *con
                 cipherSpecNewP(
                     cipherSpecType(param.cipherSpec), cipherSpecPass(param.cipherSpec),
                     .digest = repoFormatDigest(param.format)),
-                .raw = header));
+                .header = header ? cipherBlockHeaderNone : cipherBlockHeaderMagic));
 
         ioWriteOpen(write);
         ioWrite(write, content);

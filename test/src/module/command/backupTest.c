@@ -93,7 +93,8 @@ testBackupValidateFile(
         if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
         {
             ioFilterGroupAdd(
-                ioReadFilterGroup(storageReadIo(read)), cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
+                ioReadFilterGroup(storageReadIo(read)), cipherBlockNewP(
+                    cipherModeDecrypt, cipherSpecBackup, .header = cipherBlockHeaderNone));
         }
 
         ioReadOpen(storageReadIo(read));
@@ -173,7 +174,8 @@ testBackupValidateFile(
         if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
         {
             ioFilterGroupAdd(
-                ioReadFilterGroup(storageReadIo(read)), cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = raw));
+                ioReadFilterGroup(storageReadIo(read)), cipherBlockNewP(
+                    cipherModeDecrypt, cipherSpecBackup, .header = raw ? cipherBlockHeaderNone : cipherBlockHeaderMagic));
         }
 
         if (manifestData->backupOptionCompressType != compressTypeNone)
@@ -1331,7 +1333,8 @@ testRun(void)
                     blockIncrNew(
                         3, 3, 8, 2, 4, 5, NULL, compressFilterP(compressTypeGz, 1, .raw = true),
                         cipherBlockNewP(
-                            cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)), .raw = true)))),
+                            cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)),
+                            .header = cipherBlockHeaderNone)))),
             "block incr pack");
     }
 

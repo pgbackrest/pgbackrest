@@ -170,7 +170,9 @@ infoNewLoad(
                 if (cipherSpecType(cipherSpec) != cipherTypeNone)
                 {
                     ioFilterGroupAdd(
-                        ioReadFilterGroup(read), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .header = param.header));
+                        ioReadFilterGroup(read), cipherBlockNewP(
+                            cipherModeDecrypt, cipherSpec,
+                            .header = param.header ? cipherBlockHeaderFormat : cipherBlockHeaderMagic));
                 }
 
                 Ini *const ini = iniNewP(read, .strict = true);

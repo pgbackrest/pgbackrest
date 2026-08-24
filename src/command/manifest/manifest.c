@@ -235,7 +235,7 @@ cmdManifestBlockDeltaRender(const Manifest *const manifest, const ManifestFile *
             {
                 ioFilterGroupAdd(
                     ioReadFilterGroup(storageReadIo(read)),
-                    cipherBlockNewP(cipherModeDecrypt, manifestCipherSpec(manifest), .raw = true));
+                    cipherBlockNewP(cipherModeDecrypt, manifestCipherSpec(manifest), .header = cipherBlockHeaderNone));
             }
 
             ioReadOpen(storageReadIo(read));
