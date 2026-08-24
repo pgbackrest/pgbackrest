@@ -595,8 +595,8 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
         {
             .mode = mode,
             .raw = param.header == cipherBlockHeaderNone,
-            .headerFormat = mode == cipherModeEncrypt ?
-                param.format >= REPOSITORY_FORMAT_6 : param.header == cipherBlockHeaderFormat,
+            .headerFormat =
+                mode == cipherModeEncrypt ? param.format >= REPOSITORY_FORMAT_6 : param.header == cipherBlockHeaderFormat,
             .format = param.format,
             .cipher = cipher,
             .digest = digest,

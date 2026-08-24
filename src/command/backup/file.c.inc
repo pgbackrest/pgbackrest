@@ -372,8 +372,7 @@ backupFile(
                         cipherSpecType(cipherSpecBackup) != cipherTypeNone ?
                             cipherBlockNewP(
                                 cipherModeEncrypt, cipherSpecBackup,
-                                .header = bundleRaw || file->blockIncrSize != 0 ?
-                                    cipherBlockHeaderNone : cipherBlockHeaderMagic) :
+                                .header = bundleRaw || file->blockIncrSize != 0 ? cipherBlockHeaderNone : cipherBlockHeaderMagic) :
                             NULL;
 
                     // If block incremental then add the filter and pass compress/encrypt filters to it since each block is

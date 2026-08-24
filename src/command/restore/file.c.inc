@@ -337,7 +337,9 @@ restoreFile(
                         // Add decryption filter
                         if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
                         {
-                            ioFilterGroupAdd(filterGroup, cipherBlockNewP(
+                            ioFilterGroupAdd(
+                                filterGroup,
+                                cipherBlockNewP(
                                     cipherModeDecrypt, cipherSpecBackup,
                                     .header = bundleRaw ? cipherBlockHeaderNone : cipherBlockHeaderMagic));
                         }
