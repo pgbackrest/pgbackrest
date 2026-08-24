@@ -1481,7 +1481,7 @@ testRun(void)
             TEST_ASSIGN(
                 manifest,
                 manifestNewLoad(
-                    ioBufferReadNew(harnessInfoEncrypt(contentLoad, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")))),
+                    ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")))),
                     cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
                 "load manifest");
             TEST_RESULT_VOID(manifestMove(manifest, memContextPrior()), "move manifest");

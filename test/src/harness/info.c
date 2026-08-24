@@ -176,11 +176,12 @@ hrnInfoPut(const Storage *const storage, const char *const file, const char *con
 
 /**********************************************************************************************************************************/
 Buffer *
-harnessInfoEncrypt(const Buffer *const content, const CipherSpec *const cipherSpec)
+harnessInfoEncrypt(const Buffer *const content, const CipherSpec *const cipherSpec, const HarnessInfoEncryptParam param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(BUFFER, content);
         FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_HARNESS_PARAM(UINT, param.format);
     FUNCTION_HARNESS_END();
 
     ASSERT(content != NULL);
@@ -188,7 +189,7 @@ harnessInfoEncrypt(const Buffer *const content, const CipherSpec *const cipherSp
 
     Buffer *const result = bufNew(0);
     IoWrite *const write = ioBufferWriteNew(result);
-    ioFilterGroupAdd(ioWriteFilterGroup(write), cipherBlockNewP(cipherModeEncrypt, cipherSpec));
+    cipherBlockFilterGroupAddP(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec, .format = param.format);
 
     ioWriteOpen(write);
     ioWrite(write, content);

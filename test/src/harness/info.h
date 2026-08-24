@@ -42,7 +42,17 @@ Buffer *harnessInfoChecksum(const String *info);
 Buffer *harnessInfoChecksumFormat(unsigned int format, const String *info);
 Buffer *harnessInfoChecksumZ(const char *info);
 
-// Encrypt content the way a file that contains no header is stored, e.g. a manifest
-Buffer *harnessInfoEncrypt(const Buffer *content, const CipherSpec *cipherSpec);
+// Encrypt content the way a file at a format is stored, i.e. with the header and digest that go with the format. No format means
+// the file has none of its own, e.g. a manifest, so it is stored with no header and the digest the spec was given.
+typedef struct HarnessInfoEncryptParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int format;                                            // Repository format the file is stored at
+} HarnessInfoEncryptParam;
+
+#define harnessInfoEncryptP(content, cipherSpec, ...)                                                                              \
+    harnessInfoEncrypt(content, cipherSpec, (HarnessInfoEncryptParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+Buffer *harnessInfoEncrypt(const Buffer *content, const CipherSpec *cipherSpec, HarnessInfoEncryptParam param);
 
 void harnessInfoLoadNewCallback(void *callbackData, const String *section, const String *key, JsonRead *json);

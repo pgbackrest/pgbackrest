@@ -68,23 +68,6 @@ testInfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveDa
 }
 
 /***********************************************************************************************************************************
-Store info file content the way it would be stored at a format, i.e. with the header and digest that go with the format
-***********************************************************************************************************************************/
-static Buffer *
-testInfoEncrypt(const Buffer *const content, const unsigned int format, const CipherSpec *const cipherSpec)
-{
-    Buffer *const result = bufNew(0);
-    IoWrite *const write = ioBufferWriteNew(result);
-    cipherBlockFilterGroupAddP(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec, .format = format);
-
-    ioWriteOpen(write);
-    ioWrite(write, content);
-    ioWriteClose(write);
-
-    return result;
-}
-
-/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -279,7 +262,7 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoNewLoadP(
-                ioBufferReadNew(harnessInfoEncrypt(contentLoad, cipherSpec)), cipherSpec, harnessInfoLoadNewCallback,
+                ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec)), cipherSpec, harnessInfoLoadNewCallback,
                 callbackContent),
             "info with content and cipher");
         TEST_RESULT_STR_Z(callbackContent, "[c] key=1\n[d] key=1\n", "    check callback content");
@@ -305,7 +288,7 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoNewLoadP(
-                ioBufferReadNew(testInfoEncrypt(contentSave, REPOSITORY_FORMAT_6, cipherSpec)), cipherSpec,
+                ioBufferReadNew(harnessInfoEncryptP(contentSave, cipherSpec, .format = REPOSITORY_FORMAT_6)), cipherSpec,
                 harnessInfoLoadNewCallback, strNew(), .header = true),
             "load migrated info");
         TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_6, "    check format");
@@ -335,7 +318,7 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoNewLoadP(
-                ioBufferReadNew(testInfoEncrypt(contentLoad, REPOSITORY_FORMAT_6, cipherSpec)), cipherSpec,
+                ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6)), cipherSpec,
                 harnessInfoLoadNewCallback, callbackContent, .header = true),
             "info with header");
         TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_6, "    check format");
@@ -353,13 +336,13 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoNewLoadP(
-                ioBufferReadNew(testInfoEncrypt(contentMigrated, REPOSITORY_FORMAT_6, cipherSpec)), cipherSpec,
+                ioBufferReadNew(harnessInfoEncryptP(contentMigrated, cipherSpec, .format = REPOSITORY_FORMAT_6)), cipherSpec,
                 harnessInfoLoadNewCallback, callbackContent, .header = true),
             "info migrated to the format that stores the digest");
         TEST_RESULT_UINT(cipherSpecDigest(infoCipherSpec(info)), hashTypeSha1, "    check cipher sub digest");
 
         // The content on its own, which is how a caller that wants the file rather than the values in it reads an info file
-        IoRead *const infoRead = ioBufferReadNew(testInfoEncrypt(contentLoad, REPOSITORY_FORMAT_6, cipherSpec));
+        IoRead *const infoRead = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6));
 
         ioFilterGroupAdd(ioReadFilterGroup(infoRead), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .header = true));
         ioReadOpen(infoRead);
@@ -372,7 +355,7 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoNewLoadP(
-                ioBufferReadNew(testInfoEncrypt(contentLoad, REPOSITORY_FORMAT_5, cipherSpec)), cipherSpec,
+                ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_5)), cipherSpec,
                 harnessInfoLoadNewCallback, callbackContent, .header = true),
             "info with no header");
         TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_5, "    check format");
@@ -395,7 +378,7 @@ testRun(void)
             "HINT: is or was the repo encrypted?");
 
         // Header uses the byte held back for later, so this version does not know what it is looking at
-        Buffer *contentHeader = testInfoEncrypt(contentLoad, REPOSITORY_FORMAT_6, cipherSpec);
+        Buffer *contentHeader = harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6);
         bufPtr(contentHeader)[7] = 'X';
 
         TEST_ERROR(
@@ -404,7 +387,7 @@ testRun(void)
             FormatError, "invalid cipher header");
 
         // Header damaged where the format should be
-        contentHeader = testInfoEncrypt(contentLoad, REPOSITORY_FORMAT_6, cipherSpec);
+        contentHeader = harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6);
         bufPtr(contentHeader)[5] = 'X';
 
         TEST_ERROR(
@@ -413,7 +396,7 @@ testRun(void)
             FormatError, "invalid cipher header");
 
         // Header names a format this version cannot read, which is reported before anything is decrypted
-        contentHeader = testInfoEncrypt(contentLoad, REPOSITORY_FORMAT_6, cipherSpec);
+        contentHeader = harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6);
         bufPtr(contentHeader)[6] = '7';
 
         TEST_ERROR(
@@ -426,7 +409,7 @@ testRun(void)
         // Header and content disagree about the format
         TEST_ERROR(
             infoNewLoadP(
-                ioBufferReadNew(testInfoEncrypt(contentLoad, REPOSITORY_FORMAT_6, cipherSpec)), cipherSpec,
+                ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6)), cipherSpec,
                 harnessInfoLoadNewCallback, callbackContent, .header = true),
             FormatError, "repository format 5 does not match header format 6");
     }
