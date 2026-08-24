@@ -56,6 +56,15 @@ sees anything but the content.
 // Total length of cipher header
 #define CIPHER_BLOCK_HEADER_SIZE                                    (CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN)
 
+// The header is written in place of the magic, so the magic, the format digits, and the reserved byte must add up to exactly what
+// the magic occupies or the salt would no longer begin at the same place
+static_assert(
+    CIPHER_BLOCK_HEADER_MAGIC_SIZE + CIPHER_BLOCK_HEADER_FORMAT_SIZE + 1 == CIPHER_BLOCK_MAGIC_SIZE,
+    "cipher header must be the size of the magic it replaces");
+
+// A format too large for the digits it is written in would be truncated to a different format
+static_assert(REPOSITORY_FORMAT_MAX < 1000, "repository format must fit in the header digits");
+
 /***********************************************************************************************************************************
 Digest the pass derives the key with. The lookup is by name, so a digest must be one openssl knows.
 ***********************************************************************************************************************************/
@@ -554,6 +563,9 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
 
     // On encrypt the format defines whether a header is written, so a header is only ever requested on decrypt
     ASSERT(mode == cipherModeDecrypt || !param.header);
+
+    // A format is written in the digits the header gives it, so one that does not fit would be written as a different format
+    ASSERT(param.format < 1000);
 
     // Init crypto subsystem
     cryptoInit();
