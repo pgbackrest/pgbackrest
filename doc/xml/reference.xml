@@ -2929,7 +2929,7 @@
 
                             <allow-list caption="formats">
                                 <allow-item id="5">Format supported by all versions since <proper>1.00</proper></allow-item>
-                                <allow-item id="6">Derives repository encryption keys with <id>SHA-256</id> rather than <id>SHA-1</id></allow-item>
+                                <allow-item id="6">Derives new repository encryption keys with <id>SHA-256</id> rather than <id>SHA-1</id></allow-item>
                             </allow-list>
 
                             <p>An existing stanza is migrated to a newer format with the <cmd>stanza-upgrade</cmd> command rather than with this command, which sets the format only for a stanza it creates.</p>
@@ -2967,6 +2967,8 @@
                             <p>Migrate the stanza to the specified repository format. Migration applies to new backups and archives only, so backups and archives already in the repository are left at the format they were written with.</p>
 
                             <p>The first backup after a migration is a full backup even when a differential or incremental backup is requested, since no backup in the repository was written at the new format.</p>
+
+                            <p>A passphrase already stored in the repository keeps deriving its key with <id>SHA-1</id>, since the files it encrypted are not rewritten by the migration. Only a new passphrase derives with <id>SHA-256</id>, i.e. the passphrase generated for each full backup written at the new format, or the passphrases of a stanza created at that format.</p>
 
                             <allow-list inherit="repo-format" command="stanza-create"/>
 
