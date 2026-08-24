@@ -164,41 +164,6 @@ verifyInvalidFileAdd(List *const invalidFileList, const VerifyResult reason, con
 }
 
 /***********************************************************************************************************************************
-Load a file into memory
-***********************************************************************************************************************************/
-static StorageRead *
-verifyFileLoad(const String *const pathFileName, const CipherSpec *const cipherSpec, const bool decrypt)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, pathFileName);                  // Fully qualified path/file name
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);                // Cipher spec to open file if encrypted
-        FUNCTION_TEST_PARAM(BOOL, decrypt);                         // Decrypt here rather than leaving it to the load?
-    FUNCTION_TEST_END();
-
-    ASSERT(pathFileName != NULL);
-
-    // Read the file and error if missing
-    StorageRead *const result = storageNewReadP(storageRepo(), pathFileName);
-
-    // *read points to a location within result so update result with contents based on necessary filters
-    IoRead *const read = storageReadIo(result);
-
-    // An info file or manifest is decrypted by the load, which has to read the header before it knows what to decrypt with, so the
-    // checksum is over the file as it is stored. The file and its copy are written from the same bytes, which is all the checksum
-    // is used to compare.
-    if (decrypt)
-        cipherBlockFilterGroupAddP(ioReadFilterGroup(read), cipherModeDecrypt, cipherSpec);
-
-    ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
-
-    // If the file is compressed, add a decompression filter
-    if (compressTypeFromName(pathFileName) != compressTypeNone)
-        ioFilterGroupAdd(ioReadFilterGroup(read), decompressFilterP(compressTypeFromName(pathFileName)));
-
-    FUNCTION_TEST_RETURN(STORAGE_READ, result);
-}
-
-/***********************************************************************************************************************************
 Get status of info files in the repository
 ***********************************************************************************************************************************/
 static VerifyInfoFile
@@ -220,7 +185,10 @@ verifyInfoFile(const String *const pathFileName, const bool keepFile, const Ciph
     {
         TRY_BEGIN()
         {
-            IoRead *const infoRead = storageReadIo(verifyFileLoad(pathFileName, cipherSpec, false));
+            StorageRead *const infoStorageRead = storageNewReadP(storageRepo(), pathFileName);
+            IoRead *const infoRead = storageReadIo(infoStorageRead);
+
+            ioFilterGroupAdd(ioReadFilterGroup(infoRead), cryptoHashNew(hashTypeSha1));
 
             // If directed to keep the loaded file in memory, then move the file into the result, else drain the io and close it
             if (keepFile)
@@ -829,11 +797,18 @@ verifyArchive(VerifyJobData *const jobData)
                             if (archiveResult->pgWalInfo.size == 0)
                             {
                                 // Initialize the WAL segment size from the first WAL
-                                StorageRead *const walRead = verifyFileLoad(
-                                    strNewFmt(
-                                        STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveResult->archiveId), strZ(walPath),
-                                        strZ(strLstGet(jobData->walFileList, 0))),
-                                    jobData->cipherSpecArchive, true);
+                                const String *const walFile = strNewFmt(
+                                    STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveResult->archiveId), strZ(walPath),
+                                    strZ(strLstGet(jobData->walFileList, 0)));
+                                StorageRead *const walRead = storageNewReadP(storageRepo(), walFile);
+                                IoFilterGroup *const walFilterGroup = ioReadFilterGroup(storageReadIo(walRead));
+
+                                // Add decryption filter when required
+                                cipherBlockFilterGroupAddP(walFilterGroup, cipherModeDecrypt, jobData->cipherSpecArchive);
+
+                                // If the file is compressed, add a decompression filter
+                                if (compressTypeFromName(walFile) != compressTypeNone)
+                                    ioFilterGroupAdd(walFilterGroup, decompressFilterP(compressTypeFromName(walFile)));
 
                                 const PgWal walInfo = pgWalFromBuffer(
                                     storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE), cfgOptionStrNull(cfgOptPgVersionForce));
