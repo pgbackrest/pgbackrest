@@ -89,30 +89,17 @@ jobs:
           cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/test.py --vm-max=2 --no-coverage --no-valgrind
 
   # Fil-C. Everything the tests link has to be built with Fil-C as well -- linking to code that was not is what Fil-C calls
-  # unsafe and it is severely restricted -- so the libraries it does not ship are built here.
-  #
-  # The job is informational while the failures it reports are worked through, so a failure does not fail the workflow. Remove
-  # continue-on-error to make it binding.
+  # unsafe and it is severely restricted -- so the /opt/fil distribution is used, which ships memory-safe builds of every
+  # library the tests need.
   fil-c:
     runs-on: ubuntu-24.04
-    continue-on-error: true
 
     # Fail rather than hang, since a test that deadlocks under Fil-C blocks the runner until the workflow timeout otherwise
     timeout-minutes: 45
 
-    # Allow pushing the prefix to the GHCR cache
-    permissions:
-      contents: read
-      packages: write
-
-    # Versions of everything downloaded below. Fil-C releases are at https://github.com/pizlonator/fil-c/releases.
+    # Fil-C releases are at https://github.com/pizlonator/fil-c/releases.
     env:
-      FILC_VERSION: '0.683'
-      LIBXML2_VERSION: '2.14.4'
-      POSTGRES_VERSION: '17.2'
-
-      # Bump when the steps that build the prefix change in a way the versions above do not capture
-      FILC_CACHE_REVISION: '1'
+      FILC_VERSION: '0.684'
 
       # Build with the Fil-C compiler and find only the libraries built for it. --gcc-toolchain points clang at the Fil-C
       # prefix so the host gcc's library directory stays out of the search path, which keeps a library that was not built with
@@ -136,56 +123,16 @@ jobs:
       - name: Update Apt
         uses: ./pgbackrest/.github/action/apt
 
-      # bison and flex are needed to build PostgreSQL below. No -dev packages are installed since nothing built by the host
-      # toolchain can be linked into a Fil-C binary.
+      # No -dev packages are installed since nothing built by the host toolchain can be linked into a Fil-C binary.
       - name: Install
         run: |
           DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y meson ninja-build \
-            python3-yaml python3-coverage pkg-config bison flex liblz4-tool bzip2 zstd
-
-      # Log in so the prefix can be pushed to the GHCR cache. Best effort -- pull is anonymous and push is skipped when the token
-      # is read-only (e.g. pull requests from forks).
-      - name: Login to GHCR
-        continue-on-error: true
-        run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
-
-      # Building the prefix takes minutes and produces the same thing every time, so cache it. A container registry is used
-      # rather than actions/cache because it is not branch-scoped, so the many short-lived branches this project works in all
-      # share one cache and a fork that has not run yet falls back to the canonical pgbackrest one, exactly as the ccache does.
-      - name: Restore Fil-C
-        id: restore
-        run: |
-          tag="x86_64-${FILC_CACHE_REVISION?}-${FILC_VERSION?}-${LIBXML2_VERSION?}-${POSTGRES_VERSION?}"
-          echo "tag=${tag}" >> ${GITHUB_OUTPUT?}
-
-          for repo in "${GITHUB_REPOSITORY_OWNER,,}" pgbackrest; do
-              image="ghcr.io/${repo}/test-filc:${tag}"
-
-              if docker pull -q "${image}" 2>/dev/null; then
-                  # The tarball is held in a scratch image that is never run, only created so it can be copied out
-                  container=$(docker create "${image}")
-                  docker cp "${container}:/fil.tar.zst" /tmp/fil.tar.zst
-                  docker rm "${container}" > /dev/null
-
-                  # The toolchain resolves its own headers and libraries through /opt/fil rather than relative to the
-                  # binary, so the prefix has to be restored to exactly the path it was built at
-                  sudo mkdir -p /opt/fil
-                  sudo tar -I zstd -xf /tmp/fil.tar.zst -C /opt/fil
-                  sudo chown -R $(id -u):$(id -g) /opt/fil
-
-                  echo "restored=true" >> ${GITHUB_OUTPUT?}
-                  echo "restored from ${image}"
-                  exit 0
-              fi
-          done
-
-          echo "no cached prefix found, building it"
+            python3-yaml python3-coverage pkg-config liblz4-tool bzip2 zstd
 
       # The /opt/fil distribution is used rather than the standalone tarball because it is glibc-based and ships memory-safe
-      # builds of openssl, zlib, lz4, zstd, and bz2, which leaves only libxml2 and libpq to build below. It is x86_64 only,
-      # which is why this job does not also run on the ARM runner.
+      # builds of every library the tests link, openssl, zlib, lz4, zstd, bz2, libxml2, and libpq. It is x86_64 only, which
+      # is why this job does not also run on the ARM runner.
       - name: Install Fil-C
-        if: steps.restore.outputs.restored != 'true'
         run: |
           cd ${HOME?}
           filc=optfil-${FILC_VERSION?}-linux-x86_64
@@ -193,72 +140,6 @@ jobs:
           tar -xJf ${filc}.tar.xz
           cd ${filc} && sudo ./setup.sh --unattended
           sudo chown -R $(id -u):$(id -g) /opt/fil
-
-      - name: Build libxml2
-        if: steps.restore.outputs.restored != 'true'
-        run: |
-          cd ${HOME?}
-          curl -fsSL https://download.gnome.org/sources/libxml2/${LIBXML2_VERSION%.*}/libxml2-${LIBXML2_VERSION?}.tar.xz | \
-            tar -xJ
-          cd libxml2-${LIBXML2_VERSION?}
-          ./configure --prefix=/opt/fil --disable-maintainer-mode --without-python --without-icu --without-lzma --without-zlib
-          make -j$(nproc)
-          make install
-
-      # Only libpq is built, not all of PostgreSQL. Two things have to be turned off for it to work with Fil-C. The exports
-      # list names the plain symbols but Fil-C emits pizlonated_-prefixed ones, so the version script built from it hides every
-      # entry point, and -fvisibility=hidden hides the prefixed symbols as well because they do not inherit the default
-      # visibility that PGDLLEXPORT puts on the declaration. Without both changes libpq exports nothing pgBackRest can link to.
-      - name: Build libpq
-        if: steps.restore.outputs.restored != 'true'
-        run: |
-          cd ${HOME?}
-          curl -fsSL https://ftp.postgresql.org/pub/source/v${POSTGRES_VERSION?}/postgresql-${POSTGRES_VERSION?}.tar.bz2 | \
-            tar -xj
-          cd postgresql-${POSTGRES_VERSION?}
-          ./configure --prefix=/opt/fil --without-icu --without-readline --without-zlib --without-openssl
-          sed -i 's/-fvisibility=hidden//g' src/Makefile.global
-
-          for dir in src/port src/common src/interfaces/libpq; do
-              make -C ${dir} SHLIB_EXPORTS= -j$(nproc)
-          done
-
-          make -C src/interfaces/libpq SHLIB_EXPORTS= install
-          make -C src/include install
-
-      # Saved here rather than at the end of the job so that a prefix is only ever cached when every build step above succeeded,
-      # and so the test run failing does not stop it being cached
-      - name: Save Fil-C
-        if: steps.restore.outputs.restored != 'true'
-        continue-on-error: true
-        run: |
-          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/test-filc:${{steps.restore.outputs.tag}}"
-
-          mkdir -p /tmp/filc-context
-          tar -I 'zstd -3 -T0' -cf /tmp/filc-context/fil.tar.zst -C /opt/fil .
-          printf 'FROM scratch\nCOPY fil.tar.zst /fil.tar.zst\nCMD ["/fil.tar.zst"]\n' > /tmp/filc-context/Dockerfile
-
-          if docker build -q -t "${image}" /tmp/filc-context && docker push "${image}"; then
-              echo "saved to ${image}"
-          else
-              echo "push skipped (no write access)"
-          fi
-
-      # Work around a Fil-C bug where a volatile local declared without an initializer loses its value across longjmp, so the
-      # context this test saves before throwing reads as null in the handler. Reported upstream. This is patched here rather than in
-      # the test because the declaration is correct C and should not carry a workaround for a compiler bug. The check makes the step
-      # fail if the declaration changes rather than silently patching nothing, and the step can be removed once a Fil-C release
-      # contains the fix.
-      - name: Patch Test Source
-        run: |
-          test=${GITHUB_WORKSPACE?}/pgbackrest/test/src/module/common/memContextTest.c
-
-          sed -i 's/MemContext \*volatile memContextFatal;/MemContext *volatile memContextFatal = NULL;/' ${test}
-
-          if ! grep -q 'MemContext \*volatile memContextFatal = NULL;' ${test}; then
-              echo "memContextFatal declaration not found, so nothing was patched"
-              exit 1
-          fi
 
       - name: Run Test
         run: |
