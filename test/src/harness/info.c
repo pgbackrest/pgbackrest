@@ -143,7 +143,7 @@ hrnInfoPut(const Storage *const storage, const char *const file, const char *con
     const Buffer *content = harnessInfoChecksumFormat(param.format, STR(info));
 
     // Encrypt the way the format stores the file. A file that contains a header gets it in place of the magic the cipher writes,
-    // and from format 6 the pass derives with SHA-256 rather than SHA-1.
+    // and the pass derives with the digest the format calls for.
     if (param.cipherSpec != NULL && cipherSpecType(param.cipherSpec) != cipherTypeNone)
     {
         const bool header = param.header && param.format >= REPOSITORY_FORMAT_6;
@@ -159,7 +159,7 @@ hrnInfoPut(const Storage *const storage, const char *const file, const char *con
                 cipherModeEncrypt,
                 cipherSpecNewP(
                     cipherSpecType(param.cipherSpec), cipherSpecPass(param.cipherSpec),
-                    .digest = param.format >= REPOSITORY_FORMAT_6 ? hashTypeSha256 : hashTypeSha1),
+                    .digest = repoFormatDigest(param.format)),
                 .raw = header));
 
         ioWriteOpen(write);
