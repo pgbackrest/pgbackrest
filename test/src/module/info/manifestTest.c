@@ -1785,7 +1785,8 @@ testRun(void)
 
         TEST_RESULT_UINT(cipherSpecType(manifestCipherSpec(manifest)), cipherTypeNone, "check cipher subpass");
         TEST_RESULT_VOID(
-            manifestCipherSpecSet(manifest, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("supersecret"))),
+            manifestCipherSpecSet(
+                manifest, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("supersecret"), .digest = hashTypeSha1)),
             "cipher subpass set");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpec(manifest))), "supersecret", "check cipher subpass");
 

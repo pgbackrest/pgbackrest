@@ -2310,7 +2310,8 @@ testRun(void)
         Manifest *manifestEncrypted = manifestLoadFile(
             storageRepoIdxWrite(0), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE),
             cipherSpecNewNone());
-        manifestCipherSpecSet(manifestEncrypted, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE)));
+        manifestCipherSpecSet(
+            manifestEncrypted, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE), .digest = hashTypeSha1));
 
         // Open file for write
         IoWrite *write = storageWriteIo(
@@ -2334,7 +2335,7 @@ testRun(void)
         // Write archive.info to the encrypted repo
         InfoArchive *infoArchive = infoArchiveNew(
             PG_VERSION_11, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT,
-            cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE)));
+            cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE), .digest = hashTypeSha1));
         infoArchiveSaveFile(
             infoArchive, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR,
             cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)));

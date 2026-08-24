@@ -87,7 +87,9 @@ testRun(void)
             info,
             infoArchiveNew(
                 PG_VERSION_10, 6569239123849665999, REPOSITORY_FORMAT_DEFAULT,
-                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
+                cipherSpecNewP(
+                    cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"),
+                    .digest = hashTypeSha1)),
             "infoArchiveNew() - cipher sub");
 
         const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
