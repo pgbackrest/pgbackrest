@@ -232,10 +232,13 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
             this->blockMapWrite = true;
         }
 
-        // Write the block map if done processing and there are new/changed blocks or block list has been truncated
+        // Write the block map if done processing and there are new/changed blocks or block list has been truncated. A block map
+        // with no blocks is never written because it cannot be read back. That happens when the file is truncated to zero during
+        // the backup, in which case the file is stored as truncated and the map is not needed.
         if (this->done && this->blockOutOffset == 0 &&
             (this->blockMapWrite ||
-             (this->blockMapPrior != NULL && blockMapSize(this->blockMapOut) < blockMapSize(this->blockMapPrior))))
+             (this->blockMapPrior != NULL && blockMapSize(this->blockMapOut) > 0 &&
+              blockMapSize(this->blockMapOut) < blockMapSize(this->blockMapPrior))))
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
