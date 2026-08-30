@@ -3691,6 +3691,13 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
+            // Block incremental file within the bundle limit that will grow past it
+            file = bufNew(BLOCK_MIN_FILE_SIZE);
+            memset(bufPtr(file), 88, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "grow-past-bundle-limit", file, .timeModified = backupTimeStart);
+
             // Run backup
             hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
@@ -3714,17 +3721,18 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/16403, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/32809, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/49215, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/65629, 2B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/normal-same (bundle 1/65631, 4B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/65635, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/82018, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-past-bundle-limit (bundle 1/49215, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/65621, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/82035, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/normal-same (bundle 1/82037, 4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/82041, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/98424, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC08C000000001, lsn = 5dc08c0/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC08C000000000:0000000105DC08C000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 11");
+                "P00   INFO: full backup size = [SIZE], file total = 12");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3735,6 +3743,7 @@ testRun(void)
                 "bundle/1/pg_data/block-incr-shrink-below {s=16384, m=0:{0,1}}\n"
                 "bundle/1/pg_data/block-incr-shrink-block {s=16384, m=0:{0,1}}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
+                "bundle/1/pg_data/grow-past-bundle-limit {s=16384, m=0:{0,1}}\n"
                 "bundle/1/pg_data/grow-to-block-incr {s=16383}\n"
                 "bundle/1/pg_data/normal-same {s=4}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
@@ -3826,6 +3835,14 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
+            // Grow file past the bundle limit. The prior size is within the limit but the file must be stored unbundled since the
+            // original size is what will be copied.
+            file = bufNew(BLOCK_MIN_FILE_SIZE * 2);
+            memset(bufPtr(file), 88, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "grow-past-bundle-limit", file, .timeModified = backupTimeStart);
+
             // File that gets truncated to zero during the backup
             HRN_STORAGE_PUT(storagePgWrite(), "truncate-to-zero", BUFSTRDEF("DATA"), .timeModified = backupTimeStart);
 
@@ -3870,6 +3887,7 @@ testRun(void)
                 "P00   INFO: backup '20191103-165320F_20191106-002640D' cannot be resumed: resume only valid for full backup\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-larger (1.4MB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (128KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-past-bundle-limit (32KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-same (16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/16411, 8KB, [PCT]) checksum [SHA1]\n"
@@ -3886,7 +3904,7 @@ testRun(void)
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC213000000000:0000000105DC213000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F_20191106-002640D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 12");
+                "P00   INFO: diff backup size = [SIZE], file total = 13");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3899,6 +3917,7 @@ testRun(void)
                 "pg_data/backup_label {s=17, ts=+2}\n"
                 "pg_data/block-incr-grow.pgbi {s=131072, m=0:{0},1:{0},0:{2},1:{1,2,3,4,5,6,7,8,9,10,11,12,13}}\n"
                 "pg_data/block-incr-larger.pgbi {s=1507328, m=1:{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},1:{0,1,2,3,4,5,6}}\n"
+                "pg_data/grow-past-bundle-limit.pgbi {s=32768, m=0:{0,1},1:{0,1}}\n"
                 "20191103-165320F/bundle/1/pg_data/PG_VERSION {s=2, ts=-200000}\n"
                 "20191103-165320F/bundle/1/pg_data/block-incr-same {s=16384, m=0:{0,1}}\n"
                 "20191103-165320F/bundle/1/pg_data/normal-same {s=4}\n"
@@ -3913,6 +3932,7 @@ testRun(void)
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-shrink");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-shrink-below");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-shrink-block");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "grow-past-bundle-limit");
             HRN_STORAGE_REMOVE(storagePgWrite(), "grow-to-block-incr");
             HRN_STORAGE_REMOVE(storagePgWrite(), "normal-same");
             HRN_STORAGE_REMOVE(storagePgWrite(), "truncate-to-zero");
