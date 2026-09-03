@@ -77,6 +77,27 @@ testRun(void)
 
         TEST_RESULT_UINT(cvtDivToZ(5555, 100, 1, false, buffer, sizeof(buffer)), 4, "partial round up");
         TEST_RESULT_Z(buffer, "55.6", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(87, 100, 2, false, buffer, sizeof(buffer)), 4, "quotient less than one");
+        TEST_RESULT_Z(buffer, "0.87", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(1, 1000, 3, true, buffer, sizeof(buffer)), 5, "quotient less than one trimmed");
+        TEST_RESULT_Z(buffer, "0.001", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(5, 1000, 2, false, buffer, sizeof(buffer)), 4, "quotient less than precision round up");
+        TEST_RESULT_Z(buffer, "0.01", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(4, 1000, 2, false, buffer, sizeof(buffer)), 4, "quotient less than precision round down");
+        TEST_RESULT_Z(buffer, "0.00", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(0, 100, 2, true, buffer, sizeof(buffer)), 1, "zero quotient trimmed");
+        TEST_RESULT_Z(buffer, "0", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(9, 10, 0, false, buffer, sizeof(buffer)), 1, "quotient less than one round up no precision");
+        TEST_RESULT_Z(buffer, "1", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(4, 10, 0, false, buffer, sizeof(buffer)), 1, "quotient less than one round down no precision");
+        TEST_RESULT_Z(buffer, "0", "    check buffer");
     }
 
     // *****************************************************************************************************************************
