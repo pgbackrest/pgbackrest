@@ -429,9 +429,10 @@ backupFile(
                             fileResult->copySize = pckReadU64P(
                                 ioFilterGroupResultP(ioReadFilterGroup(readIo), SIZE_FILTER_TYPE, .idx = 0));
 
-                            // If file is zero-length then it was truncated during the backup. When bundling we can simply mark it
-                            // as truncated since no file needs to be stored.
-                            if (bundleId != 0 && fileResult->copySize == 0)
+                            // If file is zero-length then it was truncated during the backup. When bundling we can simply mark
+                            // it as truncated since no file needs to be stored. The same is true for block incremental, which
+                            // additionally must not be stored because a block map with no blocks cannot be read back.
+                            if ((bundleId != 0 || file->blockIncrSize != 0) && fileResult->copySize == 0)
                             {
                                 fileResult->backupCopyResult = backupCopyResultTruncate;
                                 fileResult->copyChecksum = HASH_TYPE_SHA1_ZERO_BUF;
