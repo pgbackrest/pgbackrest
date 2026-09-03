@@ -425,6 +425,7 @@ testRun(void)
             .cipherSpec = cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x")));
 
         // Enable read retry to show that it is disabled when the filters are passed to the remote
+        uint64_t featureOld = storageRepo->pub.interface.feature;
         storageRepo->pub.interface.feature |= 1 << storageFeatureReadRetry;
 
         // Limit the read so it ends in the middle of a cipher block and the decrypt filter errors on the remote
@@ -438,7 +439,7 @@ testRun(void)
 
         TEST_ERROR(storageGetP(fileRead), CryptoError, "raised from remote-0 shim protocol: unable to flush");
 
-        storageRepo->pub.interface.feature ^= 1 << storageFeatureReadRetry;
+        storageRepo->pub.interface.feature = featureOld;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid filter");
