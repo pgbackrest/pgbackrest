@@ -64,6 +64,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2843"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Use original size to determine if a file should be bundled.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2830"/>
 
                 <release-item-contributor-list>
