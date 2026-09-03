@@ -44,7 +44,6 @@ testRun(void)
         TEST_RESULT_UINT(repoFormatDigest(REPOSITORY_FORMAT_6), hashTypeSha256, "format 6 derives with sha256");
     }
 
-
     // *****************************************************************************************************************************
     if (testBegin("cipherBlockFormatNew()"))
     {
