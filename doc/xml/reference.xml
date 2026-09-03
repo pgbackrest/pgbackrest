@@ -2974,6 +2974,8 @@
 
                             <p>Once the info files have been migrated, a version of <backrest/> that does not support the new format is no longer able to read the stanza at all, including the parts of it that are still at the older format. The format cannot be downgraded.</p>
 
+                            <p>On an encrypted repository such a version reports an error about the cipher rather than the format, since the header written from format 6 takes the place of the magic that an older version expects to find.</p>
+
                             <p>This option cannot be set in a configuration file but it can be set in the environment, where it applies to every <cmd>stanza-upgrade</cmd> run until it is removed.</p>
 
                             <admonition type="caution">Set this option for the run that migrates the stanza. A format left in the environment migrates every stanza that is upgraded from that environment.</admonition>
