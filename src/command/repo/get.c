@@ -8,6 +8,7 @@ Repository Get Command
 #include "command/repo/common.h"
 #include "command/repo/get.h"
 #include "common/crypto/cipherBlock.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
@@ -147,11 +148,11 @@ storageGetProcess(IoWrite *const destination)
 
                 ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
 
-                // Add the decryption filter. An info file is read with a header, which the cipher consumes.
-                ioFilterGroupAdd(
-                    ioReadFilterGroup(source), cipherBlockNewP(
-                        cipherModeDecrypt, cipherSpec,
-                        .header = fileIsInfo ? cipherBlockHeaderFormat : cipherBlockHeaderMagic));
+                // Add the decryption filter. An info file is read through the filter that reads its header.
+                if (fileIsInfo)
+                    cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(source), cipherSpec);
+                else
+                    cipherBlockFilterGroupAdd(ioReadFilterGroup(source), cipherModeDecrypt, cipherSpec);
             }
         }
 

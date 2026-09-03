@@ -11,7 +11,8 @@ Info Handler
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
-#include "common/format.h"
+#include "common/format/cipherBlockFormat.h"
+#include "common/format/format.h"
 #include "common/ini.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
@@ -165,15 +166,12 @@ infoNewLoad(
 
             TRY_BEGIN()
             {
-                // The content is decrypted as it is parsed. A file that may contain a header is read with one, which the cipher
-                // consumes and reports the format of once the read is done.
-                if (cipherSpecType(cipherSpec) != cipherTypeNone)
-                {
-                    ioFilterGroupAdd(
-                        ioReadFilterGroup(read), cipherBlockNewP(
-                            cipherModeDecrypt, cipherSpec,
-                            .header = param.header ? cipherBlockHeaderFormat : cipherBlockHeaderMagic));
-                }
+                // A file that may contain a header is decrypted by the filter that reads the header, since the header is what
+                // gives the format and the format is what gives the digest. Anything else is decrypted by the block cipher.
+                if (param.header)
+                    cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), cipherSpec);
+                else
+                    cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, cipherSpec);
 
                 Ini *const ini = iniNewP(read, .strict = true);
 
@@ -291,14 +289,14 @@ infoNewLoad(
             if (infoFormat(this) == 0)
                 THROW(FormatError, "repository format not found\nHINT: is this a valid " PROJECT_NAME " info file?");
 
-            // Only a cipher that read a header reports a format, so a result here means the file had one. The header is written
+            // Only a read that looked for a header reports a format, so a result here means the file had one. The header is written
             // from the same format as the content, so a file where they disagree has been damaged or put together from parts of two
             // files.
-            PackRead *const cipherResult = ioFilterGroupResultP(ioReadFilterGroup(read), CIPHER_BLOCK_FILTER_TYPE);
+            PackRead *const cipherResult = ioFilterGroupResultP(ioReadFilterGroup(read), CIPHER_BLOCK_FORMAT_FILTER_TYPE);
 
             if (cipherResult != NULL)
             {
-                const unsigned int formatHeader = cipherBlockFormat(cipherResult);
+                const unsigned int formatHeader = cipherBlockFormatResult(cipherResult);
 
                 if (this->pub.format != formatHeader)
                 {

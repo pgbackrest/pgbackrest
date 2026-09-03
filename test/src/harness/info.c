@@ -8,7 +8,8 @@ Harness for Loading Test Configurations
 #include "common/assert.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
-#include "common/format.h"
+#include "common/format/cipherBlockFormat.h"
+#include "common/format/format.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/filter/filter.h"
@@ -189,7 +190,11 @@ harnessInfoEncrypt(const Buffer *const content, const CipherSpec *const cipherSp
 
     Buffer *const result = bufNew(0);
     IoWrite *const write = ioBufferWriteNew(result);
-    cipherBlockFilterGroupAddP(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec, .format = param.format);
+
+    if (param.format == 0)
+        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec);
+    else
+        cipherBlockFormatFilterGroupWriteAdd(result, ioWriteFilterGroup(write), cipherSpec, param.format);
 
     ioWriteOpen(write);
     ioWrite(write, content);

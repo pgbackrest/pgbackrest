@@ -8,7 +8,7 @@ Archive Info Handler
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/crypto/cipherBlock.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/debug.h"
 #include "common/ini.h"
 #include "common/io/bufferWrite.h"
@@ -338,8 +338,7 @@ infoArchiveSaveFile(
         // Write output into a buffer since it needs to be saved to storage twice
         Buffer *const buffer = bufNew(ioBufferSize());
         IoWrite *const write = ioBufferWriteNew(buffer);
-        cipherBlockFilterGroupAddP(
-            ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec, .format = infoArchiveFormat(infoArchive));
+        cipherBlockFormatFilterGroupWriteAdd(buffer, ioWriteFilterGroup(write), cipherSpec, infoArchiveFormat(infoArchive));
         infoArchiveSave(infoArchive, write);
 
         // Save the file and make a copy

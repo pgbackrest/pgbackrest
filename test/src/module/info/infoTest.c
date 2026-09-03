@@ -2,6 +2,7 @@
 Test Info Handler
 ***********************************************************************************************************************************/
 #include "common/crypto/cipherBlock.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "storage/posix/storage.h"
@@ -300,8 +301,7 @@ testRun(void)
         contentSave = bufNew(0);
 
         IoWrite *const writeNone = ioBufferWriteNew(contentSave);
-        cipherBlockFilterGroupAddP(
-            ioWriteFilterGroup(writeNone), cipherModeEncrypt, cipherSpecNewNone(), .format = REPOSITORY_FORMAT_6);
+        cipherBlockFormatFilterGroupWriteAdd(contentSave, ioWriteFilterGroup(writeNone), cipherSpecNewNone(), REPOSITORY_FORMAT_6);
 
         TEST_RESULT_VOID(infoSave(info, writeNone, testInfoSaveCallback, strNewZ("1")), "info save");
         TEST_RESULT_BOOL(strBeginsWithZ(strNewBuf(contentSave), "PGBR"), false, "    check no header");
@@ -345,7 +345,7 @@ testRun(void)
         IoRead *const infoRead = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6));
 
         ioFilterGroupAdd(
-            ioReadFilterGroup(infoRead), cipherBlockNewP(cipherModeDecrypt, cipherSpec, .header = cipherBlockHeaderFormat));
+            ioReadFilterGroup(infoRead), cipherBlockFormatNewP(cipherSpec));
         ioReadOpen(infoRead);
 
         TEST_RESULT_STR(strNewBuf(ioReadBuf(infoRead)), strNewBuf(contentLoad), "info content read");

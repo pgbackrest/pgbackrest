@@ -804,7 +804,7 @@ verifyArchive(VerifyJobData *const jobData)
                                 IoFilterGroup *const walFilterGroup = ioReadFilterGroup(storageReadIo(walRead));
 
                                 // Add decryption filter when required
-                                cipherBlockFilterGroupAddP(walFilterGroup, cipherModeDecrypt, jobData->cipherSpecArchive);
+                                cipherBlockFilterGroupAdd(walFilterGroup, cipherModeDecrypt, jobData->cipherSpecArchive);
 
                                 // If the file is compressed, add a decompression filter
                                 if (compressTypeFromName(walFile) != compressTypeNone)

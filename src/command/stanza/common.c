@@ -6,7 +6,7 @@ Stanza Commands Handler
 #include "command/check/common.h"
 #include "command/stanza/common.h"
 #include "common/debug.h"
-#include "common/format.h"
+#include "common/format/format.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "db/helper.h"

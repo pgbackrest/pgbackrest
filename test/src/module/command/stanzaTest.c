@@ -1221,7 +1221,7 @@ testRun(void)
         Buffer *const walBuffer = bufNew(0);
         IoWrite *const walWrite = ioBufferWriteNew(walBuffer);
 
-        cipherBlockFilterGroupAddP(
+        cipherBlockFilterGroupAdd(
             ioWriteFilterGroup(walWrite), cipherModeEncrypt, infoArchiveCipherSpec(infoArchiveMigrate));
         ioWriteOpen(walWrite);
         ioWrite(walWrite, BUFSTRDEF("WAL BEFORE MIGRATION"));
@@ -1247,7 +1247,7 @@ testRun(void)
 
         StorageRead *const walRead = storageNewReadP(storageRepoIdx(0), STRDEF(TEST_WAL_MIGRATE));
 
-        cipherBlockFilterGroupAddP(
+        cipherBlockFilterGroupAdd(
             ioReadFilterGroup(storageReadIo(walRead)), cipherModeDecrypt, infoArchiveCipherSpec(infoArchiveMigrate));
 
         TEST_RESULT_STR_Z(
