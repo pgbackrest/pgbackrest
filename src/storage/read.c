@@ -144,6 +144,10 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                             .limit = this->pub.limit != NULL ? varNewUInt64(varUInt64(this->pub.limit) - this->bytesRead) : NULL,
                             .versionId = this->pub.versionId);
 
+                        // The filter group is never set on the recreated driver, so retry must already be disabled for any driver
+                        // that requires one (see storageReadNew())
+                        ASSERT(storageReadDriverInterface(this->driver)->filterGroup == NULL);
+
                         // Open should always return true either because a) the file still exists or b) the driver is async and
                         // existence will be checked later. This is a CHECK() because currently there are not drivers that have
                         // retry without async.
