@@ -11,6 +11,19 @@
 
                 <p>Fix <cmd>annotate</cmd> command on a remote encrypted repository.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2829"/>
+                <github-pull-request id="2842"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="jpcosta78"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix empty block map when file is truncated to zero during backup.</p>
+            </release-item>
         </release-bug-list>
 
         <release-improvement-list>
