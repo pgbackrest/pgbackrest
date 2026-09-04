@@ -15,6 +15,7 @@ Info Command
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "common/type/json.h"
@@ -209,7 +210,7 @@ stanzaStatusLockAdd(KeyValue *targetKv, const Variant *const lockKey, const Info
         kvPut(lockKv, STATUS_KEY_LOCK_SIZE_COMPLETE_VAR, VARUINT64(lock->sizeComplete));
         kvPut(lockKv, STATUS_KEY_LOCK_SIZE_VAR, VARUINT64(lock->size));
 
-        if (cfgOptionSeq(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
+        if (cfgOptionSeq(cfgOptOutput) != CFGOPTVAL_INFO_OUTPUT_JSON)
             kvPut(lockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR, VARUINT(cvtPctToUInt(lock->sizeComplete, lock->size)));
     }
 }
@@ -276,7 +277,7 @@ stanzaStatusBackupLockAdd(
             kvPut(lockKv, STATUS_KEY_LOCK_SIZE_VAR, VARUINT64(sizeTotal));
 
             // Add pct-cplt for text output only
-            if (cfgOptionSeq(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
+            if (cfgOptionSeq(cfgOptOutput) != CFGOPTVAL_INFO_OUTPUT_JSON)
                 kvPut(lockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR, VARUINT(cvtPctToUInt(sizeCompleteTotal, sizeTotal)));
 
             // Add per-repo detail
@@ -526,7 +527,8 @@ backupListAdd(
     Variant *const backupInfo = varNewKv(kvNew());
 
     // Flags used to decide what data to add
-    const bool outputJson = cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
+    const bool outputJson = cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_INFO_OUTPUT_JSON;
+    const bool outputTable = cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_INFO_OUTPUT_TABLE;
 
     // main keys
     kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData->backupLabel));
@@ -623,8 +625,9 @@ backupListAdd(
     if (backupData->backupError != NULL)
         kvPut(varKv(backupInfo), BACKUP_KEY_ERROR_VAR, backupData->backupError);
 
-    // Add start/stop backup lsn info to json output or --set text
-    if ((outputJson || backupLabel != NULL) && backupData->backupLsnStart != NULL && backupData->backupLsnStop != NULL)
+    // Add start/stop backup lsn info to json/table output or --set text
+    if ((outputJson || outputTable || backupLabel != NULL) && backupData->backupLsnStart != NULL &&
+        backupData->backupLsnStop != NULL)
     {
         KeyValue *const lsnInfo = kvPutKv(varKv(backupInfo), BACKUP_KEY_LSN_VAR);
 
@@ -1401,6 +1404,620 @@ formatTextDb(
 }
 
 /***********************************************************************************************************************************
+Format the table output for a stanza
+***********************************************************************************************************************************/
+// Columns that may appear in the table, in the default order. The key selects the column in the format option.
+typedef enum
+{
+    infoTableColumnRepo,
+    infoTableColumnVersion,
+    infoTableColumnId,
+    infoTableColumnRecoveryTime,
+    infoTableColumnType,
+    infoTableColumnCipher,
+    infoTableColumnTli,
+    infoTableColumnTime,
+    infoTableColumnSize,
+    infoTableColumnBackupSize,
+    infoTableColumnZratio,
+    infoTableColumnStartLsn,
+    infoTableColumnStopLsn,
+    infoTableColumnStatus,
+} InfoTableColumn;
+
+typedef struct InfoTableColumnDef
+{
+    const char *key;                                                // Key that selects the column in the format option
+    const char *header;                                             // Column header
+    bool alignRight;                                                // Right-align the values, i.e. the column is numeric
+} InfoTableColumnDef;
+
+static const InfoTableColumnDef infoTableColumnDef[] =
+{
+    [infoTableColumnRepo] = {.key = "repo", .header = "Repo"},
+    [infoTableColumnVersion] = {.key = "version", .header = "Version"},
+    [infoTableColumnId] = {.key = "id", .header = "ID"},
+    [infoTableColumnRecoveryTime] = {.key = "recovery-time", .header = "Recovery Time"},
+    [infoTableColumnType] = {.key = "type", .header = "Type"},
+    [infoTableColumnCipher] = {.key = "cipher", .header = "Cipher"},
+    [infoTableColumnTli] = {.key = "tli", .header = "TLI"},
+    [infoTableColumnTime] = {.key = "time", .header = "Time", .alignRight = true},
+    [infoTableColumnSize] = {.key = "size", .header = "DB size", .alignRight = true},
+    [infoTableColumnBackupSize] = {.key = "backup-size", .header = "Backup size", .alignRight = true},
+    [infoTableColumnZratio] = {.key = "zratio", .header = "Zratio", .alignRight = true},
+    [infoTableColumnStartLsn] = {.key = "start-lsn", .header = "Start LSN"},
+    [infoTableColumnStopLsn] = {.key = "stop-lsn", .header = "Stop LSN"},
+    [infoTableColumnStatus] = {.key = "status", .header = "Status"},
+};
+
+// Value shown when a column does not apply to a row
+STRING_STATIC(INFO_TABLE_NONE_STR,                                  "-");
+
+// Build the list of columns to output from the format option, or all columns when the option is not set
+static List *
+formatTableColumnList(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_AUDIT_HELPER();
+
+    List *const result = lstNewP(sizeof(unsigned int));
+    const String *const format = cfgOptionStrNull(cfgOptFormat);
+
+    if (format == NULL)
+    {
+        for (unsigned int column = 0; column < LENGTH_OF(infoTableColumnDef); column++)
+            lstAdd(result, &column);
+    }
+    else
+    {
+        const StringList *const keyList = strLstNewSplitZ(format, ",");
+
+        for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+        {
+            const String *const key = strTrim(strLstGet(keyList, keyIdx));
+            unsigned int column = 0;
+
+            while (column < LENGTH_OF(infoTableColumnDef) && !strEqZ(key, infoTableColumnDef[column].key))
+                column++;
+
+            if (column == LENGTH_OF(infoTableColumnDef))
+            {
+                THROW_FMT(
+                    OptionInvalidValueError, "'%s' is not a valid column for '%s' option", strZ(key), cfgOptionName(cfgOptFormat));
+            }
+
+            lstAdd(result, &column);
+        }
+    }
+
+    FUNCTION_TEST_RETURN(LIST, result);
+}
+
+// Format the timeline of a WAL segment
+static String *
+formatTableTimeline(const String *const walSegment)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, walSegment);
+    FUNCTION_TEST_END();
+
+    String *result;
+
+    if (walSegment == NULL)
+        result = strDup(INFO_TABLE_NONE_STR);
+    else
+        result = strNewFmt("%u", cvtZSubNToUIntBase(strZ(walSegment), 0, 8, 16));
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+// Get the cipher of a repository from the repo section of the stanza
+static const String *
+formatTableRepoCipher(const VariantList *const repoSection, const unsigned int repoKey)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(VARIANT_LIST, repoSection);
+        FUNCTION_TEST_PARAM(UINT, repoKey);
+    FUNCTION_TEST_END();
+
+    const String *result = INFO_TABLE_NONE_STR;
+
+    for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
+    {
+        const KeyValue *const repoInfo = varKv(varLstGet(repoSection, repoIdx));
+
+        if (varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)) == repoKey)
+            result = varStr(kvGet(repoInfo, KEY_CIPHER_VAR));
+    }
+
+    FUNCTION_TEST_RETURN_CONST(STRING, result);
+}
+
+// Format a cell of a backup row
+static String *
+formatTableBackupCell(
+    const unsigned int column, const KeyValue *const backupInfo, const VariantList *const backupSection,
+    const VariantList *const dbSection, const VariantList *const repoSection)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, column);
+        FUNCTION_TEST_PARAM(KEY_VALUE, backupInfo);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, backupSection);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, dbSection);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, repoSection);
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ASSERT(backupInfo != NULL);
+
+    const KeyValue *const backupDbInfo = varKv(kvGet(backupInfo, KEY_DATABASE_VAR));
+    const unsigned int repoKey = varUInt(kvGet(backupDbInfo, KEY_REPO_KEY_VAR));
+    const KeyValue *const archiveInfo = varKv(kvGet(backupInfo, KEY_ARCHIVE_VAR));
+    const KeyValue *const info = varKv(kvGet(backupInfo, BACKUP_KEY_INFO_VAR));
+    const KeyValue *const repoInfo = varKv(kvGet(info, INFO_KEY_REPOSITORY_VAR));
+    const KeyValue *const timestampInfo = varKv(kvGet(backupInfo, BACKUP_KEY_TIMESTAMP_VAR));
+    const KeyValue *const lsnInfo = varKv(kvGet(backupInfo, BACKUP_KEY_LSN_VAR));
+
+    String *result;
+
+    switch (column)
+    {
+        case infoTableColumnRepo:
+            result = strNewFmt("repo%u", repoKey);
+            break;
+
+        case infoTableColumnVersion:
+        {
+            // Find the database the backup was made from to get the version
+            const unsigned int dbId = varUInt(kvGet(backupDbInfo, DB_KEY_ID_VAR));
+            const String *version = INFO_TABLE_NONE_STR;
+
+            for (unsigned int dbIdx = 0; dbIdx < varLstSize(dbSection); dbIdx++)
+            {
+                const KeyValue *const pgInfo = varKv(varLstGet(dbSection, dbIdx));
+
+                if (varUInt(kvGet(pgInfo, DB_KEY_ID_VAR)) == dbId && varUInt(kvGet(pgInfo, KEY_REPO_KEY_VAR)) == repoKey)
+                    version = varStr(kvGet(pgInfo, DB_KEY_VERSION_VAR));
+            }
+
+            result = strDup(version);
+            break;
+        }
+
+        case infoTableColumnId:
+            result = strDup(varStr(kvGet(backupInfo, BACKUP_KEY_LABEL_VAR)));
+            break;
+
+        case infoTableColumnRecoveryTime:
+            result = formatTextBackupDateTime((time_t)varUInt64(kvGet(timestampInfo, KEY_STOP_VAR)));
+            break;
+
+        case infoTableColumnType:
+            result = strDup(varStr(kvGet(backupInfo, BACKUP_KEY_TYPE_VAR)));
+            break;
+
+        case infoTableColumnCipher:
+            result = strDup(formatTableRepoCipher(repoSection, repoKey));
+            break;
+
+        case infoTableColumnTli:
+        {
+            // Timeline of this backup and of the prior backup it depends on, which is 0 for a full backup
+            const String *const prior = varStr(kvGet(backupInfo, BACKUP_KEY_PRIOR_VAR));
+            String *priorTimeline = strNewZ("0");
+
+            if (prior != NULL)
+            {
+                const String *priorArchiveStart = NULL;
+
+                for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
+                {
+                    const KeyValue *const priorInfo = varKv(varLstGet(backupSection, backupIdx));
+
+                    if (strEq(varStr(kvGet(priorInfo, BACKUP_KEY_LABEL_VAR)), prior))
+                        priorArchiveStart = varStr(kvGet(varKv(kvGet(priorInfo, KEY_ARCHIVE_VAR)), KEY_START_VAR));
+                }
+
+                priorTimeline = formatTableTimeline(priorArchiveStart);
+            }
+
+            result = strNewFmt(
+                "%s/%s", strZ(formatTableTimeline(varStr(kvGet(archiveInfo, KEY_START_VAR)))), strZ(priorTimeline));
+            break;
+        }
+
+        case infoTableColumnTime:
+        {
+            // Duration of the backup
+            const uint64_t start = varUInt64(kvGet(timestampInfo, KEY_START_VAR));
+            const uint64_t stop = varUInt64(kvGet(timestampInfo, KEY_STOP_VAR));
+            const uint64_t seconds = stop > start ? stop - start : 0;
+
+            result = strNewFmt("%" PRIu64 "h:%" PRIu64 "m", seconds / 3600, seconds % 3600 / 60);
+            break;
+        }
+
+        case infoTableColumnSize:
+            result = strSizeFormat(varUInt64Force(kvGet(info, KEY_SIZE_VAR)));
+            break;
+
+        case infoTableColumnBackupSize:
+            result = strSizeFormat(varUInt64Force(kvGet(repoInfo, KEY_DELTA_VAR)));
+            break;
+
+        case infoTableColumnZratio:
+        {
+            // Ratio of the data backed up to the size of the backup in the repository
+            const uint64_t repoDelta = varUInt64Force(kvGet(repoInfo, KEY_DELTA_VAR));
+
+            if (repoDelta == 0)
+                result = strDup(INFO_TABLE_NONE_STR);
+            else
+            {
+                char working[CVT_DIV_BUFFER_SIZE];
+
+                cvtDivToZ(varUInt64Force(kvGet(info, KEY_DELTA_VAR)), repoDelta, 2, false, working, sizeof(working));
+                result = strNewZ(working);
+            }
+
+            break;
+        }
+
+        case infoTableColumnStartLsn:
+            result = strDup(lsnInfo != NULL ? varStr(kvGet(lsnInfo, KEY_START_VAR)) : INFO_TABLE_NONE_STR);
+            break;
+
+        case infoTableColumnStopLsn:
+            result = strDup(lsnInfo != NULL ? varStr(kvGet(lsnInfo, KEY_STOP_VAR)) : INFO_TABLE_NONE_STR);
+            break;
+
+        default:
+        {
+            ASSERT(column == infoTableColumnStatus);
+
+            const Variant *const error = kvGet(backupInfo, BACKUP_KEY_ERROR_VAR);
+            result = strNewZ(error != NULL && varBool(error) ? "ERROR" : "OK");
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+// Format a cell of a row for a backup that is running
+static String *
+formatTableLockCell(const unsigned int column, const KeyValue *const repoLockInfo, const VariantList *const repoSection)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, column);
+        FUNCTION_TEST_PARAM(KEY_VALUE, repoLockInfo);
+        FUNCTION_TEST_PARAM(VARIANT_LIST, repoSection);
+    FUNCTION_TEST_END();
+
+    ASSERT(repoLockInfo != NULL);
+
+    const unsigned int repoKey = varUInt(kvGet(repoLockInfo, REPO_KEY_KEY_VAR));
+    const uint64_t size = varUInt64(kvGet(repoLockInfo, STATUS_KEY_LOCK_SIZE_VAR));
+
+    String *result;
+
+    switch (column)
+    {
+        case infoTableColumnRepo:
+            result = strNewFmt("repo%u", repoKey);
+            break;
+
+        case infoTableColumnCipher:
+            result = strDup(formatTableRepoCipher(repoSection, repoKey));
+            break;
+
+        case infoTableColumnSize:
+            result = strSizeFormat(size);
+            break;
+
+        case infoTableColumnStatus:
+            result = strNewPct(varUInt64(kvGet(repoLockInfo, STATUS_KEY_LOCK_SIZE_COMPLETE_VAR)), size);
+            break;
+
+        default:
+            result = strDup(INFO_TABLE_NONE_STR);
+            break;
+    }
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+static void
+formatTable(const KeyValue *const stanzaInfo, String *const resultStr, const List *const columnList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, stanzaInfo);
+        FUNCTION_TEST_PARAM(STRING, resultStr);
+        FUNCTION_TEST_PARAM(LIST, columnList);
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ASSERT(stanzaInfo != NULL);
+    ASSERT(resultStr != NULL);
+    ASSERT(columnList != NULL && !lstEmpty(columnList));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const VariantList *const dbSection = kvGetList(stanzaInfo, STANZA_KEY_DB_VAR);
+        const VariantList *const repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
+        const VariantList *const backupSection = kvGetList(stanzaInfo, STANZA_KEY_BACKUP_VAR);
+        const KeyValue *const stanzaStatus = varKv(kvGet(stanzaInfo, STANZA_KEY_STATUS_VAR));
+        const KeyValue *const lockKv = varKv(kvGet(stanzaStatus, STATUS_KEY_LOCK_VAR));
+        const KeyValue *const backupLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_BACKUP_VAR));
+        const Variant *const repoLockVar = kvGet(backupLockKv, STANZA_KEY_REPO_VAR);
+        const unsigned int columnTotal = lstSize(columnList);
+
+        // The header row is followed by a row for each backup and then a row for each backup that is running
+        List *const rowList = lstNewP(sizeof(StringList *));
+        StringList *const header = strLstNew();
+
+        for (unsigned int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
+            strLstAddZ(header, infoTableColumnDef[*(unsigned int *)lstGet(columnList, columnIdx)].header);
+
+        lstAdd(rowList, &header);
+
+        for (unsigned int backupIdx = 0; backupIdx < varLstSize(backupSection); backupIdx++)
+        {
+            const KeyValue *const backupInfo = varKv(varLstGet(backupSection, backupIdx));
+            StringList *const row = strLstNew();
+
+            for (unsigned int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
+            {
+                strLstAdd(
+                    row,
+                    formatTableBackupCell(
+                        *(unsigned int *)lstGet(columnList, columnIdx), backupInfo, backupSection, dbSection, repoSection));
+            }
+
+            lstAdd(rowList, &row);
+        }
+
+        if (repoLockVar != NULL)
+        {
+            const VariantList *const repoLockList = varVarLst(repoLockVar);
+
+            for (unsigned int repoLockIdx = 0; repoLockIdx < varLstSize(repoLockList); repoLockIdx++)
+            {
+                const KeyValue *const repoLockInfo = varKv(varLstGet(repoLockList, repoLockIdx));
+                StringList *const row = strLstNew();
+
+                for (unsigned int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
+                    strLstAdd(row, formatTableLockCell(*(unsigned int *)lstGet(columnList, columnIdx), repoLockInfo, repoSection));
+
+                lstAdd(rowList, &row);
+            }
+        }
+
+        // Output the table when there is at least one row besides the header
+        if (lstSize(rowList) > 1)
+        {
+            // Each column is as wide as its widest value. A line has a space before the first column and two between columns.
+            size_t *const width = memNew(columnTotal * sizeof(size_t));
+            size_t lineWidth = columnTotal * 2 - 1;
+
+            for (unsigned int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
+            {
+                width[columnIdx] = 0;
+
+                for (unsigned int rowIdx = 0; rowIdx < lstSize(rowList); rowIdx++)
+                {
+                    const size_t cellSize = strSize(strLstGet(*(StringList **)lstGet(rowList, rowIdx), columnIdx));
+
+                    if (cellSize > width[columnIdx])
+                        width[columnIdx] = cellSize;
+                }
+
+                lineWidth += width[columnIdx];
+            }
+
+            String *const separator = strNew();
+
+            for (size_t idx = 0; idx < lineWidth; idx++)
+                strCatChr(separator, '-');
+
+            strCatFmt(resultStr, "%s\n", strZ(separator));
+
+            for (unsigned int rowIdx = 0; rowIdx < lstSize(rowList); rowIdx++)
+            {
+                const StringList *const row = *(StringList **)lstGet(rowList, rowIdx);
+
+                for (unsigned int columnIdx = 0; columnIdx < columnTotal; columnIdx++)
+                {
+                    const InfoTableColumnDef *const columnDef = &infoTableColumnDef[*(unsigned int *)lstGet(columnList, columnIdx)];
+                    const char *const separatorZ = columnIdx == 0 ? " " : "  ";
+                    const String *const value = strLstGet(row, columnIdx);
+
+                    // Headers are always left-aligned. The last column is not padded when left-aligned to avoid trailing spaces.
+                    if (columnDef->alignRight && rowIdx > 0)
+                        strCatFmt(resultStr, "%s%*s", separatorZ, (int)width[columnIdx], strZ(value));
+                    else
+                    {
+                        strCatFmt(
+                            resultStr, "%s%-*s", separatorZ, columnIdx == columnTotal - 1 ? 0 : (int)width[columnIdx],
+                            strZ(value));
+                    }
+                }
+
+                strCatZ(resultStr, "\n");
+
+                // Separate the header from the data
+                if (rowIdx == 0)
+                    strCatFmt(resultStr, "%s\n", strZ(separator));
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Format the status of a stanza for text and table output
+***********************************************************************************************************************************/
+static void
+formatTextStatus(const KeyValue *const stanzaInfo, String *const resultStr, const bool outputFull, const bool skipOk)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, stanzaInfo);
+        FUNCTION_TEST_PARAM(STRING, resultStr);
+        FUNCTION_TEST_PARAM(BOOL, outputFull);
+        FUNCTION_TEST_PARAM(BOOL, skipOk);
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ASSERT(stanzaInfo != NULL);
+    ASSERT(resultStr != NULL);
+
+    // Get the stanza status
+    const KeyValue *const stanzaStatus = varKv(kvGet(stanzaInfo, STANZA_KEY_STATUS_VAR));
+    const int statusCode = varInt(kvGet(stanzaStatus, STATUS_KEY_CODE_VAR));
+
+    // Get the backup lock info
+    const KeyValue *const lockKv = varKv(kvGet(stanzaStatus, STATUS_KEY_LOCK_VAR));
+    const KeyValue *const backupLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_BACKUP_VAR));
+    const bool backupLockHeld = varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_HELD_VAR));
+    const Variant *const backupPercentComplete = kvGet(backupLockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR);
+    const String *const backupPercentCompleteStr =
+        backupPercentComplete != NULL ?
+            strNewFmt(" - %s complete", strZ(strNewPct(varUInt(backupPercentComplete), 10000))) : EMPTY_STR;
+
+    // Get the restore lock info
+    const KeyValue *const restoreLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_RESTORE_VAR));
+    const bool restoreLockHeld = varBool(kvGet(restoreLockKv, STATUS_KEY_LOCK_HELD_VAR));
+    const Variant *const restorePercentComplete = kvGet(restoreLockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR);
+    const String *const restorePercentCompleteStr =
+        restorePercentComplete != NULL ?
+            strNewFmt(" - %s complete", strZ(strNewPct(varUInt(restorePercentComplete), 10000))) : EMPTY_STR;
+
+    const bool progressStatus = backupLockHeld == true || restoreLockHeld == true;
+
+    // When requested skip the status if the stanza is ok and no backup/restore is running
+    if (!skipOk || statusCode != INFO_STANZA_STATUS_CODE_OK || progressStatus)
+    {
+        strCatZ(resultStr, "    status: ");
+
+        // Build stanza status
+        const bool errorStatus =
+            statusCode != INFO_STANZA_STATUS_CODE_OK &&
+            (outputFull == false || statusCode != INFO_STANZA_STATUS_CODE_MIXED);
+        const String *const statusLabelStr =
+            statusCode == INFO_STANZA_STATUS_CODE_OK ?
+                strNewZ(INFO_STANZA_STATUS_OK) :
+                errorStatus == true ? strNewZ(INFO_STANZA_STATUS_ERROR) : strNewZ(INFO_STANZA_MIXED);
+        const String *const statusErrorStr =
+            errorStatus ? varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR)) : EMPTY_STR;
+        const String *const progressStr =
+            backupLockHeld == true && restoreLockHeld == true ?
+                strNewFmt(
+                    INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s, " INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s",
+                    strZ(backupPercentCompleteStr),
+                    strZ(restorePercentCompleteStr)) :
+                backupLockHeld == true ?
+                    strNewFmt(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s", strZ(backupPercentCompleteStr)) :
+                    restoreLockHeld == true ?
+                        strNewFmt(INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s", strZ(restorePercentCompleteStr)) :
+                        EMPTY_STR;
+
+        if (progressStatus)
+        {
+            // Status: error (message, progress)
+            if (errorStatus)
+            {
+                strCatFmt(resultStr, "%s (%s, %s)\n", strZ(statusLabelStr), strZ(statusErrorStr), strZ(progressStr));
+            }
+            // Status: ok/mixed (progress)
+            else
+                strCatFmt(resultStr, "%s (%s)\n", strZ(statusLabelStr), strZ(progressStr));
+        }
+        else
+        {
+            // Status: error (message)
+            if (errorStatus)
+            {
+                strCatFmt(resultStr, "%s (%s)\n", strZ(statusLabelStr), strZ(statusErrorStr));
+            }
+            // Status: ok/mixed
+            else
+                strCatFmt(resultStr, "%s\n", strZ(statusLabelStr));
+        }
+
+        // Output per-repo backup progress when multiple backups are running
+        const Variant *const backupRepoVar = kvGet(backupLockKv, STANZA_KEY_REPO_VAR);
+        const VariantList *const backupRepoList = backupRepoVar != NULL ? varVarLst(backupRepoVar) : NULL;
+
+        if (backupRepoList != NULL && varLstSize(backupRepoList) > 1)
+        {
+            for (unsigned int repoLockIdx = 0; repoLockIdx < varLstSize(backupRepoList); repoLockIdx++)
+            {
+                const KeyValue *const repoLockKv = varKv(varLstGet(backupRepoList, repoLockIdx));
+
+                strCatFmt(
+                    resultStr, "        repo%u backup: %s complete\n",
+                    varUInt(kvGet(repoLockKv, REPO_KEY_KEY_VAR)),
+                    strZ(strNewPct(
+                             cvtPctToUInt(
+                                 varUInt64(kvGet(repoLockKv, STATUS_KEY_LOCK_SIZE_COMPLETE_VAR)),
+                                 varUInt64(kvGet(repoLockKv, STATUS_KEY_LOCK_SIZE_VAR))),
+                             10000)));
+            }
+        }
+
+        // Output the status per repo
+        if (outputFull &&
+            (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
+             statusCode == INFO_STANZA_STATUS_CODE_OTHER))
+        {
+            const VariantList *const repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
+            const bool multiRepo = varLstSize(repoSection) > 1;
+            const char *const formatSpacer = multiRepo ? "               " : "            ";
+
+            for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
+            {
+                const KeyValue *const repoInfo = varKv(varLstGet(repoSection, repoIdx));
+                const KeyValue *const repoStatus = varKv(kvGet(repoInfo, STANZA_KEY_STATUS_VAR));
+
+                // If more than one repo configured, then add the repo status per repo
+                if (multiRepo)
+                    strCatFmt(resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
+
+                if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK)
+                    strCatZ(resultStr, INFO_STANZA_STATUS_OK "\n");
+                else
+                {
+                    if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OTHER)
+                    {
+                        const StringList *const repoError = strLstNewSplit(
+                            varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR)), STRDEF("\n"));
+
+                        strCatFmt(
+                            resultStr, "%s%s%s\n",
+                            multiRepo ? INFO_STANZA_STATUS_ERROR " (" INFO_STANZA_STATUS_MESSAGE_OTHER ")\n" : "",
+                            formatSpacer, strZ(strLstJoin(repoError, zNewFmt("\n%s", formatSpacer))));
+                    }
+                    else
+                    {
+                        strCatFmt(
+                            resultStr, INFO_STANZA_STATUS_ERROR " (%s)\n",
+                            strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))));
+                    }
+                }
+            }
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Get the lock info of the specified lock type for the stanza
 ***********************************************************************************************************************************/
 static void
@@ -1751,7 +2368,7 @@ infoRender(void)
             infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxMin, repoIdxMax);
 
         // Format text output
-        if (cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
+        if (cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_INFO_OUTPUT_TEXT)
         {
             // Process any stanza directories
             if (!varLstEmpty(infoList))
@@ -1769,137 +2386,11 @@ infoRender(void)
                         strCatZ(resultStr, "\n");
 
                     // Stanza name and status
-                    strCatFmt(resultStr, "stanza: %s\n    status: ", strZ(stanzaName));
+                    strCatFmt(resultStr, "stanza: %s\n", strZ(stanzaName));
+                    formatTextStatus(stanzaInfo, resultStr, outputFull, false);
 
-                    // If an error has occurred, provide the information that is available and move onto next stanza
                     const KeyValue *const stanzaStatus = varKv(kvGet(stanzaInfo, STANZA_KEY_STATUS_VAR));
                     const int statusCode = varInt(kvGet(stanzaStatus, STATUS_KEY_CODE_VAR));
-
-                    // Get the backup lock info
-                    const KeyValue *const lockKv = varKv(kvGet(stanzaStatus, STATUS_KEY_LOCK_VAR));
-                    const KeyValue *const backupLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_BACKUP_VAR));
-                    const bool backupLockHeld = varBool(kvGet(backupLockKv, STATUS_KEY_LOCK_HELD_VAR));
-                    const Variant *const backupPercentComplete = kvGet(backupLockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR);
-                    const String *const backupPercentCompleteStr =
-                        backupPercentComplete != NULL ?
-                            strNewFmt(" - %s complete", strZ(strNewPct(varUInt(backupPercentComplete), 10000))) : EMPTY_STR;
-
-                    // Get the restore lock info
-                    const KeyValue *const restoreLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_RESTORE_VAR));
-                    const bool restoreLockHeld = varBool(kvGet(restoreLockKv, STATUS_KEY_LOCK_HELD_VAR));
-                    const Variant *const restorePercentComplete = kvGet(restoreLockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR);
-                    const String *const restorePercentCompleteStr =
-                        restorePercentComplete != NULL ?
-                            strNewFmt(" - %s complete", strZ(strNewPct(varUInt(restorePercentComplete), 10000))) : EMPTY_STR;
-
-                    // Build stanza status
-                    const bool errorStatus =
-                        statusCode != INFO_STANZA_STATUS_CODE_OK &&
-                        (outputFull == false || statusCode != INFO_STANZA_STATUS_CODE_MIXED);
-                    const bool progressStatus = backupLockHeld == true || restoreLockHeld == true;
-                    const String *const statusLabelStr =
-                        statusCode == INFO_STANZA_STATUS_CODE_OK ?
-                            strNewZ(INFO_STANZA_STATUS_OK) :
-                            errorStatus == true ? strNewZ(INFO_STANZA_STATUS_ERROR) : strNewZ(INFO_STANZA_MIXED);
-                    const String *const statusErrorStr =
-                        errorStatus ? varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR)) : EMPTY_STR;
-                    const String *const progressStr =
-                        backupLockHeld == true && restoreLockHeld == true ?
-                            strNewFmt(
-                                INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s, " INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s",
-                                strZ(backupPercentCompleteStr),
-                                strZ(restorePercentCompleteStr)) :
-                            backupLockHeld == true ?
-                                strNewFmt(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s", strZ(backupPercentCompleteStr)) :
-                                restoreLockHeld == true ?
-                                    strNewFmt(INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s", strZ(restorePercentCompleteStr)) :
-                                    EMPTY_STR;
-
-                    if (progressStatus)
-                    {
-                        // Status: error (message, progress)
-                        if (errorStatus)
-                        {
-                            strCatFmt(resultStr, "%s (%s, %s)\n", strZ(statusLabelStr), strZ(statusErrorStr), strZ(progressStr));
-                        }
-                        // Status: ok/mixed (progress)
-                        else
-                            strCatFmt(resultStr, "%s (%s)\n", strZ(statusLabelStr), strZ(progressStr));
-                    }
-                    else
-                    {
-                        // Status: error (message)
-                        if (errorStatus)
-                        {
-                            strCatFmt(resultStr, "%s (%s)\n", strZ(statusLabelStr), strZ(statusErrorStr));
-                        }
-                        // Status: ok/mixed
-                        else
-                            strCatFmt(resultStr, "%s\n", strZ(statusLabelStr));
-                    }
-
-                    // Output per-repo backup progress when multiple backups are running
-                    const Variant *const backupRepoVar = kvGet(backupLockKv, STANZA_KEY_REPO_VAR);
-                    const VariantList *const backupRepoList = backupRepoVar != NULL ? varVarLst(backupRepoVar) : NULL;
-
-                    if (backupRepoList != NULL && varLstSize(backupRepoList) > 1)
-                    {
-                        for (unsigned int repoLockIdx = 0; repoLockIdx < varLstSize(backupRepoList); repoLockIdx++)
-                        {
-                            const KeyValue *const repoLockKv = varKv(varLstGet(backupRepoList, repoLockIdx));
-
-                            strCatFmt(
-                                resultStr, "        repo%u backup: %s complete\n",
-                                varUInt(kvGet(repoLockKv, REPO_KEY_KEY_VAR)),
-                                strZ(strNewPct(
-                                         cvtPctToUInt(
-                                             varUInt64(kvGet(repoLockKv, STATUS_KEY_LOCK_SIZE_COMPLETE_VAR)),
-                                             varUInt64(kvGet(repoLockKv, STATUS_KEY_LOCK_SIZE_VAR))),
-                                         10000)));
-                        }
-                    }
-
-                    // Output the status per repo
-                    if (outputFull &&
-                        (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
-                         statusCode == INFO_STANZA_STATUS_CODE_OTHER))
-                    {
-                        const VariantList *const repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
-                        const bool multiRepo = varLstSize(repoSection) > 1;
-                        const char *const formatSpacer = multiRepo ? "               " : "            ";
-
-                        for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
-                        {
-                            const KeyValue *const repoInfo = varKv(varLstGet(repoSection, repoIdx));
-                            const KeyValue *const repoStatus = varKv(kvGet(repoInfo, STANZA_KEY_STATUS_VAR));
-
-                            // If more than one repo configured, then add the repo status per repo
-                            if (multiRepo)
-                                strCatFmt(resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
-
-                            if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK)
-                                strCatZ(resultStr, INFO_STANZA_STATUS_OK "\n");
-                            else
-                            {
-                                if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OTHER)
-                                {
-                                    const StringList *const repoError = strLstNewSplit(
-                                        varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR)), STRDEF("\n"));
-
-                                    strCatFmt(
-                                        resultStr, "%s%s%s\n",
-                                        multiRepo ? INFO_STANZA_STATUS_ERROR " (" INFO_STANZA_STATUS_MESSAGE_OTHER ")\n" : "",
-                                        formatSpacer, strZ(strLstJoin(repoError, zNewFmt("\n%s", formatSpacer))));
-                                }
-                                else
-                                {
-                                    strCatFmt(
-                                        resultStr, INFO_STANZA_STATUS_ERROR " (%s)\n",
-                                        strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))));
-                                }
-                            }
-                        }
-                    }
 
                     // Add cipher type if the stanza is found on at least one repo
                     if (outputFull && statusCode != INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH)
@@ -1936,10 +2427,42 @@ infoRender(void)
             else
                 resultStr = strNewZ("No stanzas exist in the repository.\n");
         }
+        // Format table output
+        else if (cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_INFO_OUTPUT_TABLE)
+        {
+            // Get the columns to output, which also validates the format option
+            const List *const columnList = formatTableColumnList();
+
+            // Process any stanza directories
+            if (!varLstEmpty(infoList))
+            {
+                // Is full output requested?
+                const bool outputFull = cfgOptionSeq(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_FULL;
+
+                for (unsigned int stanzaIdx = 0; stanzaIdx < varLstSize(infoList); stanzaIdx++)
+                {
+                    const KeyValue *const stanzaInfo = varKv(varLstGet(infoList, stanzaIdx));
+
+                    // Add a blank line between stanzas
+                    if (stanzaIdx > 0)
+                        strCatZ(resultStr, "\n");
+
+                    // Stanza name followed by the status when it is not ok or a backup/restore is running
+                    strCatFmt(resultStr, "STANZA '%s'\n", strZ(varStr(kvGet(stanzaInfo, KEY_NAME_VAR))));
+                    formatTextStatus(stanzaInfo, resultStr, outputFull, true);
+
+                    // Backups are only available when full output is requested
+                    if (outputFull)
+                        formatTable(stanzaInfo, resultStr, columnList);
+                }
+            }
+            else
+                resultStr = strNewZ("No stanzas exist in the repository.\n");
+        }
         // Format json output
         else
         {
-            ASSERT(cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON);
+            ASSERT(cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_INFO_OUTPUT_JSON);
             resultStr = jsonFromVar(varNewVarLst(infoList));
         }
 

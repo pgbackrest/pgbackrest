@@ -311,6 +311,18 @@ option:
     command-role:
       main: {}
 
+  format:
+    type: string
+    required: false
+    command:
+      info: {}
+    depend:
+      option: output
+      list:
+        - table
+    command-role:
+      main: {}
+
   force:
     type: boolean
     default: false
@@ -363,7 +375,11 @@ option:
     sequence: true
     default: text
     command:
-      info: {}
+      info:
+        allow-list:
+          - text
+          - json
+          - table
       repo-ls: {}
       manifest: {}
       verify:

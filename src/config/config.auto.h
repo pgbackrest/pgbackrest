@@ -80,6 +80,7 @@ Option constants
 #define CFGOPT_EXPIRE_AUTO                                          "expire-auto"
 #define CFGOPT_FILTER                                               "filter"
 #define CFGOPT_FORCE                                                "force"
+#define CFGOPT_FORMAT                                               "format"
 #define CFGOPT_HELP                                                 "help"
 #define CFGOPT_IGNORE_MISSING                                       "ignore-missing"
 #define CFGOPT_IO_TIMEOUT                                           "io-timeout"
@@ -145,7 +146,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            199
+#define CFG_OPTION_TOTAL                                            200
 
 /***********************************************************************************************************************************
 Option value constants
@@ -257,6 +258,16 @@ Option value constants
 #define CFGOPTVAL_OUTPUT_JSON                                       1
 #define CFGOPTVAL_OUTPUT_JSON_STRID                                 STRID5S("json", 1, 0x73e6a4)
 #define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
+
+#define CFGOPTVAL_INFO_OUTPUT_TEXT                                  0
+#define CFGOPTVAL_INFO_OUTPUT_TEXT_STRID                            STRID5S("text", 0, 0xa60b42)
+#define CFGOPTVAL_INFO_OUTPUT_TEXT_Z                                "text"
+#define CFGOPTVAL_INFO_OUTPUT_JSON                                  1
+#define CFGOPTVAL_INFO_OUTPUT_JSON_STRID                            STRID5S("json", 1, 0x73e6a4)
+#define CFGOPTVAL_INFO_OUTPUT_JSON_Z                                "json"
+#define CFGOPTVAL_INFO_OUTPUT_TABLE                                 2
+#define CFGOPTVAL_INFO_OUTPUT_TABLE_STRID                           STRID5S("table", 2, 0x5608346)
+#define CFGOPTVAL_INFO_OUTPUT_TABLE_Z                               "table"
 
 #define CFGOPTVAL_VERIFY_OUTPUT_NONE                                0
 #define CFGOPTVAL_VERIFY_OUTPUT_NONE_STRID                          STRID5S("none", 0, 0x2b9ee2)
@@ -518,6 +529,7 @@ typedef enum
     cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptForce,
+    cfgOptFormat,
     cfgOptHelp,
     cfgOptIgnoreMissing,
     cfgOptIoTimeout,

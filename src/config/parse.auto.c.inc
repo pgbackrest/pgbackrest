@@ -133,6 +133,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("storage.googleapis.com"),                                                                          // val/str
     PARSE_RULE_STRPUB("strict"),                                                                                          // val/str
     PARSE_RULE_STRPUB("sts.amazonaws.com"),                                                                               // val/str
+    PARSE_RULE_STRPUB("table"),                                                                                           // val/str
     PARSE_RULE_STRPUB("text"),                                                                                            // val/str
     PARSE_RULE_STRPUB("time"),                                                                                            // val/str
     PARSE_RULE_STRPUB("tls"),                                                                                             // val/str
@@ -271,6 +272,7 @@ typedef enum
     parseRuleValStrQT_storage_DT_googleapis_DT_com_QT,                                                               // val/str/enum
     parseRuleValStrQT_strict_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_sts_DT_amazonaws_DT_com_QT,                                                                    // val/str/enum
+    parseRuleValStrQT_table_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_text_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_time_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_tls_QT,                                                                                        // val/str/enum
@@ -2511,6 +2513,31 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                              // opt/force
     ),                                                                                                                  // opt/force
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                  // opt/format
+    (                                                                                                                  // opt/format
+        PARSE_RULE_OPTION_NAME("format"),                                                                              // opt/format
+        PARSE_RULE_OPTION_TYPE(String),                                                                                // opt/format
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                             // opt/format
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                        // opt/format
+                                                                                                                       // opt/format
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                 // opt/format
+        (                                                                                                              // opt/format
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                            // opt/format
+        ),                                                                                                             // opt/format
+                                                                                                                       // opt/format
+        PARSE_RULE_OPTIONAL                                                                                            // opt/format
+        (                                                                                                              // opt/format
+            PARSE_RULE_OPTIONAL_GROUP                                                                                  // opt/format
+            (                                                                                                          // opt/format
+                PARSE_RULE_OPTIONAL_DEPEND                                                                             // opt/format
+                (                                                                                                      // opt/format
+                    PARSE_RULE_VAL_OPT(Output),                                                                        // opt/format
+                    PARSE_RULE_VAL_STRID(table),                                                                       // opt/format
+                ),                                                                                                     // opt/format
+            ),                                                                                                         // opt/format
+        ),                                                                                                             // opt/format
+    ),                                                                                                                 // opt/format
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                    // opt/help
     (                                                                                                                    // opt/help
         PARSE_RULE_OPTION_NAME("help"),                                                                                  // opt/help
@@ -3593,6 +3620,26 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                        // opt/output
         PARSE_RULE_OPTIONAL                                                                                            // opt/output
         (                                                                                                              // opt/output
+            PARSE_RULE_OPTIONAL_GROUP                                                                                  // opt/output
+            (                                                                                                          // opt/output
+                PARSE_RULE_FILTER_CMD                                                                                  // opt/output
+                (                                                                                                      // opt/output
+                    PARSE_RULE_VAL_CMD(Info),                                                                          // opt/output
+                ),                                                                                                     // opt/output
+                                                                                                                       // opt/output
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                         // opt/output
+                (                                                                                                      // opt/output
+                    PARSE_RULE_VAL_STRID(text),                                                                        // opt/output
+                    PARSE_RULE_VAL_STRID(json),                                                                        // opt/output
+                    PARSE_RULE_VAL_STRID(table),                                                                       // opt/output
+                ),                                                                                                     // opt/output
+                                                                                                                       // opt/output
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/output
+                (                                                                                                      // opt/output
+                    PARSE_RULE_VAL_STRID(text),                                                                        // opt/output
+                ),                                                                                                     // opt/output
+            ),                                                                                                         // opt/output
+                                                                                                                       // opt/output
             PARSE_RULE_OPTIONAL_GROUP                                                                                  // opt/output
             (                                                                                                          // opt/output
                 PARSE_RULE_FILTER_CMD                                                                                  // opt/output
@@ -12112,6 +12159,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptArchiveModeCheck,                                                                                     // opt-resolve-order
     cfgOptCompressLevel,                                                                                        // opt-resolve-order
     cfgOptForce,                                                                                                // opt-resolve-order
+    cfgOptFormat,                                                                                               // opt-resolve-order
     cfgOptPgDatabase,                                                                                           // opt-resolve-order
     cfgOptPgHost,                                                                                               // opt-resolve-order
     cfgOptPgHostConfig,                                                                                         // opt-resolve-order
