@@ -2673,6 +2673,8 @@
 
                     <p>For machine-readable output use <br-option>--output=json</br-option>. The JSON output contains far more information than the text output and is kept stable unless a bug is found.</p>
 
+                    <p>For a compact overview use <br-option>--output=table</br-option>, which prints one row per backup. The '<id>recovery time</id>' column is the backup stop time, '<id>tli</id>' is the timeline of the backup and of the backup it depends on, '<id>time</id>' is the backup duration, '<id>size</id>' is the database size, '<id>backup size</id>' is the size of the backup in the repository, and '<id>zratio</id>' is the ratio of the data backed up to the backup size. A backup that is running is shown as a final row with its percent complete in the '<id>status</id>' column. The columns may be selected and ordered with <br-option>--format</br-option>.</p>
+
                     <p>To speed up execution, limit the output to only progress information by specifying <br-option>--detail-level=progress</br-option>. Note that this skips all checks except for availability of the stanza.</p>
 
                     <p>Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option. The stanza '<id>status</id>' gives a brief indication of the stanza's health. If this is '<id>ok</id>' then <backrest/> is functioning normally. If there are multiple repositories, then a status of '<id>mixed</id>' indicates that the stanza is not in a healthy state on one or more of the repositories; in this case the state of the stanza will be detailed per repository. For cases in which an error on a repository occurred that is not one of the known error codes, then an error code of '<id>other</id>' will be used and the full error details will be provided. The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive and, in the case of multiple repositories, will be reported across all repositories unless the <br-option>{[dash]}-repo</br-option> option is set. Note that there may be gaps due to archive retention policies or other reasons.</p>
@@ -2708,6 +2710,18 @@
                         <example>progress</example>
                     </option>
 
+                    <option id="format" name="Format">
+                        <summary>Table columns.</summary>
+
+                        <text>
+                            <p>Comma-separated list of the columns to include in <br-option>--output=table</br-option>, in the order they should appear. When not specified all columns are included.</p>
+
+                            <p>The available columns are <id>repo</id>, <id>version</id>, <id>id</id>, <id>recovery-time</id>, <id>type</id>, <id>cipher</id>, <id>tli</id>, <id>time</id>, <id>size</id>, <id>backup-size</id>, <id>zratio</id>, <id>start-lsn</id>, <id>stop-lsn</id>, and <id>status</id>.</p>
+                        </text>
+
+                        <example>id,type,size</example>
+                    </option>
+
                     <option id="output" name="Output">
                         <summary>Output format.</summary>
 
@@ -2715,6 +2729,7 @@
                             <allow-list caption="output types">
                                 <allow-item id="text">Human-readable summary of backup information.</allow-item>
                                 <allow-item id="json">Exhaustive machine-readable backup information in JSON format.</allow-item>
+                                <allow-item id="table">One row per backup with the most commonly needed information. Columns may be selected with <br-option>--format</br-option>.</allow-item>
                             </allow-list>
                         </text>
 

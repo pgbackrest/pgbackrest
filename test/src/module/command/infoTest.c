@@ -56,6 +56,23 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argListTextProgressOnly);
         TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text (progress only) - no stanzas");
 
+        StringList *argListTable = strLstNew();
+        hrnCfgArgRawZ(argListTable, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argListTable, cfgOptOutput, "table");
+        HRN_CFG_LOAD(cfgCmdInfo, argListTable);
+        TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "table - no stanzas");
+
+        hrnCfgArgRawZ(argListTable, cfgOptFormat, "id,bogus");
+        HRN_CFG_LOAD(cfgCmdInfo, argListTable);
+        TEST_ERROR(infoRender(), OptionInvalidValueError, "'bogus' is not a valid column for 'format' option");
+
+        argListTable = strLstNew();
+        hrnCfgArgRawZ(argListTable, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argListTable, cfgOptFormat, "id");
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdInfo, argListTable), OptionInvalidError,
+            "option 'format' not valid without option 'output' = 'table'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo is still empty but stanza option is specified");
 
@@ -1987,6 +2004,132 @@ testRun(void)
                     "        wal archive min/max (9.4): none present\n",
                     "text - multiple stanzas, multi-repo with valid backups, backup lock held on one stanza");
 
+                StringList *argListMultiRepoTable = strLstDup(argListMultiRepo);
+                hrnCfgArgRawZ(argListMultiRepoTable, cfgOptOutput, "table");
+                HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoTable);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "STANZA 'stanza1'\n"
+                    "    status: ok (backup/expire running - 65.28% complete, restore running - 65.28% complete)\n"
+                    "        repo1 backup: 55.55% complete\n"
+                    "        repo2 backup: 75.00% complete\n"
+                    "--------------------------------------------------------------------------------------------------------------"
+                    "--------------------------------------------------------------\n"
+                    " Repo   Version  ID                                 Recovery Time           Type  Cipher       TLI  Time   DB"
+                    " size  Backup size  Zratio   Start LSN     Stop LSN      Status\n"
+                    "--------------------------------------------------------------------------------------------------------------"
+                    "--------------------------------------------------------------\n"
+                    " repo1  9.4      20181119-152138F                   2018-11-19 15:21:39+00  full  none         1/0  0h:0m  "
+                    " 19.2MB        2.3MB     8.51  -             -             OK\n"
+                    " repo1  9.4      20181119-152138F_20181119-152152D  2018-11-19 15:21:55+00  diff  none         1/1  0h:0m  "
+                    " 19.2MB         346B    24.36  -             -             OK\n"
+                    " repo1  9.4      20181119-152138F_20181119-152155I  2018-11-19 15:21:57+00  incr  none         1/1  0h:0m  "
+                    " 19.2MB         346B    24.36  285/89000028  285/89001F88  OK\n"
+                    " repo1  9.5      20201116-155000F                   2020-11-16 15:50:02+00  full  none         1/0  0h:0m  "
+                    " 25.7MB          3KB  8676.46  -             -             OK\n"
+                    " repo2  9.5      20201116-200000F                   2020-11-16 20:00:05+00  full  aes-256-cbc  1/0  0h:0m  "
+                    " 25.7MB          3KB  8676.46  -             -             ERROR\n"
+                    " repo1  9.5      20201116-155000F_20201119-152100I  2020-11-19 15:21:03+00  incr  none         1/1  0h:0m  "
+                    " 19.2MB         346B    24.36  -             -             OK\n"
+                    " repo1  -        -                                  -                       -     none         -        -    "
+                    "  3MB            -        -  -             -             55.55%\n"
+                    " repo2  -        -                                  -                       -     aes-256-cbc  -        -    "
+                    "  3MB            -        -  -             -             75.00%\n"
+                    "\n"
+                    "STANZA 'stanza2'\n"
+                    "    status: mixed (backup/expire running - 55.55% complete)\n"
+                    "        repo1: error (no valid backups)\n"
+                    "        repo2: error (missing stanza path)\n"
+                    "--------------------------------------------------------------------------------------------------------------"
+                    "--------\n"
+                    " Repo   Version  ID  Recovery Time  Type  Cipher  TLI  Time  DB size  Backup size  Zratio  Start LSN  Stop"
+                    " LSN  Status\n"
+                    "--------------------------------------------------------------------------------------------------------------"
+                    "--------\n"
+                    " repo1  -        -   -              -     none    -       -      3MB            -       -  -          -      "
+                    "   55.55%\n"
+                    "\n"
+                    "STANZA 'stanza3'\n"
+                    "    status: mixed\n"
+                    "        repo1: error (missing stanza path)\n"
+                    "        repo2: ok\n"
+                    "--------------------------------------------------------------------------------------------------------------"
+                    "--------------------------------------\n"
+                    " Repo   Version  ID                Recovery Time           Type  Cipher       TLI  Time   DB size  Backup"
+                    " size  Zratio   Start LSN  Stop LSN  Status\n"
+                    "--------------------------------------------------------------------------------------------------------------"
+                    "--------------------------------------\n"
+                    " repo2  9.4      20201110-100000F  2020-11-10 10:00:02+00  full  aes-256-cbc  1/0  0h:0m   25.7MB         "
+                    " 3KB  8676.46  -          -         OK\n"
+                    "\n"
+                    "STANZA 'stanza4'\n"
+                    "    status: mixed (restore running - 12.34% complete)\n"
+                    "        repo1: error (no valid backups)\n"
+                    "        repo2: error (missing stanza path)\n",
+                    "table - multiple stanzas, multi-repo with valid backups, backup lock held on one stanza");
+
+                hrnCfgArgRawZ(argListMultiRepoTable, cfgOptFormat, "id,type,size");
+                HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoTable);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "STANZA 'stanza1'\n"
+                    "    status: ok (backup/expire running - 65.28% complete, restore running - 65.28% complete)\n"
+                    "        repo1 backup: 55.55% complete\n"
+                    "        repo2 backup: 75.00% complete\n"
+                    "-------------------------------------------------\n"
+                    " ID                                 Type  DB size\n"
+                    "-------------------------------------------------\n"
+                    " 20181119-152138F                   full   19.2MB\n"
+                    " 20181119-152138F_20181119-152152D  diff   19.2MB\n"
+                    " 20181119-152138F_20181119-152155I  incr   19.2MB\n"
+                    " 20201116-155000F                   full   25.7MB\n"
+                    " 20201116-200000F                   full   25.7MB\n"
+                    " 20201116-155000F_20201119-152100I  incr   19.2MB\n"
+                    " -                                  -         3MB\n"
+                    " -                                  -         3MB\n"
+                    "\n"
+                    "STANZA 'stanza2'\n"
+                    "    status: mixed (backup/expire running - 55.55% complete)\n"
+                    "        repo1: error (no valid backups)\n"
+                    "        repo2: error (missing stanza path)\n"
+                    "------------------\n"
+                    " ID  Type  DB size\n"
+                    "------------------\n"
+                    " -   -         3MB\n"
+                    "\n"
+                    "STANZA 'stanza3'\n"
+                    "    status: mixed\n"
+                    "        repo1: error (missing stanza path)\n"
+                    "        repo2: ok\n"
+                    "--------------------------------\n"
+                    " ID                Type  DB size\n"
+                    "--------------------------------\n"
+                    " 20201110-100000F  full   25.7MB\n"
+                    "\n"
+                    "STANZA 'stanza4'\n"
+                    "    status: mixed (restore running - 12.34% complete)\n"
+                    "        repo1: error (no valid backups)\n"
+                    "        repo2: error (missing stanza path)\n",
+                    "table - multiple stanzas, selected columns");
+
+                hrnCfgArgRawZ(argListMultiRepoTable, cfgOptDetailLevel, "progress");
+                HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoTable);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "STANZA 'stanza1'\n"
+                    "    status: ok (backup/expire running - 65.28% complete, restore running - 65.28% complete)\n"
+                    "        repo1 backup: 55.55% complete\n"
+                    "        repo2 backup: 75.00% complete\n"
+                    "\n"
+                    "STANZA 'stanza2'\n"
+                    "    status: ok (backup/expire running - 55.55% complete)\n"
+                    "\n"
+                    "STANZA 'stanza3'\n"
+                    "\n"
+                    "STANZA 'stanza4'\n"
+                    "    status: ok (restore running - 12.34% complete)\n",
+                    "table (progress only) - multiple stanzas");
+
                 HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoProgressOnly);
                 TEST_RESULT_STR_Z(
                     infoRender(),
@@ -2390,6 +2533,27 @@ testRun(void)
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
             "            error(s) detected during backup\n",
             "text - multi-repo, filter by backup type");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        hrnCfgArgRawZ(argList2, cfgOptType, "incr");
+        hrnCfgArgRawZ(argList2, cfgOptOutput, "table");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "STANZA 'stanza1'\n"
+            "----------------------------------------------------------------------------------------------------------------------"
+            "------------------------------------------------\n"
+            " Repo   Version  ID                                 Recovery Time           Type  Cipher  TLI  Time   DB size  Backup"
+            " size  Zratio  Start LSN     Stop LSN      Status\n"
+            "----------------------------------------------------------------------------------------------------------------------"
+            "------------------------------------------------\n"
+            " repo1  9.4      20181119-152138F_20181119-152155I  2018-11-19 15:21:57+00  incr  none    1/-  0h:0m   19.2MB        "
+            " 346B   24.36  285/89000028  285/89001F88  OK\n"
+            " repo1  9.5      20201116-155000F_20201119-152100I  2020-11-19 15:21:03+00  incr  none    1/-  0h:0m   19.2MB        "
+            " 346B   24.36  -             -             OK\n",
+            "table - multi-repo, filter by backup type, prior backups not listed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: read encrypted manifest and confirm requested database found without setting --repo");
@@ -3214,6 +3378,48 @@ testRun(void)
             "            repo1: backup size: 346B\n"
             "            backup reference total: 1 full, 1 incr\n",
             "text - multi-repo, prior backup: no archives but backups (code coverage)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("table output with a zero size backup and a stop time before the start time");
+
+        argList2 = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza1");
+        hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList2, cfgOptOutput, "table");
+        hrnCfgArgRawZ(argList2, cfgOptFormat, " id , tli, time,zratio ");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2);
+
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
+            "[backup:current]\n"
+            "20201116-155000F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-info-repo-size\":0,\"backup-info-repo-size-delta\":0,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605541802,\"backup-timestamp-stop\":1605541800,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201510051\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"9.5\"}\n",
+            .comment = "put backup info to file - stanza1, repo1");
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "STANZA 'stanza1'\n"
+            "-------------------------------------\n"
+            " ID                TLI  Time   Zratio\n"
+            "-------------------------------------\n"
+            " 20201116-155000F  -/0  0h:0m       -\n",
+            "table - zero repo size and stop before start");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Annotation assert not null value");

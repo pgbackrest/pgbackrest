@@ -142,7 +142,7 @@ typedef struct ParseRuleOption
     bool group : 1;                                                 // In a group?
     unsigned int groupId : 1;                                       // Id if in a group
     bool deprecateMatch : 1;                                        // Does a deprecated name exactly match the option name?
-    unsigned int packSize : 7;                                      // Size of optional data in pack format
+    unsigned int packSize : 8;                                      // Size of optional data in pack format
     uint32_t commandRoleValid[CFG_COMMAND_ROLE_TOTAL];              // Valid for the command role?
 
     const uint8_t *pack;                                            // Optional data in pack format
