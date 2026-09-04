@@ -761,7 +761,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageInfoP(storage, NULL, .ignoreMissing = true).exists, false, "info for /");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("remove files with shared key batched one per request");
+                TEST_TITLE("remove files with shared key batched one per request and extra response part");
 
                 // Force one delete per batch to exercise the deleteMax flush with shared-key signed sub-requests
                 driver->deleteMax = 1;
@@ -823,6 +823,7 @@ testRun(void)
                         "date: ???, ?? ??? ???? ??:??:?? GMT\r\n"
                         "\r\n\r\n"
                         "--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                // Return an extra response part to check that more parts than sub-requests is an error
                 testResponseP(
                     service, .multiPart = true,
                     .content =
@@ -831,9 +832,16 @@ testRun(void)
                         "content-id:0\r\n"
                         "\r\n"
                         "HTTP/1.1 202 Accepted\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:1\r\n"
+                        "\r\n"
+                        "HTTP/1.1 202 Accepted\r\n\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
-                TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
+                TEST_ERROR(
+                    storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), FormatError,
+                    "more response parts than sub-requests");
 
                 driver->deleteMax = STORAGE_AZURE_DELETE_MAX;
 
@@ -1257,7 +1265,7 @@ testRun(void)
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("remove files from path");
+                TEST_TITLE("remove files from path with fewer response parts than sub-requests");
 
                 testRequestP(service, HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
                 testResponseP(
@@ -1301,6 +1309,7 @@ testRun(void)
                         "content-length: 0\r\n"
                         "\r\n\r\n"
                         "--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                // Return fewer response parts than sub-requests to check that the missing sub-requests are retried individually
                 testResponseP(
                     service, .multiPart = true,
                     .content =
@@ -1309,12 +1318,10 @@ testRun(void)
                         "content-id:0\r\n"
                         "\r\n"
                         "HTTP/1.1 200 OK\r\n\r\n"
-                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
-                        "content-type:application/http\r\n"
-                        "content-id:1\r\n"
-                        "\r\n"
-                        "HTTP/1.1 200 OK\r\n\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+
+                testRequestP(service, HTTP_VERB_DELETE, "/path/path1/xxx.zzz");
+                testResponseP(service);
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
 
