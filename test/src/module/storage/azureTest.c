@@ -1265,7 +1265,7 @@ testRun(void)
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("remove files from path with fewer response parts than sub-requests");
+                TEST_TITLE("remove files from path when the entire batch is rejected");
 
                 testRequestP(service, HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
                 testResponseP(
@@ -1309,17 +1309,21 @@ testRun(void)
                         "content-length: 0\r\n"
                         "\r\n\r\n"
                         "--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
-                // Return fewer response parts than sub-requests to check that the missing sub-requests are retried individually
+                // Reject the entire batch as Azure does when it is unable to parse the request, i.e. a single error part with no
+                // content-id for all the sub-requests. The first sub-request is retried because its part reports an error and the
+                // rest are retried because they have no part at all.
                 testResponseP(
                     service, .multiPart = true,
                     .content =
                         "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
                         "content-type:application/http\r\n"
-                        "content-id:0\r\n"
                         "\r\n"
-                        "HTTP/1.1 200 OK\r\n\r\n"
+                        "HTTP/1.1 400 One of the request inputs is not valid.\r\n"
+                        "x-ms-error-code:InvalidInput\r\n\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
+                testRequestP(service, HTTP_VERB_DELETE, "/path/test1.txt");
+                testResponseP(service);
                 testRequestP(service, HTTP_VERB_DELETE, "/path/path1/xxx.zzz");
                 testResponseP(service);
 
