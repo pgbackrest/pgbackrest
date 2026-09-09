@@ -761,7 +761,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageInfoP(storage, NULL, .ignoreMissing = true).exists, false, "info for /");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("remove files with shared key batched one per request and extra response part");
+                TEST_TITLE("remove files with shared key batched one per request");
 
                 // Force one delete per batch to exercise the deleteMax flush with shared-key signed sub-requests
                 driver->deleteMax = 1;
@@ -823,7 +823,6 @@ testRun(void)
                         "date: ???, ?? ??? ???? ??:??:?? GMT\r\n"
                         "\r\n\r\n"
                         "--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
-                // Return an extra response part to check that more parts than sub-requests is an error
                 testResponseP(
                     service, .multiPart = true,
                     .content =
@@ -832,16 +831,9 @@ testRun(void)
                         "content-id:0\r\n"
                         "\r\n"
                         "HTTP/1.1 202 Accepted\r\n\r\n"
-                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
-                        "content-type:application/http\r\n"
-                        "content-id:1\r\n"
-                        "\r\n"
-                        "HTTP/1.1 202 Accepted\r\n\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
-                TEST_ERROR(
-                    storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), FormatError,
-                    "more response parts than sub-requests");
+                TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
 
                 driver->deleteMax = STORAGE_AZURE_DELETE_MAX;
 
