@@ -153,9 +153,10 @@ storageAzureAuth(
         if (this->keyType == storageAzureKeyTypeShared)
             httpHeaderPut(httpHeader, HTTP_HEADER_DATE_STR, dateTime);
 
-        // Set version header (required for shared key and auto auth types, not for SAS) but never on batch sub-requests,
-        // which inherit the version from the top-level batch request
-        if (this->keyType != storageAzureKeyTypeSas && !subRequest)
+        // Set version header but never on batch sub-requests, which inherit the version from the top-level batch request. SAS
+        // specifies a version in the sv parameter, but that is not sufficient for batch, which rejects the request when the version
+        // is not set explicitly.
+        if (!subRequest)
             httpHeaderPut(httpHeader, AZURE_HEADER_VERSION_STR, AZURE_HEADER_VERSION_VALUE_STR);
 
         // Shared key authentication
