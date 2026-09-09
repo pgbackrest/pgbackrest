@@ -812,6 +812,8 @@ storageAzurePathRemoveInternal(StorageAzurePathRemoveData *const data)
             // Loop through all sub-requests. Response parts are mapped to the original request by ordinal position since the
             // service returns one response part per sub-request in request order. The echoed content-id is intentionally not used
             // because Azure omits it on some error responses, which would otherwise make a failed part impossible to retry.
+            // A response with no parts at all is an error rather than a retry since the response was well formed enough to parse
+            // but contained nothing that can be mapped to a sub-request
             HttpResponse *responsePart = httpResponseMultiNext(responseMulti);
             CHECK(FormatError, responsePart != NULL, "at least one response part is required");
 
