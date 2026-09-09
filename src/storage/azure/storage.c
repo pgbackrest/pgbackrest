@@ -832,12 +832,9 @@ storageAzurePathRemoveInternal(StorageAzurePathRemoveData *const data)
                 else
                     statInc(AZURE_STAT_REMOVE_BATCH_PART_STR);
 
-                // Get the next response part when the current part has not already been exhausted
-                if (responsePart != NULL)
-                {
-                    httpResponseFree(responsePart);
-                    responsePart = httpResponseMultiNext(responseMulti);
-                }
+                // Get the next response part
+                httpResponseFree(responsePart);
+                responsePart = httpResponseMultiNext(responseMulti);
             }
 
             // Error when the service returned more response parts than there were sub-requests
