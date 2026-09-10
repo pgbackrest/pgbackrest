@@ -16,8 +16,8 @@ Verify contents of the repository.
 #include "command/verify/verify.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
-#include "common/format/cipherBlockFormat.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -191,30 +191,29 @@ verifyInfoFile(const String *const pathFileName, const bool keepFile, const Ciph
 
             ioFilterGroupAdd(ioReadFilterGroup(infoRead), cryptoHashNew(hashTypeSha1));
 
+            const bool isBackup = strBeginsWith(pathFileName, INFO_BACKUP_PATH_FILE_STR);
+            const bool isArchive = strBeginsWith(pathFileName, INFO_ARCHIVE_PATH_FILE_STR);
+
+            // Add decryption after the hash so the checksum is over the file as stored. An info file is read through the filter
+            // that reads its header, a manifest with the spec as it was given since it has no header of its own.
+            if (isBackup || isArchive)
+                cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(infoRead), cipherSpec);
+            else
+                cipherBlockFilterGroupAdd(ioReadFilterGroup(infoRead), cipherModeDecrypt, cipherSpec);
+
             // If directed to keep the loaded file in memory, then move the file into the result, else drain the io and close it
             if (keepFile)
             {
-                if (strBeginsWith(pathFileName, INFO_BACKUP_PATH_FILE_STR))
+                if (isBackup)
                     result.backup = infoBackupMove(infoBackupNewLoad(infoRead, cipherSpec), memContextPrior());
-                else if (strBeginsWith(pathFileName, INFO_ARCHIVE_PATH_FILE_STR))
+                else if (isArchive)
                     result.archive = infoArchiveMove(infoArchiveNewLoad(infoRead, cipherSpec), memContextPrior());
                 else
                     result.manifest = manifestMove(manifestNewLoad(infoRead, cipherSpec), memContextPrior());
             }
-            // Else nothing needs the file, so decryption is added here and the drain runs it
+            // Else nothing needs the file, so the drain runs the filters
             else
-            {
-                if (strBeginsWith(pathFileName, INFO_BACKUP_PATH_FILE_STR) ||
-                    strBeginsWith(pathFileName, INFO_ARCHIVE_PATH_FILE_STR))
-                {
-                    cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(infoRead), cipherSpec);
-                }
-                // Else a manifest, which has no header of its own and is decrypted with the spec as it was given
-                else
-                    cipherBlockFilterGroupAdd(ioReadFilterGroup(infoRead), cipherModeDecrypt, cipherSpec);
-
                 ioReadDrain(infoRead);
-            }
 
             const Buffer *const filterResult = pckReadBinP(
                 ioFilterGroupResultP(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE));

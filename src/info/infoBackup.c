@@ -714,8 +714,9 @@ infoBackupLoadFileCallback(void *const data, const unsigned int try)
             // Construct filename based on try
             const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
 
-            // Attempt to load the file. Decryption is added during load since the header has to be read before the digest is known.
+            // Attempt to load the file
             IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
+            cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), loadData->cipherSpec);
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {

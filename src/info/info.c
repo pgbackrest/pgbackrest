@@ -8,7 +8,6 @@ Info Handler
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/format/cipherBlockFormat.h"
@@ -134,14 +133,13 @@ infoNew(const unsigned int format, const CipherSpec *const cipherSpecSub)
 FN_EXTERN Info *
 infoNewLoad(
     IoRead *const read, const CipherSpec *const cipherSpec, InfoLoadNewCallback *const callbackFunction,
-    void *const callbackData, const InfoNewLoadParam param)
+    void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
         FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_LOG_PARAM(FUNCTIONP, callbackFunction);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
-        FUNCTION_LOG_PARAM(BOOL, param.header);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_CALLBACK();
@@ -166,13 +164,6 @@ infoNewLoad(
 
             TRY_BEGIN()
             {
-                // A file that may contain a header is decrypted by the filter that reads the header, since the header is what
-                // gives the format and the format is what gives the digest. Anything else is decrypted by the block cipher.
-                if (param.header)
-                    cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), cipherSpec);
-                else
-                    cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, cipherSpec);
-
                 Ini *const ini = iniNewP(read, .strict = true);
 
                 MEM_CONTEXT_TEMP_RESET_BEGIN()

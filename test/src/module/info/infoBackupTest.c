@@ -103,8 +103,11 @@ testRun(void)
             strNewZN((const char *)bufPtrConst(contentSave), 8), "PGBR006_", "header names the format");
 
         infoBackup = NULL;
-        TEST_ASSIGN(
-            infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave), cipherSpec), "load backup info with cipher sub");
+
+        IoRead *const read = ioBufferReadNew(contentSave);
+        cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), cipherSpec);
+
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(read, cipherSpec), "load backup info with cipher sub");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackupPg(infoBackup), "infoPg set");
         TEST_RESULT_STR_Z(
             strNewBuf(cipherSpecPass(infoBackupCipherSpec(infoBackup))),

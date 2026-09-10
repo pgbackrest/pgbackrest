@@ -1478,12 +1478,11 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(
-                manifest,
-                manifestNewLoad(
-                    ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")))),
-                    cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
-                "load manifest");
+            const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
+            IoRead *const read = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec));
+            cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, cipherSpec);
+
+            TEST_ASSIGN(manifest, manifestNewLoad(read, cipherSpec), "load manifest");
             TEST_RESULT_VOID(manifestMove(manifest, memContextPrior()), "move manifest");
         }
         MEM_CONTEXT_TEMP_END();

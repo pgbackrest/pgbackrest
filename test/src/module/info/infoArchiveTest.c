@@ -103,8 +103,10 @@ testRun(void)
         TEST_RESULT_BOOL(
             strBeginsWithZ(strNewBuf(contentSave), "PGBR"), false, "no header before the format that added it");
 
-        TEST_ASSIGN(
-            info, infoArchiveNewLoad(ioBufferReadNew(contentSave), cipherSpec), "load encrypted archive info");
+        IoRead *const read = ioBufferReadNew(contentSave);
+        cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), cipherSpec);
+
+        TEST_ASSIGN(info, infoArchiveNewLoad(read, cipherSpec), "load encrypted archive info");
         TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), infoArchivePg(info), "infoPg set");
         TEST_RESULT_STR_Z(
