@@ -11,32 +11,12 @@ Block Cipher
 
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/common.h"
+#include "common/crypto/common.intern.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/type/convert.h"
 #include "common/type/object.h"
-
-/***********************************************************************************************************************************
-Digest the pass derives the key with. The lookup is by name, so a digest must be one openssl knows.
-***********************************************************************************************************************************/
-static const EVP_MD *
-cipherBlockDigest(const HashType type)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_ID, type);
-    FUNCTION_TEST_END();
-
-    char typeZ[STRID_MAX + 1];
-    strIdToZ(type, typeZ);
-
-    const EVP_MD *const result = EVP_get_digestbyname(typeZ);
-
-    if (result == NULL)
-        THROW_FMT(AssertError, "unable to load digest '%s'", typeZ);
-
-    FUNCTION_TEST_RETURN_TYPE_CONST_P(EVP_MD, result);
-}
 
 /***********************************************************************************************************************************
 Object type
@@ -422,7 +402,7 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
     zFree(cipherTypeZ);
 
     // Lookup digest, which the spec supplies since the pass and the digest are chosen together
-    const EVP_MD *const digest = cipherBlockDigest(cipherSpecDigest(cipherSpec));
+    const EVP_MD *const digest = cryptoDigest(cipherSpecDigest(cipherSpec));
 
     OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {

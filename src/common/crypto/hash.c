@@ -10,6 +10,7 @@ Cryptographic Hash
 #include <openssl/hmac.h>
 
 #include "common/crypto/common.h"
+#include "common/crypto/common.intern.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
@@ -193,12 +194,7 @@ cryptoHashNew(const HashType type)
         // Else use the standard OpenSSL implementation
         else
         {
-            // Lookup digest
-            char typeZ[STRID_MAX + 1];
-            strIdToZ(type, typeZ);
-
-            if ((this->hashType = EVP_get_digestbyname(typeZ)) == NULL)
-                THROW_FMT(AssertError, "unable to load hash '%s'", typeZ);
+            this->hashType = cryptoDigest(type);
 
             // Create context
             cryptoError((this->hashContext = EVP_MD_CTX_new()) == NULL, "unable to create hash context");
@@ -299,12 +295,7 @@ cryptoHmacOne(const HashType type, const Buffer *const key, const Buffer *const 
     // Init crypto subsystem
     cryptoInit();
 
-    // Lookup digest
-    char typeZ[STRID_MAX + 1];
-    strIdToZ(type, typeZ);
-
-    const EVP_MD *const hashType = EVP_get_digestbyname(typeZ);
-    ASSERT(hashType != NULL);
+    const EVP_MD *const hashType = cryptoDigest(type);
 
     // Allocate a buffer to hold the hmac
     Buffer *const result = bufNew((size_t)EVP_MD_size(hashType));

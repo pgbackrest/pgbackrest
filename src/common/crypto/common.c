@@ -10,6 +10,7 @@ Crypto Common
 #include <openssl/ssl.h>
 
 #include "common/crypto/common.h"
+#include "common/crypto/common.intern.h"
 #include "common/debug.h"
 #include "common/log.h"
 
@@ -84,4 +85,23 @@ cryptoRandomBytes(uint8_t *const buffer, const size_t size)
     RAND_bytes(buffer, (int)size);
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN const EVP_MD *
+cryptoDigest(const HashType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_ID, type);
+    FUNCTION_TEST_END();
+
+    char typeZ[STRID_MAX + 1];
+    strIdToZ(type, typeZ);
+
+    const EVP_MD *const result = EVP_get_digestbyname(typeZ);
+
+    if (result == NULL)
+        THROW_FMT(AssertError, "unable to load digest '%s'", typeZ);
+
+    FUNCTION_TEST_RETURN_TYPE_CONST_P(EVP_MD, result);
 }

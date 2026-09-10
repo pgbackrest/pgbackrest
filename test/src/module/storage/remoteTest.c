@@ -422,7 +422,7 @@ testRun(void)
         // Write an encrypted file larger than the buffer size so the error will happen after the first chunk has been read
         HRN_STORAGE_PUT(
             storageTest, TEST_PATH "/repo128/test.bin", contentBuf,
-            .cipherSpec = cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x")));
+            .cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")));
 
         // Enable read retry to show that it is disabled when the filters are passed to the remote
         uint64_t featureOld = storageRepo->pub.interface.feature;
@@ -435,7 +435,7 @@ testRun(void)
 
         ioFilterGroupAdd(
             ioReadFilterGroup(storageReadIo(fileRead)),
-            cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
+            cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
 
         TEST_ERROR(storageGetP(fileRead), CryptoError, "raised from remote-0 shim protocol: unable to flush");
 

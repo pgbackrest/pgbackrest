@@ -348,7 +348,7 @@ testRun(void)
     {
         IoFilter *hash = NULL;
 
-        TEST_ERROR(cryptoHashNew(STRID5("bogus", 0x13a9de20)), AssertError, "unable to load hash 'bogus'");
+        TEST_ERROR(cryptoHashNew(STRID5("bogus", 0x13a9de20)), AssertError, "unable to load digest 'bogus'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(hashTypeSha1), "create sha1 hash");
