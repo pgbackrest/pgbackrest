@@ -117,8 +117,7 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
         strCatFmt(request, "x-ms-tags:%s\r\n", param.tag);
 
     // Add version
-    if (driver->sharedKey != NULL || driver->credHttpClient != NULL)
-        strCatZ(request, "x-ms-version:2024-08-04\r\n");
+    strCatZ(request, "x-ms-version:2024-08-04\r\n");
 
     // Complete headers
     strCatZ(request, "\r\n");
@@ -474,7 +473,9 @@ testRun(void)
         TEST_RESULT_VOID(
             storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header, false), "auth");
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
-        TEST_RESULT_Z(logBuf, "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net'}", "check headers");
+        TEST_RESULT_Z(
+            logBuf, "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net', x-ms-version: '2024-08-04'}",
+            "check headers");
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "a=b&sig=key", "check query");
     }
 
@@ -1171,7 +1172,8 @@ testRun(void)
                     "GET /account/container?comp=list&restype=container&sig=<redacted>\n"
                     "*** Request Headers ***:\n"
                     "content-length: 0\n"
-                    "host: %s",
+                    "host: %s\n"
+                    "x-ms-version: 2024-08-04",
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------

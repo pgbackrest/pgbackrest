@@ -341,8 +341,10 @@ cvtDivToZ(
         multiplier *= 10;
     }
 
-    // Convert to string
-    size_t result = (size_t)snprintf(buffer, bufferSize, "%0*" PRIu64, (int)precision, dividend * multiplier / divisor);
+    // Convert to string. Zero pad to leave a digit before the fractional part, plus another for the rounding digit when one was
+    // added, so that a quotient less than one is not left without an integer digit.
+    size_t result = (size_t)snprintf(
+        buffer, bufferSize, "%0*" PRIu64, (int)precision + (round ? 2 : 1), dividend * multiplier / divisor);
 
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
