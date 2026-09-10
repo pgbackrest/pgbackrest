@@ -8,8 +8,8 @@ A constant is defined for each format so that code which varies by format can be
 REPOSITORY_FORMAT_MIN/MAX are the range that can be read. The allow list for repo-format in build/config.yaml must be kept in sync
 with MIN/MAX and its default is the format used for new repositories.
 ***********************************************************************************************************************************/
-#ifndef COMMON_FORMAT_H
-#define COMMON_FORMAT_H
+#ifndef COMMON_FORMAT_FORMAT_H
+#define COMMON_FORMAT_FORMAT_H
 
 #include "common/crypto/common.h"
 

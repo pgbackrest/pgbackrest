@@ -11,7 +11,6 @@ Cipher Block Format
 #include "common/format/cipherBlockFormat.h"
 #include "common/format/format.h"
 #include "common/io/filter/filter.h"
-#include "common/io/io.h"
 #include "common/log.h"
 #include "common/type/convert.h"
 #include "common/type/object.h"
@@ -352,15 +351,15 @@ cipherBlockFormatNewPack(const Pack *const paramList)
 
 /**********************************************************************************************************************************/
 FN_EXTERN unsigned int
-cipherBlockFormatResult(PackRead *const cipherBlockFormatResult)
+cipherBlockFormatResult(PackRead *const packRead)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(PACK_READ, cipherBlockFormatResult);
+        FUNCTION_TEST_PARAM(PACK_READ, packRead);
     FUNCTION_TEST_END();
 
-    ASSERT(cipherBlockFormatResult != NULL);
+    ASSERT(packRead != NULL);
 
-    FUNCTION_TEST_RETURN(UINT, pckReadU32P(cipherBlockFormatResult));
+    FUNCTION_TEST_RETURN(UINT, pckReadU32P(packRead));
 }
 
 /**********************************************************************************************************************************/

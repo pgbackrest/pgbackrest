@@ -3,7 +3,6 @@ Info Handler
 ***********************************************************************************************************************************/
 #include <build.h>
 
-#include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,8 +12,6 @@ Info Handler
 #include "common/format/cipherBlockFormat.h"
 #include "common/format/format.h"
 #include "common/ini.h"
-#include "common/io/bufferRead.h"
-#include "common/io/bufferWrite.h"
 #include "common/io/filter/filter.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -132,8 +129,7 @@ infoNew(const unsigned int format, const CipherSpec *const cipherSpecSub)
 
 FN_EXTERN Info *
 infoNewLoad(
-    IoRead *const read, const CipherSpec *const cipherSpec, InfoLoadNewCallback *const callbackFunction,
-    void *const callbackData)
+    IoRead *const read, const CipherSpec *const cipherSpec, InfoLoadNewCallback *const callbackFunction, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);

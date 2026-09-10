@@ -5,10 +5,8 @@ Encryption of a file written at a repository format, which is the format header 
 derives the key with. Everything the format defines is here so that the block cipher itself has no knowledge of the repository.
 
 A writer knows the format, so it writes the header itself and encrypts the content raw behind it. A reader cannot know the format
-until it has read the header, and a filter cannot be added to a read once it is open, so the read side is a filter that reads the
-header, works out what the content is encrypted with, and decrypts it with a block cipher of its own. The content is decrypted into
-a buffer rather than as it is read, which an info file is small enough for and which is what lets the whole decision be made after
-the header has arrived.
+until it has read the header, and a filter cannot be added to a read once it is open, so the read side is a filter that parses
+the header, works out from it what the content is encrypted with, and passes everything after it through a block cipher of its own.
 ***********************************************************************************************************************************/
 #ifndef COMMON_FORMAT_CIPHERBLOCKFORMAT_H
 #define COMMON_FORMAT_CIPHERBLOCKFORMAT_H
@@ -40,7 +38,7 @@ FN_EXTERN IoFilter *cipherBlockFormatNewPack(const Pack *paramList);
 Getters/Setters
 ***********************************************************************************************************************************/
 // The format the header gave, which is what the header was read for
-FN_EXTERN unsigned int cipherBlockFormatResult(PackRead *cipherBlockFormatResult);
+FN_EXTERN unsigned int cipherBlockFormatResult(PackRead *packRead);
 
 /***********************************************************************************************************************************
 Helper functions

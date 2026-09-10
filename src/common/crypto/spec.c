@@ -34,11 +34,7 @@ cipherSpecNew(const CipherType type, const Buffer *const pass, const CipherSpecN
 
         if (this->pub.type != cipherTypeNone)
         {
-            if (param.digest == 0)
-                this->pub.digest = hashTypeSha256;
-            else
-                this->pub.digest = param.digest;
-
+            this->pub.digest = param.digest == 0 ? hashTypeSha256 : param.digest;
             this->pub.pass = bufDup(pass);
         }
     }

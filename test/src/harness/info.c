@@ -17,7 +17,6 @@ Harness for Loading Test Configurations
 #include "info/info.h"
 #include "version.h"
 
-#include "harness/config.h"
 #include "harness/debug.h"
 #include "harness/info.h"
 
@@ -147,21 +146,23 @@ hrnInfoPut(const Storage *const storage, const char *const file, const char *con
     // and the pass derives with the digest the format calls for.
     if (param.cipherSpec != NULL && cipherSpecType(param.cipherSpec) != cipherTypeNone)
     {
-        const bool header = param.header && param.format >= REPOSITORY_FORMAT_6;
         Buffer *const encrypted = bufNew(0);
-
-        if (header)
-            bufCat(encrypted, BUFSTR(strNewFmt("PGBR%03u_", param.format)));
-
         IoWrite *const write = ioBufferWriteNew(encrypted);
-        ioFilterGroupAdd(
-            ioWriteFilterGroup(write),
-            cipherBlockNewP(
-                cipherModeEncrypt,
+
+        // If a file with a header
+        if (param.header)
+        {
+            cipherBlockFormatFilterGroupWriteAdd(encrypted, ioWriteFilterGroup(write), param.cipherSpec, param.format);
+        }
+        // Else a file with no header of its own, e.g. a manifest, which is still stored with the digest of its format
+        else
+        {
+            cipherBlockFilterGroupAdd(
+                ioWriteFilterGroup(write), cipherModeEncrypt,
                 cipherSpecNewP(
                     cipherSpecType(param.cipherSpec), cipherSpecPass(param.cipherSpec),
-                    .digest = repoFormatDigest(param.format)),
-                .header = header ? cipherBlockHeaderNone : cipherBlockHeaderMagic));
+                    .digest = repoFormatDigest(param.format)));
+        }
 
         ioWriteOpen(write);
         ioWrite(write, content);
