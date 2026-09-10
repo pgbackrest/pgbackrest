@@ -104,7 +104,21 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("content is handed on in pieces when the destination cannot take it whole");
 
-        IoRead *const readPieces = ioBufferReadNew(headerBuffer);
+        // Content long enough that decryption has output to hand on while input is still arriving, so the destination fills before
+        // the source has been consumed
+        Buffer *const piecesPlainText = bufNew(TEST_BUFFER_SIZE);
+        memset(bufPtr(piecesPlainText), 'x', bufSize(piecesPlainText));
+        bufUsedSet(piecesPlainText, bufSize(piecesPlainText));
+
+        Buffer *const piecesBuffer = bufNew(0);
+        IoWrite *const piecesWrite = ioBufferWriteNew(piecesBuffer);
+
+        cipherBlockFormatFilterGroupWriteAdd(piecesBuffer, ioWriteFilterGroup(piecesWrite), cipherSpec, REPOSITORY_FORMAT_6);
+        ioWriteOpen(piecesWrite);
+        ioWrite(piecesWrite, piecesPlainText);
+        ioWriteClose(piecesWrite);
+
+        IoRead *const readPieces = ioBufferReadNew(piecesBuffer);
         Buffer *const piecesResult = bufNew(0);
         Buffer *const piece = bufNew(4);
 
@@ -123,7 +137,7 @@ testRun(void)
         ioReadClose(readPieces);
         ioBufferSizeSet(TEST_BUFFER_SIZE);
 
-        TEST_RESULT_STR_Z(strNewBuf(piecesResult), TEST_PLAINTEXT, "content decrypted in pieces");
+        TEST_RESULT_BOOL(bufEq(piecesResult, piecesPlainText), true, "content decrypted in pieces");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("the header is read no matter how the input is split");

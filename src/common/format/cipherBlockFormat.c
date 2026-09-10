@@ -10,7 +10,6 @@ Cipher Block Format
 #include "common/debug.h"
 #include "common/format/cipherBlockFormat.h"
 #include "common/format/format.h"
-#include "common/io/bufferWrite.h"
 #include "common/io/filter/filter.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -67,13 +66,8 @@ typedef struct CipherBlockFormat
 
     uint8_t header[CIPHER_BLOCK_FORMAT_HEADER_SIZE];                // Header bytes held until there are enough to read
     size_t headerSize;                                              // Header bytes held so far
-    IoWrite *contentWrite;                                          // Write the content is decrypted through
-    bool contentDone;                                               // Has the content write been closed?
-    Buffer *content;                                                // Content once it has been decrypted
-    size_t contentOffset;                                           // Content bytes already handed to the caller
-
-    bool inputSame;                                                 // Is the same input required on the next process call?
-    bool done;                                                      // Is processing done?
+    IoFilter *cipherBlock;                                          // Block cipher the content behind the header is decrypted by
+    size_t sourceOffset;                                            // Bytes of the current source taken for the header
 } CipherBlockFormat;
 
 /***********************************************************************************************************************************
@@ -131,18 +125,18 @@ cipherBlockFormatHeaderRead(const uint8_t *const header)
 }
 
 /***********************************************************************************************************************************
-Build the write the content is decrypted through, which is only possible once the header has been read since the header is what
-gives the format and the format is what gives the digest
+Build the block cipher the content behind the header is decrypted by, which is only possible once the header has been read since the
+header is what gives the format and the format is what gives the digest
 ***********************************************************************************************************************************/
 static void
-cipherBlockFormatContentWriteNew(CipherBlockFormat *const this)
+cipherBlockFormatCipherNew(CipherBlockFormat *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CIPHER_BLOCK_FORMAT, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->contentWrite == NULL);
+    ASSERT(this->cipherBlock == NULL);
 
     this->format = cipherBlockFormatHeaderRead(this->header);
 
@@ -150,36 +144,23 @@ cipherBlockFormatContentWriteNew(CipherBlockFormat *const this)
     if (this->formatExpected != 0 && this->formatExpected != this->format)
         THROW_FMT(FormatError, "expected repository format %u but found %u", this->formatExpected, this->format);
 
-    // A file at a format that has no header begins with the magic, so the block cipher is given the bytes held back for it to
-    // consume. A header takes the place of the magic, so the content behind it is decrypted raw.
-    const bool magic = this->format < REPOSITORY_FORMAT_6;
-
+    // The eight bytes at the front have been read and are not passed on, whichever of the two they were, so what reaches the block
+    // cipher begins with the salt either way and it is told to expect no header of its own
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        this->content = bufNew(0);
-        this->contentWrite = ioBufferWriteNew(this->content);
-
-        ioFilterGroupAdd(
-            ioWriteFilterGroup(this->contentWrite),
-            cipherBlockNewP(
-                cipherModeDecrypt,
-                cipherSpecNewP(
-                    cipherSpecType(this->cipherSpec), cipherSpecPass(this->cipherSpec),
-                    .digest = repoFormatDigest(this->format)),
-                .header = magic ? cipherBlockHeaderMagic : cipherBlockHeaderNone));
-
-        ioWriteOpen(this->contentWrite);
+        this->cipherBlock = cipherBlockNewP(
+            cipherModeDecrypt,
+            cipherSpecNewP(
+                cipherSpecType(this->cipherSpec), cipherSpecPass(this->cipherSpec), .digest = repoFormatDigest(this->format)),
+            .header = cipherBlockHeaderNone);
     }
     MEM_CONTEXT_OBJ_END();
-
-    if (magic)
-        ioWrite(this->contentWrite, BUF(this->header, CIPHER_BLOCK_FORMAT_HEADER_SIZE));
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /***********************************************************************************************************************************
-Read the header, decrypt the content behind it, and hand the content on
+Read the header and pass everything behind it through the block cipher the header selected
 ***********************************************************************************************************************************/
 static void
 cipherBlockFormatProcess(THIS_VOID, const Buffer *const source, Buffer *const destination)
@@ -195,56 +176,46 @@ cipherBlockFormatProcess(THIS_VOID, const Buffer *const source, Buffer *const de
     ASSERT(this != NULL);
     ASSERT(destination != NULL);
 
-    // Feed input to the content write, holding back the header until there is enough of it to read
     if (source != NULL)
     {
-        size_t sourceOffset = 0;
-
-        if (this->headerSize < CIPHER_BLOCK_FORMAT_HEADER_SIZE)
+        // Hold back the header until there is enough of it to read
+        if (this->cipherBlock == NULL)
         {
-            sourceOffset = CIPHER_BLOCK_FORMAT_HEADER_SIZE - this->headerSize;
+            this->sourceOffset = CIPHER_BLOCK_FORMAT_HEADER_SIZE - this->headerSize;
 
-            if (sourceOffset > bufUsed(source))
-                sourceOffset = bufUsed(source);
+            if (this->sourceOffset > bufUsed(source))
+                this->sourceOffset = bufUsed(source);
 
-            memcpy(this->header + this->headerSize, bufPtrConst(source), sourceOffset);
-            this->headerSize += sourceOffset;
+            memcpy(this->header + this->headerSize, bufPtrConst(source), this->sourceOffset);
+            this->headerSize += this->sourceOffset;
 
             // Nothing can be decrypted until the header is complete
             if (this->headerSize < CIPHER_BLOCK_FORMAT_HEADER_SIZE)
                 FUNCTION_LOG_RETURN_VOID();
 
-            cipherBlockFormatContentWriteNew(this);
+            cipherBlockFormatCipherNew(this);
         }
 
-        if (sourceOffset < bufUsed(source))
-            ioWrite(this->contentWrite, BUF(bufPtrConst(source) + sourceOffset, bufUsed(source) - sourceOffset));
+        // Decrypt whatever of the source the header did not take
+        if (this->sourceOffset < bufUsed(source))
+        {
+            ioFilterProcessInOut(
+                this->cipherBlock, BUF(bufPtrConst(source) + this->sourceOffset, bufUsed(source) - this->sourceOffset),
+                destination);
+        }
+
+        // The header is stripped from the source only once
+        if (!ioFilterInputSame(this->cipherBlock))
+            this->sourceOffset = 0;
     }
-    // Else all the input has been seen, so the content is complete and can be handed on
+    // Else all the input has been seen, so the block cipher is flushed
     else
     {
         // A file too short to hold a header cannot have one
-        if (this->headerSize < CIPHER_BLOCK_FORMAT_HEADER_SIZE)
+        if (this->cipherBlock == NULL)
             THROW(CryptoError, "cipher header missing");
 
-        if (!this->contentDone)
-        {
-            ioWriteClose(this->contentWrite);
-            this->contentDone = true;
-        }
-
-        // Hand on as much content as the destination will take
-        size_t copySize = bufUsed(this->content) - this->contentOffset;
-
-        if (copySize > bufRemains(destination))
-            copySize = bufRemains(destination);
-
-        bufCatC(destination, bufPtrConst(this->content), this->contentOffset, copySize);
-        this->contentOffset += copySize;
-
-        // More content requires another destination, otherwise everything has been handed on
-        this->inputSame = this->contentOffset < bufUsed(this->content);
-        this->done = !this->inputSame;
+        ioFilterProcessInOut(this->cipherBlock, NULL, destination);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -264,7 +235,7 @@ cipherBlockFormatDone(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->done);
+    FUNCTION_TEST_RETURN(BOOL, this->cipherBlock != NULL && ioFilterDone(this->cipherBlock));
 }
 
 /***********************************************************************************************************************************
@@ -281,7 +252,7 @@ cipherBlockFormatInputSame(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
+    FUNCTION_TEST_RETURN(BOOL, this->cipherBlock != NULL && ioFilterInputSame(this->cipherBlock));
 }
 
 /***********************************************************************************************************************************
