@@ -138,10 +138,8 @@ static void
 cipherBlockFormatContentWriteNew(CipherBlockFormat *const this)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, this);
+        FUNCTION_TEST_PARAM(CIPHER_BLOCK_FORMAT, this);
     FUNCTION_TEST_END();
-
-    FUNCTION_AUDIT_HELPER();
 
     ASSERT(this != NULL);
     ASSERT(this->contentWrite == NULL);
@@ -156,18 +154,23 @@ cipherBlockFormatContentWriteNew(CipherBlockFormat *const this)
     // consume. A header takes the place of the magic, so the content behind it is decrypted raw.
     const bool magic = this->format < REPOSITORY_FORMAT_6;
 
-    this->content = bufNew(0);
-    this->contentWrite = ioBufferWriteNew(this->content);
+    MEM_CONTEXT_OBJ_BEGIN(this)
+    {
+        this->content = bufNew(0);
+        this->contentWrite = ioBufferWriteNew(this->content);
 
-    ioFilterGroupAdd(
-        ioWriteFilterGroup(this->contentWrite),
-        cipherBlockNewP(
-            cipherModeDecrypt,
-            cipherSpecNewP(
-                cipherSpecType(this->cipherSpec), cipherSpecPass(this->cipherSpec), .digest = repoFormatDigest(this->format)),
-            .header = magic ? cipherBlockHeaderMagic : cipherBlockHeaderNone));
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(this->contentWrite),
+            cipherBlockNewP(
+                cipherModeDecrypt,
+                cipherSpecNewP(
+                    cipherSpecType(this->cipherSpec), cipherSpecPass(this->cipherSpec),
+                    .digest = repoFormatDigest(this->format)),
+                .header = magic ? cipherBlockHeaderMagic : cipherBlockHeaderNone));
 
-    ioWriteOpen(this->contentWrite);
+        ioWriteOpen(this->contentWrite);
+    }
+    MEM_CONTEXT_OBJ_END();
 
     if (magic)
         ioWrite(this->contentWrite, BUF(this->header, CIPHER_BLOCK_FORMAT_HEADER_SIZE));
@@ -188,8 +191,6 @@ cipherBlockFormatProcess(THIS_VOID, const Buffer *const source, Buffer *const de
         FUNCTION_LOG_PARAM(BUFFER, source);
         FUNCTION_LOG_PARAM(BUFFER, destination);
     FUNCTION_LOG_END();
-
-    FUNCTION_AUDIT_HELPER();
 
     ASSERT(this != NULL);
     ASSERT(destination != NULL);
