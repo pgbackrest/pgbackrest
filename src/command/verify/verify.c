@@ -16,6 +16,7 @@ Verify contents of the repository.
 #include "command/verify/verify.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
@@ -200,8 +201,20 @@ verifyInfoFile(const String *const pathFileName, const bool keepFile, const Ciph
                 else
                     result.manifest = manifestMove(manifestNewLoad(infoRead, cipherSpec), memContextPrior());
             }
+            // Else nothing needs the file, so decryption is added here and the drain runs it
             else
+            {
+                if (strBeginsWith(pathFileName, INFO_BACKUP_PATH_FILE_STR) ||
+                    strBeginsWith(pathFileName, INFO_ARCHIVE_PATH_FILE_STR))
+                {
+                    cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(infoRead), cipherSpec);
+                }
+                // Else a manifest, which has no header of its own and is decrypted with the spec as it was given
+                else
+                    cipherBlockFilterGroupAdd(ioReadFilterGroup(infoRead), cipherModeDecrypt, cipherSpec);
+
                 ioReadDrain(infoRead);
+            }
 
             const Buffer *const filterResult = pckReadBinP(
                 ioFilterGroupResultP(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE));

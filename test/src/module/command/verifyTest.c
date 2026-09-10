@@ -913,6 +913,20 @@ testRun(void)
         TEST_RESULT_VOID(cmdVerify(), "usable encrypted backup and archive info files at format 6");
         TEST_RESULT_LOG("");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a copy that cannot be decrypted is reported as such rather than as a checksum that does not match");
+
+        // Damage the content of the copy, which nothing but the drain reads, so that it no longer decrypts
+        Buffer *const archiveInfoCopy = bufDup(
+            storageGetP(storageNewReadP(storageRepo(), STRDEF(INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT))));
+
+        bufPtr(archiveInfoCopy)[bufUsed(archiveInfoCopy) - 1] ^= 0xff;
+        HRN_STORAGE_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, archiveInfoCopy, .comment = "damaged archive.info.copy");
+
+        TEST_RESULT_VOID(cmdVerify(), "encrypted archive.info.copy that cannot be decrypted");
+        TEST_RESULT_LOG("P00 DETAIL: unable to flush");
+
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
         harnessLogLevelReset();
     }
