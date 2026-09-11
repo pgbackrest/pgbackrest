@@ -139,6 +139,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2836"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Derive the cipher key with <id>SHA-256</id> at repository format 6</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2826"/>
 
                 <release-item-contributor-list>
