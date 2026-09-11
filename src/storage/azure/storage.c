@@ -810,21 +810,22 @@ storageAzurePathRemoveInternal(StorageAzurePathRemoveData *const data)
             HttpResponseMulti *const responseMulti = httpResponseMultiNew(
                 httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR));
 
-            // Loop through all response parts. Parts are mapped to the original request by ordinal position since the service
-            // returns one response part per sub-request in request order. The echoed content-id is intentionally not used because
-            // Azure omits it on some error responses, which would otherwise make a failed part impossible to retry.
-            unsigned int partIdx = 0;
+            // Loop through all sub-requests. Response parts are mapped to the original request by ordinal position since the
+            // service returns one response part per sub-request in request order. The echoed content-id is intentionally not used
+            // because Azure omits it on some error responses, which would otherwise make a failed part impossible to retry.
+            // A response with no parts at all is an error rather than a retry since the response was well formed enough to parse
+            // but contained nothing that can be mapped to a sub-request
             HttpResponse *responsePart = httpResponseMultiNext(responseMulti);
             CHECK(FormatError, responsePart != NULL, "at least one response part is required");
 
-            do
+            for (unsigned int partIdx = 0; partIdx < lstSize(data->requestContentList); partIdx++)
             {
-                // If not OK and not missing then retry
-                if (!httpResponseCodeOk(responsePart) && httpResponseCode(responsePart) != HTTP_RESPONSE_CODE_NOT_FOUND)
+                // Retry when there is no response part for the sub-request or the part is not OK and not missing. A response part
+                // is missing when the service returns fewer parts than were requested, which happens when the entire batch is
+                // rejected, since none of the sub-requests have been run in that case.
+                if (responsePart == NULL ||
+                    (!httpResponseCodeOk(responsePart) && httpResponseCode(responsePart) != HTTP_RESPONSE_CODE_NOT_FOUND))
                 {
-                    // Get the original request for this part by position
-                    CHECK_FMT(
-                        FormatError, partIdx < lstSize(data->requestContentList), "response part %u is out of range", partIdx);
                     const StorageAzureRequestPart *const content = lstGet(data->requestContentList, partIdx);
 
                     // Retry remove
@@ -834,11 +835,13 @@ storageAzurePathRemoveInternal(StorageAzurePathRemoveData *const data)
                 else
                     statInc(AZURE_STAT_REMOVE_BATCH_PART_STR);
 
+                // Get the next response part
                 httpResponseFree(responsePart);
                 responsePart = httpResponseMultiNext(responseMulti);
-                partIdx++;
             }
-            while (responsePart != NULL);
+
+            // Error when the service returned more response parts than there were sub-requests
+            CHECK(FormatError, responsePart == NULL, "more response parts than sub-requests");
         }
         MEM_CONTEXT_TEMP_END();
 
