@@ -1273,18 +1273,26 @@ storageGcsNew(
             // Read data from file for service keys
             case storageGcsKeyTypeService:
             {
-                const KeyValue *const kvKey = varKv(
-                    jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key)))));
-                const String *const uri = varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR));
-                CHECK(FormatError, uri != NULL, "uri missing");
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    const KeyValue *const kvKey = varKv(
+                        jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key)))));
+                    const String *const uri = varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR));
+                    CHECK(FormatError, uri != NULL, "uri missing");
 
-                this->key = strDup(key);
-                this->authUrl = httpUrlNewParseP(uri, .type = httpProtocolTypeHttps);
-                this->authClient = httpClientNew(
-                    tlsClientNewP(
-                        sckClientNew(httpUrlHost(this->authUrl), httpUrlPort(this->authUrl), timeout, timeout),
-                        httpUrlHost(this->authUrl), timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
-                    timeout);
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        this->key = strDup(key);
+                        this->authUrl = httpUrlNewParseP(uri, .type = httpProtocolTypeHttps);
+                        this->authClient = httpClientNew(
+                            tlsClientNewP(
+                                sckClientNew(httpUrlHost(this->authUrl), httpUrlPort(this->authUrl), timeout, timeout),
+                                httpUrlHost(this->authUrl), timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
+                            timeout);
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+                }
+                MEM_CONTEXT_TEMP_END();
 
                 break;
             }
