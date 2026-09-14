@@ -339,8 +339,8 @@ testRun(void)
         HRN_STORAGE_PUT_Z(
             storageTest, TEST_PATH "/credential.json",
             "{\"type\":\"external_account\",\"audience\":\"aud\",\"token_url\":\"https://localhost:12345/v1/token\","
-            "\"credential_source\":{}}");
-        TEST_ERROR(storageRepoGet(0, false), FormatError, "token file missing");
+            "\"credential_source\":{\"url\":\"http://169.254.169.254/token\"}}");
+        TEST_ERROR(storageRepoGet(0, false), FormatError, "only the file credential source is supported");
 
         HRN_STORAGE_PUT_Z(
             storageTest, TEST_PATH "/credential.json",

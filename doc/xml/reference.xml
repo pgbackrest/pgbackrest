@@ -758,7 +758,7 @@
 
                             <p>When <br-option>repo-gcs-key-type=web-id</br-option> the <br-option>repo-gcs-key</br-option> option must contain an external account credential file and the web identity token will be reloaded when the authentication token is renewed.</p>
 
-                            <p><id>service_account_impersonation_url</id> is not supported. When specified, <id>credential_source.format.type</id> must be <id>text</id>.</p>
+                            <p><id>service_account_impersonation_url</id> is not supported. Only <id>credential_source.file</id> is supported and when <id>credential_source.format</id> is specified the type must be <id>text</id>.</p>
                         </text>
 
                         <example>auto</example>

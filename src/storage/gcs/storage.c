@@ -1467,7 +1467,7 @@ storageGcsNew(
                     const KeyValue *const credentialSource = varKv(credentialSourceVariant);
 
                     const Variant *const tokenFileVariant = kvGet(credentialSource, GCS_JSON_FILE_VAR);
-                    CHECK(FormatError, tokenFileVariant != NULL, "token file missing");
+                    CHECK(FormatError, tokenFileVariant != NULL, "only the file credential source is supported");
                     CHECK(FormatError, varType(tokenFileVariant) == varTypeString, "token file must be a string");
                     const String *const tokenFile = varStr(tokenFileVariant);
 
