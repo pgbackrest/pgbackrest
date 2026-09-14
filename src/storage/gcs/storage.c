@@ -47,7 +47,6 @@ STRING_EXTERN(GCS_QUERY_MEDIA_STR,                                  GCS_QUERY_ME
 STRING_EXTERN(GCS_QUERY_NAME_STR,                                   GCS_QUERY_NAME);
 STRING_STATIC(GCS_QUERY_PAGE_TOKEN_STR,                             "pageToken");
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
-STRING_STATIC(GCS_QUERY_SUBJECT_TOKEN_STR,                          "subject_token");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
 STRING_STATIC(GCS_QUERY_VERSIONS_STR,                               "versions");
 STRING_STATIC(GCS_QUERY_USER_PROJECT_STR,                           "userProject");
@@ -354,18 +353,15 @@ storageGcsAuthWebId(StorageGcs *const this, const time_t timeBegin)
             strTrim(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->webIdTokenFile))));
         CHECK(FormatError, !strEmpty(subjectToken), "web identity token is empty");
 
-        // Build form content with subject token redaction
-        StringList *const redactList = strLstNew();
-        strLstAdd(redactList, GCS_QUERY_SUBJECT_TOKEN_STR);
-
-        HttpQuery *const contentQuery = httpQueryNewP(.redactList = redactList);
+        // Build form content
+        HttpQuery *const contentQuery = httpQueryNewP();
         httpQueryAdd(contentQuery, STRDEF("audience"), this->webIdAudience);
         httpQueryAdd(contentQuery, STRDEF("grant_type"), STRDEF("urn:ietf:params:oauth:grant-type:token-exchange"));
         httpQueryAdd(contentQuery, STRDEF("requested_token_type"), STRDEF("urn:ietf:params:oauth:token-type:access_token"));
         httpQueryAdd(
             contentQuery, STRDEF("scope"),
             strNewFmt("https://www.googleapis.com/auth/devstorage.read%s", this->write ? "_write" : "_only"));
-        httpQueryAdd(contentQuery, GCS_QUERY_SUBJECT_TOKEN_STR, subjectToken);
+        httpQueryAdd(contentQuery, STRDEF("subject_token"), subjectToken);
         httpQueryAdd(contentQuery, STRDEF("subject_token_type"), STRDEF("urn:ietf:params:oauth:token-type:jwt"));
 
         String *const content = httpQueryRenderP(contentQuery);
