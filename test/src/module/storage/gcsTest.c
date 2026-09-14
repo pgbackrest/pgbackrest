@@ -780,6 +780,25 @@ testRun(void)
                     storageGetP(storageNewReadP(storage, STRDEF("fi&le.txt"), .ignoreMissing = true)), ProtocolError,
                     "unable to get authentication token: [error] null");
 
+                // Responses that are valid JSON but not an object are rejected before the fields are read
+                hrnServerScriptAccept(auth);
+                hrnServerScriptExpect(auth, authRequest);
+                testResponseP(auth, .content = "[]");
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(storage, STRDEF("fi&le.txt"), .ignoreMissing = true)), FormatError,
+                    "token response must be an object");
+
+                hrnServerScriptAccept(auth);
+                hrnServerScriptExpect(auth, authRequest);
+                testResponseP(auth, .content = "null");
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(storage, STRDEF("fi&le.txt"), .ignoreMissing = true)), FormatError,
+                    "token response must be an object");
+
                 // Nested JSON errors retain the full response for non-Web-ID authentication
                 hrnServerScriptAccept(auth);
                 hrnServerScriptExpect(auth, authRequest);

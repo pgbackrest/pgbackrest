@@ -168,7 +168,11 @@ storageGcsAuthToken(HttpRequest *const request, const time_t timeBegin, const bo
             httpRequestError(request, response);
         }
 
-        const KeyValue *const kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
+        const Variant *const responseVariant = jsonToVar(strNewBuf(httpResponseContent(response)));
+        CHECK(
+            FormatError, responseVariant != NULL && varType(responseVariant) == varTypeKeyValue,
+            "token response must be an object");
+        const KeyValue *const kvResponse = varKv(responseVariant);
 
         // Check for an error
         const Variant *const error = kvGet(kvResponse, GCS_JSON_ERROR_VAR);
