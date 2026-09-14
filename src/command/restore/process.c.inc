@@ -235,7 +235,13 @@ restoreJobResult(
 
                 if (file.checksumPage && file.checksumPageError && result == restoreResultCopy)
                 {
-                    LOG_WARN_FMT("invalid page checksum(s) found in file %s", strZ(restoreFilePgPath(manifest, file.name)));
+                    const String *const message = strNewFmt(
+                        "invalid page checksum(s) found in file %s", strZ(restoreFilePgPath(manifest, file.name)));
+
+                    if (cfgOptionBool(cfgOptChecksumPageError))
+                        THROW(ChecksumError, strZ(message));
+
+                    LOG_WARN(strZ(message));
                     (*checksumErrorFileTotal)++;
                 }
 

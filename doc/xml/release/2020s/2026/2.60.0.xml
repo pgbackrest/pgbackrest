@@ -1,7 +1,7 @@
 <release date="XXXX-XX-XX" version="2.60.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
         <text>
-            <p><b>IMPORTANT NOTE</b>: The <cmd>restore</cmd> command will now error at the end of the restore if any restored file contains an invalid page checksum, though the cluster will still be fully restored. The <cmd>expire</cmd> command will now refuse to expire if the oldest retained backup would contain checksum errors, which also prevents archive from being expired in that repository. Set <br-option>checksum-page-error=n</br-option> to warn instead of erroring.</p>
+            <p><b>IMPORTANT NOTE</b>: The <cmd>restore</cmd> command will now error and stop if any restored file contains an invalid page checksum. The <cmd>expire</cmd> command will now refuse to expire if the oldest retained backup would contain checksum errors, which also prevents archive from being expired in that repository. Set <br-option>checksum-page-error=n</br-option> to warn instead of erroring.</p>
         </text>
 
         <release-bug-list>

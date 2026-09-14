@@ -3390,7 +3390,7 @@ testRun(void)
 
         TEST_ERROR(
             hrnCmdRestore(), ChecksumError,
-            "restore command encountered page checksum error(s) in 1 file(s), check the log file for details");
+            "invalid page checksum(s) found in file " TEST_PATH "/pg-checksum-throw/PG_VERSION");
 
         TEST_RESULT_LOG(
             "P00   INFO: repo1: restore backup set 20161219-212741F, recovery will start at [TIME]\n"
@@ -3399,16 +3399,7 @@ testRun(void)
             "P00 DETAIL: create path '" TEST_PATH "/pg-checksum-throw/global'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg-checksum-throw/pg_tblspc'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg-checksum-throw/postgresql.conf (10B, [PCT]) checksum"
-            " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
-            "P00   WARN: invalid page checksum(s) found in file " TEST_PATH "/pg-checksum-throw/PG_VERSION\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg-checksum-throw/PG_VERSION (3B, [PCT]) checksum"
-            " dd71038f3463f511ee7403dbcbc87195302d891c\n"
-            "P00   INFO: write " TEST_PATH "/pg-checksum-throw/recovery.conf\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg-checksum-throw'\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg-checksum-throw/pg_tblspc'\n"
-            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg-checksum-throw/global'\n"
-            "P00   INFO: restore size = [SIZE], file total = 2");
+            " 1a49a3c2240449fee1422e4afcf44d5b96378511");
 
         #undef TEST_CKSUM_LABEL
         #undef TEST_CKSUM_PGDATA

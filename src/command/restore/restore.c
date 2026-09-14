@@ -266,14 +266,9 @@ cmdRestore(void)
 
         if (checksumErrorFileTotal > 0)
         {
-            const String *const message = strNewFmt(
+            LOG_WARN_FMT(
                 CFGCMD_RESTORE " command encountered page checksum error(s) in %u file(s), check the log file for details",
                 checksumErrorFileTotal);
-
-            if (cfgOptionBool(cfgOptChecksumPageError))
-                THROW(ChecksumError, strZ(message));
-
-            LOG_WARN(strZ(message));
         }
     }
     MEM_CONTEXT_TEMP_END();
