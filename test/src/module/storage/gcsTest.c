@@ -536,7 +536,7 @@ testRun(void)
                 testRequestP(
                     sts, HTTP_VERB_POST, .path = "/v1/token", .noAuth = true, .contentType = "application/x-www-form-urlencoded",
                     .content = rotatedContent);
-                testResponseP(sts, .content = "{\"access_token\":\"renewed\",\"token_type\":\"Bearer\",\"expires_in\":3600}");
+                testResponseP(sts, .content = "{\"access_token\":\"renewed\",\"token_type\":\"Bearer\",\"expires_in\":1}");
                 hrnServerScriptClose(sts);
 
                 testRequestP(service, HTTP_VERB_GET, .object = "missing2", .query = "alt=media", .auth = "Bearer renewed");
@@ -549,7 +549,6 @@ testRun(void)
                 TEST_TITLE("redact sts error response");
 
                 // STS responses are redacted because a provider may echo all or part of the subject token
-                ((StorageGcs *)storageDriver(storage))->tokenTimeExpire = 0;
                 hrnServerScriptAccept(sts);
                 testRequestP(
                     sts, HTTP_VERB_POST, .path = "/v1/token", .noAuth = true, .contentType = "application/x-www-form-urlencoded",
