@@ -135,12 +135,11 @@ typedef struct
 typedef StorageGcsAuthTokenResult (*StorageGcsAuthFunction)(StorageGcs *this, time_t timeBegin);
 
 static StorageGcsAuthTokenResult
-storageGcsAuthToken(HttpRequest *const request, const time_t timeBegin, const bool redactResponse)
+storageGcsAuthToken(HttpRequest *const request, const time_t timeBegin)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_REQUEST, request);
         FUNCTION_TEST_PARAM(TIME, timeBegin);
-        FUNCTION_TEST_PARAM(BOOL, redactResponse);
     FUNCTION_TEST_END();
 
     FUNCTION_AUDIT_STRUCT();
@@ -156,17 +155,7 @@ storageGcsAuthToken(HttpRequest *const request, const time_t timeBegin, const bo
         // Error when the response is not OK and is not JSON, e.g. an HTML error page returned by a misconfigured authentication
         // server. Otherwise the JSON error fields checked below provide a more detailed report of the error.
         if (!httpResponseCodeOk(response) && (contentType == NULL || !strBeginsWithZ(contentType, "application/json")))
-        {
-            // Redact the response since it may echo the web identity token
-            if (redactResponse)
-            {
-                THROW_FMT(
-                    ProtocolError, "unable to get authentication token: HTTP request failed with %u; response redacted",
-                    httpResponseCode(response));
-            }
-
             httpRequestError(request, response);
-        }
 
         const Variant *const responseVariant = jsonToVar(strNewBuf(httpResponseContent(response)));
         CHECK(
@@ -179,14 +168,6 @@ storageGcsAuthToken(HttpRequest *const request, const time_t timeBegin, const bo
 
         if (error != NULL)
         {
-            // Redact the response since it may echo the web identity token
-            if (redactResponse)
-            {
-                THROW_FMT(
-                    ProtocolError, "unable to get authentication token: HTTP request failed with %u; response redacted",
-                    httpResponseCode(response));
-            }
-
             // Report flat OAuth-style errors, e.g. {"error":"invalid_grant","error_description":"..."}
             if (varType(error) == varTypeString)
             {
@@ -337,7 +318,7 @@ storageGcsAuthService(StorageGcs *const this, const time_t timeBegin)
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = storageGcsAuthToken(request, timeBegin, false);
+            result = storageGcsAuthToken(request, timeBegin);
         }
         MEM_CONTEXT_PRIOR_END();
     }
@@ -399,7 +380,7 @@ storageGcsAuthWebId(StorageGcs *const this, const time_t timeBegin)
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = storageGcsAuthToken(request, timeBegin, true);
+            result = storageGcsAuthToken(request, timeBegin);
         }
         MEM_CONTEXT_PRIOR_END();
     }
@@ -440,7 +421,7 @@ storageGcsAuthAuto(StorageGcs *const this, const time_t timeBegin)
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = storageGcsAuthToken(request, timeBegin, false);
+            result = storageGcsAuthToken(request, timeBegin);
         }
         MEM_CONTEXT_PRIOR_END();
     }

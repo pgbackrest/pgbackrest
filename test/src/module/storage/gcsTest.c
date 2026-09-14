@@ -546,9 +546,8 @@ testRun(void)
                     "renew with rotated web identity token");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("redact sts error response");
+                TEST_TITLE("sts auth error");
 
-                // STS responses are redacted because a provider may echo all or part of the subject token
                 hrnServerScriptAccept(sts);
                 testRequestP(
                     sts, HTTP_VERB_POST, .path = "/v1/token", .noAuth = true, .contentType = "application/x-www-form-urlencoded",
@@ -559,31 +558,7 @@ testRun(void)
                 hrnServerScriptClose(sts);
                 TEST_ERROR(
                     storageGetP(storageNewReadP(storage, STRDEF("missing3"), .ignoreMissing = true)), ProtocolError,
-                    "unable to get authentication token: HTTP request failed with 400; response redacted");
-
-                // Redaction is independent of response shape
-                hrnServerScriptAccept(sts);
-                testRequestP(
-                    sts, HTTP_VERB_POST, .path = "/v1/token", .noAuth = true, .contentType = "application/x-www-form-urlencoded",
-                    .content = rotatedContent);
-                testResponseP(
-                    sts, .code = 400, .header = "content-type:application/json",
-                    .content = "{\"error\":\"invalid_grant\",\"error_description\":{}}");
-                hrnServerScriptClose(sts);
-                TEST_ERROR(
-                    storageGetP(storageNewReadP(storage, STRDEF("missing3a"), .ignoreMissing = true)), ProtocolError,
-                    "unable to get authentication token: HTTP request failed with 400; response redacted");
-
-                hrnServerScriptAccept(sts);
-                testRequestP(
-                    sts, HTTP_VERB_POST, .path = "/v1/token", .noAuth = true, .contentType = "application/x-www-form-urlencoded",
-                    .content = rotatedContent);
-                testResponseP(
-                    sts, .code = 400, .header = "content-type:application/json", .content = "{\"error\":\"invalid_grant\"}");
-                hrnServerScriptClose(sts);
-                TEST_ERROR(
-                    storageGetP(storageNewReadP(storage, STRDEF("missing3b"), .ignoreMissing = true)), ProtocolError,
-                    "unable to get authentication token: HTTP request failed with 400; response redacted");
+                    "unable to get authentication token: [invalid_grant] token rotated rejected");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on missing token response fields");
@@ -609,35 +584,7 @@ testRun(void)
                     "expiry missing");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("redact non-json error response");
-
-                hrnServerScriptAccept(sts);
-                testRequestP(
-                    sts, HTTP_VERB_POST, .path = "/v1/token", .noAuth = true, .contentType = "application/x-www-form-urlencoded",
-                    .content = rotatedContent);
-                testResponseP(sts, .code = 400, .header = "content-type:text/html", .content = "<html>error</html>");
-                hrnServerScriptClose(sts);
-                TEST_ERROR(
-                    storageGetP(storageNewReadP(storage, STRDEF("missing6"), .ignoreMissing = true)), ProtocolError,
-                    "unable to get authentication token: HTTP request failed with 400; response redacted");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("redact nested error object");
-
-                hrnServerScriptAccept(sts);
-                testRequestP(
-                    sts, HTTP_VERB_POST, .path = "/v1/token", .noAuth = true, .contentType = "application/x-www-form-urlencoded",
-                    .content = rotatedContent);
-                testResponseP(
-                    sts, .code = 403, .header = "content-type:application/json",
-                    .content = "{\"error\":{\"code\":403,\"message\":\"sts api disabled\"}}");
-                hrnServerScriptClose(sts);
-                TEST_ERROR(
-                    storageGetP(storageNewReadP(storage, STRDEF("missing8"), .ignoreMissing = true)), ProtocolError,
-                    "unable to get authentication token: HTTP request failed with 403; response redacted");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("redact error response without content-type");
+                TEST_TITLE("sts error response without content-type");
 
                 hrnServerScriptAccept(sts);
                 testRequestP(
@@ -645,9 +592,16 @@ testRun(void)
                     .content = rotatedContent);
                 testResponseP(sts, .code = 400);
                 hrnServerScriptClose(sts);
-                TEST_ERROR(
-                    storageGetP(storageNewReadP(storage, STRDEF("missing7"), .ignoreMissing = true)), ProtocolError,
-                    "unable to get authentication token: HTTP request failed with 400; response redacted");
+                TEST_ERROR_FMT(
+                    storageGetP(storageNewReadP(storage, STRDEF("missing6"), .ignoreMissing = true)), ProtocolError,
+                    "HTTP request failed with 400:\n"
+                    "*** Path/Query ***:\n"
+                    "POST /v1/token\n"
+                    "*** Request Headers ***:\n"
+                    "content-length: %zu\n"
+                    "content-type: application/x-www-form-urlencoded\n"
+                    "host: %s",
+                    strlen(rotatedContent), strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write storage requests read_write scope");
