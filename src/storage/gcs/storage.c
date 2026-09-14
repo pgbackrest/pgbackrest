@@ -1426,69 +1426,77 @@ storageGcsNew(
             {
                 ASSERT(key != NULL);
 
-                const Variant *const keyVariant =
-                    jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
-                CHECK(
-                    FormatError, keyVariant != NULL && varType(keyVariant) == varTypeKeyValue,
-                    "not an external account credential file");
-                const KeyValue *const kvKey = varKv(keyVariant);
-
-                const Variant *const typeVariant = kvGet(kvKey, GCS_JSON_TYPE_VAR);
-                const String *const type =
-                    typeVariant != NULL && varType(typeVariant) == varTypeString ? varStr(typeVariant) : NULL;
-                CHECK(FormatError, type != NULL && strEqZ(type, "external_account"), "not an external account credential file");
-
-                // Impersonation would require a second exchange so the federated identity must have direct access
-                CHECK(
-                    FormatError, kvGet(kvKey, GCS_JSON_SA_IMPERSONATION_URL_VAR) == NULL,
-                    "service account impersonation is not supported");
-
-                const Variant *const audienceVariant = kvGet(kvKey, GCS_JSON_AUDIENCE_VAR);
-                CHECK(FormatError, audienceVariant != NULL, "audience missing");
-                CHECK(FormatError, varType(audienceVariant) == varTypeString, "audience must be a string");
-                const String *const audience = varStr(audienceVariant);
-
-                const Variant *const tokenUrlVariant = kvGet(kvKey, GCS_JSON_TOKEN_URL_VAR);
-                CHECK(FormatError, tokenUrlVariant != NULL, "token url missing");
-                CHECK(FormatError, varType(tokenUrlVariant) == varTypeString, "token url must be a string");
-                const String *const tokenUrl = varStr(tokenUrlVariant);
-
-                const Variant *const credentialSourceVariant = kvGet(kvKey, GCS_JSON_CREDENTIAL_SOURCE_VAR);
-                CHECK(FormatError, credentialSourceVariant != NULL, "credential source missing");
-                CHECK(
-                    FormatError, varType(credentialSourceVariant) == varTypeKeyValue,
-                    "credential source must be an object");
-                const KeyValue *const credentialSource = varKv(credentialSourceVariant);
-
-                const Variant *const tokenFileVariant = kvGet(credentialSource, GCS_JSON_FILE_VAR);
-                CHECK(FormatError, tokenFileVariant != NULL, "token file missing");
-                CHECK(FormatError, varType(tokenFileVariant) == varTypeString, "token file must be a string");
-                const String *const tokenFile = varStr(tokenFileVariant);
-
-                // Only the default text format is supported
-                const Variant *const format = kvGet(credentialSource, GCS_JSON_FORMAT_VAR);
-
-                if (format != NULL)
+                MEM_CONTEXT_TEMP_BEGIN()
                 {
+                    const Variant *const keyVariant =
+                        jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
                     CHECK(
-                        FormatError, varType(format) == varTypeKeyValue, "credential source format is not supported");
-                    const Variant *const formatTypeVariant = kvGet(varKv(format), GCS_JSON_TYPE_VAR);
-                    const String *const formatType =
-                        formatTypeVariant != NULL && varType(formatTypeVariant) == varTypeString ?
-                            varStr(formatTypeVariant) : NULL;
-                    CHECK(
-                        FormatError, formatType != NULL && strEqZ(formatType, "text"),
-                        "credential source format is not supported");
-                }
+                        FormatError, keyVariant != NULL && varType(keyVariant) == varTypeKeyValue,
+                        "not an external account credential file");
+                    const KeyValue *const kvKey = varKv(keyVariant);
 
-                this->webIdTokenFile = strDup(tokenFile);
-                this->webIdAudience = strDup(audience);
-                this->authUrl = httpUrlNewParseP(tokenUrl, .type = httpProtocolTypeHttps);
-                this->authClient = httpClientNew(
-                    tlsClientNewP(
-                        sckClientNew(httpUrlHost(this->authUrl), httpUrlPort(this->authUrl), timeout, timeout),
-                        httpUrlHost(this->authUrl), timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
-                    timeout);
+                    const Variant *const typeVariant = kvGet(kvKey, GCS_JSON_TYPE_VAR);
+                    const String *const type =
+                        typeVariant != NULL && varType(typeVariant) == varTypeString ? varStr(typeVariant) : NULL;
+                    CHECK(FormatError, type != NULL && strEqZ(type, "external_account"), "not an external account credential file");
+
+                    // Impersonation would require a second exchange so the federated identity must have direct access
+                    CHECK(
+                        FormatError, kvGet(kvKey, GCS_JSON_SA_IMPERSONATION_URL_VAR) == NULL,
+                        "service account impersonation is not supported");
+
+                    const Variant *const audienceVariant = kvGet(kvKey, GCS_JSON_AUDIENCE_VAR);
+                    CHECK(FormatError, audienceVariant != NULL, "audience missing");
+                    CHECK(FormatError, varType(audienceVariant) == varTypeString, "audience must be a string");
+                    const String *const audience = varStr(audienceVariant);
+
+                    const Variant *const tokenUrlVariant = kvGet(kvKey, GCS_JSON_TOKEN_URL_VAR);
+                    CHECK(FormatError, tokenUrlVariant != NULL, "token url missing");
+                    CHECK(FormatError, varType(tokenUrlVariant) == varTypeString, "token url must be a string");
+                    const String *const tokenUrl = varStr(tokenUrlVariant);
+
+                    const Variant *const credentialSourceVariant = kvGet(kvKey, GCS_JSON_CREDENTIAL_SOURCE_VAR);
+                    CHECK(FormatError, credentialSourceVariant != NULL, "credential source missing");
+                    CHECK(
+                        FormatError, varType(credentialSourceVariant) == varTypeKeyValue,
+                        "credential source must be an object");
+                    const KeyValue *const credentialSource = varKv(credentialSourceVariant);
+
+                    const Variant *const tokenFileVariant = kvGet(credentialSource, GCS_JSON_FILE_VAR);
+                    CHECK(FormatError, tokenFileVariant != NULL, "token file missing");
+                    CHECK(FormatError, varType(tokenFileVariant) == varTypeString, "token file must be a string");
+                    const String *const tokenFile = varStr(tokenFileVariant);
+
+                    // Only the default text format is supported
+                    const Variant *const format = kvGet(credentialSource, GCS_JSON_FORMAT_VAR);
+
+                    if (format != NULL)
+                    {
+                        CHECK(
+                            FormatError, varType(format) == varTypeKeyValue, "credential source format is not supported");
+                        const Variant *const formatTypeVariant = kvGet(varKv(format), GCS_JSON_TYPE_VAR);
+                        const String *const formatType =
+                            formatTypeVariant != NULL && varType(formatTypeVariant) == varTypeString ?
+                                varStr(formatTypeVariant) : NULL;
+                        CHECK(
+                            FormatError, formatType != NULL && strEqZ(formatType, "text"),
+                            "credential source format is not supported");
+                    }
+
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        this->webIdTokenFile = strDup(tokenFile);
+                        this->webIdAudience = strDup(audience);
+                        this->authUrl = httpUrlNewParseP(tokenUrl, .type = httpProtocolTypeHttps);
+                        this->authClient = httpClientNew(
+                            tlsClientNewP(
+                                sckClientNew(httpUrlHost(this->authUrl), httpUrlPort(this->authUrl), timeout, timeout),
+                                httpUrlHost(this->authUrl), timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
+                            timeout);
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+                }
+                MEM_CONTEXT_TEMP_END();
 
                 break;
             }
