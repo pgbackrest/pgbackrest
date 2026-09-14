@@ -1232,7 +1232,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         hrnHostLocal.storage = strIdFromZ(testDef->stg);
         hrnHostLocal.compressType = compressTypeEnum(strIdFromZ(testDef->cmp));
         hrnHostLocal.cipherSpecMain =
-            testDef->enc ? cipherSpecNew(cipherTypeAes256Cbc, BUFSTRZ(HRN_CIPHER_PASSPHRASE)) : cipherSpecNewNone();
+            testDef->enc ? cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRZ(HRN_CIPHER_PASSPHRASE)) : cipherSpecNewNone();
         hrnHostLocal.repoTotal = testDef->rt;
         hrnHostLocal.tls = testDef->tls;
         hrnHostLocal.bundle = testDef->bnd;

@@ -1,19 +1,21 @@
 /***********************************************************************************************************************************
-Stanza Commands Handler
-***********************************************************************************************************************************/
-#ifndef COMMAND_STANZA_COMMON_H
-#define COMMAND_STANZA_COMMON_H
+Crypto Common Internal
 
-#include "info/infoPg.h"
-#include "postgres/interface.h"
+Openssl types are used here, so this is included only by the crypto modules that work with them rather than by everything that
+needs a hash type.
+***********************************************************************************************************************************/
+#ifndef COMMON_CRYPTO_COMMON_INTERN_H
+#define COMMON_CRYPTO_COMMON_INTERN_H
+
+#include <openssl/evp.h>
+
+#include "common/crypto/common.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Generate a sub pass for a file at this format, which sets the digest since that is what will derive it when it is read back
-FN_EXTERN CipherSpec *cipherSpecGen(CipherType cipherType, unsigned int format);
-
-// Validate and return database information
-FN_EXTERN PgControl pgValidate(void);
+// Digest openssl knows by the name of the hash type. Error when there is no such digest, which is a coding error since a hash type
+// is not read from user input.
+FN_EXTERN const EVP_MD *cryptoDigest(HashType type);
 
 #endif

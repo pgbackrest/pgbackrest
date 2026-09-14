@@ -18,7 +18,7 @@ Config option constants
 #define TEST_CIPHER_PASS_ARCHIVE                                    "xarchivex"
 
 // Cipher spec for a test pass, defaulting to the main pass, since most tests encrypt with that
-#define TEST_CIPHER_SPEC_PASS(pass)                                 cipherSpecNew(cipherTypeAes256Cbc, BUFSTRZ(pass))
+#define TEST_CIPHER_SPEC_PASS(pass)                                 cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRZ(pass))
 #define TEST_CIPHER_SPEC                                            TEST_CIPHER_SPEC_PASS(TEST_CIPHER_PASS)
 
 /***********************************************************************************************************************************

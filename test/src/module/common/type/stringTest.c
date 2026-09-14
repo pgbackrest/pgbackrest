@@ -70,6 +70,7 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 2), "999.10", "new div");
         TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 2, .trim = true), "999.1", "new div");
         TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 0), "999", "new div");
+        TEST_RESULT_STR_Z(strNewDivP(1, 2, .precision = 2), "0.50", "new div less than one");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("new from percentage");

@@ -9,6 +9,7 @@ Repository Get Command
 #include "command/repo/get.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -16,6 +17,7 @@ Repository Get Command
 #include "config/config.h"
 #include "storage/helper.h"
 
+#include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 
@@ -46,6 +48,9 @@ storageGetProcess(IoWrite *const destination)
         // Create new file read
         IoRead *const source = storageReadIo(
             storageNewReadP(storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing)));
+
+        // Is the file an info file, i.e. one that has a header in front of its content?
+        bool fileIsInfo = false;
 
         // Add decryption if needed
         if (!cfgOptionBool(cfgOptRaw))
@@ -96,6 +101,9 @@ storageGetProcess(IoWrite *const destination)
                                 cfgCipherSpecMain());
                             cipherSpec = infoArchiveCipherSpec(info);
                         }
+                        // Else the file is the archive info, which the repo passphrase opens
+                        else
+                            fileIsInfo = true;
                     }
 
                     // Backup path
@@ -128,6 +136,9 @@ storageGetProcess(IoWrite *const destination)
                             else
                                 cipherSpec = cipherSpecManifest;
                         }
+                        // Else the file is the backup info, which the repo passphrase opens
+                        else
+                            fileIsInfo = true;
                     }
                 }
 
@@ -137,8 +148,11 @@ storageGetProcess(IoWrite *const destination)
 
                 ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
 
-                // Add encryption filter
-                cipherBlockFilterGroupAdd(ioReadFilterGroup(source), cipherModeDecrypt, cipherSpec);
+                // Add the decryption filter. An info file is read through the filter that reads its header.
+                if (fileIsInfo)
+                    cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(source), cipherSpec);
+                else
+                    cipherBlockFilterGroupAdd(ioReadFilterGroup(source), cipherModeDecrypt, cipherSpec);
             }
         }
 

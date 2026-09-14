@@ -237,7 +237,8 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
             if (cipherSpecType(this->cipherSpecBackup) != cipherTypeNone)
             {
                 ioFilterGroupAdd(
-                    ioReadFilterGroup(this->limitRead), cipherBlockNewP(cipherModeDecrypt, this->cipherSpecBackup, .raw = true));
+                    ioReadFilterGroup(this->limitRead), cipherBlockNewP(
+                        cipherModeDecrypt, this->cipherSpecBackup, .header = cipherBlockHeaderNone));
             }
 
             if (this->compressType != compressTypeNone)

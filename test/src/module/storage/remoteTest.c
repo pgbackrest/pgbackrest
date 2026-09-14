@@ -381,8 +381,8 @@ testRun(void)
         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
-        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
-        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
         ioFilterGroupAdd(filterGroup, compressFilterP(compressTypeGz, 3));
         ioFilterGroupAdd(filterGroup, decompressFilterP(compressTypeGz));
 
@@ -415,6 +415,31 @@ testRun(void)
             "1:strid:size, 2:pack:<1:u64:8>, 3:strid:hash, 4:pack:<1:bin:bbbcf2c59433f68f22376cd2439d6cd309378df6>, 5:strid:sink,"
             " 7:strid:buffer",
             "filter results");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read error is not retried when filters are passed to the remote");
+
+        // Write an encrypted file larger than the buffer size so the error will happen after the first chunk has been read
+        HRN_STORAGE_PUT(
+            storageTest, TEST_PATH "/repo128/test.bin", contentBuf,
+            .cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")));
+
+        // Enable read retry to show that it is disabled when the filters are passed to the remote
+        uint64_t featureOld = storageRepo->pub.interface.feature;
+        storageRepo->pub.interface.feature |= 1 << storageFeatureReadRetry;
+
+        // Limit the read so it ends in the middle of a cipher block and the decrypt filter errors on the remote
+        TEST_ASSIGN(
+            fileRead, storageNewReadP(storageRepo, STRDEF("test.bin"), .limit = VARUINT64(bufSize(contentBuf) - 5)), "new read");
+        TEST_RESULT_BOOL(fileRead->retry, false, "retry is disabled");
+
+        ioFilterGroupAdd(
+            ioReadFilterGroup(storageReadIo(fileRead)),
+            cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
+
+        TEST_ERROR(storageGetP(fileRead), CryptoError, "raised from remote-0 shim protocol: unable to flush");
+
+        storageRepo->pub.interface.feature = featureOld;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid filter");

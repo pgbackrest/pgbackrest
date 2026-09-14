@@ -8,6 +8,13 @@ Block Cipher Header
 #include "common/io/filter/group.h"
 
 /***********************************************************************************************************************************
+Magic constant for salted encrypt, written before the salt unless the header is none. Anything written in place of the magic must be
+the same size so that what follows still begins with the salt.
+***********************************************************************************************************************************/
+#define CIPHER_BLOCK_MAGIC                                          "Salted__"
+#define CIPHER_BLOCK_MAGIC_SIZE                                     (sizeof(CIPHER_BLOCK_MAGIC) - 1)
+
+/***********************************************************************************************************************************
 Filter type constant
 ***********************************************************************************************************************************/
 #define CIPHER_BLOCK_FILTER_TYPE                                   STRID5("cipher-blk", 0x16c16e45441230)
@@ -15,10 +22,19 @@ Filter type constant
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
+// What precedes the content of a file. The magic is what openssl writes and is the default. None saves the eight bytes the magic
+// takes for a file nothing but this version reads, e.g. a file bundled into a backup, and for a file that something else has
+// written in place of the magic, e.g. the format header.
+typedef enum
+{
+    cipherBlockHeaderMagic = 0,                                     // Salted magic openssl writes
+    cipherBlockHeaderNone,                                          // Nothing, to save space
+} CipherBlockHeader;
+
 typedef struct CipherBlockNewParam
 {
     VAR_PARAM_HEADER;
-    bool raw;                                                       // Omit header magic to save space
+    CipherBlockHeader header;                                       // What precedes the content, the magic by default
 } CipherBlockNewParam;
 
 #define cipherBlockNewP(mode, cipherSpec, ...)                                                                                     \

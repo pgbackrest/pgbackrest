@@ -2,11 +2,24 @@
 Test Info Handler
 ***********************************************************************************************************************************/
 #include "common/crypto/cipherBlock.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "storage/posix/storage.h"
 
 #include "harness/info.h"
+
+/***********************************************************************************************************************************
+Read a buffer through the filter that reads the header, as a caller loading a file that has one does
+***********************************************************************************************************************************/
+static IoRead *
+testInfoReadHeader(const Buffer *const buffer, const CipherSpec *const cipherSpec)
+{
+    IoRead *const result = ioBufferReadNew(buffer);
+    cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(result), cipherSpec);
+
+    return result;
+}
 
 /***********************************************************************************************************************************
 Test load callback
@@ -79,7 +92,7 @@ testRun(void)
         Info *info = NULL;
 
         TEST_ASSIGN(
-            info, infoNew(REPOSITORY_FORMAT_DEFAULT, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
+            info, infoNew(REPOSITORY_FORMAT_DEFAULT, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
             "infoNew(cipher)");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(info))), "123xyz", "    cipherPass is set");
 
@@ -167,7 +180,7 @@ testRun(void)
         IoRead *read = ioBufferReadNew(contentLoad);
         ioFilterGroupAdd(
             ioReadFilterGroup(read),
-            cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("X"))));
+            cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("X"))));
 
         TEST_ERROR(
             infoNewLoad(read, cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent), CryptoError,
@@ -255,20 +268,163 @@ testRun(void)
 
         callbackContent = strNew();
 
+        const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
+
+        // A file with no header, e.g. a manifest, is decrypted with the spec as it was given since nothing defines the digest
+        // as anything else
+        IoRead *const readNoHeader = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec));
+        cipherBlockFilterGroupAdd(ioReadFilterGroup(readNoHeader), cipherModeDecrypt, cipherSpec);
+
         TEST_ASSIGN(
-            info,
-            infoNewLoad(
-                ioBufferReadNew(contentLoad), cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x")), harnessInfoLoadNewCallback,
-                callbackContent),
+            info, infoNewLoad(readNoHeader, cipherSpec, harnessInfoLoadNewCallback, callbackContent),
             "info with content and cipher");
         TEST_RESULT_STR_Z(callbackContent, "[c] key=1\n[d] key=1\n", "    check callback content");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(info))), "somepass", "    check cipher pass set");
+        TEST_RESULT_UINT(cipherSpecDigest(infoCipherSpec(info)), hashTypeSha1, "    check cipher sub digest");
         TEST_RESULT_STR_Z(infoBackrestVersion(info), PROJECT_VERSION, "    check backrest version");
 
         contentSave = bufNew(0);
 
         TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNewZ("1")), "info save");
         TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "   check save");
+
+        // Migrating to a format that stores the digest does not change the digest the pass derives with, since the files the pass
+        // encrypted before the migration are not rewritten
+        contentSave = bufNew(0);
+
+        TEST_RESULT_VOID(infoFormatSet(info, REPOSITORY_FORMAT_6), "migrate to format 6");
+        TEST_RESULT_VOID(
+            infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNewZ("1")), "save migrated info");
+        TEST_RESULT_BOOL(
+            strstr(strZ(strNewBuf(contentSave)), "cipher-digest=\"sha1\"") != NULL, true, "    check digest stored with pass");
+
+        TEST_ASSIGN(
+            info,
+            infoNewLoad(
+                testInfoReadHeader(harnessInfoEncryptP(contentSave, cipherSpec, .format = REPOSITORY_FORMAT_6), cipherSpec),
+                cipherSpec, harnessInfoLoadNewCallback, strNew()),
+            "load migrated info");
+        TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_6, "    check format");
+        TEST_RESULT_UINT(cipherSpecDigest(infoCipherSpec(info)), hashTypeSha1, "    check cipher sub digest unchanged");
+
+        // Header
+        // -------------------------------------------------------------------------------------------------------------------------
+        // An unencrypted file has no header no matter the format, since the format is read from the content
+        contentSave = bufNew(0);
+
+        IoWrite *const writeNone = ioBufferWriteNew(contentSave);
+        cipherBlockFormatFilterGroupWriteAdd(contentSave, ioWriteFilterGroup(writeNone), cipherSpecNewNone(), REPOSITORY_FORMAT_6);
+
+        TEST_RESULT_VOID(infoSave(info, writeNone, testInfoSaveCallback, strNewZ("1")), "info save");
+        TEST_RESULT_BOOL(strBeginsWithZ(strNewBuf(contentSave), "PGBR"), false, "    check no header");
+
+        contentLoad = harnessInfoChecksumFormat(
+            REPOSITORY_FORMAT_6,
+            STRDEF(
+                "[cipher]\n"
+                "cipher-digest=\"sha256\"\n"
+                "cipher-pass=\"somepass\"\n"));
+
+        callbackContent = strNew();
+
+        TEST_ASSIGN(
+            info,
+            infoNewLoad(
+                testInfoReadHeader(harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6), cipherSpec),
+                cipherSpec, harnessInfoLoadNewCallback, callbackContent),
+            "info with header");
+        TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_6, "    check format");
+        TEST_RESULT_UINT(cipherSpecDigest(infoCipherSpec(info)), hashTypeSha256, "    check cipher sub digest");
+
+        // A pass migrated from a format that could not store the digest keeps deriving with SHA-1, so the files it encrypted
+        // before the migration are still readable
+        const Buffer *const contentMigrated = harnessInfoChecksumFormat(
+            REPOSITORY_FORMAT_6,
+            STRDEF(
+                "[cipher]\n"
+                "cipher-digest=\"sha1\"\n"
+                "cipher-pass=\"somepass\"\n"));
+
+        TEST_ASSIGN(
+            info,
+            infoNewLoad(
+                testInfoReadHeader(harnessInfoEncryptP(contentMigrated, cipherSpec, .format = REPOSITORY_FORMAT_6), cipherSpec),
+                cipherSpec, harnessInfoLoadNewCallback, callbackContent),
+            "info migrated to the format that stores the digest");
+        TEST_RESULT_UINT(cipherSpecDigest(infoCipherSpec(info)), hashTypeSha1, "    check cipher sub digest");
+
+        // The content on its own, which is how a caller that wants the file rather than the values in it reads an info file
+        IoRead *const infoRead = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6));
+
+        ioFilterGroupAdd(
+            ioReadFilterGroup(infoRead), cipherBlockFormatNewP(cipherSpec));
+        ioReadOpen(infoRead);
+
+        TEST_RESULT_STR(strNewBuf(ioReadBuf(infoRead)), strNewBuf(contentLoad), "info content read");
+
+        // A file written before the header existed is read as the format that had none
+        contentLoad = harnessInfoChecksumZ("[c]\nkey=1\n");
+
+        TEST_ASSIGN(
+            info,
+            infoNewLoad(
+                testInfoReadHeader(harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_5), cipherSpec),
+                cipherSpec, harnessInfoLoadNewCallback, callbackContent),
+            "info with no header");
+        TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_5, "    check format");
+
+        // A file too short to hold a header cannot have one
+        TEST_ERROR(
+            infoNewLoad(
+                testInfoReadHeader(BUFSTRDEF("PGBR"), cipherSpec), cipherSpec, harnessInfoLoadNewCallback, callbackContent),
+            CryptoError,
+            "cipher header missing\n"
+            "HINT: is or was the repo encrypted?");
+
+        // A file with neither header was never encrypted, which is reported the way the cipher reports it
+        TEST_ERROR(
+            infoNewLoad(
+                testInfoReadHeader(BUFSTRDEF("[backrest]\nbackrest-format=5\n"), cipherSpec), cipherSpec,
+                harnessInfoLoadNewCallback, callbackContent),
+            CryptoError,
+            "cipher header invalid\n"
+            "HINT: is or was the repo encrypted?");
+
+        // Header uses the byte held back for later, so this version does not know what it is looking at
+        Buffer *contentHeader = harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6);
+        bufPtr(contentHeader)[7] = 'X';
+
+        TEST_ERROR(
+            infoNewLoad(
+                testInfoReadHeader(contentHeader, cipherSpec), cipherSpec, harnessInfoLoadNewCallback, callbackContent),
+            FormatError, "invalid cipher header");
+
+        // Header damaged where the format should be
+        contentHeader = harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6);
+        bufPtr(contentHeader)[5] = 'X';
+
+        TEST_ERROR(
+            infoNewLoad(
+                testInfoReadHeader(contentHeader, cipherSpec), cipherSpec, harnessInfoLoadNewCallback, callbackContent),
+            FormatError, "invalid cipher header");
+
+        // Header names a format this version cannot read, which is reported before anything is decrypted
+        contentHeader = harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6);
+        bufPtr(contentHeader)[6] = '7';
+
+        TEST_ERROR(
+            infoNewLoad(
+                testInfoReadHeader(contentHeader, cipherSpec), cipherSpec, harnessInfoLoadNewCallback, callbackContent),
+            FormatError,
+            "repository format 7 requires a newer version of pgBackRest\n"
+            "HINT: pgBackRest " PROJECT_VERSION " supports repository format 5 to 6.");
+
+        // Header and content disagree about the format
+        TEST_ERROR(
+            infoNewLoad(
+                testInfoReadHeader(harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6), cipherSpec),
+                cipherSpec, harnessInfoLoadNewCallback, callbackContent),
+            FormatError, "repository format 5 does not match header format 6");
     }
 
     // *****************************************************************************************************************************

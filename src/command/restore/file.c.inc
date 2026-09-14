@@ -264,7 +264,8 @@ restoreFile(
                         if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
                         {
                             ioFilterGroupAdd(
-                                ioReadFilterGroup(blockMapRead), cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
+                                ioReadFilterGroup(blockMapRead), cipherBlockNewP(
+                                    cipherModeDecrypt, cipherSpecBackup, .header = cipherBlockHeaderNone));
                         }
 
                         ioReadOpen(blockMapRead);
@@ -336,7 +337,11 @@ restoreFile(
                         // Add decryption filter
                         if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
                         {
-                            ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = bundleRaw));
+                            ioFilterGroupAdd(
+                                filterGroup,
+                                cipherBlockNewP(
+                                    cipherModeDecrypt, cipherSpecBackup,
+                                    .header = bundleRaw ? cipherBlockHeaderNone : cipherBlockHeaderMagic));
                         }
 
                         // Add decompression filter

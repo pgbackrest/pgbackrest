@@ -78,7 +78,7 @@ cmdStanzaCreate(void)
                 const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent archive files
-                const CipherSpec *const cipherSpecArchive = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
+                const CipherSpec *const cipherSpecArchive = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), format);
 
                 // Create and save archive info
                 infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, format, cipherSpecArchive);
@@ -86,7 +86,8 @@ cmdStanzaCreate(void)
                 infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent manifests
-                const CipherSpec *const cipherSpecManifest = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx));
+                const CipherSpec *const cipherSpecManifest = cipherSpecGen(
+                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), format);
 
                 // Create and save backup info
                 infoBackup = infoBackupNew(

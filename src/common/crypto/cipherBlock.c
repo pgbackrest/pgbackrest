@@ -10,21 +10,12 @@ Block Cipher
 
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/common.h"
+#include "common/crypto/common.intern.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
+#include "common/type/convert.h"
 #include "common/type/object.h"
-
-/***********************************************************************************************************************************
-Header constants and sizes
-***********************************************************************************************************************************/
-// Magic constant for salted encrypt. Only salted encrypt is done here, but this constant is required for compatibility with the
-// openssl command-line tool.
-#define CIPHER_BLOCK_MAGIC                                          "Salted__"
-#define CIPHER_BLOCK_MAGIC_SIZE                                     (sizeof(CIPHER_BLOCK_MAGIC) - 1)
-
-// Total length of cipher header
-#define CIPHER_BLOCK_HEADER_SIZE                                    (CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN)
 
 /***********************************************************************************************************************************
 Object type
@@ -37,7 +28,7 @@ typedef struct CipherBlock
     bool processDone;                                               // Has any data been processed?
     const Buffer *pass;                                             // Passphrase used to generate encryption key
     size_t headerSize;                                              // Size of header read during decrypt
-    uint8_t header[CIPHER_BLOCK_HEADER_SIZE];                       // Buffer to hold partial header during decrypt
+    uint8_t header[CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN];       // Buffer to hold partial header during decrypt
     const EVP_CIPHER *cipher;                                       // Cipher object
     const EVP_MD *digest;                                           // Message digest object
     EVP_CIPHER_CTX *cipherContext;                                  // Encrypt/decrypt context
@@ -149,7 +140,7 @@ cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t s
         else if (sourceSize > 0)
         {
             // Check if the entire header has been read
-            const size_t headerExpected = this->raw ? PKCS5_SALT_LEN : CIPHER_BLOCK_HEADER_SIZE;
+            const size_t headerExpected = this->raw ? PKCS5_SALT_LEN : CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN;
 
             if (this->headerSize + sourceSize >= headerExpected)
             {
@@ -161,8 +152,8 @@ cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t s
                 source += headerExpected - this->headerSize;
                 sourceSize -= headerExpected - this->headerSize;
 
-                // The first bytes of the file to decrypt should be equal to the magic. If not then this is not an encrypted file,
-                // or at least not in a format we recognize.
+                // The first bytes of the file to decrypt should be equal to the magic. If not then this is not an encrypted
+                // file, or at least not in a format we recognize.
                 if (!this->raw && memcmp(this->header, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
                     THROW(CryptoError, "cipher header invalid");
             }
@@ -389,7 +380,7 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, mode);
         FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
-        FUNCTION_LOG_PARAM(BOOL, param.raw);
+        FUNCTION_LOG_PARAM(ENUM, param.header);
     FUNCTION_LOG_END();
 
     ASSERT(cipherSpec != NULL);
@@ -409,16 +400,17 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
 
     zFree(cipherTypeZ);
 
+    // Lookup digest, which the spec supplies since the pass and the digest are chosen together
+    const EVP_MD *const digest = cryptoDigest(cipherSpecDigest(cipherSpec));
+
     OBJ_NEW_BEGIN(CipherBlock, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         *this = (CipherBlock)
         {
             .mode = mode,
-            .raw = param.raw,
+            .raw = param.header == cipherBlockHeaderNone,
             .cipher = cipher,
-
-            // The key is always derived with SHA-1. Deriving it with anything else is not supported yet.
-            .digest = EVP_sha1(),
+            .digest = digest,
             .pass = bufDup(cipherSpecPass(cipherSpec)),
         };
     }
@@ -433,7 +425,7 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
 
         pckWriteU64P(packWrite, mode);
         cipherSpecPack(packWrite, cipherSpec);
-        pckWriteBoolP(packWrite, param.raw);
+        pckWriteU32P(packWrite, param.header);
         pckWriteEndP(packWrite);
 
         paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -457,9 +449,9 @@ cipherBlockNewPack(const Pack *const paramList)
         PackRead *const paramListPack = pckReadNew(paramList);
         const CipherMode cipherMode = (CipherMode)pckReadU64P(paramListPack);
         const CipherSpec *const cipherSpec = cipherSpecNewPack(paramListPack);
-        const bool raw = pckReadBoolP(paramListPack);
+        const CipherBlockHeader header = (CipherBlockHeader)pckReadU32P(paramListPack);
 
-        result = ioFilterMove(cipherBlockNewP(cipherMode, cipherSpec, .raw = raw), memContextPrior());
+        result = ioFilterMove(cipherBlockNewP(cipherMode, cipherSpec, .header = header), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

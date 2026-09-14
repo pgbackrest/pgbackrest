@@ -14,6 +14,7 @@ Remote Command
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/io/filter/sink.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
@@ -44,6 +45,7 @@ static const StorageRemoteFilterHandler storageRemoteFilterHandler[] =
     {.type = BLOCK_CHECKSUM_FILTER_TYPE, .handlerParam = blockChecksumNewPack},
     {.type = BLOCK_INCR_FILTER_TYPE, .handlerParam = blockIncrNewPack},
     {.type = CIPHER_BLOCK_FILTER_TYPE, .handlerParam = cipherBlockNewPack},
+    {.type = CIPHER_BLOCK_FORMAT_FILTER_TYPE, .handlerParam = cipherBlockFormatNewPack},
     {.type = CRYPTO_HASH_FILTER_TYPE, .handlerParam = cryptoHashNewPack},
     {.type = PAGE_CHECKSUM_FILTER_TYPE, .handlerParam = pageChecksumNewPack},
     {.type = SINK_FILTER_TYPE, .handlerNoParam = ioSinkNew},
