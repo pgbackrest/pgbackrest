@@ -491,6 +491,9 @@ testRun(void)
                 hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("exchange web identity token");
+
                 Storage *const storage = storageRepoGet(0, false);
                 const char *const content =
                     "audience=%2F%2Fiam.googleapis.com%2Fprojects%2F123%2Flocations%2Fglobal%2FworkloadIdentityPools%2Fpool%2F"
@@ -516,7 +519,9 @@ testRun(void)
                     storageGetP(storageNewReadP(storage, STRDEF("missing"), .ignoreMissing = true)), NULL,
                     "use exchanged bearer token");
 
-                // Renew immediately and reload the rotated token from disk
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("renew with rotated web identity token");
+
                 HRN_STORAGE_PUT(storageTest, TEST_PATH "/web-id.jwt", BUFSTRDEF("rotated jwt\n"));
 
                 const char *const rotatedContent =
@@ -539,6 +544,9 @@ testRun(void)
                 TEST_RESULT_PTR(
                     storageGetP(storageNewReadP(storage, STRDEF("missing2"), .ignoreMissing = true)), NULL,
                     "renew with rotated web identity token");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("redact sts error response");
 
                 // STS responses are redacted because a provider may echo all or part of the subject token
                 ((StorageGcs *)storageDriver(storage))->tokenTimeExpire = 0;
@@ -578,7 +586,9 @@ testRun(void)
                     storageGetP(storageNewReadP(storage, STRDEF("missing3b"), .ignoreMissing = true)), ProtocolError,
                     "unable to get authentication token: HTTP request failed with 400; response redacted");
 
-                // Missing required token response fields fail cleanly
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on missing token response fields");
+
                 hrnServerScriptAccept(sts);
                 testRequestP(
                     sts, HTTP_VERB_POST, .path = "/v1/token", .noAuth = true, .contentType = "application/x-www-form-urlencoded",
@@ -599,7 +609,9 @@ testRun(void)
                     storageGetP(storageNewReadP(storage, STRDEF("missing5"), .ignoreMissing = true)), FormatError,
                     "expiry missing");
 
-                // Non-JSON responses are also redacted
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("redact non-json error response");
+
                 hrnServerScriptAccept(sts);
                 testRequestP(
                     sts, HTTP_VERB_POST, .path = "/v1/token", .noAuth = true, .contentType = "application/x-www-form-urlencoded",
@@ -610,7 +622,9 @@ testRun(void)
                     storageGetP(storageNewReadP(storage, STRDEF("missing6"), .ignoreMissing = true)), ProtocolError,
                     "unable to get authentication token: HTTP request failed with 400; response redacted");
 
-                // Nested error objects are redacted
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("redact nested error object");
+
                 hrnServerScriptAccept(sts);
                 testRequestP(
                     sts, HTTP_VERB_POST, .path = "/v1/token", .noAuth = true, .contentType = "application/x-www-form-urlencoded",
@@ -623,7 +637,9 @@ testRun(void)
                     storageGetP(storageNewReadP(storage, STRDEF("missing8"), .ignoreMissing = true)), ProtocolError,
                     "unable to get authentication token: HTTP request failed with 403; response redacted");
 
-                // An error response without a content-type is also reported directly
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("redact error response without content-type");
+
                 hrnServerScriptAccept(sts);
                 testRequestP(
                     sts, HTTP_VERB_POST, .path = "/v1/token", .noAuth = true, .contentType = "application/x-www-form-urlencoded",
@@ -634,7 +650,9 @@ testRun(void)
                     storageGetP(storageNewReadP(storage, STRDEF("missing7"), .ignoreMissing = true)), ProtocolError,
                     "unable to get authentication token: HTTP request failed with 400; response redacted");
 
-                // Write-mode storage requests the read_write scope
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write storage requests read_write scope");
+
                 const char *const writeContent =
                     "audience=%2F%2Fiam.googleapis.com%2Fprojects%2F123%2Flocations%2Fglobal%2FworkloadIdentityPools%2Fpool%2F"
                     "providers%2Fprovider&"
