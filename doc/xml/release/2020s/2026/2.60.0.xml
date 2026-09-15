@@ -1,5 +1,9 @@
 <release date="XXXX-XX-XX" version="2.60.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: The <cmd>restore</cmd> command will now error and stop if any restored file contains an invalid page checksum, which leaves the cluster incomplete and unable to start, so the restore must be rerun. The <cmd>expire</cmd> command will now refuse to expire if the oldest retained backup would contain checksum errors, which also prevents archive from being expired in that repository. Set <br-option>checksum-page-error=n</br-option> to warn instead of erroring.</p>
+        </text>
+
         <release-bug-list>
             <release-item>
                 <commit subject="Fix annotate and manifest commands on a remote encrypted repository."/>
@@ -65,6 +69,24 @@
                 <p>Disable read retry when filters are passed to the driver.</p>
             </release-item>
         </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <github-issue id="2687"/>
+                <github-pull-request id="2833"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="greg.sabino.mullane"/>
+                    <release-item-contributor id="andrew.pogrebnoi"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="greg.sabino.mullane"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>checksum-page-error</br-option> option to error on invalid page checksums.</p>
+            </release-item>
+        </release-feature-list>
 
         <release-improvement-list>
             <release-item>

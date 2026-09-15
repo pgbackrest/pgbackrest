@@ -2195,13 +2195,14 @@ testRun(void)
         OBJ_NEW_END();
 
         unsigned int currentPercentComplete = 4567;
+        unsigned int checksumErrorFileTotal = 0;
 
         lockInit(TEST_PATH_STR, cfgOptionStr(cfgOptExecId));
         TEST_RESULT_VOID(cmdLockAcquireP(), "acquire restore lock");
 
         TEST_RESULT_UINT(
             restoreJobResult(manifest, job, NULL, 0, 0,
-                             &currentPercentComplete), 0, "log noop result");
+                             &checksumErrorFileTotal, &currentPercentComplete), 0, "log noop result");
         TEST_RESULT_VOID(cmdLockReleaseP(), "release restore lock");
 
         TEST_RESULT_LOG("P00 DETAIL: restore file pg_data/test (0B, 100.00%)");
@@ -3248,6 +3249,165 @@ testRun(void)
 
         // Check stanza archive spool path was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_PATH_ARCHIVE);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("warn on invalid page checksum when checksum-page-error=n");
+
+        const String *const repoPathChecksumWarn = STRDEF(TEST_PATH "/repo-checksum-warn");
+        const String *const pgPathChecksumWarn = STRDEF(TEST_PATH "/pg-checksum-warn");
+
+        // Use a dedicated arg list (rather than reassigning the shared argList) so the config loaded by the prior test remains
+        // available to restore before the "remove a repo file" test below, which relies on it still being active
+        StringList *argListChecksum = strLstNew();
+        hrnCfgArgRawZ(argListChecksum, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argListChecksum, cfgOptRepoPath, repoPathChecksumWarn);
+        hrnCfgArgRaw(argListChecksum, cfgOptPgPath, pgPathChecksumWarn);
+        hrnCfgArgRawZ(argListChecksum, cfgOptSet, "20161219-212741F");
+        hrnCfgArgRawBool(argListChecksum, cfgOptChecksumPageError, false);
+        HRN_CFG_LOAD(cfgCmdRestore, argListChecksum);
+
+        #define TEST_CKSUM_LABEL                                   "20161219-212741F"
+        #define TEST_CKSUM_PGDATA                                  MANIFEST_TARGET_PGDATA "/"
+        #define TEST_CKSUM_REPO_PATH                               STORAGE_REPO_BACKUP "/" TEST_CKSUM_LABEL "/" TEST_CKSUM_PGDATA
+
+        Manifest *manifestChecksum = NULL;
+
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        {
+            manifestChecksum = manifestNewInternal();
+            manifestChecksum->pub.info = infoNew(REPOSITORY_FORMAT_DEFAULT, NULL);
+            manifestChecksum->pub.data.backupLabel = strNewZ(TEST_CKSUM_LABEL);
+            manifestChecksum->pub.data.pgVersion = PG_VERSION_11;
+            manifestChecksum->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_11);
+            manifestChecksum->pub.data.backupType = backupTypeFull;
+            manifestChecksum->pub.data.backupTimestampStart = 1482182860;
+            manifestChecksum->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
+            manifestChecksum->pub.data.backupOptionOnline = true;
+            manifestChecksum->pub.data.archiveStart = strNewZ("000000010000000000000007");
+            manifestChecksum->pub.data.lsnStart = strNewZ("0/7000028");
+
+            // Data directory
+            HRN_MANIFEST_TARGET_ADD(manifestChecksum, .name = MANIFEST_TARGET_PGDATA, .path = strZ(pgPathChecksumWarn));
+            HRN_MANIFEST_PATH_ADD(manifestChecksum, .name = MANIFEST_TARGET_PGDATA);
+
+            // Global directory
+            HRN_MANIFEST_PATH_ADD(manifestChecksum, .name = TEST_CKSUM_PGDATA PG_PATH_GLOBAL);
+
+            // PG_VERSION -- marked with a page checksum error so it triggers the checksum-page-error handling on restore
+            HRN_MANIFEST_FILE_ADD(
+                manifestChecksum, .name = TEST_CKSUM_PGDATA PG_FILE_PGVERSION, .size = 3, .timestamp = 1482182860,
+                .checksumSha1 = "dd71038f3463f511ee7403dbcbc87195302d891c", .checksumPage = true, .checksumPageError = true);
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_CKSUM_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_11_Z "\n");
+
+            // postgresql.conf -- page checksums are enabled but there is no error, so no warning should be triggered for it
+            HRN_MANIFEST_FILE_ADD(
+                manifestChecksum, .name = MANIFEST_TARGET_PGDATA "/postgresql.conf", .size = 10, .timestamp = 1482182860,
+                .checksumSha1 = "1a49a3c2240449fee1422e4afcf44d5b96378511", .checksumPage = true);
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_CKSUM_REPO_PATH "postgresql.conf", "VALID_CONF");
+
+            // pg_tblspc
+            HRN_MANIFEST_PATH_ADD(manifestChecksum, .name = MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC);
+
+            // Always sort
+            lstSort(manifestChecksum->pub.targetList, sortOrderAsc);
+            lstSort(manifestChecksum->pub.fileList, sortOrderAsc);
+            lstSort(manifestChecksum->pub.linkList, sortOrderAsc);
+            lstSort(manifestChecksum->pub.pathList, sortOrderAsc);
+        }
+        OBJ_NEW_END();
+
+        manifestSave(
+            manifestChecksum,
+            storageWriteIo(
+                storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" TEST_CKSUM_LABEL "/" BACKUP_MANIFEST_FILE))));
+
+        // Write backup.info
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
+
+        // Write archive.info
+        InfoArchive *infoArchiveChecksum = infoArchiveNew(PG_VERSION_11, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, NULL);
+        infoArchiveSaveFile(infoArchiveChecksum, storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
+
+        TEST_RESULT_VOID(hrnCmdRestore(), "successful restore");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: restore backup set 20161219-212741F, recovery will start at [TIME]\n"
+            "P00 DETAIL: check '" TEST_PATH "/pg-checksum-warn' exists\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg-checksum-warn/global'\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg-checksum-warn/pg_tblspc'\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg-checksum-warn/postgresql.conf (10B, [PCT]) checksum"
+            " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
+            "P00   WARN: invalid page checksum(s) found in file " TEST_PATH "/pg-checksum-warn/PG_VERSION\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg-checksum-warn/PG_VERSION (3B, [PCT]) checksum"
+            " dd71038f3463f511ee7403dbcbc87195302d891c\n"
+            "P00   INFO: write " TEST_PATH "/pg-checksum-warn/recovery.conf\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg-checksum-warn'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg-checksum-warn/pg_tblspc'\n"
+            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg-checksum-warn/global'\n"
+            "P00   INFO: restore size = [SIZE], file total = 2\n"
+            "P00   WARN: restore command encountered page checksum error(s) in 1 file(s), check the log file for details");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta restore preserves file despite recorded page checksum error");
+
+        // The file already matches the backup so it will be preserved rather than copied, which means the page checksum error
+        // recorded against it in the manifest must not trigger a warning
+        hrnCfgArgRawBool(argListChecksum, cfgOptDelta, true);
+        HRN_CFG_LOAD(cfgCmdRestore, argListChecksum);
+
+        TEST_RESULT_VOID(hrnCmdRestore(), "successful delta restore");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: restore backup set 20161219-212741F, recovery will start at [TIME]\n"
+            "P00 DETAIL: check '" TEST_PATH "/pg-checksum-warn' exists\n"
+            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg-checksum-warn'\n"
+            "P00 DETAIL: remove invalid file '" TEST_PATH "/pg-checksum-warn/recovery.conf'\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg-checksum-warn/postgresql.conf - exists and matches backup (10B, [PCT])"
+            " checksum 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg-checksum-warn/PG_VERSION - exists and matches backup (3B, [PCT])"
+            " checksum dd71038f3463f511ee7403dbcbc87195302d891c\n"
+            "P00   INFO: write " TEST_PATH "/pg-checksum-warn/recovery.conf\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg-checksum-warn'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg-checksum-warn/pg_tblspc'\n"
+            "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg-checksum-warn/global'\n"
+            "P00   INFO: restore size = [SIZE], file total = 2");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid page checksum when checksum-page-error=y");
+
+        // Reuse the backup written for the checksum-page-error=n test above
+        const String *const pgPathChecksumThrow = STRDEF(TEST_PATH "/pg-checksum-throw");
+
+        argListChecksum = strLstNew();
+        hrnCfgArgRawZ(argListChecksum, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argListChecksum, cfgOptRepoPath, repoPathChecksumWarn);
+        hrnCfgArgRaw(argListChecksum, cfgOptPgPath, pgPathChecksumThrow);
+        hrnCfgArgRawZ(argListChecksum, cfgOptSet, TEST_CKSUM_LABEL);
+        hrnCfgArgRawBool(argListChecksum, cfgOptChecksumPageError, true);
+        HRN_CFG_LOAD(cfgCmdRestore, argListChecksum);
+
+        TEST_ERROR(
+            hrnCmdRestore(), ChecksumError,
+            "invalid page checksum(s) found in file " TEST_PATH "/pg-checksum-throw/PG_VERSION");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: restore backup set 20161219-212741F, recovery will start at [TIME]\n"
+            "P00   INFO: remap data directory to '" TEST_PATH "/pg-checksum-throw'\n"
+            "P00 DETAIL: check '" TEST_PATH "/pg-checksum-throw' exists\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg-checksum-throw/global'\n"
+            "P00 DETAIL: create path '" TEST_PATH "/pg-checksum-throw/pg_tblspc'\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg-checksum-throw/postgresql.conf (10B, [PCT]) checksum"
+            " 1a49a3c2240449fee1422e4afcf44d5b96378511");
+
+        #undef TEST_CKSUM_LABEL
+        #undef TEST_CKSUM_PGDATA
+        #undef TEST_CKSUM_REPO_PATH
+
+        // Restore the config from the prior test since the "remove a repo file" test below still relies on it being active
+        // (it reuses the shared argList, which was left untouched by the checksum-page-error tests above)
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Keep this test at the end since is corrupts the repo
