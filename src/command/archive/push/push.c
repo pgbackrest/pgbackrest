@@ -553,19 +553,27 @@ cmdArchivePushAsync(void)
 
             // If not dropping then limit the number of WAL files pushed in a single run to archive-push-batch-size. The queue is
             // only rechecked at the start of each run so this bounds how large it can grow before the next run rechecks it. Convert
-            // the size to a segment count using the size of the first ready segment and always push at least one segment. A ready
-            // WAL segment should never be missing or zero size, so error immediately if it is. Other ready files, e.g. backup
-            // history files, are not used to size the batch since they may be zero size.
+            // the size to a segment count using the size of the first ready segment and always push at least one segment.
             if (!drop)
             {
-                unsigned int segmentIdx = 0;
+                // Find the first ready WAL segment. The ready list also contains backup and timeline history files, which are
+                // smaller than a segment and may even be zero size when PostgreSQL did not sync them before the cluster was
+                // copied, so they cannot be used to determine the segment size.
+                const String *walSegment = NULL;
 
-                while (segmentIdx < strLstSize(jobData.walFileList) && !walIsSegment(strLstGet(jobData.walFileList, segmentIdx)))
-                    segmentIdx++;
-
-                if (segmentIdx < strLstSize(jobData.walFileList))
+                for (unsigned int walFileIdx = 0; walFileIdx < strLstSize(jobData.walFileList); walFileIdx++)
                 {
-                    const String *const walSegment = strLstGet(jobData.walFileList, segmentIdx);
+                    if (walIsSegment(strLstGet(jobData.walFileList, walFileIdx)))
+                    {
+                        walSegment = strLstGet(jobData.walFileList, walFileIdx);
+                        break;
+                    }
+                }
+
+                // Apply the batch size when a segment is ready. When none is ready every file is small so there is nothing to
+                // limit. A ready WAL segment should never be missing or zero size, so error immediately if it is.
+                if (walSegment != NULL)
+                {
                     const uint64_t segmentSize = storageInfoP(
                         storagePg(), strNewFmt("%s/%s", strZ(jobData.walPath), strZ(walSegment))).size;
                     CHECK_FMT(FormatError, segmentSize != 0, "size of WAL segment '%s' is 0", strZ(walSegment));
