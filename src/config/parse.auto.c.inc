@@ -6329,6 +6329,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_OPT(RepoGcsKeyType),                                                          // opt/repo-gcs-key
                     PARSE_RULE_VAL_STRID(service),                                                               // opt/repo-gcs-key
                     PARSE_RULE_VAL_STRID(token),                                                                 // opt/repo-gcs-key
+                    PARSE_RULE_VAL_STRID(web_DS_id),                                                             // opt/repo-gcs-key
                 ),                                                                                               // opt/repo-gcs-key
             ),                                                                                                   // opt/repo-gcs-key
         ),                                                                                                       // opt/repo-gcs-key
@@ -6414,6 +6415,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_STRID(service),                                                          // opt/repo-gcs-key-type
                     PARSE_RULE_VAL_STRID(token),                                                            // opt/repo-gcs-key-type
                     PARSE_RULE_VAL_STRID(auto),                                                             // opt/repo-gcs-key-type
+                    PARSE_RULE_VAL_STRID(web_DS_id),                                                        // opt/repo-gcs-key-type
                 ),                                                                                          // opt/repo-gcs-key-type
                                                                                                             // opt/repo-gcs-key-type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                 // opt/repo-gcs-key-type
