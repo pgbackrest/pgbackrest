@@ -1900,14 +1900,16 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list with time limit");
 
+                // Truncated in the middle of the versions for a key so both markers are returned
                 testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2Fto%2F&versions=", .requesterPays = true);
                 testResponseP(
                     service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "<ListVersionsResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
                         "    <IsTruncated>true</IsTruncated>"
-                        "    <NextContinuationToken>1ueG</NextContinuationToken>"
+                        "    <NextKeyMarker>path/to/test_file</NextKeyMarker>"
+                        "    <NextVersionIdMarker>aaaa</NextVersionIdMarker>"
                         "    <DeleteMarker>"
                         "        <Key>path/to/test_file</Key>"
                         "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
@@ -1916,17 +1918,21 @@ testRun(void)
                         "        <Key>path/to/test_file</Key>"
                         "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
                         "    </Version>"
-                        "</ListBucketResult>");
+                        "</ListVersionsResult>");
 
+                // Truncated at a key boundary with an empty version id marker
                 testRequestP(
-                    service, s3, HTTP_VERB_GET, "/?continuation-token=1ueG&delimiter=%2F&prefix=path%2Fto%2F&versions=",
+                    service, s3, HTTP_VERB_GET,
+                    "/?delimiter=%2F&key-marker=path%2Fto%2Ftest_file&prefix=path%2Fto%2F&version-id-marker=aaaa&versions=",
                     .requesterPays = true);
                 testResponseP(
                     service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                        "    <IsTruncated>false</IsTruncated>"
+                        "<ListVersionsResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>true</IsTruncated>"
+                        "    <NextKeyMarker>path/to/test_file2</NextKeyMarker>"
+                        "    <NextVersionIdMarker></NextVersionIdMarker>"
                         "    <Version>"
                         "        <Key>path/to/test_file</Key>"
                         "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
@@ -1937,14 +1943,38 @@ testRun(void)
                         "        <Key>path/to/test_file</Key>"
                         "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
                         "    </Version>"
+                        "</ListVersionsResult>");
+
+                // Truncated at a common prefix so no version id marker is returned
+                testRequestP(
+                    service, s3, HTTP_VERB_GET,
+                    "/?delimiter=%2F&key-marker=path%2Fto%2Ftest_file2&prefix=path%2Fto%2F&versions=", .requesterPays = true);
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListVersionsResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>true</IsTruncated>"
+                        "    <NextKeyMarker>path/to/test_path/</NextKeyMarker>"
                         "    <Version>"
                         "        <Key>path/to/test_file2</Key>"
                         "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
                         "    </Version>"
+                        "</ListVersionsResult>");
+
+                testRequestP(
+                    service, s3, HTTP_VERB_GET,
+                    "/?delimiter=%2F&key-marker=path%2Fto%2Ftest_path%2F&prefix=path%2Fto%2F&versions=", .requesterPays = true);
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListVersionsResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "   <CommonPrefixes>"
                         "       <Prefix>path/to/test_path/</Prefix>"
                         "   </CommonPrefixes>"
-                        "</ListBucketResult>");
+                        "</ListVersionsResult>");
 
                 TEST_STORAGE_LIST(
                     s3, "/path/to",
@@ -1960,7 +1990,7 @@ testRun(void)
                     service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "<ListVersionsResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
                         "    <IsTruncated>false</IsTruncated>"
                         "    <Version>"
                         "        <Key>path/3/test_file</Key>"
@@ -1975,7 +2005,7 @@ testRun(void)
                         "   <CommonPrefixes>"
                         "       <Prefix>path/3/test_path/</Prefix>"
                         "   </CommonPrefixes>"
-                        "</ListBucketResult>");
+                        "</ListVersionsResult>");
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/path/3/test_file?versionId=bbbb", .requesterPays = true);
                 testResponseP(service, .content = "123456");
@@ -1991,7 +2021,7 @@ testRun(void)
                     service,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "<ListVersionsResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
                         "    <IsTruncated>false</IsTruncated>"
                         "    <Version>"
                         "        <Key>missing_file</Key>"
@@ -2004,7 +2034,7 @@ testRun(void)
                         "    <CommonPrefixes>"
                         "       <Prefix>test_path/</Prefix>"
                         "    </CommonPrefixes>"
-                        "</ListBucketResult>");
+                        "</ListVersionsResult>");
 
                 TEST_RESULT_PTR(
                     storageGetP(storageNewReadP(s3, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
