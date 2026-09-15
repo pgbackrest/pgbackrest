@@ -554,17 +554,27 @@ cmdArchivePushAsync(void)
             // If not dropping then limit the number of WAL files pushed in a single run to archive-push-batch-size. The queue is
             // only rechecked at the start of each run so this bounds how large it can grow before the next run rechecks it. Convert
             // the size to a segment count using the size of the first ready segment and always push at least one segment. A ready
-            // WAL segment should never be missing or zero size, so error immediately if it is.
+            // WAL segment should never be missing or zero size, so error immediately if it is. Other ready files, e.g. backup
+            // history files, are not used to size the batch since they may be zero size.
             if (!drop)
             {
-                const uint64_t segmentSize = storageInfoP(
-                    storagePg(), strNewFmt("%s/%s", strZ(jobData.walPath), strZ(strLstGet(jobData.walFileList, 0)))).size;
-                CHECK_FMT(FormatError, segmentSize != 0, "size of WAL segment '%s' is 0", strZ(strLstGet(jobData.walFileList, 0)));
+                unsigned int segmentIdx = 0;
 
-                const uint64_t batchMax = cfgOptionUInt64(cfgOptArchivePushBatchSize) / segmentSize;
+                while (segmentIdx < strLstSize(jobData.walFileList) && !walIsSegment(strLstGet(jobData.walFileList, segmentIdx)))
+                    segmentIdx++;
 
-                while (strLstSize(jobData.walFileList) > 1 && strLstSize(jobData.walFileList) > batchMax)
-                    strLstRemoveIdx(jobData.walFileList, strLstSize(jobData.walFileList) - 1);
+                if (segmentIdx < strLstSize(jobData.walFileList))
+                {
+                    const String *const walSegment = strLstGet(jobData.walFileList, segmentIdx);
+                    const uint64_t segmentSize = storageInfoP(
+                        storagePg(), strNewFmt("%s/%s", strZ(jobData.walPath), strZ(walSegment))).size;
+                    CHECK_FMT(FormatError, segmentSize != 0, "size of WAL segment '%s' is 0", strZ(walSegment));
+
+                    const uint64_t batchMax = cfgOptionUInt64(cfgOptArchivePushBatchSize) / segmentSize;
+
+                    while (strLstSize(jobData.walFileList) > 1 && strLstSize(jobData.walFileList) > batchMax)
+                        strLstRemoveIdx(jobData.walFileList, strLstSize(jobData.walFileList) - 1);
+                }
             }
 
             LOG_INFO_FMT(
