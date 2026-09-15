@@ -553,7 +553,9 @@ cmdArchivePushAsync(void)
 
             // If not dropping then limit the number of WAL files pushed in a single run to archive-push-batch-size. The queue is
             // only rechecked at the start of each run so this bounds how large it can grow before the next run rechecks it. Convert
-            // the size to a segment count using the size of the first ready segment and always push at least one segment.
+            // the size to a segment count using the size of the first ready segment and always push at least one file. Files that
+            // are not segments also count against the batch, so a run may push only those files when the batch size is small, but
+            // they are acknowledged and drop out of the list for the next run.
             if (!drop)
             {
                 // Find the first ready WAL segment. The ready list also contains backup and timeline history files, which are
