@@ -49,8 +49,10 @@ S3 query tokens
 STRING_STATIC(S3_QUERY_CONTINUATION_TOKEN_STR,                      "continuation-token");
 STRING_STATIC(S3_QUERY_DELETE_STR,                                  "delete");
 STRING_STATIC(S3_QUERY_DELIMITER_STR,                               "delimiter");
+STRING_STATIC(S3_QUERY_KEY_MARKER_STR,                              "key-marker");
 STRING_STATIC(S3_QUERY_LIST_TYPE_STR,                               "list-type");
 STRING_STATIC(S3_QUERY_PREFIX_STR,                                  "prefix");
+STRING_STATIC(S3_QUERY_VERSION_ID_MARKER_STR,                       "version-id-marker");
 STRING_STATIC(S3_QUERY_VERSIONS_STR,                                "versions");
 
 STRING_STATIC(S3_QUERY_VALUE_LIST_TYPE_2_STR,                       "2");
@@ -68,6 +70,9 @@ STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
 STRING_STATIC(S3_XML_TAG_LAST_MODIFIED_STR,                         "LastModified");
 #define S3_XML_TAG_NEXT_CONTINUATION_TOKEN                          "NextContinuationToken"
 STRING_STATIC(S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR,               S3_XML_TAG_NEXT_CONTINUATION_TOKEN);
+#define S3_XML_TAG_NEXT_KEY_MARKER                                  "NextKeyMarker"
+STRING_STATIC(S3_XML_TAG_NEXT_KEY_MARKER_STR,                       S3_XML_TAG_NEXT_KEY_MARKER);
+STRING_STATIC(S3_XML_TAG_NEXT_VERSION_ID_MARKER_STR,                "NextVersionIdMarker");
 STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
 STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
 STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
@@ -839,16 +844,42 @@ storageS3ListInternal(
                 // If list is truncated then send an async request to get more data
                 if (strEq(xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_IS_TRUNCATED_STR, true)), TRUE_STR))
                 {
-                    const String *const nextContinuationToken = xmlNodeContent(
-                        xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, true));
-                    CHECK(FormatError, !strEmpty(nextContinuationToken), S3_XML_TAG_NEXT_CONTINUATION_TOKEN " may not be empty");
+                    // Build the query for the next page from the base query since the markers are set per page
+                    HttpQuery *const queryNext = httpQueryDupP(query);
 
-                    httpQueryPut(query, S3_QUERY_CONTINUATION_TOKEN_STR, nextContinuationToken);
+                    // Version listing is paginated with key and version id markers
+                    if (targetTime != 0)
+                    {
+                        const String *const nextKeyMarker = xmlNodeContent(
+                            xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_KEY_MARKER_STR, true));
+                        CHECK(FormatError, !strEmpty(nextKeyMarker), S3_XML_TAG_NEXT_KEY_MARKER " may not be empty");
+
+                        httpQueryAdd(queryNext, S3_QUERY_KEY_MARKER_STR, nextKeyMarker);
+
+                        // The version id marker may be missing or empty when the next result is a common prefix. In that case the
+                        // next page starts at the key after the key marker, which is what is needed.
+                        const String *const nextVersionIdMarker = xmlNodeContent(
+                            xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_VERSION_ID_MARKER_STR, false));
+
+                        if (nextVersionIdMarker != NULL && !strEmpty(nextVersionIdMarker))
+                            httpQueryAdd(queryNext, S3_QUERY_VERSION_ID_MARKER_STR, nextVersionIdMarker);
+                    }
+                    // Else object listing is paginated with a continuation token
+                    else
+                    {
+                        const String *const nextContinuationToken = xmlNodeContent(
+                            xmlNodeChild(xmlRoot, S3_XML_TAG_NEXT_CONTINUATION_TOKEN_STR, true));
+                        CHECK(
+                            FormatError, !strEmpty(nextContinuationToken),
+                            S3_XML_TAG_NEXT_CONTINUATION_TOKEN " may not be empty");
+
+                        httpQueryAdd(queryNext, S3_QUERY_CONTINUATION_TOKEN_STR, nextContinuationToken);
+                    }
 
                     // Store request in the outer temp context
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
-                        request = storageS3RequestAsyncP(this, HTTP_VERB_GET_STR, FSLASH_STR, .query = query);
+                        request = storageS3RequestAsyncP(this, HTTP_VERB_GET_STR, FSLASH_STR, .query = queryNext);
                     }
                     MEM_CONTEXT_PRIOR_END();
                 }
