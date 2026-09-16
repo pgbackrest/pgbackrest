@@ -79,7 +79,7 @@
                     <release-item-reviewer id="douglas.j.hunley"/>
                 </release-item-contributor-list>
 
-                <p>Fix asynchronous <cmd>archive-push</cmd> stalling on a zero-size backup history file.</p>
+                <p>Fix async <cmd>archive-push</cmd> stalling on a zero-size backup history file.</p>
             </release-item>
         </release-bug-list>
 
