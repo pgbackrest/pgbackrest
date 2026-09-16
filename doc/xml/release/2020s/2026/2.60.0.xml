@@ -68,6 +68,19 @@
 
                 <p>Disable read retry when filters are passed to the driver.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2856"/>
+                <github-pull-request id="2857"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="andrew.kroh"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix async <cmd>archive-push</cmd> stalling on a zero-size backup history file.</p>
+            </release-item>
         </release-bug-list>
 
         <release-feature-list>

@@ -553,18 +553,38 @@ cmdArchivePushAsync(void)
 
             // If not dropping then limit the number of WAL files pushed in a single run to archive-push-batch-size. The queue is
             // only rechecked at the start of each run so this bounds how large it can grow before the next run rechecks it. Convert
-            // the size to a segment count using the size of the first ready segment and always push at least one segment. A ready
-            // WAL segment should never be missing or zero size, so error immediately if it is.
+            // the size to a segment count using the size of the first ready segment and always push at least one file. Files that
+            // are not segments also count against the batch, so a run may push only those files when the batch size is small, but
+            // they are acknowledged and drop out of the list for the next run.
             if (!drop)
             {
-                const uint64_t segmentSize = storageInfoP(
-                    storagePg(), strNewFmt("%s/%s", strZ(jobData.walPath), strZ(strLstGet(jobData.walFileList, 0)))).size;
-                CHECK_FMT(FormatError, segmentSize != 0, "size of WAL segment '%s' is 0", strZ(strLstGet(jobData.walFileList, 0)));
+                // Find the first ready WAL segment. The ready list also contains backup and timeline history files, which are
+                // smaller than a segment and may even be zero size when PostgreSQL did not sync them before the cluster was
+                // copied, so they cannot be used to determine the segment size.
+                const String *walSegment = NULL;
 
-                const uint64_t batchMax = cfgOptionUInt64(cfgOptArchivePushBatchSize) / segmentSize;
+                for (unsigned int walFileIdx = 0; walFileIdx < strLstSize(jobData.walFileList); walFileIdx++)
+                {
+                    if (walIsSegment(strLstGet(jobData.walFileList, walFileIdx)))
+                    {
+                        walSegment = strLstGet(jobData.walFileList, walFileIdx);
+                        break;
+                    }
+                }
 
-                while (strLstSize(jobData.walFileList) > 1 && strLstSize(jobData.walFileList) > batchMax)
-                    strLstRemoveIdx(jobData.walFileList, strLstSize(jobData.walFileList) - 1);
+                // Apply the batch size when a segment is ready. When none is ready every file is small so there is nothing to
+                // limit. A ready WAL segment should never be missing or zero size, so error immediately if it is.
+                if (walSegment != NULL)
+                {
+                    const uint64_t segmentSize = storageInfoP(
+                        storagePg(), strNewFmt("%s/%s", strZ(jobData.walPath), strZ(walSegment))).size;
+                    CHECK_FMT(FormatError, segmentSize != 0, "size of WAL segment '%s' is 0", strZ(walSegment));
+
+                    const uint64_t batchMax = cfgOptionUInt64(cfgOptArchivePushBatchSize) / segmentSize;
+
+                    while (strLstSize(jobData.walFileList) > 1 && strLstSize(jobData.walFileList) > batchMax)
+                        strLstRemoveIdx(jobData.walFileList, strLstSize(jobData.walFileList) - 1);
+                }
             }
 
             LOG_INFO_FMT(
