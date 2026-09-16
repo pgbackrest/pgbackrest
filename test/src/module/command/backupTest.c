@@ -1563,7 +1563,7 @@ testRun(void)
 
         TEST_RESULT_LOG(
             "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error\n"
-            "P00   INFO: unable to find primary cluster, skipping backup since backup-standby=skip");
+            "P00   WARN: unable to find primary cluster, skipping backup since backup-standby=skip");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup-standby=skip proceeds normally when a primary is found");
@@ -3124,7 +3124,7 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error\n"
-                "P00   INFO: unable to find primary cluster, skipping backup since backup-standby=skip");
+                "P00   WARN: unable to find primary cluster, skipping backup since backup-standby=skip");
 
             // Confirm no new backup was created -- latest still points at the backup from the prior test
             TEST_RESULT_STR_Z(

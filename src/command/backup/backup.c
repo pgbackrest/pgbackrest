@@ -104,7 +104,7 @@ backupInit(const InfoBackup *const infoBackup)
         // rather than trying to proceed without a primary connection.
         if (backupStandby == CFGOPTVAL_BACKUP_STANDBY_SKIP && dbInfo.primary == NULL)
         {
-            LOG_INFO("unable to find primary cluster, skipping backup since " CFGOPT_BACKUP_STANDBY "=skip");
+            LOG_WARN("unable to find primary cluster, skipping backup since " CFGOPT_BACKUP_STANDBY "=skip");
 
             dbFree(dbInfo.standby);
 
