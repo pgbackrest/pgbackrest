@@ -622,6 +622,77 @@ testRun(void)
             "HINT: are all available clusters in recovery?");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup-standby=skip and only available cluster is a standby");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_18, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), "get standby, primary not required to skip");
+
+        TEST_RESULT_BOOL(result.primary == NULL, true, "check primary not found");
+        TEST_RESULT_BOOL(result.standby != NULL, true, "check standby found");
+
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup-standby=skip, primary unreachable, standby found among multiple pg groups");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_18);
+
+        HRN_PQ_SCRIPT_SET(
+            {.session = 1, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
+            {.session = 1, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+            {.session = 1, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
+            {.session = 1, .function = HRN_PQ_FINISH},
+
+            HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg2", true, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(2));
+
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), "get standby, primary unreachable");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error");
+
+        TEST_RESULT_BOOL(result.primary == NULL, true, "check primary not found");
+        TEST_RESULT_BOOL(result.standby != NULL, true, "check standby found");
+
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
+        // Restore the single-group config used by the remaining tests in this section
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgUser, 1, "bob");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup-standby=skip but nothing is reachable at all");
+
+        HRN_PQ_SCRIPT_SET(
+            {.function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432 user='bob'\"]"},
+            {.function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+            {.function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
+            {.function = HRN_PQ_FINISH});
+
+        TEST_ERROR(
+            dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), DbConnectError,
+            "unable to find primary cluster - cannot proceed\n"
+            "HINT: are all available clusters in recovery?");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432 user='bob'':"
+            " error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby cluster required but not found");
 
         HRN_PQ_SCRIPT_SET(

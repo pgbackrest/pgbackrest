@@ -126,8 +126,9 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
             }
         }
 
-        // Error if no primary was found
-        if (result.primary == NULL && primaryRequired)
+        // Error if no primary was found, unless a standby was found and the backup is allowed to skip when no primary is present
+        if (result.primary == NULL && primaryRequired &&
+            !(standbyRequired == CFGOPTVAL_BACKUP_STANDBY_SKIP && result.standby != NULL))
         {
             THROW(
                 DbConnectError,

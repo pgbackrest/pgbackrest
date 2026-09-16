@@ -1528,6 +1528,7 @@
                             <allow-list caption="modes">
                                 <allow-item id="y">Standby is required for backup.</allow-item>
                                 <allow-item id="prefer">Backup from standby if available otherwise backup from primary.</allow-item>
+                                <allow-item id="skip">Skip the backup and exit successfully if no primary can be found and this is a standby.</allow-item>
                                 <allow-item id="n">Backup from primary only.</allow-item>
                             </allow-list>
                         </text>

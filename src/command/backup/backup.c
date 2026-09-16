@@ -100,6 +100,17 @@ backupInit(const InfoBackup *const infoBackup)
     {
         const DbGetResult dbInfo = dbGet(backupStandby == CFGOPTVAL_BACKUP_STANDBY_N, true, backupStandby);
 
+        // If backup-standby=skip and no primary was found then a standby must have been found. Log and skip the backup entirely
+        // rather than trying to proceed without a primary connection.
+        if (backupStandby == CFGOPTVAL_BACKUP_STANDBY_SKIP && dbInfo.primary == NULL)
+        {
+            LOG_INFO("unable to find primary cluster, skipping backup since " CFGOPT_BACKUP_STANDBY "=skip");
+
+            dbFree(dbInfo.standby);
+
+            FUNCTION_LOG_RETURN(BACKUP_DATA, NULL);
+        }
+
         // If no standby was found but using the primary is allowed then warn and proceed
         if (backupStandby == CFGOPTVAL_BACKUP_STANDBY_PREFER && dbInfo.standby == NULL)
             LOG_WARN("unable to find a standby to perform the backup, using primary instead");
@@ -213,100 +224,107 @@ cmdBackup(void)
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
         const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(infoBackup);
 
-        // Get pg storage and database objects
+        // Get pg storage and database objects. This will be NULL if backup-standby=skip and no primary was found, in which case
+        // there is nothing left to do.
         BackupData *const backupData = backupInit(infoBackup);
 
-        // Get the start timestamp which will later be written into the manifest to track total backup time
-        const time_t timestampStart = backupTime(backupData, false);
-
-        // Check if there is a prior manifest when backup type is diff/incr
-        Manifest *const manifestPrior = backupBuildIncrPrior(infoBackup);
-
-        // Start the backup
-        const BackupStartResult backupStartResult = backupStart(backupData);
-
-        // Build the manifest
-        const ManifestBlockIncrMap blockIncrMap = backupBlockIncrMap();
-
-        Manifest *const manifest = manifestNewBuild(
-            backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, infoBackupFormat(infoBackup), timestampStart,
-            cfgOptionBool(cfgOptOnline), cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle),
-            cfgOptionBool(cfgOptRepoBlock), &blockIncrMap, strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
-            backupStartResult.tablespaceList);
-
-        // Validate the manifest using the copy start time
-        manifestBuildValidate(
-            manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true),
-            compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
-
-        // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
-        if (!backupBuildIncr(manifest, manifestPrior, backupStartResult.walSegmentName))
-            manifestCipherSpecSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType), manifestFormat(manifest)));
-
-        // Set delta if it is not already set and the manifest requires it
-        if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
-            cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
-
-        // Resume a backup when possible
-        if (!backupResume(manifest, cipherSpecManifest))
+        if (backupData != NULL)
         {
-            manifestBackupLabelSet(
-                manifest,
-                backupLabelCreate(
-                    (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
+            // Get the start timestamp which will later be written into the manifest to track total backup time
+            const time_t timestampStart = backupTime(backupData, false);
+
+            // Check if there is a prior manifest when backup type is diff/incr
+            Manifest *const manifestPrior = backupBuildIncrPrior(infoBackup);
+
+            // Start the backup
+            const BackupStartResult backupStartResult = backupStart(backupData);
+
+            // Build the manifest
+            const ManifestBlockIncrMap blockIncrMap = backupBlockIncrMap();
+
+            Manifest *const manifest = manifestNewBuild(
+                backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, infoBackupFormat(infoBackup), timestampStart,
+                cfgOptionBool(cfgOptOnline), cfgOptionBool(cfgOptChecksumPage), cfgOptionBool(cfgOptRepoBundle),
+                cfgOptionBool(cfgOptRepoBlock), &blockIncrMap, strLstNewVarLst(cfgOptionLst(cfgOptExclude)),
+                backupStartResult.tablespaceList);
+
+            // Validate the manifest using the copy start time
+            manifestBuildValidate(
+                manifest, cfgOptionBool(cfgOptDelta), backupTime(backupData, true),
+                compressTypeEnum(cfgOptionStrId(cfgOptCompressType)));
+
+            // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
+            if (!backupBuildIncr(manifest, manifestPrior, backupStartResult.walSegmentName))
+                manifestCipherSpecSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType), manifestFormat(manifest)));
+
+            // Set delta if it is not already set and the manifest requires it
+            if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
+                cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
+
+            // Resume a backup when possible
+            if (!backupResume(manifest, cipherSpecManifest))
+            {
+                manifestBackupLabelSet(
+                    manifest,
+                    backupLabelCreate(
+                        (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
+            }
+
+            // Save the manifest before processing starts
+            backupManifestSaveCopy(manifest, cipherSpecManifest, false);
+
+            // Process the backup manifest
+            const unsigned int warningTotal = backupProcess(backupData, manifest, cipherSpecManifest);
+
+            // Check that the clusters are alive and correctly configured after the backup
+            backupDbPing(backupData, true);
+
+            // The standby db object and protocol won't be used anymore so free them
+            if (backupData->dbStandby != NULL)
+            {
+                dbFree(backupData->dbStandby);
+                protocolHelperFree(protocolRemoteGet(protocolStorageTypePg, backupData->pgIdxStandby, false));
+            }
+
+            // Stop the backup
+            const BackupStopResult backupStopResult = backupStop(backupData, manifest);
+
+            // Complete manifest
+            manifestBuildComplete(
+                manifest, backupStartResult.lsn, backupStartResult.walSegmentName, backupStopResult.timestamp, backupStopResult.lsn,
+                backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
+                cfgOptionBool(cfgOptArchiveCheck), cfgOptionBool(cfgOptArchiveCopy), cfgOptionUInt(cfgOptBufferSize),
+                cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
+                cfgOptionUInt(cfgOptProcessMax), backupData->dbStandby != NULL,
+                cfgOptionTest(cfgOptAnnotation) ? cfgOptionKv(cfgOptAnnotation) : NULL);
+
+            // The primary db object won't be used anymore so free it
+            dbFree(backupData->dbPrimary);
+
+            // Check and copy WAL segments required to make the backup consistent
+            backupArchiveCheckCopy(backupData, manifest, cipherSpecManifest);
+
+            // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy()
+            // so the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further
+            // access to the primary storage object may result in an error (likely eof).
+            protocolHelperFree(protocolRemoteGet(protocolStorageTypePg, backupData->pgIdxPrimary, false));
+
+            // Complete the backup
+            LOG_INFO_FMT("new backup label = %s", strZ(manifestData(manifest)->backupLabel));
+            backupComplete(infoBackup, manifest);
+
+            // Backup info
+            LOG_INFO_FMT(
+                "%s backup size = %s, file total = %u", zNewStrId(manifestData(manifest)->backupType),
+                strZ(strSizeFormat(infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
+                manifestFileTotal(manifest));
+
+            if (warningTotal > 0)
+            {
+                LOG_WARN_FMT(
+                    CFGCMD_BACKUP " command encountered %u checksum warning(s), check the log file for details", warningTotal);
+            }
         }
-
-        // Save the manifest before processing starts
-        backupManifestSaveCopy(manifest, cipherSpecManifest, false);
-
-        // Process the backup manifest
-        const unsigned int warningTotal = backupProcess(backupData, manifest, cipherSpecManifest);
-
-        // Check that the clusters are alive and correctly configured after the backup
-        backupDbPing(backupData, true);
-
-        // The standby db object and protocol won't be used anymore so free them
-        if (backupData->dbStandby != NULL)
-        {
-            dbFree(backupData->dbStandby);
-            protocolHelperFree(protocolRemoteGet(protocolStorageTypePg, backupData->pgIdxStandby, false));
-        }
-
-        // Stop the backup
-        const BackupStopResult backupStopResult = backupStop(backupData, manifest);
-
-        // Complete manifest
-        manifestBuildComplete(
-            manifest, backupStartResult.lsn, backupStartResult.walSegmentName, backupStopResult.timestamp, backupStopResult.lsn,
-            backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
-            cfgOptionBool(cfgOptArchiveCheck), cfgOptionBool(cfgOptArchiveCopy), cfgOptionUInt(cfgOptBufferSize),
-            cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
-            cfgOptionUInt(cfgOptProcessMax), backupData->dbStandby != NULL,
-            cfgOptionTest(cfgOptAnnotation) ? cfgOptionKv(cfgOptAnnotation) : NULL);
-
-        // The primary db object won't be used anymore so free it
-        dbFree(backupData->dbPrimary);
-
-        // Check and copy WAL segments required to make the backup consistent
-        backupArchiveCheckCopy(backupData, manifest, cipherSpecManifest);
-
-        // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy() so
-        // the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further access to
-        // the primary storage object may result in an error (likely eof).
-        protocolHelperFree(protocolRemoteGet(protocolStorageTypePg, backupData->pgIdxPrimary, false));
-
-        // Complete the backup
-        LOG_INFO_FMT("new backup label = %s", strZ(manifestData(manifest)->backupLabel));
-        backupComplete(infoBackup, manifest);
-
-        // Backup info
-        LOG_INFO_FMT(
-            "%s backup size = %s, file total = %u", zNewStrId(manifestData(manifest)->backupType),
-            strZ(strSizeFormat(infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
-            manifestFileTotal(manifest));
-
-        if (warningTotal > 0)
-            LOG_WARN_FMT(CFGCMD_BACKUP " command encountered %u checksum warning(s), check the log file for details", warningTotal);
     }
     MEM_CONTEXT_TEMP_END();
 
