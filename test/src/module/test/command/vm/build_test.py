@@ -96,7 +96,7 @@ SCRIPT_TEST_U24 = """ && \\
 
 # Create test user
     groupadd -f -g[GROUP_ID] [GROUP] && \\
-    adduser --uid=[USER_ID] --ingroup=[GROUP] --disabled-password --gecos "" [USER] && \\
+    adduser --uid=[USER_ID] --ingroup=[GROUP] --disabled-password --gecos "" --allow-bad-names [USER] && \\
     mkdir -m 750 /home/[USER]/test && \\
     chown [USER]:[GROUP] /home/[USER]/test && \\
 

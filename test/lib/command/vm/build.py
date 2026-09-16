@@ -158,6 +158,11 @@ def _user_create(os_base, name, id, group):
     if os_base == VM_OS_BASE_RHEL:
         return "adduser -g%s -u%u -N %s" % (group, id, name)
 
+    # Debian's adduser rejects usernames that don't match NAME_REGEX (e.g. containing a dot). The name mirrors the trusted
+    # host user rather than external input, so it's safe to bypass this check.
+    if os_base == VM_OS_BASE_DEBIAN:
+        return 'adduser --uid=%u --ingroup=%s --disabled-password --gecos "" --allow-bad-names %s' % (id, group, name)
+
     return 'adduser --uid=%u --ingroup=%s --disabled-password --gecos "" %s' % (id, group, name)
 
 
