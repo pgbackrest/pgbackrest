@@ -241,6 +241,18 @@
 
                 <p>Replace deprecated OpenSSL APIs.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2858"/>
+                <github-pull-request id="2859"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow test user names that adduser on Debian rejects.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
