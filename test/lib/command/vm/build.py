@@ -158,6 +158,15 @@ def _user_create(os_base, name, id, group):
     if os_base == VM_OS_BASE_RHEL:
         return "adduser -g%s -u%u -N %s" % (group, id, name)
 
+    # Debian's adduser rejects usernames that do not match NAME_REGEX (e.g. containing a dot). The name mirrors the trusted host
+    # user rather than external input, so it is safe to bypass this check. Ubuntu 22.04's adduser only understands the older
+    # --force-badname spelling; 24.04 accepts both, so detect which one this image's adduser advertises.
+    if os_base == VM_OS_BASE_DEBIAN:
+        return (
+            "badname=$(adduser --help 2>&1 | grep -q -- --allow-bad-names && echo --allow-bad-names || "
+            'echo --force-badname) && adduser --uid=%u --ingroup=%s --disabled-password --gecos "" $badname %s'
+        ) % (id, group, name)
+
     return 'adduser --uid=%u --ingroup=%s --disabled-password --gecos "" %s' % (id, group, name)
 
 
