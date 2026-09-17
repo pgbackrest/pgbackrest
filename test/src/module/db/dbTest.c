@@ -622,20 +622,6 @@ testRun(void)
             "HINT: are all available clusters in recovery?");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup-standby=skip and only available cluster is a standby");
-
-        HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_18, TEST_PATH "/pg", true, NULL, NULL),
-            HRN_PQ_SCRIPT_CLOSE(1));
-
-        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), "get standby, primary not required to skip");
-
-        TEST_RESULT_BOOL(result.primary == NULL, true, "check primary not found");
-        TEST_RESULT_BOOL(result.standby != NULL, true, "check standby found");
-
-        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup-standby=skip, primary unreachable, standby found among multiple pg groups");
 
         argList = strLstNew();

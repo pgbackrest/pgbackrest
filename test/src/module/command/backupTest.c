@@ -1531,41 +1531,6 @@ testRun(void)
             "P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup-standby=skip returns NULL when no primary is found but a standby is");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        hrnCfgArgRawZ(argList, cfgOptBackupStandby, "skip");
-        HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-        // Create standby pg_control (dbOpen() reads it after the mocked connection succeeds)
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_18);
-
-        HRN_PQ_SCRIPT_SET(
-            // Primary is unreachable
-            {.session = 1, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
-            {.session = 1, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
-            {.session = 1, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
-
-            // Standby connects and reports itself as a standby
-            HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg2", true, NULL, NULL));
-
-        TEST_RESULT_PTR(
-            backupInit(
-                infoBackupNew(
-                    PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT, NULL)),
-            NULL, "backup init returns NULL");
-
-        TEST_RESULT_LOG(
-            "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error\n"
-            "P00   WARN: unable to find primary cluster, skipping backup since backup-standby=skip");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup-standby=skip proceeds normally when a primary is found");
 
         // Create pg_control
@@ -3124,7 +3089,51 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error\n"
-                "P00   WARN: unable to find primary cluster, skipping backup since backup-standby=skip");
+                "P00   WARN: unable to find primary cluster but standby cluster found, skipping backup since"
+                " backup-standby=skip");
+
+            // Confirm no new backup was created -- latest still points at the backup from the prior test
+            TEST_RESULT_STR_Z(
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ".> {d=20191020-193320F_20191023-030640I}\n"
+                "bundle/1/pg_data/base/1/3 {s=40960, m=0:{0,1,2},1:{0},2:{0}, ts=-200000}\n"
+                "bundle/1/pg_data/base/1/4 {s=40960, m=0:{0,1,2,3},2:{0}, ts=-200000}\n"
+                "bundle/1/pg_data/global/pg_control {s=8192}\n"
+                "pg_data/backup_label {s=17, ts=+2}\n"
+                "20191020-193320F/bundle/1/pg_data/PG_VERSION {s=3, ts=-600000}\n"
+                "20191020-193320F/bundle/1/pg_data/postgresql.conf {s=11, ts=-1800000}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
+                "compare file list unchanged");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 9.6 backup-standby=skip exits without a backup when a standby is found");
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pg1Path);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 2, pg2Path);
+            hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawZ(argList, cfgOptBackupStandby, "skip");
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Create standby pg_control (dbOpen() reads it after the mocked connection succeeds)
+            HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_96);
+
+            // Both primary and standby respond, standby reports itself as a standby
+            HRN_PQ_SCRIPT_SET(
+                HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_96, strZ(pg1Path), false, NULL, NULL),
+                HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", PG_VERSION_96, strZ(pg2Path), true, NULL, NULL));
+
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+            TEST_RESULT_LOG("P00   WARN: standby cluster found, skipping backup since backup-standby=skip");
 
             // Confirm no new backup was created -- latest still points at the backup from the prior test
             TEST_RESULT_STR_Z(

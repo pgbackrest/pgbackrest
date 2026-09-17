@@ -100,12 +100,19 @@ backupInit(const InfoBackup *const infoBackup)
     {
         const DbGetResult dbInfo = dbGet(backupStandby == CFGOPTVAL_BACKUP_STANDBY_N, true, backupStandby);
 
-        // If backup-standby=skip and no primary was found then a standby must have been found. Log and skip the backup entirely
-        // rather than trying to proceed without a primary connection.
-        if (backupStandby == CFGOPTVAL_BACKUP_STANDBY_SKIP && dbInfo.primary == NULL)
+        // If backup-standby=skip and a standby was found, skip the backup entirely
+        if (backupStandby == CFGOPTVAL_BACKUP_STANDBY_SKIP && dbInfo.standby != NULL)
         {
-            LOG_WARN("unable to find primary cluster, skipping backup since " CFGOPT_BACKUP_STANDBY "=skip");
+            if (dbInfo.primary == NULL)
+            {
+                LOG_WARN(
+                    "unable to find primary cluster but standby cluster found, skipping backup since " CFGOPT_BACKUP_STANDBY
+                    "=skip");
+            }
+            else
+                LOG_WARN("standby cluster found, skipping backup since " CFGOPT_BACKUP_STANDBY "=skip");
 
+            dbFree(dbInfo.primary);
             dbFree(dbInfo.standby);
 
             FUNCTION_LOG_RETURN(BACKUP_DATA, NULL);
@@ -224,8 +231,7 @@ cmdBackup(void)
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
         const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(infoBackup);
 
-        // Get pg storage and database objects. This will be NULL if backup-standby=skip and no primary was found, in which case
-        // there is nothing left to do.
+        // Get pg storage and database objects
         BackupData *const backupData = backupInit(infoBackup);
 
         if (backupData != NULL)
