@@ -112,6 +112,9 @@ backupInit(const InfoBackup *const infoBackup)
             else
                 LOG_WARN("standby cluster found, skipping backup since " CFGOPT_BACKUP_STANDBY "=skip");
 
+            // Disable auto-expire since no backup was taken
+            cfgOptionSet(cfgOptExpireAuto, cfgSourceParam, BOOL_FALSE_VAR);
+
             dbFree(dbInfo.primary);
             dbFree(dbInfo.standby);
 

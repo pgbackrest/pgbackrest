@@ -3092,6 +3092,8 @@ testRun(void)
                 "P00   WARN: unable to find primary cluster but standby cluster found, skipping backup since"
                 " backup-standby=skip");
 
+            TEST_RESULT_BOOL(cfgOptionBool(cfgOptExpireAuto), false, "expire-auto disabled since backup was skipped");
+
             // Confirm no new backup was created -- latest still points at the backup from the prior test
             TEST_RESULT_STR_Z(
                 storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
@@ -3124,6 +3126,8 @@ testRun(void)
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG("P00   WARN: standby cluster found, skipping backup since backup-standby=skip");
+
+            TEST_RESULT_BOOL(cfgOptionBool(cfgOptExpireAuto), false, "expire-auto disabled since backup was skipped");
 
             // Confirm no new backup was created -- latest still points at the backup from the prior test
             TEST_RESULT_STR_Z(
