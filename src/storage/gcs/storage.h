@@ -19,6 +19,7 @@ typedef enum
     storageGcsKeyTypeService,
     storageGcsKeyTypeToken,
     storageGcsKeyTypeAuto,
+    storageGcsKeyTypeWebId,
 } StorageGcsKeyType;
 
 /***********************************************************************************************************************************
