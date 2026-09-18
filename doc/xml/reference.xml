@@ -1528,8 +1528,11 @@
                             <allow-list caption="modes">
                                 <allow-item id="y">Standby is required for backup.</allow-item>
                                 <allow-item id="prefer">Backup from standby if available otherwise backup from primary.</allow-item>
+                                <allow-item id="skip">Skip the backup and exit successfully if a standby is found.</allow-item>
                                 <allow-item id="n">Backup from primary only.</allow-item>
                             </allow-list>
+
+                            <admonition type="note">This option has no effect when the backup is offline (<br-option>--no-online</br-option>) since the cluster role cannot be determined without a database connection. An offline backup will proceed against whatever cluster is configured, regardless of whether it is a primary or a standby.</admonition>
                         </text>
 
                         <example>y</example>

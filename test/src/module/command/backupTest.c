@@ -1531,6 +1531,33 @@ testRun(void)
             "P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup-standby=skip proceeds normally when a primary is found");
+
+        // Create pg_control
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_18);
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawZ(argList, cfgOptBackupStandby, "skip");
+        hrnCfgArgRawBool(argList, cfgOptArchiveCheck, false);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        HRN_PQ_SCRIPT_SET(
+            // Connect to primary
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", false, NULL, NULL));
+
+        TEST_RESULT_VOID(
+            dbFree(
+                backupInit(
+                    infoBackupNew(
+                        PG_VERSION_18, HRN_PG_SYSTEMID_18, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT,
+                        NULL))->dbPrimary),
+            "backup init");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when pg_control does not match stanza");
 
         // Create pg_control
@@ -3030,6 +3057,82 @@ testRun(void)
                 "compare file list");
 
             HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog", .errorOnMissing = true);
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 9.6 backup-standby=skip exits without a backup when no primary is found");
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pg1Path);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 2, pg2Path);
+            hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawZ(argList, cfgOptBackupStandby, "skip");
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Create standby pg_control (dbOpen() reads it after the mocked connection succeeds)
+            HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_96);
+
+            // Primary is unreachable, standby responds and reports itself as a standby
+            HRN_PQ_SCRIPT_SET(
+                {.session = 1, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
+                {.session = 1, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+                {.session = 1, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
+
+                HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", PG_VERSION_96, strZ(pg2Path), true, NULL, NULL));
+
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error\n"
+                "P00   WARN: unable to find primary cluster but standby cluster found, skipping backup since"
+                " backup-standby=skip");
+
+            TEST_RESULT_BOOL(cfgOptionBool(cfgOptExpireAuto), false, "expire-auto disabled since backup was skipped");
+
+            // Confirm no new backup was created -- latest still points at the backup from the prior test
+            TEST_RESULT_STR_Z(
+                storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
+                "20191020-193320F_20191023-030640I", "latest link unchanged, no new backup taken");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 9.6 backup-standby=skip exits without a backup when a standby is found");
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pg1Path);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 2, pg2Path);
+            hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawZ(argList, cfgOptBackupStandby, "skip");
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Create standby pg_control (dbOpen() reads it after the mocked connection succeeds)
+            HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_96);
+
+            // Both primary and standby respond, standby reports itself as a standby
+            HRN_PQ_SCRIPT_SET(
+                HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_96, strZ(pg1Path), false, NULL, NULL),
+                HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", PG_VERSION_96, strZ(pg2Path), true, NULL, NULL));
+
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+            TEST_RESULT_LOG("P00   WARN: standby cluster found, skipping backup since backup-standby=skip");
+
+            TEST_RESULT_BOOL(cfgOptionBool(cfgOptExpireAuto), false, "expire-auto disabled since backup was skipped");
+
+            // Confirm no new backup was created -- latest still points at the backup from the prior test
+            TEST_RESULT_STR_Z(
+                storageInfoP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination,
+                "20191020-193320F_20191023-030640I", "latest link unchanged, no new backup taken");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
