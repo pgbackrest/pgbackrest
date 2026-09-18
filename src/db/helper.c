@@ -4,6 +4,7 @@ Database Helper
 #include <build.h>
 
 #include "common/debug.h"
+#include "common/type/list.h"
 #include "config/config.h"
 #include "db/helper.h"
 #include "postgres/interface.h"
@@ -62,8 +63,18 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
 
     DbGetResult result = {0};
 
+    const bool standbyVerify = !primaryOnly && standbyRequired != CFGOPTVAL_BACKUP_STANDBY_N;
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        typedef struct DbGetStandby
+        {
+            unsigned int pgIdx;
+            Db *db;
+        } DbGetStandby;
+
+        List *const standbyList = standbyVerify ? lstNewP(sizeof(DbGetStandby)) : NULL;
+
         // Loop through to look for primary and standby (if required)
         for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); pgIdx++)
         {
@@ -103,8 +114,11 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
                 // Is this cluster a standby
                 if (standby)
                 {
-                    // If a standby has not already been found then assign it
-                    if (result.standby == NULL && !primaryOnly)
+                    // If a standby needs to be verified then keep it in the list for now
+                    if (standbyVerify)
+                        lstAdd(standbyList, &(DbGetStandby){.pgIdx = pgIdx, .db = db});
+                    // Else if the standby has not already been found then assign it
+                    else if (result.standby == NULL && !primaryOnly)
                     {
                         result.standbyIdx = pgIdx;
                         result.standby = db;
@@ -133,6 +147,75 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
                 DbConnectError,
                 "unable to find primary cluster - cannot proceed\n"
                 "HINT: are all available clusters in recovery?");
+        }
+
+        // Pick the first standby that passes a check. No primary means nothing to verify against, so just pick the first standby.
+        if (standbyList != NULL && lstSize(standbyList) > 0)
+        {
+            // A standby that is healthy but is lagging is kept as a fallback.
+            DbGetStandby *standbyLagging = NULL;
+
+            for (unsigned int standbyIdx = 0; standbyIdx < lstSize(standbyList); standbyIdx++)
+            {
+                DbGetStandby *const standby = lstGet(standbyList, standbyIdx);
+
+                // A standby has already been selected, have to clean up the rest
+                if (result.standby != NULL)
+                    dbFree(standby->db);
+                // No primary to verify against so just take the first standby
+                else if (result.primary == NULL)
+                {
+                    result.standbyIdx = standby->pgIdx;
+                    result.standby = standby->db;
+                }
+                else
+                {
+                    TRY_BEGIN()
+                    {
+                        if (dbStandbyCheck(standby->db, result.primary))
+                        {
+                            result.standbyIdx = standby->pgIdx;
+                            result.standby = standby->db;
+
+                            if (standbyLagging != NULL)
+                            {
+                                dbFree(standbyLagging->db);
+                                standbyLagging = NULL;
+                            }
+                        }
+                        else
+                        {
+                            LOG_WARN_FMT(
+                                "standby %s is lagging behind the primary", cfgOptionGroupName(cfgOptGrpPg, standby->pgIdx));
+
+                            // Keep the first lagging standby as a fallback and discard any others
+                            if (standbyLagging == NULL)
+                                standbyLagging = standby;
+                            else
+                                dbFree(standby->db);
+                        }
+                    }
+                    CATCH_ANY()
+                    {
+                        LOG_WARN_FMT(
+                            "standby %s is not usable: [%s] %s", cfgOptionGroupName(cfgOptGrpPg, standby->pgIdx),
+                            errorTypeName(errorType()), errorMessage());
+
+                        dbFree(standby->db);
+                    }
+                    TRY_END();
+                }
+            }
+
+            if (result.standby == NULL && standbyLagging != NULL)
+            {
+                LOG_WARN_FMT(
+                    "using standby %s though it is lagging behind the primary",
+                    cfgOptionGroupName(cfgOptGrpPg, standbyLagging->pgIdx));
+
+                result.standbyIdx = standbyLagging->pgIdx;
+                result.standby = standbyLagging->db;
+            }
         }
 
         // Error if no standby was found

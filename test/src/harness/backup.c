@@ -273,6 +273,18 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             else
             {
                 HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
+
+                // dbGet() checks that the standby is not lagging the primary's current lsn before selecting it
+                if (pgVersion <= PG_VERSION_96)
+                {
+                    HRN_PQ_SCRIPT_ADD(
+                        HRN_PQ_SCRIPT_REPLAY_LSN_LE_96(2, lsnStartStr), HRN_PQ_SCRIPT_CURRENT_LSN_LE_96(1, lsnStartStr));
+                }
+                else
+                {
+                    HRN_PQ_SCRIPT_ADD(
+                        HRN_PQ_SCRIPT_REPLAY_LSN_GE_10(2, lsnStartStr), HRN_PQ_SCRIPT_CURRENT_LSN_GE_10(1, lsnStartStr));
+                }
             }
         }
 
