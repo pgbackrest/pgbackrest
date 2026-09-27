@@ -119,6 +119,10 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                             .limit = this->pub.limit != NULL ? varNewUInt64(varUInt64(this->pub.limit) - this->bytesRead) : NULL,
                             .versionId = this->pub.versionId);
 
+                        // The filter group is never set on the recreated driver, so retry must already be disabled for any driver
+                        // that requires one (see storageReadNew())
+                        ASSERT(storageReadDriverInterface(this->driver)->filterGroup == NULL);
+
                         // Error when the file is missing since it must have existed when the read began
                         if (!storageReadDriverInterface(this->driver)->open(this->driver))
                             THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(storageReadName(this)));
@@ -259,7 +263,15 @@ storageReadNew(
 
         // Set filter group when interface function exists
         if (storageReadDriverInterface(this->driver)->filterGroup != NULL)
+        {
             storageReadDriverInterface(this->driver)->filterGroup(this->driver, ioReadFilterGroup(storageReadIo(this)));
+
+            // Disable retry when the driver requires the filter group. The filters are passed to the driver when the read is
+            // opened, e.g. to be run on a remote host, so they cannot be run again for a retry. Also, bytes read are counted after
+            // the filters have been applied so the offset to restart the read cannot be determined. Retry in this case is expected
+            // to be handled by the driver, e.g. the remote host retries reads on object stores.
+            this->retry = false;
+        }
     }
     OBJ_NEW_END();
 
