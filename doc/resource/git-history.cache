@@ -1,5 +1,52 @@
 [
     {
+        "commit": "89eae839d5ca79591aaea8157f437688c3b53df4",
+        "date": "2026-09-27 12:26:46 +0300",
+        "subject": "PostgreSQL 19beta4 support.",
+        "body": "Beta4 reverted online data checksum transitions, which removed the in-progress checksum states and the checkpoint checksum state and bumped PG_CONTROL_VERSION:\n\nhttps://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=c05d5ce12366f1008e95b09a0a9b08a49818b0e1\n\nA follow-up to the revert bumped XLOG_PAGE_MAGIC:\n\nhttps://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=4a9a6c5a69c45ba74c694ccb1ff5921dd09a6676\n\nBeta4 also added data_checksum_version_init to pg_control:\n\nhttps://git.postgresql.org/gitweb/?p=postgresql.git;a=commitdiff;h=aaf8b9989f7aaeb6594122caee1eea6c87e10655\n\nThe page checksum version in pg_control is again limited to 0 and 1, so check it against PG_DATA_CHECKSUM_VERSION for all versions and remove the handling of the in-progress states added for PostgreSQL 19."
+    },
+    {
+        "commit": "12b1b3cf58caee7b04ed788eee221726f5caa155",
+        "date": "2026-09-27 11:25:38 +0300",
+        "subject": "Fix async archive-push stalling on a zero-size backup history file.",
+        "body": "The archive-push-batch-size option converts the batch size to a segment count using the size of the first file in the ready list, but that list also contains backup and timeline history files. PostgreSQL does not sync backup history files, so a cluster copied from a storage snapshot may contain one with zero size, which caused every asynchronous run to error and prevented any WAL from being archived.\n\nUse the size of the first ready WAL segment instead and skip the batch size when no segment is ready, since the remaining files are small. A zero-size WAL segment is still an error."
+    },
+    {
+        "commit": "6f0490dd29f0c756e6766fd9be023805540815fc",
+        "date": "2026-09-27 11:07:29 +0300",
+        "subject": "Fix pagination of S3 version listing.",
+        "body": "Listing with a repository target time uses the ListObjectVersions API but pagination read NextContinuationToken from the response, which is only returned by ListObjectsV2. A version listing truncated at the maximum key count failed with \"unable to find child 'NextContinuationToken':0 in node 'ListVersionsResult'\", so a repository with more than a thousand versions under a prefix could not be read at a target time.\n\nPaginate the version listing with NextKeyMarker and NextVersionIdMarker instead. NextVersionIdMarker is missing or empty when the listing is truncated at a common prefix, in which case the next page starts at the key after the key marker, which is what is needed.\n\nBuild the query for each page from the base query so a marker set for one page is not reused for the next.\n\nThe mock response used to test version listing pagination returned a continuation token rather than markers, so the error was not caught."
+    },
+    {
+        "commit": "ea3293be75c86b5e6c9ca4158b5ebe2a3224f76f",
+        "date": "2026-09-27 11:01:39 +0300",
+        "subject": "Set the Azure version header for SAS authentication.",
+        "body": "The version header was not set for SAS since a SAS specifies a version in the sv parameter. That is sufficient for normal requests but batch requires the version to be set explicitly and rejects the entire batch with 400 InvalidInput when it is missing.\n\nAzure reports the rejection as a single response part with no content-id, so it appeared that one sub-request had failed rather than that none had run. That part was retried individually and the remaining files in the batch were silently not deleted, leaving expired backups and WAL in the repository while expire reported success."
+    },
+    {
+        "commit": "c6eca28ff8e551bd2e76f0c91b1a70ddee60b35e",
+        "date": "2026-09-27 10:54:50 +0300",
+        "subject": "Disable read retry when filters are passed to the driver.",
+        "body": "When a read is retried the driver is freed and recreated but the filter group is not set on the new driver. For drivers that require the filter group (i.e. remote) this causes a segfault when the read is opened because the filter group is NULL.\n\nThis was introduced in a953aa7, which changed retry to recreate the driver rather than reopen it, added the filter group callback that is only set when the read is created, and replaced the driver retry flag with the storageFeatureReadRetry feature, which remote storage inherits from the repository host. Before that commit retry was never enabled for remote reads.\n\nEven with the filter group set the retry could not work because the filters are passed to the remote when the read is opened so they cannot be run again, and bytes read are counted after the filters have been applied so the offset to restart the read cannot be determined.\n\nRead retry is only enabled for object stores so this happened when the repository was on an object store accessed via a repository host. The repository host still retries the object store read, where the filters are applied above the driver and the retry works correctly, so the only retry lost is a redundant second attempt by the client."
+    },
+    {
+        "commit": "572d1631026d5f10915634592b547f3439b7a291",
+        "date": "2026-09-27 10:36:06 +0300",
+        "subject": "Fix empty block map when file is truncated to zero during backup.",
+        "body": "A block incremental file truncated to zero by PostgreSQL during the backup was stored as a block map with no blocks, i.e. a single byte containing only the version flag. Every subsequent backup that referenced the file failed with \"unexpected eof\" while reading the map and continued to fail until the next full backup.\n\nZero-length files detected during the copy were already stored as truncated rather than copied, but only when the file was in a bundle. Files larger than repo-bundle-limit get their own repository file and so missed the check.\n\nNever write a block map with no blocks and store zero-length block incremental files as truncated whether or not they are bundled."
+    },
+    {
+        "commit": "497ad5aee0c654611d2ad4185958727e1341dd8c",
+        "date": "2026-09-27 10:26:19 +0300",
+        "subject": "Fix annotate and manifest commands on a remote encrypted repository.",
+        "body": "Both commands read the repo cipher options to load backup.info, but when the repo is remote those options are pulled from the remote the first time the repo storage is created. Reading them before that leaves the load with no cipher when the repository is encrypted and the cipher is configured only on the repo host, and the load fails.\n\nIn manifest the storage and the options are arguments to the same call, so the order they are evaluated in is up to the compiler and whether the command works depends on how it was built. In annotate the cipher type is read by the statement before the load, so it is always read too early.\n\nGet the repo storage first, as backup, expire, verify, info, and archive-get already do. In annotate this goes inside the TRY block so a repo that cannot be reached is reported and skipped like any other error there."
+    },
+    {
+        "commit": "a0c8d7f48bc964798c12c983e826bc71b44954be",
+        "date": "2026-09-27 10:09:22 +0300",
+        "subject": "Begin v2.59.2 development."
+    },
+    {
         "commit": "8c8f3ee63e310f0b3ea10b55ed3b96b4cc9296da",
         "date": "2026-08-17 16:08:40 +0700",
         "subject": "v2.59.1: PostgreSQL 19beta3 Support"

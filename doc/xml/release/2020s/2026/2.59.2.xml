@@ -1,4 +1,4 @@
-<release date="XXXX-XX-XX" version="2.59.2dev" title="UNDER DEVELOPMENT">
+<release date="2026-09-27" version="2.59.2" title="PostgreSQL 19beta4 Support">
     <release-core-list>
         <release-bug-list>
             <release-item>
