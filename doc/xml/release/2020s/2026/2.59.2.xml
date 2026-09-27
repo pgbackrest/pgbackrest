@@ -78,5 +78,15 @@
                 <p>Fix <cmd>annotate</cmd> command on a remote encrypted repository.</p>
             </release-item>
         </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL 19beta4</proper> support.</p>
+            </release-item>
+        </release-feature-list>
     </release-core-list>
 </release>
