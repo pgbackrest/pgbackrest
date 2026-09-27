@@ -85,6 +85,14 @@
 
         <release-feature-list>
             <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL 19beta4</proper> support.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2687"/>
                 <github-pull-request id="2833"/>
 
