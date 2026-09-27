@@ -1,5 +1,10 @@
 [
     {
+        "commit": "8c8f3ee63e310f0b3ea10b55ed3b96b4cc9296da",
+        "date": "2026-08-17 16:08:40 +0700",
+        "subject": "v2.59.1: PostgreSQL 19beta3 Support"
+    },
+    {
         "commit": "5cbc256bf37a44fa478d73a12a2e5b2d84fa6337",
         "date": "2026-08-17 10:20:47 +0700",
         "subject": "PostgreSQL 19beta3 support.",
