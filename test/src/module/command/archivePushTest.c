@@ -1136,6 +1136,51 @@ testRun(void)
             cmdArchivePushAsync(), FormatError, "size of WAL segment '000000010000000100000016' is 0");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("zero-size backup history file before the first ready segment");
+
+        HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/000000010000000100000018.00000028.backup");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000018.00000028.backup.ready");
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000019", walBufferBatch);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000019.ready");
+
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
+
+        TEST_RESULT_VOID(cmdArchivePushAsync(), "push backup history file and WAL segment");
+        TEST_RESULT_LOG(
+            "P00   INFO: push 2 WAL file(s) to archive: 000000010000000100000018.00000028.backup...000000010000000100000019\n"
+            "P01 DETAIL: pushed WAL file '000000010000000100000018.00000028.backup' to the archive\n"
+            "P01 DETAIL: pushed WAL file '000000010000000100000019' to the archive");
+
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT,
+            "000000010000000100000018.00000028.backup.ok\n"
+            "000000010000000100000019.ok\n",
+            .comment = "check status files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no ready segments");
+
+        HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/00000002.history");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/00000002.history.ready");
+
+        TEST_RESULT_VOID(cmdArchivePushAsync(), "push history file");
+        TEST_RESULT_LOG(
+            "P00   INFO: push 1 WAL file(s) to archive: 00000002.history\n"
+            "P01 DETAIL: pushed WAL file '00000002.history' to the archive");
+
+        TEST_STORAGE_LIST(storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT, "00000002.history.ok\n", .comment = "check status files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive-push-queue-max is checked against the full queue, not the batch");
 
         // Remove status and ready files to get a clean state
