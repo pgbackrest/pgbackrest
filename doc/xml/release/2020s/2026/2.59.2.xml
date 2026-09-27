@@ -2,6 +2,19 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
+                <github-issue id="2829"/>
+                <github-pull-request id="2842"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="jpcosta78"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix empty block map when file is truncated to zero during backup.</p>
+            </release-item>
+
+            <release-item>
                 <commit subject="Fix annotate and manifest commands on a remote encrypted repository."/>
 
                 <release-item-contributor-list>
