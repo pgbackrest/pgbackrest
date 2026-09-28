@@ -148,7 +148,8 @@ cipherBlockFormatCipherNew(CipherBlockFormat *const this)
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->cipherBlock = cipherBlockNewP(
-            cipherModeDecrypt, repoFormatCipherSpec(this->cipherSpec, this->format), .header = cipherBlockHeaderNone);
+            cipherModeDecrypt, cipherSpecDupP(this->cipherSpec, .digestDefault = repoFormatDigest(this->format)),
+            .header = cipherBlockHeaderNone);
     }
     MEM_CONTEXT_OBJ_END();
 
@@ -299,7 +300,7 @@ cipherBlockFormatNew(const CipherSpec *const cipherSpec, const CipherBlockFormat
     {
         *this = (CipherBlockFormat)
         {
-            .cipherSpec = cipherSpecDup(cipherSpec),
+            .cipherSpec = cipherSpecDupP(cipherSpec),
             .formatExpected = param.format,
         };
     }
@@ -399,7 +400,7 @@ cipherBlockFormatFilterGroupWriteAdd(
         ioFilterGroupAdd(
             filterGroup,
             cipherBlockNewP(
-                cipherModeEncrypt, repoFormatCipherSpec(cipherSpec, format),
+                cipherModeEncrypt, cipherSpecDupP(cipherSpec, .digestDefault = repoFormatDigest(format)),
                 .header = header ? cipherBlockHeaderNone : cipherBlockHeaderMagic));
     }
 

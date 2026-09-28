@@ -49,21 +49,3 @@ repoFormatDigest(const unsigned int format)
 
     FUNCTION_TEST_RETURN(STRING_ID, format >= REPOSITORY_FORMAT_6 ? hashTypeSha256 : hashTypeSha1);
 }
-
-/**********************************************************************************************************************************/
-FN_EXTERN CipherSpec *
-repoFormatCipherSpec(const CipherSpec *const cipherSpec, const unsigned int format)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
-        FUNCTION_TEST_PARAM(UINT, format);
-    FUNCTION_TEST_END();
-
-    ASSERT(cipherSpec != NULL);
-
-    CipherSpec *const result = cipherSpecNewP(
-        cipherSpecType(cipherSpec), cipherSpecPass(cipherSpec),
-        .digest = cipherSpecDigest(cipherSpec) == 0 ? repoFormatDigest(format) : cipherSpecDigest(cipherSpec));
-
-    FUNCTION_TEST_RETURN(CIPHER_SPEC, result);
-}

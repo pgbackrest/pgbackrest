@@ -87,11 +87,16 @@ cipherSpecPass(const CipherSpec *const this)
 Functions
 ***********************************************************************************************************************************/
 // Duplicate
-FN_INLINE_ALWAYS CipherSpec *
-cipherSpecDup(const CipherSpec *const this)
+typedef struct CipherSpecDupParam
 {
-    return cipherSpecNewP(cipherSpecType(this), cipherSpecPass(this), .digest = cipherSpecDigest(this));
-}
+    VAR_PARAM_HEADER;
+    HashType digestDefault;                                         // Digest to use when the spec has none
+} CipherSpecDupParam;
+
+#define cipherSpecDupP(this, ...)                                                                                                  \
+    cipherSpecDup(this, (CipherSpecDupParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN CipherSpec *cipherSpecDup(const CipherSpec *this, CipherSpecDupParam param);
 
 // Write to a pack so it can be passed over a protocol
 FN_EXTERN void cipherSpecPack(PackWrite *packWrite, const CipherSpec *this);

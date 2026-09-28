@@ -493,7 +493,7 @@ infoCipherSpecSet(Info *const this, const CipherSpec *const cipherSpec)
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         // Copy so the caller is free to release what was passed in, and so the getter never returns NULL
-        this->pub.cipherSpec = cipherSpec == NULL ? cipherSpecNewNone() : cipherSpecDup(cipherSpec);
+        this->pub.cipherSpec = cipherSpec == NULL ? cipherSpecNewNone() : cipherSpecDupP(cipherSpec);
     }
     MEM_CONTEXT_OBJ_END();
 

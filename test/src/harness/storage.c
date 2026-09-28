@@ -72,11 +72,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
         // A key with no digest of its own derives with SHA-1, the digest of format 5
         ioFilterGroupAdd(
             filterGroup,
-            cipherBlockNewP(
-                cipherModeDecrypt,
-                cipherSpecNewP(
-                    cipherSpecType(param.cipherSpec), cipherSpecPass(param.cipherSpec),
-                    .digest = cipherSpecDigest(param.cipherSpec) == 0 ? hashTypeSha1 : cipherSpecDigest(param.cipherSpec))));
+            cipherBlockNewP(cipherModeDecrypt, cipherSpecDupP(param.cipherSpec, .digestDefault = hashTypeSha1)));
 
         strCatFmt(
             filter, "enc[%s,%s] ", zNewStrId(cipherSpecType(param.cipherSpec)),
@@ -404,11 +400,7 @@ hrnStoragePut(
         // A key with no digest of its own derives with SHA-1, the digest of format 5
         ioFilterGroupAdd(
             filterGroup,
-            cipherBlockNewP(
-                cipherModeEncrypt,
-                cipherSpecNewP(
-                    cipherSpecType(param.cipherSpec), cipherSpecPass(param.cipherSpec),
-                    .digest = cipherSpecDigest(param.cipherSpec) == 0 ? hashTypeSha1 : cipherSpecDigest(param.cipherSpec))));
+            cipherBlockNewP(cipherModeEncrypt, cipherSpecDupP(param.cipherSpec, .digestDefault = hashTypeSha1)));
     }
 
     // Add file name

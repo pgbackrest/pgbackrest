@@ -42,16 +42,6 @@ testRun(void)
     {
         TEST_RESULT_UINT(repoFormatDigest(REPOSITORY_FORMAT_5), hashTypeSha1, "format 5 derives with sha1");
         TEST_RESULT_UINT(repoFormatDigest(REPOSITORY_FORMAT_6), hashTypeSha256, "format 6 derives with sha256");
-
-        // A spec with no digest takes the digest of the format and a spec with a digest keeps it
-        TEST_RESULT_UINT(
-            cipherSpecDigest(repoFormatCipherSpec(cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")), REPOSITORY_FORMAT_6)),
-            hashTypeSha256, "format supplies the digest");
-        TEST_RESULT_UINT(
-            cipherSpecDigest(
-                repoFormatCipherSpec(
-                    cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"), .digest = hashTypeSha1), REPOSITORY_FORMAT_6)),
-            hashTypeSha1, "spec keeps its digest");
     }
 
     // *****************************************************************************************************************************
