@@ -160,8 +160,8 @@ def test_cli_test():
 
     assert_true(config.lint_only)
 
-    # The command can be named, which is the same run with the same options
-    config = cli_parse(["test", "--vm=u24", "--module=common/error"], VERSION)
+    # The command can be named, which is the same run with the same options before or after it
+    config = cli_parse(["--vm", "u24", "test", "--module=common/error"], VERSION)
 
     assert_equal(config.command, "test")
     assert_equal(config.vm, "u24")
@@ -181,7 +181,8 @@ def test_cli_vm_build():
     assert_true(config.cache)
     assert_is_none(config.vm_arch)
 
-    config = cli_parse(["vm-build", "--vm=all", "--vm-arch=aarch64", "--no-cache"], VERSION)
+    # Options before the command
+    config = cli_parse(["--vm=all", "--vm-arch", "aarch64", "--no-cache", "vm-build"], VERSION)
 
     assert_equal(config.vm, "all")
     assert_equal(config.vm_arch, "aarch64")
@@ -200,6 +201,18 @@ def test_cli_error():
 
     assert_equal(status, 2)
     assert_in("unrecognized arguments: --bogus", output)
+
+    # An option before the command that the command does not define
+    status, output = _cli_parse_exit(["--module=common/error", "vm-build"])
+
+    assert_equal(status, 2)
+    assert_in("unrecognized arguments: --module=common/error", output)
+
+    # An argument after the options that is not a command
+    status, output = _cli_parse_exit(["--vm=u24", "bogus"])
+
+    assert_equal(status, 2)
+    assert_in("invalid choice: 'bogus'", output)
 
     # A level outside the log levels is rejected here rather than later when it is converted
     status, output = _cli_parse_exit(["unit", "common/error", "--log-level=bogus"])
