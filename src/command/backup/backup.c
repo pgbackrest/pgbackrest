@@ -19,6 +19,7 @@ Backup Command
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/format/format.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
 #include "common/regExp.h"

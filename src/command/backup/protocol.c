@@ -10,6 +10,7 @@ Backup Protocol Handler
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/format/format.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/filter/size.h"
@@ -112,6 +113,7 @@ backupFileProtocol(PackRead *const param)
         const String *const repoFile = pckReadStrP(param);
         const uint64_t bundleId = pckReadU64P(param);
         const bool bundleRaw = bundleId != 0 ? pckReadBoolP(param) : false;
+        const unsigned int repoFormat = pckReadU32P(param);
         const unsigned int blockIncrReference = (unsigned int)pckReadU64P(param);
         const CompressType repoFileCompressType = (CompressType)pckReadU32P(param);
         const int repoFileCompressLevel = pckReadI32P(param);
@@ -161,12 +163,16 @@ backupFileProtocol(PackRead *const param)
         lstSort(fileList, sortOrderAsc);
 
         // Backup file
+        BackupFileBundleResult bundleResult = {0};
         const List *const resultList = backupFile(
-            repoFile, bundleId, bundleRaw, blockIncrReference, repoFileCompressType, repoFileCompressLevel, cipherSpecBackup,
-            pgVersionForce, pageSize, fileList);
+            repoFile, repoFormat, bundleId, bundleRaw, blockIncrReference, repoFileCompressType, repoFileCompressLevel,
+            cipherSpecBackup, pgVersionForce, pageSize, fileList, &bundleResult);
 
         // Return result
         PackWrite *const data = protocolServerResultData(result);
+
+        pckWriteBinP(data, bundleResult.checksum);
+        pckWriteU64P(data, bundleResult.size);
 
         for (unsigned int resultIdx = 0; resultIdx < lstSize(resultList); resultIdx++)
         {

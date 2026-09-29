@@ -253,6 +253,55 @@ testBackupValidateFile(
     FUNCTION_HARNESS_RETURN(STRING, result);
 }
 
+// Validate the checksum and size of a bundle against the manifest
+static void
+testBackupValidateBundle(
+    const Storage *const storage, const String *const path, const Manifest *const manifest, const String *const fileName,
+    const uint64_t bundleId)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STORAGE, storage);
+        FUNCTION_HARNESS_PARAM(STRING, path);
+        FUNCTION_HARNESS_PARAM(MANIFEST, manifest);
+        FUNCTION_HARNESS_PARAM(STRING, fileName);
+        FUNCTION_HARNESS_PARAM(UINT64, bundleId);
+    FUNCTION_HARNESS_END();
+
+    const ManifestBundle *bundle = NULL;
+
+    for (unsigned int bundleIdx = 0; bundleIdx < manifestBundleTotal(manifest); bundleIdx++)
+    {
+        if (manifestBundle(manifest, bundleIdx)->id == bundleId)
+        {
+            bundle = manifestBundle(manifest, bundleIdx);
+            break;
+        }
+    }
+
+    if (bundle == NULL)
+        THROW_FMT(AssertError, "bundle '%s' is not in the manifest", strZ(fileName));
+
+    const Buffer *const content = storageGetP(storageNewReadP(storage, strNewFmt("%s/%s", strZ(path), strZ(fileName))));
+    const Buffer *const checksum = cryptoHashOne(hashTypeSha256, content);
+
+    if (!bufEq(checksum, BUF(bundle->checksumSha256, HASH_TYPE_SHA256_SIZE)))
+    {
+        THROW_FMT(
+            AssertError, "bundle '%s' checksum %s does not match manifest checksum %s", strZ(fileName),
+            strZ(strNewEncode(encodingHex, checksum)),
+            strZ(strNewEncode(encodingHex, BUF(bundle->checksumSha256, HASH_TYPE_SHA256_SIZE))));
+    }
+
+    if (bufUsed(content) != bundle->size)
+    {
+        THROW_FMT(
+            AssertError, "bundle '%s' size %zu does not match manifest size %" PRIu64, strZ(fileName), bufUsed(content),
+            bundle->size);
+    }
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
 static String *
 testBackupValidateList(
     const Storage *const storage, const String *const path, Manifest *const manifest, const ManifestData *const manifestData,
@@ -311,6 +360,10 @@ testBackupValidateList(
                 if (bundle)
                 {
                     const uint64_t bundleId = cvtZToUInt64(strZ(info.name) + sizeof("bundle"));
+
+                    // Validate bundle checksum and size (Format >= 6)
+                    if (manifestFormat(manifest) >= REPOSITORY_FORMAT_6)
+                        testBackupValidateBundle(storage, path, manifest, info.name, bundleId);
 
                     for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
                     {
@@ -465,6 +518,16 @@ testBackupValidate(const Storage *const storage, const String *const path, const
                     file.sizeRepo, filePack));
         }
 
+        // Make sure all bundles in the manifest exist
+        for (unsigned int bundleIdx = 0; bundleIdx < manifestBundleTotal(manifest); bundleIdx++)
+        {
+            const String *const bundleFile = strNewFmt(
+                "%s/" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(path), manifestBundle(manifest, bundleIdx)->id);
+
+            if (!storageExistsP(storage, bundleFile))
+                THROW_FMT(AssertError, "bundle '%s' is missing", strZ(bundleFile));
+        }
+
         // Make sure both backup.manifest files exist since we skipped them in the callback above
         if (!storageExistsP(storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path))))
             THROW(AssertError, BACKUP_MANIFEST_FILE " is missing");
@@ -518,6 +581,7 @@ testBackupValidate(const Storage *const storage, const String *const path, const
                 if (strEqZ(section, INFO_SECTION_BACKREST) ||
                     strEqZ(section, INFO_SECTION_CIPHER) ||
                     strEqZ(section, MANIFEST_SECTION_BACKUP) ||
+                    strEqZ(section, MANIFEST_SECTION_BACKUP_BUNDLE) ||
                     strEqZ(section, MANIFEST_SECTION_BACKUP_DB) ||
                     strEqZ(section, MANIFEST_SECTION_BACKUP_OPTION) ||
                     strEqZ(section, MANIFEST_SECTION_DB) ||
@@ -1930,6 +1994,8 @@ testRun(void)
         job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), strIdFromZ("x"), NULL);
 
         PackWrite *const resultPack = protocolPackNew();
+        pckWriteBinP(resultPack, NULL);
+        pckWriteU64P(resultPack, 0);
         pckWriteStrP(resultPack, STRDEF("pg_data/test"));
         pckWriteU32P(resultPack, backupCopyResultNoOp);
         // No more fields need to be written since noop will ignore them anyway
