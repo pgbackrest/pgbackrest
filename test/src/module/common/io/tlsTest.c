@@ -272,6 +272,31 @@ testRun(void)
 
         TEST_RESULT_VOID(addrInfoFree(addrInfo), "free");
 #endif
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lookup wildcard address info");
+
+        AddressInfo *addrInfoWildcard = NULL;
+        TEST_ASSIGN(addrInfoWildcard, addrInfoNew(STRDEF("*"), 443), "addr list");
+        TEST_RESULT_STR_Z(addrInfoHost(addrInfoWildcard), "*", "check host");
+        TEST_RESULT_UINT(addrInfoPort(addrInfoWildcard), 443, "check port");
+        TEST_RESULT_BOOL(addrInfoSize(addrInfoWildcard) > 0, true, "check wildcard address found");
+
+        for (unsigned int addressIdx = 0; addressIdx < addrInfoSize(addrInfoWildcard); addressIdx++)
+        {
+            const struct addrinfo *const info = addrInfoGet(addrInfoWildcard, addressIdx)->info;
+
+            if (info->ai_family == AF_INET)
+            {
+                TEST_RESULT_STR_Z(addrInfoToStr(info), "0.0.0.0", "check IPv4 wildcard");
+            }
+            else if (info->ai_family == AF_INET6)
+            {
+                TEST_RESULT_STR_Z(addrInfoToStr(info), "::", "check IPv6 wildcard");
+            }
+        }
+
+        TEST_RESULT_VOID(addrInfoFree(addrInfoWildcard), "free wildcard");
     }
 
     // *****************************************************************************************************************************
