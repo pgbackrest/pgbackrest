@@ -192,7 +192,8 @@ addrInfoNew(const String *const host, const unsigned int port)
             // Do the lookup
             int error;
 
-            if ((error = getaddrinfo(strZ(host), portZ, &hints, &this->info)) != 0)
+            const bool hostWild = strEqZ(host, "*");
+            if ((error = getaddrinfo(hostWild ? NULL : strZ(host), portZ, &hints, &this->info)) != 0)
                 THROW_FMT(HostConnectError, "unable to get address for '%s': [%d] %s", strZ(host), error, gai_strerror(error));
 
             // Convert address linked list to list
