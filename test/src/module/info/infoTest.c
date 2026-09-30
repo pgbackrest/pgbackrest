@@ -92,7 +92,9 @@ testRun(void)
         Info *info = NULL;
 
         TEST_ASSIGN(
-            info, infoNew(REPOSITORY_FORMAT_DEFAULT, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
+            info,
+            infoNew(
+                REPOSITORY_FORMAT_DEFAULT, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"), .digest = hashTypeSha1)),
             "infoNew(cipher)");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(info))), "123xyz", "    cipherPass is set");
 
@@ -180,7 +182,7 @@ testRun(void)
         IoRead *read = ioBufferReadNew(contentLoad);
         ioFilterGroupAdd(
             ioReadFilterGroup(read),
-            cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("X"))));
+            cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("X"), .digest = hashTypeSha1)));
 
         TEST_ERROR(
             infoNewLoad(read, cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent), CryptoError,
@@ -270,13 +272,13 @@ testRun(void)
 
         const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
 
-        // A file with no header, e.g. a manifest, is decrypted with the spec as it was given since nothing defines the digest
-        // as anything else
-        IoRead *const readNoHeader = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec));
-        cipherBlockFilterGroupAdd(ioReadFilterGroup(readNoHeader), cipherModeDecrypt, cipherSpec);
+        const CipherSpec *const cipherSpecNoHeader = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"), .digest = hashTypeSha1);
+
+        IoRead *const readNoHeader = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpecNoHeader));
+        cipherBlockFilterGroupAdd(ioReadFilterGroup(readNoHeader), cipherModeDecrypt, cipherSpecNoHeader);
 
         TEST_ASSIGN(
-            info, infoNewLoad(readNoHeader, cipherSpec, harnessInfoLoadNewCallback, callbackContent),
+            info, infoNewLoad(readNoHeader, cipherSpecNoHeader, harnessInfoLoadNewCallback, callbackContent),
             "info with content and cipher");
         TEST_RESULT_STR_Z(callbackContent, "[c] key=1\n[d] key=1\n", "    check callback content");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(info))), "somepass", "    check cipher pass set");

@@ -1117,12 +1117,9 @@ cfgCipherSpecMainIdx(const unsigned int repoIdx)
         {
             const CipherType cipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
 
-            // The digest this pass derives with is decided by the format of the file it opens rather than chosen with the pass,
-            // so every caller rebuilds the spec from that format. SHA-1 is named here for a caller that does not, since a file
-            // that can be opened without reading a header first is one written before the format that added the header.
+            // The digest is unset because the format of the file this pass opens determines it
             configLocal->cipherSpecMain[repoIdx] = cipherSpecNewP(
-                cipherType, cipherType == cipherTypeNone ? NULL : BUFSTR(cfgOptionIdxStr(cfgOptRepoCipherPass, repoIdx)),
-                .digest = hashTypeSha1);
+                cipherType, cipherType == cipherTypeNone ? NULL : BUFSTR(cfgOptionIdxStr(cfgOptRepoCipherPass, repoIdx)));
         }
         MEM_CONTEXT_END();
     }

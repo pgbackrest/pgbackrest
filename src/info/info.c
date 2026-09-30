@@ -418,11 +418,13 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
             callbackFunction(callbackData, STRDEF(INFO_SECTION_CIPHER), &data);
 
             // A format before the digest could be stored has nowhere to put it and a reader assumes SHA-1, so a pass stored at
-            // one of those formats must derive with SHA-1 or the reader will derive a different key. This is checked rather than
-            // asserted because the file is written either way and nothing reports it, leaving a pass that no reader can derive.
+            // one of those formats must derive with SHA-1 or the reader will derive a different key. Format >= 6 must have a
+            // digest to store. Release builds check this too, instead of silently writing a pass that no reader can derive.
             CHECK(
-                AssertError, infoFormat(this) >= REPOSITORY_FORMAT_6 || cipherSpecDigest(infoCipherSpec(this)) == hashTypeSha1,
-                "pass must derive with sha1 before the format that stores the digest");
+                AssertError,
+                infoFormat(this) >= REPOSITORY_FORMAT_6 ?
+                    cipherSpecDigest(infoCipherSpec(this)) != 0 : cipherSpecDigest(infoCipherSpec(this)) == hashTypeSha1,
+                "pass must derive with sha1 before format 6 and must have a digest from format 6");
 
             // Store the digest the pass derives with so that a pass outlives the format of the file it is stored in. A pass in a
             // file written before this could be stored derives with SHA-1, which is what a reader assumes when it finds no digest.
@@ -488,11 +490,12 @@ infoCipherSpecSet(Info *const this, const CipherSpec *const cipherSpec)
     FUNCTION_AUDIT_IF(memContextCurrent() != objMemContext(this));  // Do not audit calls from within the object
 
     ASSERT(this != NULL);
+    ASSERT(cipherSpec == NULL || cipherSpecType(cipherSpec) == cipherTypeNone || cipherSpecDigest(cipherSpec) != 0);
 
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         // Copy so the caller is free to release what was passed in, and so the getter never returns NULL
-        this->pub.cipherSpec = cipherSpec == NULL ? cipherSpecNewNone() : cipherSpecDup(cipherSpec);
+        this->pub.cipherSpec = cipherSpec == NULL ? cipherSpecNewNone() : cipherSpecDupP(cipherSpec);
     }
     MEM_CONTEXT_OBJ_END();
 

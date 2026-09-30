@@ -416,7 +416,7 @@ archiveGetCheck(const StringList *const archiveRequestList)
                 // Build cipher spec in the result list context once rather than rebuilding it per candidate file later
                 MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
                 {
-                    cacheRepo.cipherSpecArchive = cipherSpecDup(infoArchiveCipherSpec(info));
+                    cacheRepo.cipherSpecArchive = cipherSpecDupP(infoArchiveCipherSpec(info));
                 }
                 MEM_CONTEXT_END();
 

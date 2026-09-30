@@ -264,7 +264,7 @@ archivePushCheck(const bool pgPathSet)
                     {
                         .repoIdx = repoIdx,
                         .archiveId = strDup(archiveId),
-                        .cipherSpecArchive = cipherSpecDup(infoArchiveCipherSpec(info)),
+                        .cipherSpecArchive = cipherSpecDupP(infoArchiveCipherSpec(info)),
                     };
 
                     lstAdd(result.repoList, &archivePushFileRepoData);
