@@ -2744,7 +2744,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive key not due for rotation");
 
-        const time_t timeRotate = (time_t)(timeMSec() / MSEC_PER_SEC);
+        const time_t timeRotate = time(NULL);
 
         #define TEST_ARCHIVE_INFO_FORMAT_6(rotateTime)                                                                             \
             zNewFmt(                                                                                                               \

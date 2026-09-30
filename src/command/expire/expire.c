@@ -1110,7 +1110,7 @@ expireArchiveCipherRotate(InfoArchive *const infoArchive, const unsigned int rep
         }
         else
         {
-            const time_t timeNow = (time_t)(timeMSec() / MSEC_PER_SEC);
+            const time_t timeNow = time(NULL);
 
             if (infoArchiveCipherRotateTime(infoArchive) <
                 timeNow - (time_t)(cfgOptionIdxUInt64(cfgOptRepoCipherRotate, repoIdx) / MSEC_PER_SEC))

@@ -265,7 +265,7 @@ archivePushFile(
                         strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoData->archiveId), strZ(archiveDestination)),
                         .compressible = compressible);
 
-                    // Add the encrypt filter, which writes the format header for a format that requires one
+                    // Add the encrypt filter to write the format header when required
                     cipherBlockFormatFilterGroupWriteAddP(
                         ioWriteFilterGroup(storageWriteIo(destination[repoListIdx])), repoData->cipherSpecArchive,
                         repoData->format, .keyId = repoData->cipherIdArchive);
