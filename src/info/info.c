@@ -251,7 +251,7 @@ infoNewLoad(
                                                         strZ(varStr(kvGet(keyData, VARSTRDEF(INFO_KEY_CIPHER_DIGEST)))))));
                                         }
                                     }
-                                    // Else there is one key with no id and no digest, which every repository derived with SHA-1
+                                    // Else there is one key with no id and no digest, which every repository derives with SHA-1
                                     else
                                     {
                                         cipherSpecMapAdd(

@@ -32,8 +32,8 @@ A file that begins with the magic rather than the header was written at format 5
 that is not an error when a header was expected.
 
 The first three bytes of the header magic are the format and the last is a marker indicating whether a key id follows. The format
-comes first so it is always in the same place, which is how a version decides whether it can read the file at all. The marker is
-only checked once the format turns out to be readable, and it must be valid for this version.
+comes first so it is always in the same place, which is how a version decides whether it can read the file. The marker is only
+checked once the format turns out to be readable, and it must be valid for this version.
 
 If a key id is indicated by the marker, there is first a byte to indicate the length of the key id and then the key id as a string.
 ***********************************************************************************************************************************/
@@ -43,7 +43,7 @@ If a key id is indicated by the marker, there is first a byte to indicate the le
 #define CIPHER_BLOCK_FORMAT_MARKER_KEY                              'K'
 #define CIPHER_BLOCK_FORMAT_SIZE                                    3
 
-// They key id length is encoded as a single byte with a max of 255 characters
+// The key id length is encoded as a single byte with a max of 255 characters
 #define CIPHER_BLOCK_FORMAT_KEY_SIZE_MAX                            255
 
 // Total header length: magic, format, and marker
@@ -153,7 +153,7 @@ cipherBlockFormatCipherNew(CipherBlockFormat *const this)
     if (this->formatExpected != 0 && this->formatExpected != this->format)
         THROW_FMT(FormatError, "expected repository format %u but found %u", this->formatExpected, this->format);
 
-    // Get the key specified in the header, or the default key when it contains none
+    // Get the key specified in the header or the default key when none is specified
     const CipherSpec *cipherSpec;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -230,7 +230,7 @@ cipherBlockFormatProcess(THIS_VOID, const Buffer *const source, Buffer *const de
                     if (this->header[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] == CIPHER_BLOCK_FORMAT_MARKER_KEY)
                         this->headerSizeExpected++;
                 }
-                // Else the length is complete, so wait for the key id
+                // Else the length is complete so wait for the key id
                 else if (this->headerSizeExpected == CIPHER_BLOCK_FORMAT_HEADER_SIZE + 1)
                 {
                     const size_t keySize = this->header[CIPHER_BLOCK_FORMAT_HEADER_SIZE];
@@ -576,7 +576,7 @@ cipherBlockFormatFilterGroupWriteAdd(
                 cipherModeEncrypt, cipherSpecDupP(cipherSpec, .digestDefault = repoFormatDigest(format)),
                 .header = header ? cipherBlockHeaderNone : cipherBlockHeaderMagic));
 
-        // The header is plaintext, so it is added after the block cipher and lands in front of what the cipher produces
+        // The filter is added after the block cipher so the plaintext header is placed before the cipher output
         if (header)
         {
             MEM_CONTEXT_TEMP_BEGIN()

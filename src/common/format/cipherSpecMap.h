@@ -2,9 +2,7 @@
 Cipher Spec Map
 
 The keys used to encrypt a repository, stored by id. A file identifies its key by id, either in the header or by where the file is
-stored. The key is then looked up by that id rather than found by trial.
-
-The meaning of an id is set by the caller. archive.info numbers its keys and backup.info uses the backup set label.
+stored. The meaning of an id is set by the caller. archive.info numbers its keys and backup.info uses the backup set label.
 
 One key is current and new files are encrypted with it. Adding a key makes it current, except for the key stored under
 CIPHER_SPEC_MAP_ID_DEFAULT.
@@ -23,9 +21,8 @@ typedef struct CipherSpecMap CipherSpecMap;
 #include "common/type/pack.h"
 
 /***********************************************************************************************************************************
-Id for the key used by a file that contains no key id. In archive.info this is the key preserved by migration, which is what files
-written before key ids existed were encrypted with. In an info file it is the repository passphrase, which is the only key those
-files are ever encrypted with.
+Id for the key required by a file that contains no key id. In archive.info this is the key preserved by migration, which is what
+files written before key ids existed were encrypted with.
 ***********************************************************************************************************************************/
 #define CIPHER_SPEC_MAP_ID_DEFAULT                                 "0"
 STRING_DECLARE(CIPHER_SPEC_MAP_ID_DEFAULT_STR);

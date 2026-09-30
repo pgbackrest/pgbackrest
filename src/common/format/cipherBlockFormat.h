@@ -34,14 +34,14 @@ typedef struct CipherBlockFormatNewParam
     unsigned int format;                                            // Format the file is expected at, any when zero
 } CipherBlockFormatNewParam;
 
-// Decrypt with whichever key the file stores the id of, or with CIPHER_SPEC_MAP_ID_DEFAULT when it stores none
+// Decrypt with the stored key id or with CIPHER_SPEC_MAP_ID_DEFAULT when no key is stored
 #define cipherBlockFormatNewP(cipherSpecMap, ...)                                                                                  \
     cipherBlockFormatNew(cipherSpecMap, (CipherBlockFormatNewParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN IoFilter *cipherBlockFormatNew(const CipherSpecMap *cipherSpecMap, CipherBlockFormatNewParam param);
 FN_EXTERN IoFilter *cipherBlockFormatNewPack(const Pack *paramList);
 
-// Create the filter that writes the format header from its param list
+// Create filter that writes the format header from its param list
 FN_EXTERN IoFilter *cipherBlockFormatHeaderNewPack(const Pack *paramList);
 
 /***********************************************************************************************************************************
@@ -53,8 +53,8 @@ FN_EXTERN unsigned int cipherBlockFormatResult(PackRead *packRead);
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
-// Write the header a format requires into the buffer the content will be written into and add encryption to the filter group. A
-// key id is stored in the header when one is given. Nothing is written and nothing is added when the repository is not encrypted.
+// Write the header the format requires into the buffer the content will be written into and add encryption to the filter group. A
+// key id is stored in the header when one is specified. No header is added when the repository is not encrypted.
 typedef struct CipherBlockFormatFilterGroupWriteAddParam
 {
     VAR_PARAM_HEADER;
@@ -69,11 +69,12 @@ FN_EXTERN void cipherBlockFormatFilterGroupWriteAdd(
     IoFilterGroup *filterGroup, const CipherSpec *cipherSpec, unsigned int format,
     CipherBlockFormatFilterGroupWriteAddParam param);
 
-// Add decryption to the filter group for a file at a format that has yet to be read. The key is stored under
+// Add decryption to the filter group for a file with format yet to be determined. The key is stored under
 // CIPHER_SPEC_MAP_ID_DEFAULT, so the file must not contain a key id. Nothing is added when the repository is not encrypted.
 FN_EXTERN IoFilterGroup *cipherBlockFormatFilterGroupReadAdd(IoFilterGroup *filterGroup, const CipherSpec *cipherSpec);
 
-// Same, for a file that may contain a key id. An empty map means the repository is not encrypted, so nothing is added.
+// Add decryption to the filter group for a file that may contain a key id. An empty map means the repository is not encrypted and
+// nothing is added.
 FN_EXTERN IoFilterGroup *cipherBlockFormatFilterGroupReadAddMap(IoFilterGroup *filterGroup, const CipherSpecMap *cipherSpecMap);
 
 #endif
