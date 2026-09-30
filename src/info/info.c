@@ -470,6 +470,10 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
                     {
                         const CipherSpecMapItem *const item = cipherSpecMapGetIdx(cipherSpecMap, keyIdx);
 
+                        // A key must have a digest to store. Release builds check this too, instead of silently writing a key
+                        // that no reader can derive.
+                        CHECK(AssertError, cipherSpecDigest(item->cipherSpec) != 0, "cipher key must have a digest from format 6");
+
                         jsonWriteObjectBegin(jsonWriteKey(json, item->id));
                         jsonWriteStrId(jsonWriteKeyZ(json, INFO_KEY_CIPHER_DIGEST), cipherSpecDigest(item->cipherSpec));
                         jsonWriteStr(

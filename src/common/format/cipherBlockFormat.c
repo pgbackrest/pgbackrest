@@ -175,7 +175,8 @@ cipherBlockFormatCipherNew(CipherBlockFormat *const this)
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->cipherBlock = cipherBlockNewP(
-            cipherModeDecrypt, repoFormatCipherSpec(cipherSpec, this->format), .header = cipherBlockHeaderNone);
+            cipherModeDecrypt, cipherSpecDupP(cipherSpec, .digestDefault = repoFormatDigest(this->format)),
+            .header = cipherBlockHeaderNone);
     }
     MEM_CONTEXT_OBJ_END();
 
@@ -572,7 +573,7 @@ cipherBlockFormatFilterGroupWriteAdd(
         ioFilterGroupAdd(
             filterGroup,
             cipherBlockNewP(
-                cipherModeEncrypt, repoFormatCipherSpec(cipherSpec, format),
+                cipherModeEncrypt, cipherSpecDupP(cipherSpec, .digestDefault = repoFormatDigest(format)),
                 .header = header ? cipherBlockHeaderNone : cipherBlockHeaderMagic));
 
         // The header is plaintext, so it is added after the block cipher and lands in front of what the cipher produces

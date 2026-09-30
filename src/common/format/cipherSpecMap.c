@@ -113,7 +113,7 @@ cipherSpecMapAdd(CipherSpecMap *const this, const String *const id, const Cipher
 
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        const CipherSpecMapItem item = {.id = strDup(id), .cipherSpec = cipherSpecDup(cipherSpec)};
+        const CipherSpecMapItem item = {.id = strDup(id), .cipherSpec = cipherSpecDupP(cipherSpec)};
 
         lstAdd(this->pub.list, &item);
         lstSort(this->pub.list, sortOrderAsc);

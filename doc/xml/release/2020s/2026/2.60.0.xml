@@ -120,7 +120,12 @@
             </release-item>
 
             <release-item>
-                <github-pull-request id="2826"/>
+                <commit subject="Pass a cipher spec rather than a type and passphrase.">
+                    <github-pull-request id="2826"/>
+                </commit>
+                <commit subject="Remove the default digest from CipherSpec.">
+                    <github-pull-request id="2862"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>

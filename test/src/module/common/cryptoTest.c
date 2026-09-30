@@ -93,13 +93,20 @@ testRun(void)
         // Initialization of object
         // -------------------------------------------------------------------------------------------------------------------------
         // Build from a duplicate to show the copy contains the type, digest, and pass of the original
-        TEST_RESULT_UINT(cipherSpecType(cipherSpecDup(cipherSpecNewNone())), cipherTypeNone, "dup of none");
+        TEST_RESULT_UINT(cipherSpecType(cipherSpecDupP(cipherSpecNewNone())), cipherTypeNone, "dup of none");
 
-        const CipherSpec *const cipherSpec = cipherSpecDup(TEST_CIPHER_SPEC());
+        const CipherSpec *const cipherSpec = cipherSpecDupP(TEST_CIPHER_SPEC());
 
         TEST_RESULT_UINT(cipherSpecDigest(cipherSpec), hashTypeSha256, "dup digest");
         TEST_RESULT_UINT(
-            cipherSpecDigest(cipherSpecDup(cipherSpecNewP(cipherTypeAes256Cbc, testPass))), 0, "dup with no digest");
+            cipherSpecDigest(cipherSpecDupP(cipherSpecNewP(cipherTypeAes256Cbc, testPass))), 0, "dup with no digest");
+
+        // The default digest is used only when the spec has none
+        TEST_RESULT_UINT(
+            cipherSpecDigest(cipherSpecDupP(cipherSpecNewP(cipherTypeAes256Cbc, testPass), .digestDefault = hashTypeSha1)),
+            hashTypeSha1, "dup with default digest");
+        TEST_RESULT_UINT(
+            cipherSpecDigest(cipherSpecDupP(cipherSpec, .digestDefault = hashTypeSha1)), hashTypeSha256, "dup keeps digest");
 
         // A pack contains nothing but the type when there is no cipher
         PackWrite *packWrite = pckWriteNewP();

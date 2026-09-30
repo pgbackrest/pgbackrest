@@ -272,7 +272,7 @@ archivePushCheck(const bool pgPathSet)
                         .repoIdx = repoIdx,
                         .archiveId = strDup(archiveId),
                         .format = infoArchiveFormat(info),
-                        .cipherSpecArchive = cipherSpecDup(archiveCipherSpec),
+                        .cipherSpecArchive = cipherSpecDupP(archiveCipherSpec),
                         .cipherIdArchive = strDup(archiveCipherId),
                     };
 

@@ -71,6 +71,24 @@ cipherSpecNewPack(PackRead *const packRead)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN CipherSpec *
+cipherSpecDup(const CipherSpec *const this, const CipherSpecDupParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, this);
+        FUNCTION_TEST_PARAM(STRING_ID, param.digestDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(
+        CIPHER_SPEC,
+        cipherSpecNewP(
+            cipherSpecType(this), cipherSpecPass(this),
+            .digest = cipherSpecDigest(this) == 0 ? param.digestDefault : cipherSpecDigest(this)));
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN void
 cipherSpecPack(PackWrite *const packWrite, const CipherSpec *const this)
 {
