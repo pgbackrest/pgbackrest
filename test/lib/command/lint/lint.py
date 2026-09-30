@@ -1,8 +1,8 @@
 """Code Linter.
 
 Scans every file in the repository for content that could hide code from review, checks that no line runs past the project line
-length, checks that StringId macros encode what they claim to, checks that a block macro is closed by the macro that matches it, and
-checks that every test module is declared in define.yaml.
+length, checks that StringId macros encode what they claim to, checks that a block macro is closed by the macro that matches it,
+checks that every test module is declared in define.yaml, and checks that every code module is covered by a test module.
 
 Everything found is reported as a warning and the number of them is returned rather than raised, so the run continues. A linter
 reads the source as it is written, which means a mistake in one place shows up wherever the source stopped making sense to it: a
@@ -18,7 +18,7 @@ from command.lint.ascii import lint_ascii
 from command.lint.line import lint_line
 from command.lint.macro import lint_macro
 from command.lint.string_id import lint_str_id
-from command.test.define import TEST_MODULE_PATH, test_def_file, test_def_parse
+from command.test.define import TEST_MODULE_PATH, test_def_coverage_file, test_def_file, test_def_parse
 from common.log import *
 from common.storage import path_list_recurse
 
@@ -49,6 +49,13 @@ _LINE_SKIP_EXT = (
     ".vendor.c.inc",
 )
 
+# Code modules that are not covered by a test module
+_COVERAGE_SKIP_LIST = (
+    "src/command/manifest/manifest.c",  # Prototype command
+    "src/common/crypto/xxhash.vendor.c.inc",  # Vendored xxHash
+    "src/main.c",  # Entry point of the binary
+)
+
 # A python module in a tool library, e.g. build/lib/common/render.py
 _LIB_MODULE_EXP = re.compile(r"^([^/]+)/lib/(.+\.py)$")
 
@@ -74,20 +81,45 @@ def _lint_c_apply(name):
 
 
 ####################################################################################################################################
+def _lint_coverage_apply(name):
+    """Must this file be covered by a test module?
+
+    C source in src must be, including an included .c.inc other than a generated .auto.c.inc, and so must a python module in a tool
+    library other than the test harness."""
+
+    if name.startswith("src/"):
+        return name.endswith((".c", ".c.inc")) and not name.endswith(".auto.c.inc")
+
+    return _LIB_MODULE_EXP.match(name) is not None and not name.startswith("test/lib/harness/")
+
+
+####################################################################################################################################
 def cmd_lint(path_repo):
     """Lint every file in the repository and return the number of errors found."""
 
     result = 0
     lib_module = {}
 
+    test_module_list = test_def_parse(path_repo)
+
     # File each test module declared in define.yaml lives in. A test module that is not declared is never built or run, and nothing
     # else reports it since the file is simply never read.
-    test_module = {test_def_file(module) for module in test_def_parse(path_repo)}
+    test_module = {test_def_file(module) for module in test_module_list}
+
+    # File each code module covered in define.yaml lives in
+    code_module = {
+        test_def_coverage_file(coverage.name, module.lang) for module in test_module_list for coverage in module.coverage_list
+    }
 
     for name in path_list_recurse(path_repo):
         # Everything where the test modules live is a test module, so it must be declared in define.yaml
         if name.startswith(TEST_MODULE_PATH) and name not in test_module:
             log(WARN, "test module '%s' is not defined in test/define.yaml" % name)
+            result += 1
+
+        # A code module must be in the coverage list of a test module unless it is on the skip list
+        if _lint_coverage_apply(name) and name not in code_module and name not in _COVERAGE_SKIP_LIST:
+            log(WARN, "code module '%s' is not covered by a test module in test/define.yaml" % name)
             result += 1
 
         # A module may appear in only one library. Python resolves a module name to the first library on the path that has it and

@@ -1,0 +1,92 @@
+<release date="2026-09-27" version="2.59.2" title="PostgreSQL 19beta4 Support">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2829"/>
+                <github-pull-request id="2842"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="jpcosta78"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix empty block map when file is truncated to zero during backup.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2845"/>
+                <github-pull-request id="2846"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="megamaced"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Disable read retry when filters are passed to the driver.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2854"/>
+                <github-pull-request id="2855"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="guruguruguru"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="guruguruguru"/>
+                </release-item-contributor-list>
+
+                <p>Fix pagination of <proper>S3</proper> version listing.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2840"/>
+                <github-pull-request id="2848"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="florian.helmberger"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Set the <proper>Azure</proper> version header for <id>SAS</id> authentication.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2856"/>
+                <github-pull-request id="2857"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="andrew.kroh"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix async <cmd>archive-push</cmd> stalling on a zero-size backup history file.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix annotate and manifest commands on a remote encrypted repository."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="douglas.j.hunley"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix <cmd>annotate</cmd> command on a remote encrypted repository.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL 19beta4</proper> support.</p>
+            </release-item>
+        </release-feature-list>
+    </release-core-list>
+</release>

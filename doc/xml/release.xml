@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc [
     <!ENTITY v2.60.0 SYSTEM "release/2020s/2026/2.60.0.xml">
+    <!ENTITY v2.59.2 SYSTEM "release/2020s/2026/2.59.2.xml">
     <!ENTITY v2.59.1 SYSTEM "release/2020s/2026/2.59.1.xml">
     <!ENTITY v2.59.0 SYSTEM "release/2020s/2026/2.59.0.xml">
     <!ENTITY v2.58.0 SYSTEM "release/2020s/2026/2.58.0.xml">
@@ -138,6 +139,7 @@
 
     <release-list>
         &v2.60.0;
+        &v2.59.2;
         &v2.59.1;
         &v2.59.0;
         &v2.58.0;

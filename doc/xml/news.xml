@@ -3,6 +3,57 @@
     <description>News</description>
 
     <!-- ======================================================================================================================= -->
+    <section id="release-2-59-2" date="2026-09-27">
+        <title><backrest/> 2.59.2 Released</title>
+
+        <p>The <backrest/> community is pleased to announce the release of <link url="{[backrest-url-base]}">{[project]}</link> 2.59.2, the latest version of the reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads.</p>
+
+        <p><backrest/> supports a robust set of features for managing your backup and recovery infrastructure, including: parallel backup/restore, full/differential/incremental backups, block incremental backup, multiple repositories, delta restore, parallel asynchronous archiving, malware/ransomware protection, per-file checksums, page checksums (when enabled) validated during backup, multiple compression types, encryption, partial/failed backup resume, backup from standby, tablespace and link support, S3/Azure/GCS/SFTP support, backup expiration, local/remote operation via SSH or TLS, flexible configuration, and more.</p>
+
+        <p><backrest/> can be installed from the <link url="https://yum.postgresql.org">{[postgres]} Yum Repository</link> or the <link url="https://apt.postgresql.org">{[postgres]} APT Repository</link> and packages are also available for many other distributions. Source code can be downloaded from <link page="release">releases</link>.</p>
+
+        <section id="feature">
+            <title>New Features and Bug Fixes</title>
+
+            <list>
+                <list-item><postgres/> 19beta4 support (David Steele)</list-item>
+                <list-item>Fix empty block map when file is truncated to zero during backup (David Steele)</list-item>
+                <list-item>Disable read retry when filters are passed to the driver (David Steele)</list-item>
+                <list-item>Fix pagination of S3 version listing (David Steele)</list-item>
+                <list-item>Set the Azure version header for SAS authentication (David Steele)</list-item>
+                <list-item>Fix async archive-push stalling on a zero-size backup history file (Andrew Kroh)</list-item>
+                <list-item>Fix annotate command on a remote encrypted repository (Douglas J Hunley)</list-item>
+            </list>
+
+            <p>See the <link page="release" section="/2.59.2">2.59.2 Release Notes</link> for additional fixes and improvements.</p>
+        </section>
+
+        <section id="note">
+            <title>Important Notes</title>
+
+            <list>
+                <list-item><postgres/> 19beta4 changed the pg_control and WAL formats, so clusters and WAL from an earlier 19 beta are no longer supported. Clusters running an earlier beta should be recreated with 19beta4.</list-item>
+            </list>
+        </section>
+
+        <section id="link">
+            <title>Links</title>
+
+            <list>
+                <list-item><link url="{[backrest-url-base]}">Website</link></list-item>
+                <list-item><link page="user-guide-index">User Guides</link></list-item>
+                <list-item><link page="release">Release Notes</link></list-item>
+            </list>
+        </section>
+
+        <section id="Sponsorship">
+            <title>Sponsorship</title>
+
+            <p>This release was made possible by the generous sponsorship of <link url="https://aws.amazon.com">AWS</link>, <link url="https://supabase.com">Supabase</link>, <link url="https://pgedge.com">pgEdge</link>, <link url="https://tigerdata.com">Tiger Data</link>, <link url="https://percona.com">Percona</link>, <link url="https://eon.io">Eon</link>, <link url="https://xata.io">Xata</link>, <link url="https://dalibo.com">Dalibo</link>, and <link url="https://dataegret.com/">Data Egret</link>.</p>
+        </section>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="release-2-59-1" date="2026-08-17">
         <title><backrest/> 2.59.1 Released</title>
 

@@ -86,10 +86,15 @@ tlsCertCommonName(X509 *const certificate)                                      
         FUNCTION_TEST_PARAM_P(VOID, certificate);                                                                   // {vm_covered}
     FUNCTION_TEST_END();                                                                                            // {vm_covered}
 
-    X509_NAME *const subjectName = X509_get_subject_name(certificate);                                              // {vm_covered}
+    const X509_NAME *const subjectName = X509_get_subject_name(certificate);                                        // {vm_covered}
     CHECK(FormatError, subjectName != NULL, "subject name is missing");                                             // {vm_covered}
 
-    const int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);                        // {vm_covered}
+    // OpenSSL < 3 requires a non-const name
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+    const int commonNameIndex = X509_NAME_get_index_by_NID(                                                         // {vm_covered}
+        UNCONSTIFY(X509_NAME *, subjectName), NID_commonName, -1);                                                  // {vm_covered}
+#pragma GCC diagnostic pop
     CHECK(FormatError, commonNameIndex >= 0, "common name is missing");                                             // {vm_covered}
 
     String *result = tlsAsn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex)));     // {vm_covered}

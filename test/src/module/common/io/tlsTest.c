@@ -967,7 +967,9 @@ testRun(void)
                     // TLS < 3
                     "TLS error [1:336151568] sslv3 alert handshake failure",
                     // TLS >= 3 Fedora/Alpine
-                    "TLS error [1:167773200] ssl/tls alert handshake failure");
+                    "TLS error [1:167773200] ssl/tls alert handshake failure",
+                    // TLS >= 4
+                    "TLS error [1:167773200] tls alert handshake failure");
             }
             HRN_FORK_PARENT_END();
         }

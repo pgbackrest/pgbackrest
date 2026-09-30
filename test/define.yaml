@@ -438,6 +438,7 @@ unit:
 
     coverage:
       - test/harness/exec
+      - common/exec: included
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: common/ini
@@ -706,7 +707,11 @@ unit:
         - info/manifest/manifest
 
     coverage:
+      - info/manifest/build.inc: included
+      - info/manifest/link.inc: included
       - info/manifest/manifest
+      - info/manifest/serialize.inc: included
+      - info/manifest/store.inc: included
 
     depend:
       - command/backup/common
@@ -875,6 +880,7 @@ unit:
       - command/backup/pageChecksum
       - command/backup/process.inc: included
       - command/backup/protocol
+      - command/backup/resume.inc: included
       - command/restore/blockDelta
 
     include:

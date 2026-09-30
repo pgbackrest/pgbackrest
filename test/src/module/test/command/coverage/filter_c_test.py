@@ -77,6 +77,12 @@ def test_filter_c_read():
                     "functions": [],
                     "lines": [{"line_number": 5, "count": 1, "branches": []}],
                 },
+                # A harness .c.inc with the same name as a module
+                {
+                    "file": "/test/repo/test/src/harness/command/backup/process.c.inc",
+                    "functions": [],
+                    "lines": [{"line_number": 1, "count": 1}],
+                },
                 # A file that is compiled but is not one of the modules being reported on
                 {"file": "/test/repo/src/common/other.c", "functions": [], "lines": [{"line_number": 1, "count": 1}]},
             ]

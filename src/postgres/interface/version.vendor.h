@@ -296,7 +296,7 @@ Types from src/include/catalog/pg_control.h
 #elif PG_VERSION >= PG_VERSION_19
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	1902
+#define PG_CONTROL_VERSION	1905
 
 #elif PG_VERSION >= PG_VERSION_18
 
@@ -388,9 +388,6 @@ typedef struct CheckPoint
 	 * set to InvalidTransactionId.
 	 */
 	TransactionId oldestActiveXid;
-
-	/* data checksums state at the time of the checkpoint  */
-	uint32		dataChecksumState;
 } CheckPoint;
 
 #elif PG_VERSION >= PG_VERSION_17
@@ -694,7 +691,13 @@ typedef struct ControlFileData
 
 	bool		float8ByVal;	/* float8, int8, etc pass-by-value? */
 
-	/* Are data pages protected by checksums? Zero if no checksum version */
+	/*
+	 * Data checksum state at cluster initialization. Since the state can be
+	 * changed during runtime, we need to store the initial value for system
+	 * functions which report initdb settings.
+	 */
+	uint32		data_checksum_version_init;
+	/* Current data checksums state */
 	uint32		data_checksum_version;
 
 	/*
@@ -1701,7 +1704,7 @@ Types from src/include/access/xlog_internal.h
 
 #elif PG_VERSION >= PG_VERSION_19
 
-#define XLOG_PAGE_MAGIC 0xD121	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD122	/* can be used as WAL version indicator */
 
 #elif PG_VERSION >= PG_VERSION_18
 
