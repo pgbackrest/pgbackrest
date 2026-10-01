@@ -144,11 +144,13 @@ ioReadInternal(IoRead *const this, Buffer *const buffer, const bool block)
             // Process the input buffer (or flush if NULL)
             if (this->input == NULL || !bufEmpty(this->input))
                 ioFilterGroupProcess(this->pub.filterGroup, this->input, buffer);
-
-            // Stop if not blocking -- we don't need to fill the buffer as long as we got some data
-            if (!block && bufUsed(buffer) > bufferUsedBegin)
-                break;
         }
+
+        // Stop if not blocking -- we don't need to fill the buffer as long as we got some data. Eof is not set here even when the
+        // filter group is done, since the data may be in the internal output buffer, which callers read until eof. It will be set
+        // by the next read, which gets no data.
+        if (!block && bufUsed(buffer) > bufferUsedBegin)
+            break;
 
         // Eof when no more input and the filter group is done
         this->pub.eofAll = ioReadEofDriver(this) && ioFilterGroupDone(this->pub.filterGroup);

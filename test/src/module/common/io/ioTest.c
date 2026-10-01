@@ -251,6 +251,76 @@ ioTestFilterMultiplyNew(const StringId type, unsigned int multiplier, unsigned i
 }
 
 /***********************************************************************************************************************************
+Test filter that holds its input and only writes it to the output on flush, as a filter must when it cannot tell what to do with
+what it holds until it has seen the end of the input
+***********************************************************************************************************************************/
+typedef struct IoTestFilterHold
+{
+    Buffer *holdBuffer;                                             // Input held until flush
+    IoFilter *bufferFilter;                                         // Writes the held input to the output
+    bool done;                                                      // Has all the held input been written?
+} IoTestFilterHold;
+
+static void
+ioTestFilterHoldProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
+{
+    THIS(IoTestFilterHold);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, this);
+        FUNCTION_LOG_PARAM(BUFFER, input);
+        FUNCTION_LOG_PARAM(BUFFER, output);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(output != NULL && bufRemains(output) > 0);
+
+    if (input != NULL)
+        bufCat(this->holdBuffer, input);
+    else
+    {
+        ioFilterProcessInOut(this->bufferFilter, this->holdBuffer, output);
+        this->done = !ioFilterInputSame(this->bufferFilter);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+static bool
+ioTestFilterHoldDone(const THIS_VOID)
+{
+    THIS(const IoTestFilterHold);
+
+    return this->done;
+}
+
+static bool
+ioTestFilterHoldInputSame(const THIS_VOID)
+{
+    THIS(const IoTestFilterHold);
+
+    return ioFilterInputSame(this->bufferFilter);
+}
+
+static IoFilter *
+ioTestFilterHoldNew(void)
+{
+    OBJ_NEW_BEGIN(IoTestFilterHold, .childQty = MEM_CONTEXT_QTY_MAX)
+    {
+        *this = (IoTestFilterHold)
+        {
+            .holdBuffer = bufNew(0),
+            .bufferFilter = ioBufferNew(),
+        };
+    }
+    OBJ_NEW_END();
+
+    return ioFilterNewP(
+        STRID5("hold", 0x231e80), this, NULL, .done = ioTestFilterHoldDone, .inOut = ioTestFilterHoldProcess,
+        .inputSame = ioTestFilterHoldInputSame);
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -498,6 +568,40 @@ testRun(void)
         // Read line without eof
         read = ioBufferReadNewOpen(BUFSTRDEF("1234"));
         TEST_RESULT_STR_Z(ioReadLineParam(read, true), "1234", "read line without eof");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("eof is not set while output that a filter wrote on flush is still to be read");
+
+        // The filter writes all its output on flush, which is more than the buffer holds, so it is written over several calls. The
+        // last of them leaves two lines in the buffer, which must both be read before eof.
+        ioBufferSizeSet(8);
+
+        read = ioBufferReadNew(BUFSTRDEF("1\n2\n3\n4\n5\n6\n7\n8\n9\nA\n"));
+        ioFilterGroupAdd(ioReadFilterGroup(read), ioTestFilterHoldNew());
+        ioReadOpen(read);
+
+        StringList *const lineList = strLstNew();
+
+        while (!ioReadEof(read))
+            strLstAdd(lineList, ioReadLineParam(read, true));
+
+        TEST_RESULT_STRLST_Z(lineList, "1\n2\n3\n4\n5\n6\n7\n8\n9\nA\n\n", "all lines read, then an empty line at eof");
+
+        read = ioBufferReadNew(BUFSTRDEF("0123456789ABCDEFGHIJKLMNOPQRS"));
+        ioFilterGroupAdd(ioReadFilterGroup(read), ioTestFilterHoldNew());
+        ioReadOpen(read);
+
+        Buffer *const smallAll = bufNew(0);
+
+        while (!ioReadEof(read))
+        {
+            Buffer *const small = bufNew(3);
+
+            ioReadSmall(read, small);
+            bufCat(smallAll, small);
+        }
+
+        TEST_RESULT_STR_Z(strNewBuf(smallAll), "0123456789ABCDEFGHIJKLMNOPQRS", "all bytes read in small reads");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("ioCopyP()");
