@@ -82,7 +82,8 @@ cryptoRandomBytes(uint8_t *const buffer, const size_t size)
     ASSERT(buffer != NULL);
     ASSERT(size > 0);
 
-    RAND_bytes(buffer, (int)size);
+    // A failure must not go unnoticed since the caller would be left with bytes that are not random, e.g. a salt or a key
+    cryptoError(RAND_bytes(buffer, (int)size) != 1, "unable to generate random bytes");
 
     FUNCTION_LOG_RETURN_VOID();
 }

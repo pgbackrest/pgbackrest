@@ -179,6 +179,14 @@
 
                 <p>Allow test user names that adduser on Debian rejects.</p>
             </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="j0uinim"/>
+                </release-item-contributor-list>
+
+                <p>Check the result of <code>RAND_bytes()</code>.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
