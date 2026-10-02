@@ -175,7 +175,10 @@ cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t s
             uint8_t key[EVP_MAX_KEY_LENGTH];
             uint8_t initVector[EVP_MAX_IV_LENGTH];
 
-            EVP_BytesToKey(this->cipher, this->digest, salt, bufPtrConst(this->pass), (int)bufSize(this->pass), 1, key, initVector);
+            cryptoError(
+                EVP_BytesToKey(
+                    this->cipher, this->digest, salt, bufPtrConst(this->pass), (int)bufSize(this->pass), 1, key, initVector) == 0,
+                "unable to generate key and initialization vector");
 
             // Create context to track cipher
             cryptoError(!(this->cipherContext = EVP_CIPHER_CTX_new()), "unable to create context");
