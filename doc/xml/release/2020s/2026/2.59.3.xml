@@ -1,5 +1,9 @@
 <release date="XXXX-XX-XX" version="2.59.3dev" title="Under Development">
     <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: In prior versions it was possible for weak encryption subkeys and salts to be generated if there was an error accessing system random data.</p>
+        </text>
+
         <release-bug-list>
             <release-item>
                 <github-issue id="2866"/>
@@ -11,6 +15,20 @@
                 </release-item-contributor-list>
 
                 <p>Fix possible checksum error loading encrypted info and manifest files.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2866"/>
+                <github-pull-request id="2867"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="j0uinim"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix possible weak encryption subkeys/salts.</p>
             </release-item>
         </release-bug-list>
     </release-core-list>

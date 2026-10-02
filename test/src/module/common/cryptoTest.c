@@ -15,6 +15,20 @@ Data for testing
 #define TEST_BUFFER_SIZE                                            256
 
 /***********************************************************************************************************************************
+Shim for RAND_bytes() that returns testRandBytesResult when testRandBytesResult != 1
+***********************************************************************************************************************************/
+static int testRandBytesResult = 1;
+
+int
+RAND_bytes(unsigned char *const buf, const int num)
+{
+    if (testRandBytesResult != 1)
+        return testRandBytesResult;
+
+    return RAND_priv_bytes(buf, num);
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -67,6 +81,19 @@ testRun(void)
                 nonZeroTotal++;
 
         TEST_RESULT_INT_NE(nonZeroTotal, 0, "check that there are non-zero values in the buffer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on RAND_bytes() failure");
+
+        testRandBytesResult = 0;
+        TEST_ERROR(
+            cryptoRandomBytes(buffer, sizeof(buffer)), CryptoError, "unable to generate random bytes: [0] no details available");
+
+        testRandBytesResult = -1;
+        TEST_ERROR(
+            cryptoRandomBytes(buffer, sizeof(buffer)), CryptoError, "unable to generate random bytes: [0] no details available");
+
+        testRandBytesResult = 1;
     }
 
     // *****************************************************************************************************************************
