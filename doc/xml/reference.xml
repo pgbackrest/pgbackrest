@@ -2877,7 +2877,7 @@
                 <text>
                     <p>Verify determines if the backups and archives in a repository are valid.</p>
 
-                    <p>At repository format 6 or higher, files stored in a bundle are verified with a checksum of the entire bundle. A bundle that fails verification is reported once for each backup that has files stored in it, and those files are counted as invalid.</p>
+                    <p>At repository format 6 or higher, files stored in a bundle are verified with a checksum of the entire bundle rather than individually. Since verification is performed at the bundle level, all files stored in a bundle that fails verification are counted as invalid, even when only part of the bundle is damaged. The bundle is reported once for each backup that has files stored in it.</p>
                 </text>
 
                 <option-list>
