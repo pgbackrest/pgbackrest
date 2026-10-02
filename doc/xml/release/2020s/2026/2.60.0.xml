@@ -184,8 +184,12 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2867"/>
+
                 <release-item-contributor-list>
                     <release-item-contributor id="j0uinim"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
                 <p>Check the result of <code>RAND_bytes()</code>.</p>
