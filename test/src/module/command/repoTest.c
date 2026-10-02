@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Repo Commands
 ***********************************************************************************************************************************/
+#include "common/format/cipherBlockFormat.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 #include "storage/posix/storage.h"
@@ -613,6 +614,51 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
         strLstAddFmt(
             argList, "%s/repo/" STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            TEST_PATH);
+        HRN_CFG_LOAD(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, archiveFileBuffer), true, "get matches put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted format 6 WAL archive file");
+
+        // Format 6 archive.info with the migrated key at id 0 and the current key at id 1
+        HRN_INFO_PUT(
+            storageFixture, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE,
+            "[cipher]\n"
+            "cipher-pass={\"0\":{\"digest\":\"sha1\",\"key\":\"custom\"},\"1\":{\"digest\":\"sha256\",\"key\":\"custom6\"}}\n"
+            "cipher-pass-current=\"1\"\n"
+            "\n"
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=6846378200844646865\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6846378200844646865,\"db-version\":\"12\"}",
+            .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC);
+
+        // Store the WAL as format 6 with the key id in the header
+        Buffer *const archiveFileBuffer6 = bufNew(0);
+        IoWrite *const archiveFileWrite6 = ioBufferWriteNew(archiveFileBuffer6);
+
+        cipherBlockFormatFilterGroupWriteAddP(
+            ioWriteFilterGroup(archiveFileWrite6), TEST_CIPHER_SPEC_PASS("custom6"), REPOSITORY_FORMAT_6, .keyId = STRDEF("1"));
+        ioWriteOpen(archiveFileWrite6);
+        ioWrite(archiveFileWrite6, archiveFileBuffer);
+        ioWriteClose(archiveFileWrite6);
+
+        HRN_STORAGE_PUT(
+            storageFixture, STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000002-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            archiveFileBuffer6);
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
+        strLstAddFmt(
+            argList, "%s/repo/" STORAGE_PATH_ARCHIVE "/test/12-1/000000010000000100000002-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
             TEST_PATH);
         HRN_CFG_LOAD(cfgCmdRepoGet, argList);
 

@@ -1110,10 +1110,18 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
+        // Set archive.info to an older timestamp so we can be sure it was updated as part of expire
+        const time_t archiveInfoOldTimestamp = 967746268;
+        HRN_STORAGE_TIME(storageRepo(), INFO_ARCHIVE_PATH_FILE, archiveInfoOldTimestamp);
+
         TEST_RESULT_VOID(cmdExpire(), "expire last backup in archive sub path and remove sub path");
         TEST_RESULT_BOOL(
             storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000")), false,
             "archive sub path removed repo1");
+
+        // Check archive.info timestamp was updated
+        TEST_RESULT_INT_NE(
+            storageInfoP(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR).timeModified, archiveInfoOldTimestamp, "time updated");
 
         TEST_RESULT_LOG(
             "P00   INFO: repo1: expire full backup 20181119-152138F\n"
@@ -1145,10 +1153,13 @@ testRun(void)
             storageTest, TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT,
             TEST_PATH "/repo/backup/db/" INFO_BACKUP_FILE INFO_COPY_EXT ".save");
 
-        // Rename archive.info file on repo2 to cause error
+        // Rename archive.info files on repo2 to cause error
         HRN_STORAGE_MOVE(
             storageTest, TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE,
             TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE ".save");
+        HRN_STORAGE_MOVE(
+            storageTest, TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE INFO_COPY_EXT,
+            TEST_PATH "/repo2/archive/db/" INFO_ARCHIVE_FILE INFO_COPY_EXT ".save");
 
         // Configure dry-run
         argList2 = strLstDup(argList);
@@ -1179,8 +1190,11 @@ testRun(void)
             "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
             " archiving scheme.");
 
-        // Restore saved archive.info file
+        // Restore saved archive.info files
         HRN_STORAGE_MOVE(storageTest, "repo2/archive/db/" INFO_ARCHIVE_FILE ".save", "repo2/archive/db/" INFO_ARCHIVE_FILE);
+        HRN_STORAGE_MOVE(
+            storageTest, "repo2/archive/db/" INFO_ARCHIVE_FILE INFO_COPY_EXT ".save",
+            "repo2/archive/db/" INFO_ARCHIVE_FILE INFO_COPY_EXT);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire command - multi-repo, continue to next repo after error");
@@ -1220,10 +1234,10 @@ testRun(void)
         TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) - log expired backups and archive path to remove");
 
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE, "10-2/\n9.4-1/\narchive.info\n", .noRecurse = true,
+            storageRepo(), STORAGE_REPO_ARCHIVE, "10-2/\n9.4-1/\narchive.info\narchive.info.copy\n", .noRecurse = true,
             .comment = "repo1: 9.4-1 archive path not removed");
         TEST_STORAGE_LIST(
-            storageRepoIdx(1), STORAGE_REPO_ARCHIVE, "10-2/\n9.4-1/\narchive.info\n", .noRecurse = true,
+            storageRepoIdx(1), STORAGE_REPO_ARCHIVE, "10-2/\n9.4-1/\narchive.info\narchive.info.copy\n", .noRecurse = true,
             .comment = "repo2: 9.4-1 archive path not removed");
         TEST_STORAGE_LIST(
             storageRepoIdx(1), STORAGE_REPO_ARCHIVE "/9.4-1/",
@@ -1289,10 +1303,10 @@ testRun(void)
         TEST_RESULT_VOID(cmdExpire(), "expire backups and remove archive path");
 
         TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE, "10-2/\narchive.info\n", .noRecurse = true,
+            storageRepo(), STORAGE_REPO_ARCHIVE, "10-2/\narchive.info\narchive.info.copy\n", .noRecurse = true,
             .comment = "repo1: retention-archive-type=full so 9.4-1 archive path removed");
         TEST_STORAGE_LIST(
-            storageRepoIdx(1), STORAGE_REPO_ARCHIVE, "10-2/\n9.4-1/\narchive.info\n", .noRecurse = true,
+            storageRepoIdx(1), STORAGE_REPO_ARCHIVE, "10-2/\n9.4-1/\narchive.info\narchive.info.copy\n", .noRecurse = true,
             .comment = "repo2: retention-archive-type=diff so 9.4-1 archive path not removed");
         TEST_STORAGE_LIST(
             storageRepoIdx(1), STORAGE_REPO_ARCHIVE "/9.4-1/",
@@ -2710,6 +2724,104 @@ testRun(void)
             storageInfoP(storageRepoIdx(1), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination, STRDEF("20181119-152850F"),
             "latest link updated, repo2");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive key rotation set at format 5");
+
+        argList = strLstDup(argListAvoidWarn);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherRotate, 2, "30d");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
+            "P00   INFO: repo2: 12-2 no archive to remove\n"
+            "P00   WARN: option 'repo2-cipher-rotate' requires repository format 6 or higher");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive key not due for rotation");
+
+        const time_t timeRotate = time(NULL);
+
+        #define TEST_ARCHIVE_INFO_FORMAT_6(rotateTime)                                                                             \
+            zNewFmt(                                                                                                               \
+                "[cipher]\n"                                                                                                       \
+                "cipher-pass={\"1\":{\"digest\":\"sha256\",\"key\":\"" TEST_CIPHER_PASS_ARCHIVE "\"}}\n"                           \
+                "cipher-pass-current=\"1\"\n"                                                                                      \
+                "cipher-pass-rotate=%" PRId64 "\n"                                                                                 \
+                "\n"                                                                                                               \
+                "[db]\n"                                                                                                           \
+                "db-id=2\n"                                                                                                        \
+                "db-system-id=6626363367545678089\n"                                                                               \
+                "db-version=\"12\"\n"                                                                                              \
+                "\n"                                                                                                               \
+                "[db:history]\n"                                                                                                   \
+                "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"                                                       \
+                "2={\"db-id\":6626363367545678089,\"db-version\":\"12\"}",                                                         \
+                (int64_t)(rotateTime))
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_FORMAT_6(timeRotate - 29 * SEC_PER_DAY),
+            .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
+            "P00   INFO: repo2: 12-2 no archive to remove");
+
+        InfoArchive *infoArchive = NULL;
+
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, TEST_CIPHER_SPEC), "load archive info");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive)), "1", "current key not rotated");
+        TEST_RESULT_INT(infoArchiveCipherRotateTime(infoArchive), timeRotate - 29 * SEC_PER_DAY, "rotation time unchanged");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive key due for rotation, dry run");
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_FORMAT_6(timeRotate - 31 * SEC_PER_DAY),
+            .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC);
+
+        StringList *argListDryRun = strLstDup(argList);
+        hrnCfgArgRawBool(argListDryRun, cfgOptDryRun, true);
+        HRN_CFG_LOAD(cfgCmdExpire, argListDryRun);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: [DRY-RUN] repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
+            "P00   INFO: [DRY-RUN] repo2: 12-2 no archive to remove\n"
+            "P00   INFO: [DRY-RUN] repo2: rotate archive key to id 2");
+
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, TEST_CIPHER_SPEC), "load archive info");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive)), "1", "current key not rotated");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive key due for rotation");
+
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
+            "P00   INFO: repo2: 12-2 no archive to remove\n"
+            "P00   INFO: repo2: rotate archive key to id 2");
+
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, TEST_CIPHER_SPEC), "load archive info");
+
+        const CipherSpecMap *const cipherSpecMapRotate = infoArchiveCipherSpecMap(infoArchive);
+
+        TEST_RESULT_UINT(cipherSpecMapSize(cipherSpecMapRotate), 2, "prior key kept");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(cipherSpecMapRotate), "2", "new key is current");
+        TEST_RESULT_UINT(
+            cipherSpecDigest(cipherSpecMapGet(cipherSpecMapRotate, STRDEF("2"))), hashTypeSha256, "new key derives with sha256");
+        TEST_RESULT_BOOL(infoArchiveCipherRotateTime(infoArchive) >= timeRotate, true, "rotation time updated");
+
         // Cleanup
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
         harnessLogLevelReset();
@@ -3061,6 +3173,17 @@ testRun(void)
             "1={\"db-catalog-version\":202506291,\"db-control-version\":1800,\"db-system-id\":7577015877005525116"
             ",\"db-version\":\"18\"}\n");
 
+        // Create archive info
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=7577015877005525116\n"
+            "db-version=\"18\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":7577015877005525116,\"db-version\":\"18\"}");
+
         TEST_RESULT_VOID(cmdExpire(), "no backups to expire using --oldest");
         TEST_RESULT_LOG(
             "P00   WARN: repo1: expire oldest requested but no eligible full backup to expire");
@@ -3182,17 +3305,6 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101453F_20251127-101458D/" BACKUP_MANIFEST_FILE);
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101503F/" BACKUP_MANIFEST_FILE);
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101503F_20251127-101508D/" BACKUP_MANIFEST_FILE);
-
-        // Create archive info
-        HRN_INFO_PUT(
-            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
-            "[db]\n"
-            "db-id=1\n"
-            "db-system-id=7577015877005525116\n"
-            "db-version=\"18\"\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-id\":7577015877005525116,\"db-version\":\"18\"}");
 
         // Create archive directories and generate archive
         archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 32, "18-1", "0000000100000000");

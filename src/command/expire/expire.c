@@ -7,7 +7,9 @@ Expire Command
 #include "command/backup/common.h"
 #include "command/control/common.h"
 #include "command/expire/expire.h"
+#include "command/stanza/common.h"
 #include "common/debug.h"
+#include "common/format/format.h"
 #include "common/regExp.h"
 #include "common/time.h"
 #include "common/type/list.h"
@@ -1081,6 +1083,56 @@ removeExpiredHistory(const InfoBackup *const infoBackup, const unsigned int repo
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Rotate the archive key when it is older than the rotation period
+***********************************************************************************************************************************/
+static void
+expireArchiveCipherRotate(InfoArchive *const infoArchive, const unsigned int repoIdx)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_ARCHIVE, infoArchive);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
+    FUNCTION_LOG_END();
+
+    ASSERT(infoArchive != NULL);
+
+    if (cfgOptionIdxTest(cfgOptRepoCipherRotate, repoIdx))
+    {
+        // Format < 6 has a single archive key that cannot be rotated. Warn only when the option is not the default.
+        if (infoArchiveFormat(infoArchive) < REPOSITORY_FORMAT_6)
+        {
+            if (cfgOptionIdxSource(cfgOptRepoCipherRotate, repoIdx) != cfgSourceDefault)
+            {
+                LOG_WARN_FMT(
+                    "option '%s' requires repository format %d or higher", cfgOptionIdxName(cfgOptRepoCipherRotate, repoIdx),
+                    REPOSITORY_FORMAT_6);
+            }
+        }
+        else
+        {
+            const time_t timeNow = time(NULL);
+
+            if (infoArchiveCipherRotateTime(infoArchive) <
+                timeNow - (time_t)(cfgOptionIdxUInt64(cfgOptRepoCipherRotate, repoIdx) / MSEC_PER_SEC))
+            {
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    infoArchiveCipherRotate(
+                        infoArchive,
+                        cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), infoArchiveFormat(infoArchive)), timeNow);
+                }
+                MEM_CONTEXT_TEMP_END();
+
+                LOG_INFO_FMT(
+                    "%s: rotate archive key to id %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
+                    strZ(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive))));
+            }
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN void
 cmdExpire(void)
@@ -1239,6 +1291,19 @@ cmdExpire(void)
                 removeExpiredBackup(infoBackup, adhocBackupLabel, repoIdx);
                 removeExpiredArchive(infoBackup, timeBasedFullRetention, repoIdx);
                 removeExpiredHistory(infoBackup, repoIdx);
+
+                // Load archive info and rotate the archive key when it is due
+                InfoArchive *const infoArchive = infoArchiveLoadFile(
+                    storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+
+                expireArchiveCipherRotate(infoArchive, repoIdx);
+
+                // Save archive.info/copy to update the timestamps and prevent lifecycle settings from removing the files early
+                if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                {
+                    infoArchiveSaveFile(
+                        infoArchive, storageRepoIdxWrite(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                }
 
                 // Check the oldest retained backup for page checksum errors and issue a warning if any
                 if (infoBackupDataTotal(infoBackup) > 0)

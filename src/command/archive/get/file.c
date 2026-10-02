@@ -7,8 +7,8 @@ Archive Get File
 #include "command/archive/get/file.h"
 #include "command/control/common.h"
 #include "common/compress/helper.h"
-#include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/io/filter/group.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -53,12 +53,11 @@ archiveGetFile(
                 StorageWrite *const destination = storageNewWriteP(
                     storage, walDestination, .noCreatePath = true, .noSyncFile = true, .noSyncPath = true, .noAtomic = true);
 
-                // If there is a cipher then add the decrypt filter
-                if (cipherSpecType(actual->cipherSpecArchive) != cipherTypeNone)
+                // Add decrypt filter to read the format header
+                if (cipherSpecMapSize(actual->cipherSpecArchive) != 0)
                 {
-                    ioFilterGroupAdd(
-                        ioWriteFilterGroup(storageWriteIo(destination)),
-                        cipherBlockNewP(cipherModeDecrypt, actual->cipherSpecArchive));
+                    cipherBlockFormatFilterGroupReadAddMap(
+                        ioWriteFilterGroup(storageWriteIo(destination)), actual->cipherSpecArchive);
                     compressible = false;
                 }
 
