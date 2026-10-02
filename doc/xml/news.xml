@@ -3,6 +3,80 @@
     <description>News</description>
 
     <!-- ======================================================================================================================= -->
+    <section id="weak-encryption" date="2026-10-02">
+        <title>Weak Encryption Subkeys and Salts</title>
+
+        <p>Versions of <backrest/> prior to 2.60.0 did not check for an error when generating random data for encryption. If OpenSSL was unable to get random data from the operating system, then encryption subkeys and salts were generated from data already in memory and no error was reported. Repositories without encryption are not affected.</p>
+
+        <p>This error should be rare. Possible causes include a sandbox or seccomp policy that blocks the <code>getrandom()</code> system call and an invalid OpenSSL configuration. The error may be intermittent, so a repository could have weak salts but no weak subkeys, or the reverse.</p>
+
+        <section id="impact">
+            <title>Impact</title>
+
+            <p>The WAL subkey is stored in <file>archive.info</file>, the manifest subkey is stored in <file>backup.info</file>, and the subkey for the files in each backup is stored in its <file>backup.manifest</file>. A weak subkey is easier to guess than a random subkey, and a guessed subkey decrypts the files encrypted with it without <br-option>repo-cipher-pass</br-option>. How much easier depends on what was in memory, which varies by platform and build. A weak subkey in <file>backup.info</file> also exposes the subkey of every backup, since the manifests are encrypted with it.</p>
+
+            <p>A weak salt does not expose a subkey. Files encrypted with the same subkey and salt use the same key and IV, so identical data in those files produces identical encrypted data. The salt is stored unencrypted at the start of each file, and a weak salt may contain up to eight bytes of data that was previously in memory.</p>
+        </section>
+
+        <section id="check-subkey">
+            <title>Check Subkeys</title>
+
+            <p>Run the following on a host that has access to the repository, with <code>STANZA</code> set to the stanza name. Add <br-option>--repo</br-option> to the <cmd>pgbackrest</cmd> commands to check a repository other than the first.</p>
+
+            <code-block>
+STANZA=demo
+
+for file in archive/$STANZA/archive.info backup/$STANZA/backup.info \
+    $(pgbackrest --stanza=$STANZA repo-ls backup/$STANZA --filter='^[0-9]{8}-[0-9]{6}F' |
+      sed "s|^|backup/$STANZA/|; s|$|/backup.manifest|")
+do
+    for key in $(pgbackrest --stanza=$STANZA repo-get $file | grep '^cipher-pass=' | grep -oE '[A-Za-z0-9+/]{64}'); do
+        echo "$(printf '%s' $key | base64 -d | od -An -v -tx1 | tr -s ' ' '\n' | grep -c '^00$') $file"
+    done
+done
+            </code-block>
+
+            <p>The first column is the number of zero bytes in the subkey. A random subkey has six or more zero bytes less than once in 25 million, while the weak subkeys found in testing had 13 or more. A subkey with six or more zero bytes should be considered weak.</p>
+        </section>
+
+        <section id="check-salt">
+            <title>Check Salts</title>
+
+            <p>Set <code>LIMIT</code> to the number of WAL files to check, starting with the most recent. The salt is read from the first 16 bytes of each file.</p>
+
+            <code-block>
+STANZA=demo
+LIMIT=1000
+
+pgbackrest --stanza=$STANZA repo-ls archive/$STANZA --recurse --sort=desc --filter='[0-9A-F]{24}-' | head -n $LIMIT |
+while read -r file; do
+    pgbackrest --stanza=$STANZA --raw repo-get archive/$STANZA/$file 2>/dev/null | head -c 16 | od -An -v -tx1 -j8 | tr -d ' \n'
+    echo
+done | sort | uniq -c | sort -rn | head -n 5
+            </code-block>
+
+            <p>The output lists the most common salts and the number of files that use each. With random salts every count is 1. A count greater than 1 or a salt of all zeros means that weak salts were generated. Salts in backup files are not checked.</p>
+        </section>
+
+        <section id="openssl-1-0">
+            <title>OpenSSL 1.0</title>
+
+            <p>Versions of <backrest/> prior to 2.53 could be built with OpenSSL 1.0, which generates random data from a state that was not seeded with random data when it is unable to get random data from the operating system. Weak subkeys and salts generated this way cannot be detected with the checks above.</p>
+        </section>
+
+        <section id="remediation">
+            <title>Remediation</title>
+
+            <list>
+                <list-item>Upgrade to <backrest/> 2.60.0 or later, which reports an error when random data cannot be generated.</list-item>
+                <list-item>If the subkey in <file>archive.info</file> or <file>backup.info</file> is weak, create the stanza in a new repository and keep the old repository only as long as its backups are needed.</list-item>
+                <list-item>If only backup subkeys are weak, take a new full backup and expire the affected backups when they are no longer needed.</list-item>
+                <list-item>Files with weak salts are removed as WAL and backups expire.</list-item>
+            </list>
+        </section>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="release-2-59-2" date="2026-09-27">
         <title><backrest/> 2.59.2 Released</title>
 

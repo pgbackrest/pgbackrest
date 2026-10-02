@@ -2,6 +2,8 @@
     <release-core-list>
         <text>
             <p><b>IMPORTANT NOTE</b>: The <cmd>restore</cmd> command will now error and stop if any restored file contains an invalid page checksum, which leaves the cluster incomplete and unable to start, so the restore must be rerun. The <cmd>expire</cmd> command will now refuse to expire if the oldest retained backup would contain checksum errors, which also prevents archive from being expired in that repository. Set <br-option>checksum-page-error=n</br-option> to warn instead of erroring.</p>
+
+            <p><b>IMPORTANT NOTE</b>: In prior versions it was possible for weak encryption subkeys and salts to be generated if there was an error accessing system random data. See <link page="news" section="/weak-encryption">Weak Encryption Subkeys and Salts</link> for more information.</p>
         </text>
 
         <release-bug-list>
@@ -15,6 +17,19 @@
                 </release-item-contributor-list>
 
                 <p>Fix possible checksum error loading encrypted info and manifest files.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2866"/>
+                <github-pull-request id="2867"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="j0uinim"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix possible weak encryption subkeys/salts.</p>
             </release-item>
         </release-bug-list>
 
@@ -195,19 +210,6 @@
                 </release-item-contributor-list>
 
                 <p>Allow test user names that adduser on Debian rejects.</p>
-            </release-item>
-
-            <release-item>
-                <github-issue id="2866"/>
-                <github-pull-request id="2867"/>
-
-                <release-item-contributor-list>
-                    <release-item-contributor id="j0uinim"/>
-                    <release-item-reviewer id="david.steele"/>
-                    <release-item-reviewer id="stefan.fercot"/>
-                </release-item-contributor-list>
-
-                <p>Check the result of <code>RAND_bytes()</code>.</p>
             </release-item>
         </release-development-list>
     </release-core-list>
