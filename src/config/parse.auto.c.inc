@@ -29,6 +29,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("12"),                                                                                              // val/str
     PARSE_RULE_STRPUB("128KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("128MiB"),                                                                                          // val/str
+    PARSE_RULE_STRPUB("15d"),                                                                                             // val/str
     PARSE_RULE_STRPUB("15m"),                                                                                             // val/str
     PARSE_RULE_STRPUB("15s"),                                                                                             // val/str
     PARSE_RULE_STRPUB("16GiB"),                                                                                           // val/str
@@ -72,8 +73,10 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("8MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("9"),                                                                                               // val/str
     PARSE_RULE_STRPUB("900"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("90d"),                                                                                             // val/str
     PARSE_RULE_STRPUB("999"),                                                                                             // val/str
     PARSE_RULE_STRPUB("9999999"),                                                                                         // val/str
+    PARSE_RULE_STRPUB("9999999d"),                                                                                        // val/str
     PARSE_RULE_STRPUB("accept-new"),                                                                                      // val/str
     PARSE_RULE_STRPUB("aes-256-cbc"),                                                                                     // val/str
     PARSE_RULE_STRPUB("asc"),                                                                                             // val/str
@@ -168,6 +171,7 @@ typedef enum
     parseRuleValStrQT_12_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_128KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_128MiB_QT,                                                                                     // val/str/enum
+    parseRuleValStrQT_15d_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_15m_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_15s_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_16GiB_QT,                                                                                      // val/str/enum
@@ -211,8 +215,10 @@ typedef enum
     parseRuleValStrQT_8MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_9_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_900_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_90d_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_999_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_9999999_QT,                                                                                    // val/str/enum
+    parseRuleValStrQT_9999999d_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_accept_DS_new_QT,                                                                              // val/str/enum
     parseRuleValStrQT_aes_DS_256_DS_cbc_QT,                                                                          // val/str/enum
     parseRuleValStrQT_asc_QT,                                                                                        // val/str/enum
@@ -483,6 +489,9 @@ static const int64_t parseRuleValueTime[] =
     3600000,                                                                                                             // val/time
     86400000,                                                                                                            // val/time
     604800000,                                                                                                           // val/time
+    1296000000,                                                                                                          // val/time
+    7776000000,                                                                                                          // val/time
+    863999913600000,                                                                                                     // val/time
 };
 
 static const uint8_t parseRuleValueTimeStrMap[] =
@@ -497,6 +506,9 @@ static const uint8_t parseRuleValueTimeStrMap[] =
     parseRuleValStrQT_1h_QT,                                                                                      // val/time/strmap
     parseRuleValStrQT_1d_QT,                                                                                      // val/time/strmap
     parseRuleValStrQT_7d_QT,                                                                                      // val/time/strmap
+    parseRuleValStrQT_15d_QT,                                                                                     // val/time/strmap
+    parseRuleValStrQT_90d_QT,                                                                                     // val/time/strmap
+    parseRuleValStrQT_9999999d_QT,                                                                                // val/time/strmap
 };
 
 typedef enum
@@ -511,6 +523,9 @@ typedef enum
     parseRuleValTime1h,                                                                                             // val/time/enum
     parseRuleValTime1d,                                                                                             // val/time/enum
     parseRuleValTime7d,                                                                                             // val/time/enum
+    parseRuleValTime15d,                                                                                            // val/time/enum
+    parseRuleValTime90d,                                                                                            // val/time/enum
+    parseRuleValTime9999999d,                                                                                       // val/time/enum
 } ParseRuleValueTime;
 
 /***********************************************************************************************************************************
@@ -5982,6 +5997,45 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                               // opt/repo-cipher-pass
         ),                                                                                                   // opt/repo-cipher-pass
     ),                                                                                                       // opt/repo-cipher-pass
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                      // opt/repo-cipher-rotate
+    (                                                                                                      // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_NAME("repo-cipher-rotate"),                                                      // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_TYPE(Time),                                                                      // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_RESET(true),                                                                     // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                  // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_SECTION(Global),                                                                 // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                  // opt/repo-cipher-rotate
+                                                                                                           // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-cipher-rotate
+        (                                                                                                  // opt/repo-cipher-rotate
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                              // opt/repo-cipher-rotate
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                              // opt/repo-cipher-rotate
+        ),                                                                                                 // opt/repo-cipher-rotate
+                                                                                                           // opt/repo-cipher-rotate
+        PARSE_RULE_OPTIONAL                                                                                // opt/repo-cipher-rotate
+        (                                                                                                  // opt/repo-cipher-rotate
+            PARSE_RULE_OPTIONAL_GROUP                                                                      // opt/repo-cipher-rotate
+            (                                                                                              // opt/repo-cipher-rotate
+                PARSE_RULE_OPTIONAL_DEPEND                                                                 // opt/repo-cipher-rotate
+                (                                                                                          // opt/repo-cipher-rotate
+                    PARSE_RULE_VAL_OPT(RepoCipherType),                                                    // opt/repo-cipher-rotate
+                    PARSE_RULE_VAL_STRID(aes_DS_256_DS_cbc),                                               // opt/repo-cipher-rotate
+                ),                                                                                         // opt/repo-cipher-rotate
+                                                                                                           // opt/repo-cipher-rotate
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                            // opt/repo-cipher-rotate
+                (                                                                                          // opt/repo-cipher-rotate
+                    PARSE_RULE_VAL_TIME(15d),                                                              // opt/repo-cipher-rotate
+                    PARSE_RULE_VAL_TIME(9999999d),                                                         // opt/repo-cipher-rotate
+                ),                                                                                         // opt/repo-cipher-rotate
+                                                                                                           // opt/repo-cipher-rotate
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                // opt/repo-cipher-rotate
+                (                                                                                          // opt/repo-cipher-rotate
+                    PARSE_RULE_VAL_TIME(90d),                                                              // opt/repo-cipher-rotate
+                ),                                                                                         // opt/repo-cipher-rotate
+            ),                                                                                             // opt/repo-cipher-rotate
+        ),                                                                                                 // opt/repo-cipher-rotate
+    ),                                                                                                     // opt/repo-cipher-rotate
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                        // opt/repo-cipher-type
     (                                                                                                        // opt/repo-cipher-type
@@ -12218,6 +12272,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoBlockSizeSuper,                                                                                   // opt-resolve-order
     cfgOptRepoBlockSizeSuperFull,                                                                               // opt-resolve-order
     cfgOptRepoCipherPass,                                                                                       // opt-resolve-order
+    cfgOptRepoCipherRotate,                                                                                     // opt-resolve-order
     cfgOptRepoGcsKeyType,                                                                                       // opt-resolve-order
     cfgOptRepoHost,                                                                                             // opt-resolve-order
     cfgOptRepoHostConfig,                                                                                       // opt-resolve-order

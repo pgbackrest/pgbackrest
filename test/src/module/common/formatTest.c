@@ -51,6 +51,9 @@ testRun(void)
         const Buffer *const testPass = BUFSTRDEF(TEST_PASS);
         const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, testPass);
 
+        CipherSpecMap *const keyMapDefault = cipherSpecMapNew();
+        cipherSpecMapAdd(keyMapDefault, CIPHER_SPEC_MAP_ID_DEFAULT_STR, cipherSpec);
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("nothing is added when the repository is not encrypted");
 
@@ -58,7 +61,7 @@ testRun(void)
         IoWrite *plainWrite = ioBufferWriteNew(plain);
 
         TEST_RESULT_VOID(
-            cipherBlockFormatFilterGroupWriteAdd(plain, ioWriteFilterGroup(plainWrite), cipherSpecNewNone(), REPOSITORY_FORMAT_6),
+            cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(plainWrite), cipherSpecNewNone(), REPOSITORY_FORMAT_6),
             "add write filter for no cipher");
         ioWriteOpen(plainWrite);
         ioWrite(plainWrite, testPlainText);
@@ -77,14 +80,14 @@ testRun(void)
         Buffer *headerBuffer = bufNew(0);
         IoWrite *headerWrite = ioBufferWriteNew(headerBuffer);
 
-        cipherBlockFormatFilterGroupWriteAdd(headerBuffer, ioWriteFilterGroup(headerWrite), cipherSpec, REPOSITORY_FORMAT_6);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(headerWrite), cipherSpec, REPOSITORY_FORMAT_6);
         ioWriteOpen(headerWrite);
         ioWrite(headerWrite, testPlainText);
         ioWriteClose(headerWrite);
 
         TEST_RESULT_BOOL(
             memcmp(bufPtrConst(headerBuffer), CIPHER_BLOCK_FORMAT_MAGIC "006_", CIPHER_BLOCK_FORMAT_HEADER_SIZE) == 0, true,
-            "header names the format");
+            "header contains the format");
 
         // The format is not given on decrypt, so it comes from the header and is what the pass derives with
         Buffer *headerResult = bufNew(0);
@@ -113,7 +116,7 @@ testRun(void)
         Buffer *const piecesBuffer = bufNew(0);
         IoWrite *const piecesWrite = ioBufferWriteNew(piecesBuffer);
 
-        cipherBlockFormatFilterGroupWriteAdd(piecesBuffer, ioWriteFilterGroup(piecesWrite), cipherSpec, REPOSITORY_FORMAT_6);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(piecesWrite), cipherSpec, REPOSITORY_FORMAT_6);
         ioWriteOpen(piecesWrite);
         ioWrite(piecesWrite, piecesPlainText);
         ioWriteClose(piecesWrite);
@@ -165,7 +168,7 @@ testRun(void)
         Buffer *magicBuffer = bufNew(0);
         IoWrite *magicWrite = ioBufferWriteNew(magicBuffer);
 
-        cipherBlockFormatFilterGroupWriteAdd(magicBuffer, ioWriteFilterGroup(magicWrite), cipherSpec, REPOSITORY_FORMAT_5);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(magicWrite), cipherSpec, REPOSITORY_FORMAT_5);
         ioWriteOpen(magicWrite);
         ioWrite(magicWrite, testPlainText);
         ioWriteClose(magicWrite);
@@ -189,12 +192,12 @@ testRun(void)
             REPOSITORY_FORMAT_5, "filter reports the format before the header");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("a format given on decrypt must be the one the header names");
+        TEST_TITLE("a format given on decrypt must be the one the header contains");
 
         IoWrite *const headerMismatch = ioBufferWriteNew(bufNew(0));
 
         ioFilterGroupAdd(
-            ioWriteFilterGroup(headerMismatch), cipherBlockFormatNewP(cipherSpec, .format = REPOSITORY_FORMAT_5));
+            ioWriteFilterGroup(headerMismatch), cipherBlockFormatNewP(keyMapDefault, .format = REPOSITORY_FORMAT_5));
         ioWriteOpen(headerMismatch);
 
         TEST_ERROR(ioWrite(headerMismatch, headerBuffer), FormatError, "expected repository format 5 but found 6");
@@ -208,7 +211,7 @@ testRun(void)
         ioFilterGroupAdd(
             ioWriteFilterGroup(headerRead),
             cipherBlockFormatNewPack(
-                ioFilterParamList(cipherBlockFormatNewP(cipherSpec, .format = REPOSITORY_FORMAT_6))));
+                ioFilterParamList(cipherBlockFormatNewP(keyMapDefault, .format = REPOSITORY_FORMAT_6))));
         ioWriteOpen(headerRead);
         ioWrite(headerRead, headerBuffer);
         ioWriteClose(headerRead);
@@ -266,6 +269,247 @@ testRun(void)
         TEST_HEADER_DAMAGE(0, 'X', CryptoError, "cipher header invalid");
 
         #undef TEST_HEADER_DAMAGE
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read with the key id stored in the header");
+
+        const CipherSpec *const keySpecOld = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("oldkey"), .digest = hashTypeSha1);
+        const CipherSpec *const keySpecNew = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("newkey"));
+
+        CipherSpecMap *const keyMap = cipherSpecMapNew();
+        cipherSpecMapAdd(keyMap, STRDEF(CIPHER_SPEC_MAP_ID_DEFAULT), keySpecOld);
+        cipherSpecMapAdd(keyMap, STRDEF("7"), keySpecNew);
+
+        Buffer *const keyBuffer = bufNew(0);
+        IoRead *const keyWrite = ioBufferReadNew(testPlainText);
+        Buffer *const keyPiece = bufNew(4);
+
+        // Build the write filters from their param lists, as the remote protocol does
+        IoFilterGroup *const keyWriteGroup = ioFilterGroupNew();
+        cipherBlockFormatFilterGroupWriteAddP(keyWriteGroup, keySpecNew, REPOSITORY_FORMAT_6, .keyId = STRDEF("7"));
+
+        PackRead *const keyWriteParam = pckReadNew(ioFilterGroupParamAll(keyWriteGroup));
+
+        TEST_RESULT_UINT(pckReadStrIdP(keyWriteParam), CIPHER_BLOCK_FILTER_TYPE, "block cipher filter");
+        ioFilterGroupAdd(ioReadFilterGroup(keyWrite), cipherBlockNewPack(pckReadPackP(keyWriteParam)));
+        TEST_RESULT_UINT(pckReadStrIdP(keyWriteParam), CIPHER_BLOCK_FORMAT_HEADER_FILTER_TYPE, "header filter");
+        ioFilterGroupAdd(ioReadFilterGroup(keyWrite), cipherBlockFormatHeaderNewPack(pckReadPackP(keyWriteParam)));
+
+        // Take the result in pieces smaller than the header so the header is written in more than one part
+        ioBufferSizeSet(4);
+        ioReadOpen(keyWrite);
+
+        while (!ioReadEof(keyWrite))
+        {
+            bufUsedZero(keyPiece);
+            ioRead(keyWrite, keyPiece);
+            bufCat(keyBuffer, keyPiece);
+        }
+
+        ioReadClose(keyWrite);
+        ioBufferSizeSet(TEST_BUFFER_SIZE);
+
+        TEST_RESULT_BOOL(
+            memcmp(bufPtrConst(keyBuffer), CIPHER_BLOCK_FORMAT_MAGIC "006K\0017", CIPHER_BLOCK_FORMAT_HEADER_SIZE + 2) == 0, true,
+            "header contains the key after its length");
+
+        Buffer *keyResult = bufNew(0);
+        IoWrite *keyRead = ioBufferWriteNew(keyResult);
+
+        cipherBlockFormatFilterGroupReadAddMap(ioWriteFilterGroup(keyRead), keyMap);
+        ioWriteOpen(keyRead);
+        ioWrite(keyRead, keyBuffer);
+        ioWriteClose(keyRead);
+
+        TEST_RESULT_STR_Z(strNewBuf(keyResult), TEST_PLAINTEXT, "content decrypted with the key the header contains");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key id split across input, from a pack");
+
+        keyResult = bufNew(0);
+        keyRead = ioBufferWriteNew(keyResult);
+
+        // Build from a pack, as the remote protocol does
+        ioFilterGroupAdd(
+            ioWriteFilterGroup(keyRead), cipherBlockFormatNewPack(ioFilterParamList(cipherBlockFormatNewP(keyMap))));
+
+        // Split so the length byte and the key id each arrive separately
+        ioBufferSizeSet(4);
+        ioWriteOpen(keyRead);
+        ioWrite(keyRead, BUF(bufPtrConst(keyBuffer), CIPHER_BLOCK_FORMAT_HEADER_SIZE));
+        ioWrite(keyRead, BUF(bufPtrConst(keyBuffer) + CIPHER_BLOCK_FORMAT_HEADER_SIZE, 1));
+        ioWrite(keyRead, BUF(bufPtrConst(keyBuffer) + CIPHER_BLOCK_FORMAT_HEADER_SIZE + 1, 1));
+        ioWrite(
+            keyRead,
+            BUF(
+                bufPtrConst(keyBuffer) + CIPHER_BLOCK_FORMAT_HEADER_SIZE + 2,
+                bufUsed(keyBuffer) - CIPHER_BLOCK_FORMAT_HEADER_SIZE - 2));
+        ioWriteClose(keyRead);
+        ioBufferSizeSet(TEST_BUFFER_SIZE);
+
+        TEST_RESULT_STR_Z(strNewBuf(keyResult), TEST_PLAINTEXT, "content decrypted from split input");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key digest is used, not the digest of the format");
+
+        // A key kept by migration derives with SHA-1 even in a file written at a format that derives with SHA-256
+        Buffer *const digestBuffer = bufNew(0);
+        IoWrite *const digestWrite = ioBufferWriteNew(digestBuffer);
+
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(digestWrite), keySpecOld, REPOSITORY_FORMAT_5);
+        ioWriteOpen(digestWrite);
+        ioWrite(digestWrite, testPlainText);
+        ioWriteClose(digestWrite);
+
+        // Replace the magic with a format 6 header, which leaves content that only the SHA-1 key can decrypt
+        memcpy(bufPtr(digestBuffer), CIPHER_BLOCK_FORMAT_MAGIC "006_", CIPHER_BLOCK_FORMAT_HEADER_SIZE);
+
+        Buffer *const digestResult = bufNew(0);
+        IoWrite *const digestRead = ioBufferWriteNew(digestResult);
+
+        cipherBlockFormatFilterGroupReadAddMap(ioWriteFilterGroup(digestRead), keyMap);
+        ioWriteOpen(digestRead);
+        ioWrite(digestRead, digestBuffer);
+        ioWriteClose(digestRead);
+
+        TEST_RESULT_STR_Z(strNewBuf(digestResult), TEST_PLAINTEXT, "content decrypted with the digest of the key");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("file with no key id uses the migrated key");
+
+        Buffer *const migratedBuffer = bufNew(0);
+        IoWrite *const migratedWrite = ioBufferWriteNew(migratedBuffer);
+
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(migratedWrite), keySpecOld, REPOSITORY_FORMAT_5);
+        ioWriteOpen(migratedWrite);
+        ioWrite(migratedWrite, testPlainText);
+        ioWriteClose(migratedWrite);
+
+        Buffer *const migratedResult = bufNew(0);
+        IoWrite *const migratedRead = ioBufferWriteNew(migratedResult);
+
+        cipherBlockFormatFilterGroupReadAddMap(ioWriteFilterGroup(migratedRead), keyMap);
+        ioWriteOpen(migratedRead);
+        ioWrite(migratedRead, migratedBuffer);
+        ioWriteClose(migratedRead);
+
+        TEST_RESULT_STR_Z(strNewBuf(migratedResult), TEST_PLAINTEXT, "content decrypted with the migrated key");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key id not in the map");
+
+        CipherSpecMap *const keyMapShort = cipherSpecMapNew();
+        cipherSpecMapAdd(keyMapShort, STRDEF(CIPHER_SPEC_MAP_ID_DEFAULT), keySpecOld);
+
+        IoWrite *const keyMissing = ioBufferWriteNew(bufNew(0));
+        cipherBlockFormatFilterGroupReadAddMap(ioWriteFilterGroup(keyMissing), keyMapShort);
+        ioWriteOpen(keyMissing);
+
+        TEST_ERROR(ioWrite(keyMissing, keyBuffer), CryptoError, "unable to find cipher key '7'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key id in a file read with a single key");
+
+        IoWrite *const keyUnexpected = ioBufferWriteNew(bufNew(0));
+        cipherBlockFormatFilterGroupReadAdd(ioWriteFilterGroup(keyUnexpected), keySpecNew);
+        ioWriteOpen(keyUnexpected);
+
+        TEST_ERROR(ioWrite(keyUnexpected, keyBuffer), CryptoError, "unable to find cipher key '7'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key id with zero length");
+
+        Buffer *const keyEmpty = bufDup(keyBuffer);
+        bufPtr(keyEmpty)[CIPHER_BLOCK_FORMAT_HEADER_SIZE] = 0;
+
+        IoWrite *const keyEmptyRead = ioBufferWriteNew(bufNew(0));
+        cipherBlockFormatFilterGroupReadAddMap(ioWriteFilterGroup(keyEmptyRead), keyMap);
+        ioWriteOpen(keyEmptyRead);
+
+        TEST_ERROR(ioWrite(keyEmptyRead, keyEmpty), FormatError, "invalid cipher header");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no filter added when the map is empty");
+
+        IoWrite *const keyNone = ioBufferWriteNew(bufNew(0));
+        TEST_RESULT_PTR_NE(
+            cipherBlockFormatFilterGroupReadAddMap(ioWriteFilterGroup(keyNone), cipherSpecMapNew()), NULL,
+            "add read filter for no keys");
+        TEST_RESULT_UINT(ioFilterGroupSize(ioWriteFilterGroup(keyNone)), 0, "no filter added");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cipherSpecMapNew()"))
+    {
+        const CipherSpec *const cipherSpec1 = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("key1"), .digest = hashTypeSha256);
+        const CipherSpec *const cipherSpec2 = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("key2"), .digest = hashTypeSha1);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("add and get keys");
+
+        CipherSpecMap *map = NULL;
+        TEST_ASSIGN(map, cipherSpecMapNew(), "new map");
+        TEST_RESULT_UINT(cipherSpecMapSize(map), 0, "no keys");
+
+        // Add out of order to check that the map sorts
+        TEST_RESULT_VOID(cipherSpecMapAdd(map, STRDEF("2"), cipherSpec2), "add 2");
+        TEST_RESULT_VOID(cipherSpecMapAdd(map, STRDEF("0"), cipherSpec1), "add 0");
+
+        TEST_RESULT_UINT(cipherSpecMapSize(map), 2, "two keys");
+        TEST_RESULT_STR_Z(cipherSpecMapGetIdx(map, 0)->id, "0", "first id");
+        TEST_RESULT_STR_Z(cipherSpecMapGetIdx(map, 1)->id, "2", "second id");
+
+        // Each key keeps its own digest
+        TEST_RESULT_UINT(cipherSpecDigest(cipherSpecMapGet(map, STRDEF("0"))), hashTypeSha256, "key 0 digest");
+        TEST_RESULT_UINT(cipherSpecDigest(cipherSpecMapGet(map, STRDEF("2"))), hashTypeSha1, "key 2 digest");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecMapGet(map, STRDEF("2")))), "key2", "key 2 pass");
+
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(map), "2", "adding the key with no id did not make it current");
+
+        // A map with only the key that has no id has no current key
+        CipherSpecMap *const mapDefault = cipherSpecMapNew();
+        TEST_RESULT_VOID(cipherSpecMapAdd(mapDefault, CIPHER_SPEC_MAP_ID_DEFAULT_STR, cipherSpec1), "add key with no id");
+        TEST_RESULT_PTR(cipherSpecMapIdCurrent(mapDefault), NULL, "no current key");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("duplicate keeps the current key");
+
+        TEST_RESULT_PTR(cipherSpecMapIdCurrent(cipherSpecMapDup(cipherSpecMapNew())), NULL, "dup empty map");
+
+        CipherSpecMap *mapDup = NULL;
+        TEST_ASSIGN(mapDup, cipherSpecMapDup(map), "dup map");
+        TEST_RESULT_UINT(cipherSpecMapSize(mapDup), 2, "two keys");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(mapDup), "2", "current key id");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("key id not found");
+
+        TEST_ERROR(cipherSpecMapGet(map, STRDEF("1")), CryptoError, "unable to find cipher key '1'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pack round trip");
+
+        PackWrite *const packWrite = pckWriteNewP();
+        TEST_RESULT_VOID(cipherSpecMapPack(packWrite, map), "pack map");
+        pckWriteEndP(packWrite);
+
+        CipherSpecMap *mapPack = NULL;
+        TEST_ASSIGN(mapPack, cipherSpecMapNewPack(pckReadNew(pckWriteResult(packWrite))), "unpack map");
+
+        TEST_RESULT_UINT(cipherSpecMapSize(mapPack), 2, "two keys");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecMapGet(mapPack, STRDEF("0")))), "key1", "key 0 pass");
+        TEST_RESULT_UINT(cipherSpecDigest(cipherSpecMapGet(mapPack, STRDEF("2"))), hashTypeSha1, "key 2 digest");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(mapPack), "2", "current key id");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("log ids but not keys");
+
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(map, cipherSpecMapToLog, logBuf, sizeof(logBuf)), "cipherSpecMapToLog");
+        TEST_RESULT_Z(logBuf, "{ids: [0, 2]}", "check log");
+
+        TEST_RESULT_VOID(cipherSpecMapFree(map), "free map");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

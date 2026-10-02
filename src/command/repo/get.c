@@ -73,6 +73,7 @@ storageGetProcess(IoWrite *const destination)
                 // should contain only stanza paths.
                 // -----------------------------------------------------------------------------------------------------------------
                 const CipherSpec *cipherSpec = NULL;
+                const CipherSpecMap *cipherSpecMap = NULL;
                 const StringList *const filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
 
                 // At a minimum the path must contain archive/backup, a stanza, and a file
@@ -91,19 +92,20 @@ storageGetProcess(IoWrite *const destination)
                     // Archive path
                     if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
                     {
-                        cipherSpec = cfgCipherSpecMain();
-
-                        // Find the archive passphrase
+                        // Find the archive keys. WAL stores the id of the key it is encrypted with in the header.
                         if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
                         {
                             const InfoArchive *const info = infoArchiveLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
                                 cfgCipherSpecMain());
-                            cipherSpec = infoArchiveCipherSpec(info);
+                            cipherSpecMap = infoArchiveCipherSpecMap(info);
                         }
                         // Else the file is the archive info, which the repo passphrase opens
                         else
+                        {
+                            cipherSpec = cfgCipherSpecMain();
                             fileIsInfo = true;
+                        }
                     }
 
                     // Backup path
@@ -143,16 +145,20 @@ storageGetProcess(IoWrite *const destination)
                 }
 
                 // Error when unable to determine cipher passphrase
-                if (cipherSpec == NULL)
+                if (cipherSpec == NULL && cipherSpecMap == NULL)
                     THROW_FMT(OptionInvalidValueError, "unable to determine cipher passphrase for '%s'", strZ(file));
 
-                ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
-
-                // Add the decryption filter. An info file is read through the filter that reads its header.
+                // Add the decryption filter. An info file is read through the filter that reads its header and WAL through the
+                // filter that selects the key by the id in the header.
                 if (fileIsInfo)
                     cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(source), cipherSpec);
+                else if (cipherSpecMap != NULL)
+                    cipherBlockFormatFilterGroupReadAddMap(ioReadFilterGroup(source), cipherSpecMap);
                 else
+                {
+                    ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
                     cipherBlockFilterGroupAdd(ioReadFilterGroup(source), cipherModeDecrypt, cipherSpec);
+                }
             }
         }
 

@@ -46,6 +46,7 @@ static const StorageRemoteFilterHandler storageRemoteFilterHandler[] =
     {.type = BLOCK_INCR_FILTER_TYPE, .handlerParam = blockIncrNewPack},
     {.type = CIPHER_BLOCK_FILTER_TYPE, .handlerParam = cipherBlockNewPack},
     {.type = CIPHER_BLOCK_FORMAT_FILTER_TYPE, .handlerParam = cipherBlockFormatNewPack},
+    {.type = CIPHER_BLOCK_FORMAT_HEADER_FILTER_TYPE, .handlerParam = cipherBlockFormatHeaderNewPack},
     {.type = CRYPTO_HASH_FILTER_TYPE, .handlerParam = cryptoHashNewPack},
     {.type = PAGE_CHECKSUM_FILTER_TYPE, .handlerParam = pageChecksumNewPack},
     {.type = SINK_FILTER_TYPE, .handlerNoParam = ioSinkNew},

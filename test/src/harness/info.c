@@ -152,7 +152,7 @@ hrnInfoPut(const Storage *const storage, const char *const file, const char *con
         // If a file with a header
         if (param.header)
         {
-            cipherBlockFormatFilterGroupWriteAdd(encrypted, ioWriteFilterGroup(write), param.cipherSpec, param.format);
+            cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), param.cipherSpec, param.format);
         }
         // Else a file with no header of its own, e.g. a manifest, which is still stored with the digest of its format
         else
@@ -195,7 +195,7 @@ harnessInfoEncrypt(const Buffer *const content, const CipherSpec *const cipherSp
     if (param.format == 0)
         cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec);
     else
-        cipherBlockFormatFilterGroupWriteAdd(result, ioWriteFilterGroup(write), cipherSpec, param.format);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, param.format);
 
     ioWriteOpen(write);
     ioWrite(write, content);

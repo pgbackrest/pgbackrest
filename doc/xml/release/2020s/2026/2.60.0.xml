@@ -126,13 +126,16 @@
                 <commit subject="Remove the default digest from CipherSpec.">
                     <github-pull-request id="2862"/>
                 </commit>
+                <commit subject="Add archive key rotation for repository format 6.">
+                    <github-pull-request id="2864"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="douglas.j.hunley"/>
                 </release-item-contributor-list>
 
-                <p>Pass a cipher spec rather than a type and passphrase.</p>
+                <p>Add archive key rotation for repository format 6.</p>
             </release-item>
 
             <release-item>

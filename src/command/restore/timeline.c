@@ -9,7 +9,7 @@ Timeline Management
 #include <unistd.h>
 
 #include "command/restore/timeline.h"
-#include "common/crypto/cipherBlock.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "postgres/interface.h"
@@ -79,13 +79,13 @@ Load history file
 static List *
 historyLoad(
     const Storage *const storageRepo, const String *const archiveId, const unsigned int timeline,
-    const CipherSpec *const cipherSpecArchive)
+    const CipherSpecMap *const cipherSpecArchive)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storageRepo);
         FUNCTION_LOG_PARAM(STRING, archiveId);
         FUNCTION_LOG_PARAM(UINT, timeline);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecArchive);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC_MAP, cipherSpecArchive);
     FUNCTION_LOG_END();
 
     List *result;
@@ -94,7 +94,7 @@ historyLoad(
     {
         const String *const historyFile = strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%08X.history", strZ(archiveId), timeline);
         StorageRead *const storageRead = storageNewReadP(storageRepo, historyFile);
-        cipherBlockFilterGroupAdd(ioReadFilterGroup(storageReadIo(storageRead)), cipherModeDecrypt, cipherSpecArchive);
+        cipherBlockFormatFilterGroupReadAddMap(ioReadFilterGroup(storageReadIo(storageRead)), cipherSpecArchive);
         const Buffer *const history = storageGetP(storageRead);
 
         TRY_BEGIN()
@@ -158,7 +158,7 @@ FN_EXTERN void
 timelineVerify(
     const Storage *const storageRepo, const String *const archiveId, const unsigned int pgVersion,
     const unsigned int timelineBackup, const uint64_t lsnBackup, const String *timelineTargetStr, const unsigned int recoveryType,
-    const CipherSpec *const cipherSpecArchive)
+    const CipherSpecMap *const cipherSpecArchive)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storageRepo);
@@ -168,7 +168,7 @@ timelineVerify(
         FUNCTION_LOG_PARAM(UINT64, lsnBackup);
         FUNCTION_LOG_PARAM(STRING, timelineTargetStr);
         FUNCTION_LOG_PARAM(UINT, recoveryType);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecArchive);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC_MAP, cipherSpecArchive);
     FUNCTION_LOG_END();
 
     ASSERT(storageRepo != NULL);

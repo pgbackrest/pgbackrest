@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Archive Get Command
 ***********************************************************************************************************************************/
+#include "common/io/bufferWrite.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 
@@ -1075,6 +1076,60 @@ testRun(void)
         strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYXLOG");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+
+        TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH "/repo-bogus/archive/test1/archive.info'"
+            " or '" TEST_PATH "/repo-bogus/archive/test1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo-bogus/archive/test1/archive.info'"
+            " for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo-bogus/archive/test1/archive.info.copy'"
+            " for read\n"
+            "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "            HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate"
+            " archiving scheme.\n"
+            "P00   INFO: found 01ABCDEF01ABCDEF01ABCDEF in the repo2: 10-1 archive");
+
+        TEST_RESULT_UINT(storageInfoP(storagePg(), STRDEF("pg_wal/RECOVERYXLOG")).size, 16 * 1024 * 1024, "check size");
+        TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted format 6 WAL segment");
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
+            "[cipher]\n"
+            "cipher-pass={\"1\":{\"digest\":\"sha256\",\"key\":\"" TEST_CIPHER_PASS_ARCHIVE "\"}}\n"
+            "cipher-pass-current=\"1\"\n"
+            "\n"
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}",
+            .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC);
+
+        // Store the WAL as format 6 with the key id in the header
+        Buffer *const walFormat6 = bufNew(0);
+        IoWrite *const walFormat6Write = ioBufferWriteNew(walFormat6);
+
+        ioFilterGroupAdd(ioWriteFilterGroup(walFormat6Write), compressFilterP(compressTypeGz, 1));
+        cipherBlockFormatFilterGroupWriteAddP(
+            ioWriteFilterGroup(walFormat6Write), TEST_CIPHER_SPEC_PASS(TEST_CIPHER_PASS_ARCHIVE), REPOSITORY_FORMAT_6,
+            .keyId = STRDEF("1"));
+
+        ioWriteOpen(walFormat6Write);
+        ioWrite(walFormat6Write, buffer);
+        ioWriteClose(walFormat6Write);
+
+        TEST_RESULT_STR_Z(strNewZN((const char *)bufPtrConst(walFormat6), 8), "PGBR006K", "header contains a key id");
+
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(1),
+            STORAGE_REPO_ARCHIVE "/10-1/01ABCDEF01ABCDEF01ABCDEF-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.gz", walFormat6);
 
         TEST_RESULT_INT(cmdArchiveGet(), 0, "get");
 
