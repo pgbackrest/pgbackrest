@@ -1145,6 +1145,7 @@ option:
     allow-list:
       - n
       - prefer
+      - skip
       - y
     command:
       backup: {}
