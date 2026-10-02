@@ -125,8 +125,11 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 1, "6");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 4, cipherTypeAes256Cbc);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 4, "6");
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "87654321");
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        const time_t timeCreate = time(NULL);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - files already exist on repo1 and both are valid");
         TEST_RESULT_LOG(
@@ -184,13 +187,27 @@ testRun(void)
         TEST_RESULT_UINT(
             infoArchiveFormat(infoArchive), REPOSITORY_FORMAT_DEFAULT, "archive info on existing stanza still at default format");
 
-        // Confirm other repo encrypted with different password
+        // Confirm other repo encrypted with different password. Format 6 stores the archive key at the first key id.
         TEST_ASSIGN(
             infoArchive,
             infoArchiveLoadFile(
                 storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load archive info from encrypted repo4");
-        TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(infoArchive)), cipherTypeAes256Cbc, "cipher sub set");
+
+        const CipherSpecMap *const cipherSpecMapCreate = infoArchiveCipherSpecMap(infoArchive);
+
+        TEST_RESULT_UINT(cipherSpecMapSize(cipherSpecMapCreate), 1, "one archive key");
+        TEST_RESULT_STR_Z(cipherSpecMapGetIdx(cipherSpecMapCreate, 0)->id, "1", "archive key stored at id 1");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(cipherSpecMapCreate), "1", "archive key at id 1 is current");
+        TEST_RESULT_BOOL(
+            infoArchiveCipherRotateTime(infoArchive) >= timeCreate &&
+            infoArchiveCipherRotateTime(infoArchive) <= time(NULL),
+            true, "rotation time is the create time");
+        TEST_RESULT_UINT(
+            cipherSpecDigest(cipherSpecMapGet(cipherSpecMapCreate, STRDEF("1"))), hashTypeSha256,
+            "archive key derives with sha256");
+        TEST_RESULT_UINT(
+            bufSize(cipherSpecPass(cipherSpecMapGet(cipherSpecMapCreate, STRDEF("1")))), 64, "archive key is 64 characters");
 
         TEST_ASSIGN(
             infoBackup,
@@ -1233,6 +1250,8 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 1, "6");
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
+        const time_t timeMigrate = time(NULL);
+
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format 6 on encrypted repo");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
@@ -1244,6 +1263,22 @@ testRun(void)
             infoArchiveMigrate, infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain),
             "load archive info after migration");
         TEST_RESULT_UINT(infoArchiveFormat(infoArchiveMigrate), REPOSITORY_FORMAT_6, "archive info at format 6");
+
+        // The migrated key stays at id 0 and a key for new WAL is added at id 1
+        const CipherSpecMap *const cipherSpecMapMigrate = infoArchiveCipherSpecMap(infoArchiveMigrate);
+
+        TEST_RESULT_UINT(cipherSpecMapSize(cipherSpecMapMigrate), 2, "migrated and new archive key");
+        TEST_RESULT_UINT(
+            cipherSpecDigest(cipherSpecMapGet(cipherSpecMapMigrate, CIPHER_SPEC_MAP_ID_DEFAULT_STR)), hashTypeSha1,
+            "migrated key derives with sha1");
+        TEST_RESULT_UINT(
+            cipherSpecDigest(cipherSpecMapGet(cipherSpecMapMigrate, STRDEF("1"))), hashTypeSha256,
+            "new key derives with sha256");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(cipherSpecMapMigrate), "1", "new key is current");
+        TEST_RESULT_BOOL(
+            infoArchiveCipherRotateTime(infoArchiveMigrate) >= timeMigrate &&
+            infoArchiveCipherRotateTime(infoArchiveMigrate) <= time(NULL),
+            true, "rotation time is the migration time");
 
         StorageRead *const walRead = storageNewReadP(storageRepoIdx(0), STRDEF(TEST_WAL_MIGRATE));
 

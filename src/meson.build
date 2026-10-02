@@ -127,6 +127,7 @@ src_pgbackrest = [
     'common/exec.c',
     'common/fork.c',
     'common/format/cipherBlockFormat.c',
+    'common/format/cipherSpecMap.c',
     'common/format/format.c',
     'common/ini.c',
     'common/io/bufferRead.c',
