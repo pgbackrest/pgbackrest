@@ -255,6 +255,13 @@ archivePushCheck(const bool pgPathSet)
                     }
                 }
 
+                // Get the current archive key. Format >= 6 also requires the key id.
+                const CipherSpecMap *const archiveCipherSpecMap = infoArchiveCipherSpecMap(info);
+                const String *const archiveCipherId = cipherSpecMapIdCurrent(archiveCipherSpecMap);
+                const CipherSpec *const archiveCipherSpec =
+                    archiveCipherId == NULL ?
+                        infoArchiveCipherSpec(info) : cipherSpecMapGet(archiveCipherSpecMap, archiveCipherId);
+
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
                     result.pgVersion = archiveInfo.version;
@@ -264,7 +271,9 @@ archivePushCheck(const bool pgPathSet)
                     {
                         .repoIdx = repoIdx,
                         .archiveId = strDup(archiveId),
-                        .cipherSpecArchive = cipherSpecDup(infoArchiveCipherSpec(info)),
+                        .format = infoArchiveFormat(info),
+                        .cipherSpecArchive = cipherSpecDupP(archiveCipherSpec),
+                        .cipherIdArchive = strDup(archiveCipherId),
                     };
 
                     lstAdd(result.repoList, &archivePushFileRepoData);
@@ -488,7 +497,9 @@ archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
                 pckWriteObjBeginP(param);
                 pckWriteU32P(param, data->repoIdx);
                 pckWriteStrP(param, data->archiveId);
+                pckWriteU32P(param, data->format);
                 cipherSpecPack(param, data->cipherSpecArchive);
+                pckWriteStrP(param, data->cipherIdArchive);
                 pckWriteObjEndP(param);
             }
 

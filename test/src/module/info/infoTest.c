@@ -22,6 +22,15 @@ testInfoReadHeader(const Buffer *const buffer, const CipherSpec *const cipherSpe
 }
 
 /***********************************************************************************************************************************
+The key an info file holds under the default id
+***********************************************************************************************************************************/
+static const CipherSpec *
+testInfoCipherSpec(const Info *const info)
+{
+    return infoCipherSpec(info);
+}
+
+/***********************************************************************************************************************************
 Test load callback
 ***********************************************************************************************************************************/
 typedef struct TestInfoLoad
@@ -92,12 +101,17 @@ testRun(void)
         Info *info = NULL;
 
         TEST_ASSIGN(
-            info, infoNew(REPOSITORY_FORMAT_DEFAULT, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
+            info,
+            infoNew(
+                REPOSITORY_FORMAT_DEFAULT, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"), .digest = hashTypeSha1)),
             "infoNew(cipher)");
-        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(info))), "123xyz", "    cipherPass is set");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(testInfoCipherSpec(info))), "123xyz", "    cipherPass is set");
 
         TEST_ASSIGN(info, infoNew(REPOSITORY_FORMAT_DEFAULT, NULL), "infoNew(NULL)");
-        TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(info)), cipherTypeNone, "    cipher spec is none");
+        TEST_RESULT_UINT(cipherSpecType(testInfoCipherSpec(info)), cipherTypeNone, "    cipher spec is none");
+
+        TEST_ASSIGN(info, infoNew(REPOSITORY_FORMAT_DEFAULT, cipherSpecNewNone()), "infoNew(none)");
+        TEST_RESULT_UINT(cipherSpecMapSize(infoCipherSpecMap(info)), 0, "    no cipher keys");
     }
 
     // *****************************************************************************************************************************
@@ -180,7 +194,7 @@ testRun(void)
         IoRead *read = ioBufferReadNew(contentLoad);
         ioFilterGroupAdd(
             ioReadFilterGroup(read),
-            cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("X"))));
+            cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("X"), .digest = hashTypeSha1)));
 
         TEST_ERROR(
             infoNewLoad(read, cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent), CryptoError,
@@ -201,7 +215,7 @@ testRun(void)
             info, infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
             "info with other cipher");
         TEST_RESULT_STR_Z(callbackContent, "", "    check callback content");
-        TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(info)), cipherTypeNone, "    check cipher pass not set");
+        TEST_RESULT_UINT(cipherSpecType(testInfoCipherSpec(info)), cipherTypeNone, "    check cipher pass not set");
 
         // Base file with content
         // -------------------------------------------------------------------------------------------------------------------------
@@ -218,7 +232,7 @@ testRun(void)
             info, infoNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone(), harnessInfoLoadNewCallback, callbackContent),
             "info with content");
         TEST_RESULT_STR_Z(callbackContent, "[c] key=1\n[d] key=1\n", "    check callback content");
-        TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(info)), cipherTypeNone, "    check cipher pass not set");
+        TEST_RESULT_UINT(cipherSpecType(testInfoCipherSpec(info)), cipherTypeNone, "    check cipher pass not set");
 
         Buffer *contentSave = bufNew(0);
 
@@ -270,17 +284,17 @@ testRun(void)
 
         const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
 
-        // A file with no header, e.g. a manifest, is decrypted with the spec as it was given since nothing defines the digest
-        // as anything else
-        IoRead *const readNoHeader = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec));
-        cipherBlockFilterGroupAdd(ioReadFilterGroup(readNoHeader), cipherModeDecrypt, cipherSpec);
+        const CipherSpec *const cipherSpecNoHeader = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"), .digest = hashTypeSha1);
+
+        IoRead *const readNoHeader = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpecNoHeader));
+        cipherBlockFilterGroupAdd(ioReadFilterGroup(readNoHeader), cipherModeDecrypt, cipherSpecNoHeader);
 
         TEST_ASSIGN(
-            info, infoNewLoad(readNoHeader, cipherSpec, harnessInfoLoadNewCallback, callbackContent),
+            info, infoNewLoad(readNoHeader, cipherSpecNoHeader, harnessInfoLoadNewCallback, callbackContent),
             "info with content and cipher");
         TEST_RESULT_STR_Z(callbackContent, "[c] key=1\n[d] key=1\n", "    check callback content");
-        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(info))), "somepass", "    check cipher pass set");
-        TEST_RESULT_UINT(cipherSpecDigest(infoCipherSpec(info)), hashTypeSha1, "    check cipher sub digest");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(testInfoCipherSpec(info))), "somepass", "    check cipher pass set");
+        TEST_RESULT_UINT(cipherSpecDigest(testInfoCipherSpec(info)), hashTypeSha1, "    check cipher sub digest");
         TEST_RESULT_STR_Z(infoBackrestVersion(info), PROJECT_VERSION, "    check backrest version");
 
         contentSave = bufNew(0);
@@ -296,7 +310,8 @@ testRun(void)
         TEST_RESULT_VOID(
             infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNewZ("1")), "save migrated info");
         TEST_RESULT_BOOL(
-            strstr(strZ(strNewBuf(contentSave)), "cipher-digest=\"sha1\"") != NULL, true, "    check digest stored with pass");
+            strstr(strZ(strNewBuf(contentSave)), "cipher-pass={\"0\":{\"digest\":\"sha1\",\"key\":\"somepass\"}}") != NULL, true,
+            "    check key stored by id with its digest");
 
         TEST_ASSIGN(
             info,
@@ -305,7 +320,7 @@ testRun(void)
                 cipherSpec, harnessInfoLoadNewCallback, strNew()),
             "load migrated info");
         TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_6, "    check format");
-        TEST_RESULT_UINT(cipherSpecDigest(infoCipherSpec(info)), hashTypeSha1, "    check cipher sub digest unchanged");
+        TEST_RESULT_UINT(cipherSpecDigest(testInfoCipherSpec(info)), hashTypeSha1, "    check cipher sub digest unchanged");
 
         // Header
         // -------------------------------------------------------------------------------------------------------------------------
@@ -313,7 +328,7 @@ testRun(void)
         contentSave = bufNew(0);
 
         IoWrite *const writeNone = ioBufferWriteNew(contentSave);
-        cipherBlockFormatFilterGroupWriteAdd(contentSave, ioWriteFilterGroup(writeNone), cipherSpecNewNone(), REPOSITORY_FORMAT_6);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(writeNone), cipherSpecNewNone(), REPOSITORY_FORMAT_6);
 
         TEST_RESULT_VOID(infoSave(info, writeNone, testInfoSaveCallback, strNewZ("1")), "info save");
         TEST_RESULT_BOOL(strBeginsWithZ(strNewBuf(contentSave), "PGBR"), false, "    check no header");
@@ -322,8 +337,7 @@ testRun(void)
             REPOSITORY_FORMAT_6,
             STRDEF(
                 "[cipher]\n"
-                "cipher-digest=\"sha256\"\n"
-                "cipher-pass=\"somepass\"\n"));
+                "cipher-pass={\"0\":{\"digest\":\"sha256\",\"key\":\"somepass\"}}\n"));
 
         callbackContent = strNew();
 
@@ -334,7 +348,7 @@ testRun(void)
                 cipherSpec, harnessInfoLoadNewCallback, callbackContent),
             "info with header");
         TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_6, "    check format");
-        TEST_RESULT_UINT(cipherSpecDigest(infoCipherSpec(info)), hashTypeSha256, "    check cipher sub digest");
+        TEST_RESULT_UINT(cipherSpecDigest(testInfoCipherSpec(info)), hashTypeSha256, "    check cipher sub digest");
 
         // A pass migrated from a format that could not store the digest keeps deriving with SHA-1, so the files it encrypted
         // before the migration are still readable
@@ -342,8 +356,7 @@ testRun(void)
             REPOSITORY_FORMAT_6,
             STRDEF(
                 "[cipher]\n"
-                "cipher-digest=\"sha1\"\n"
-                "cipher-pass=\"somepass\"\n"));
+                "cipher-pass={\"0\":{\"digest\":\"sha1\",\"key\":\"somepass\"}}\n"));
 
         TEST_ASSIGN(
             info,
@@ -351,13 +364,56 @@ testRun(void)
                 testInfoReadHeader(harnessInfoEncryptP(contentMigrated, cipherSpec, .format = REPOSITORY_FORMAT_6), cipherSpec),
                 cipherSpec, harnessInfoLoadNewCallback, callbackContent),
             "info migrated to the format that stores the digest");
-        TEST_RESULT_UINT(cipherSpecDigest(infoCipherSpec(info)), hashTypeSha1, "    check cipher sub digest");
+        TEST_RESULT_UINT(cipherSpecDigest(testInfoCipherSpec(info)), hashTypeSha1, "    check cipher sub digest");
+
+        // Two keys, as rotation stores them. The last key added is current.
+        CipherSpecMap *const cipherSpecMapMulti = cipherSpecMapNew();
+        cipherSpecMapAdd(
+            cipherSpecMapMulti, CIPHER_SPEC_MAP_ID_DEFAULT_STR,
+            cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("oldpass"), .digest = hashTypeSha1));
+
+        TEST_RESULT_VOID(infoCipherSpecMapSet(info, cipherSpecMapMulti), "set migrated key");
+        TEST_RESULT_VOID(
+            infoCipherSpecAdd(
+                info, STRDEF("9"), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("newpass"), .digest = hashTypeSha256)),
+            "add second key");
+        TEST_RESULT_VOID(infoCipherRotateTimeSet(info, 1700000000), "set rotation time");
+
+        contentSave = bufNew(0);
+
+        TEST_RESULT_VOID(infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNewZ("1")), "save two keys");
+        TEST_RESULT_BOOL(
+            strstr(
+                strZ(strNewBuf(contentSave)),
+                "cipher-pass={\"0\":{\"digest\":\"sha1\",\"key\":\"oldpass\"}"
+                ",\"9\":{\"digest\":\"sha256\",\"key\":\"newpass\"}}\n"
+                "cipher-pass-current=\"9\"\n"
+                "cipher-pass-rotate=1700000000\n") != NULL,
+            true, "    check both keys stored by id");
+
+        TEST_ASSIGN(
+            info,
+            infoNewLoad(
+                testInfoReadHeader(harnessInfoEncryptP(contentSave, cipherSpec, .format = REPOSITORY_FORMAT_6), cipherSpec),
+                cipherSpec, harnessInfoLoadNewCallback, strNew()),
+            "load two keys");
+
+        const CipherSpecMap *const cipherSpecMapLoad = infoCipherSpecMap(info);
+
+        TEST_RESULT_UINT(cipherSpecMapSize(cipherSpecMapLoad), 2, "    check two keys");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(cipherSpecMapLoad), "9", "    check current key id");
+        TEST_RESULT_INT(infoCipherRotateTime(info), 1700000000, "    check rotation time");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(testInfoCipherSpec(info))), "oldpass", "    check default key");
+        TEST_RESULT_UINT(cipherSpecDigest(testInfoCipherSpec(info)), hashTypeSha1, "    check default key digest");
+        TEST_RESULT_STR_Z(
+            strNewBuf(cipherSpecPass(cipherSpecMapGet(cipherSpecMapLoad, STRDEF("9")))), "newpass", "    check key 9");
+        TEST_RESULT_UINT(
+            cipherSpecDigest(cipherSpecMapGet(cipherSpecMapLoad, STRDEF("9"))), hashTypeSha256, "    check key 9 digest");
 
         // The content on its own, which is how a caller that wants the file rather than the values in it reads an info file
         IoRead *const infoRead = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec, .format = REPOSITORY_FORMAT_6));
 
-        ioFilterGroupAdd(
-            ioReadFilterGroup(infoRead), cipherBlockFormatNewP(cipherSpec));
+        cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(infoRead), cipherSpec);
         ioReadOpen(infoRead);
 
         TEST_RESULT_STR(strNewBuf(ioReadBuf(infoRead)), strNewBuf(contentLoad), "info content read");

@@ -7,6 +7,7 @@ Verify File
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/io/filter/group.h"
 #include "common/io/filter/sink.h"
 #include "common/io/filter/size.h"
@@ -18,7 +19,8 @@ Verify File
 FN_EXTERN VerifyResult
 verifyFile(
     const String *const filePathName, const uint64_t offset, const Variant *const limit, const CompressType compressType,
-    const HashType hashType, const Buffer *const fileChecksum, const uint64_t fileSize, const CipherSpec *const cipherSpec)
+    const HashType hashType, const Buffer *const fileChecksum, const uint64_t fileSize, const CipherSpecMap *const cipherSpecMap,
+    const bool formatHeader)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, filePathName);                   // Fully qualified file name
@@ -28,7 +30,8 @@ verifyFile(
         FUNCTION_LOG_PARAM(STRING_ID, hashType);                    // Hash type of the checksum
         FUNCTION_LOG_PARAM(BUFFER, fileChecksum);                   // Checksum for the file
         FUNCTION_LOG_PARAM(UINT64, fileSize);                       // Size of file
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);                // Cipher spec to access the repo file if encrypted
+        FUNCTION_LOG_PARAM(CIPHER_SPEC_MAP, cipherSpecMap);         // Cipher keys to access the repo file if encrypted
+        FUNCTION_LOG_PARAM(BOOL, formatHeader);                     // May the file begin with a format header?
     FUNCTION_LOG_END();
 
     ASSERT(filePathName != NULL);
@@ -46,8 +49,17 @@ verifyFile(
         IoFilterGroup *const filterGroup = ioReadFilterGroup(read);
 
         // Add decryption filter
-        if (cipherSpecType(cipherSpec) != cipherTypeNone)
-            ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpec));
+        if (cipherSpecMapSize(cipherSpecMap) != 0)
+        {
+            // WAL contains a format header with the key id. Backup files contain no header so their key is under the default id.
+            if (formatHeader)
+                cipherBlockFormatFilterGroupReadAddMap(filterGroup, cipherSpecMap);
+            else
+            {
+                cipherBlockFilterGroupAdd(
+                    filterGroup, cipherModeDecrypt, cipherSpecMapGet(cipherSpecMap, CIPHER_SPEC_MAP_ID_DEFAULT_STR));
+            }
+        }
 
         // Add decompression filter
         if (compressType != compressTypeNone)

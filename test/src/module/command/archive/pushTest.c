@@ -568,6 +568,39 @@ testRun(void)
             .remove = true, .comment = "check repo3 for WAL file then remove");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("encrypted format 6 WAL segment begins with the format header");
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
+            "[cipher]\n"
+            "cipher-pass={\"1\":{\"digest\":\"sha256\",\"key\":\"badsubpassphrase\"}}\n"
+            "cipher-pass-current=\"1\"\n"
+            "\n"
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}",
+            .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC_PASS("badpassphrase"));
+
+        TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
+        TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000002' to the archive");
+
+        const Buffer *const walFormat6 = storageGetP(
+            storageNewReadP(
+                storageTest,
+                strNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1)));
+
+        TEST_RESULT_STR_Z(strNewZN((const char *)bufPtrConst(walFormat6), 8), "PGBR006K", "header contains the format");
+        TEST_RESULT_UINT(bufPtrConst(walFormat6)[8], 1, "key id is one byte");
+        TEST_RESULT_STR_Z(strNewZN((const char *)bufPtrConst(walFormat6) + 9, 1), "1", "header contains the key id");
+
+        HRN_STORAGE_REMOVE(
+            storageTest, zNewFmt("repo2/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1));
+        HRN_STORAGE_REMOVE(
+            storageTest, zNewFmt("repo3/archive/test/11-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1));
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write error on one repo but other repo succeeds");
 
         HRN_STORAGE_MODE(storageTest, "repo2/archive/test/11-1/0000000100000001", .mode = 0500);

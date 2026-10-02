@@ -385,6 +385,7 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
 
     ASSERT(cipherSpec != NULL);
     ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
+    ASSERT(cipherSpecDigest(cipherSpec) != 0);
     ASSERT(cipherSpecPass(cipherSpec) != NULL && !bufEmpty(cipherSpecPass(cipherSpec)));
 
     // Init crypto subsystem

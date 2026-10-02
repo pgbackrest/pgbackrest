@@ -10,8 +10,7 @@ with the wrong digest gives a wrong key instead of an error.
 The pass is a buffer rather than a string because it may be binary or it may be text and nothing here needs to know which. It is
 copied into the object, so the caller can release whatever it read the pass from.
 
-The digest defaults to SHA-256, so a caller with no preference gets the digest new work should use. Repositories before format 6
-derived with SHA-1, so a caller that works with that format must pass SHA-1 rather than taking the default.
+An unset digest means the repository format of the file being read or written specifies it.
 
 There is no digest or pass when the type is none, and the pass is never logged.
 ***********************************************************************************************************************************/
@@ -35,7 +34,7 @@ Constructors
 typedef struct CipherSpecNewParam
 {
     VAR_PARAM_HEADER;
-    HashType digest;                                                // Digest to derive the key with instead of SHA-256
+    HashType digest;                                                // Digest to derive the key with, unset when specified by format
 } CipherSpecNewParam;
 
 #define cipherSpecNewP(type, pass, ...)                                                                                            \
@@ -59,7 +58,7 @@ Getters/Setters
 typedef struct CipherSpecPub
 {
     CipherType type;                                                // Cipher type, none when not encrypted
-    HashType digest;                                                // Digest the pass derives the key with
+    HashType digest;                                                // Digest the pass derives with, unset when specified by format
     const Buffer *pass;                                             // Passphrase text or key bytes
 } CipherSpecPub;
 
@@ -70,7 +69,7 @@ cipherSpecType(const CipherSpec *const this)
     return THIS_PUB(CipherSpec)->type;
 }
 
-// Digest the pass derives the key with
+// Digest the pass derives the key with, unset when specified by the format
 FN_INLINE_ALWAYS HashType
 cipherSpecDigest(const CipherSpec *const this)
 {
@@ -88,11 +87,16 @@ cipherSpecPass(const CipherSpec *const this)
 Functions
 ***********************************************************************************************************************************/
 // Duplicate
-FN_INLINE_ALWAYS CipherSpec *
-cipherSpecDup(const CipherSpec *const this)
+typedef struct CipherSpecDupParam
 {
-    return cipherSpecNewP(cipherSpecType(this), cipherSpecPass(this), .digest = cipherSpecDigest(this));
-}
+    VAR_PARAM_HEADER;
+    HashType digestDefault;                                         // Digest to use when the spec has none
+} CipherSpecDupParam;
+
+#define cipherSpecDupP(this, ...)                                                                                                  \
+    cipherSpecDup(this, (CipherSpecDupParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN CipherSpec *cipherSpecDup(const CipherSpec *this, CipherSpecDupParam param);
 
 // Write to a pack so it can be passed over a protocol
 FN_EXTERN void cipherSpecPack(PackWrite *packWrite, const CipherSpec *this);

@@ -1456,6 +1456,18 @@
 
                         <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
                     </config-key>
+
+                    <config-key id="repo-cipher-rotate" name="Repository Cipher Rotation">
+                        <summary>Archive key rotation period.</summary>
+
+                        <text>
+                            <p>When the key that encrypts archived WAL is older than this period, <cmd>expire</cmd> generates a new key and WAL archived after that is encrypted with it. WAL encrypted with an earlier key remains readable. If rotation is not desired then set the option to the max value.</p>
+
+                            <p>Archive key rotation requires <br-option>repo-format</br-option> 6 or higher.</p>
+                        </text>
+
+                        <example>30d</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
 

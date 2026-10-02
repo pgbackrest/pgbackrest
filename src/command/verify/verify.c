@@ -145,7 +145,7 @@ typedef struct VerifyJobData
     const InfoPg *pgHistory;                                        // Database history list
     bool backupProcessing;                                          // Are we processing WAL or are we processing backups
     const CipherSpec *cipherSpecManifest;                           // Cipher spec for reading backup manifests
-    const CipherSpec *cipherSpecArchive;                            // Cipher spec for reading WAL files
+    const CipherSpecMap *cipherSpecArchive;                         // Cipher keys for reading WAL files
     unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
     List *archiveIdResultList;                                      // Archive results
     List *backupResultList;                                         // Backup results
@@ -940,7 +940,7 @@ verifyArchive(VerifyJobData *const jobData)
                                 IoFilterGroup *const walFilterGroup = ioReadFilterGroup(storageReadIo(walRead));
 
                                 // Add decryption filter when required
-                                cipherBlockFilterGroupAdd(walFilterGroup, cipherModeDecrypt, jobData->cipherSpecArchive);
+                                cipherBlockFormatFilterGroupReadAddMap(walFilterGroup, jobData->cipherSpecArchive);
 
                                 // If the file is compressed, add a decompression filter
                                 if (compressTypeFromName(walFile) != compressTypeNone)
@@ -981,7 +981,8 @@ verifyArchive(VerifyJobData *const jobData)
                         pckWriteStrIdP(param, hashTypeSha1);
                         pckWriteBinP(param, checksum);
                         pckWriteU64P(param, archiveResult->pgWalInfo.size);
-                        cipherSpecPack(param, jobData->cipherSpecArchive);
+                        cipherSpecMapPack(param, jobData->cipherSpecArchive);
+                        pckWriteBoolP(param, true);
 
                         // Assign job to result, prepending the archiveId to the key for consistency with backup processing
                         const String *const jobKey = strNewFmt("%s/%s", strZ(archiveResult->archiveId), strZ(filePathName));
@@ -1154,7 +1155,8 @@ verifyBackup(VerifyJobData *const jobData)
                 pckWriteStrIdP(param, hashTypeSha256);
                 pckWriteBinP(param, BUF(bundle->checksumSha256, HASH_TYPE_SHA256_SIZE));
                 pckWriteU64P(param, bundle->size);
-                cipherSpecPack(param, cipherSpecNewNone());
+                cipherSpecMapPack(param, cipherSpecMapNew());
+                pckWriteBoolP(param, false);
 
                 // Assign job to result
                 const String *const jobKey = strNewFmt("%s/%s", strZ(backupResult->backupLabel), strZ(filePathName));
@@ -1275,7 +1277,8 @@ verifyBackup(VerifyJobData *const jobData)
                                 pckWriteStrIdP(param, hashTypeSha1);
                                 pckWriteBinP(param, BUF(fileData.checksumRepoSha1, HASH_TYPE_SHA1_SIZE));
                                 pckWriteU64P(param, fileData.sizeRepo);
-                                cipherSpecPack(param, cipherSpecNewNone());
+                                cipherSpecMapPack(param, cipherSpecMapNew());
+                                pckWriteBoolP(param, false);
                             }
                             // Else use the file checksum, which may require additional filters, e.g. decompression
                             else
@@ -1284,7 +1287,13 @@ verifyBackup(VerifyJobData *const jobData)
                                 pckWriteStrIdP(param, hashTypeSha1);
                                 pckWriteBinP(param, BUF(fileData.checksumSha1, HASH_TYPE_SHA1_SIZE));
                                 pckWriteU64P(param, fileData.size);
-                                cipherSpecPack(param, manifestCipherSpec(jobData->manifest));
+                                // Backup files contain no key id so their key goes under the default id
+                                CipherSpecMap *const cipherSpecMap = cipherSpecMapNew();
+                                cipherSpecMapAdd(
+                                    cipherSpecMap, CIPHER_SPEC_MAP_ID_DEFAULT_STR, manifestCipherSpec(jobData->manifest));
+
+                                cipherSpecMapPack(param, cipherSpecMap);
+                                pckWriteBoolP(param, false);
                             }
 
                             // Assign job to result (prepend backup label being processed to the key since some files are in a prior
@@ -1844,7 +1853,7 @@ verifyProcess(const bool verboseText)
                 .walFileList = strLstNew(),
                 .pgHistory = infoArchivePg(archiveInfo),
                 .cipherSpecManifest = infoBackupCipherSpec(backupInfo),
-                .cipherSpecArchive = infoArchiveCipherSpec(archiveInfo),
+                .cipherSpecArchive = infoArchiveCipherSpecMap(archiveInfo),
                 .archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator = archiveIdComparator),
                 .backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr),
                 .bundleList = lstNewP(sizeof(VerifyBundle), .comparator = lstComparatorStr),

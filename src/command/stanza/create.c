@@ -6,12 +6,14 @@ Stanza Create Command
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "command/check/common.h"
 #include "command/control/common.h"
 #include "command/stanza/common.h"
 #include "command/stanza/create.h"
 #include "common/debug.h"
+#include "common/format/format.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
@@ -77,11 +79,19 @@ cmdStanzaCreate(void)
                 // Format for the new stanza
                 const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
 
-                // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent archive files
+                // If the repo is encrypted, generate a cipher passphrase for encrypting archive files. Format >= 6 adds it by
+                // rotating to the first key id and earlier formats store it as the default key with no id.
                 const CipherSpec *const cipherSpecArchive = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), format);
+                CipherSpecMap *const cipherSpecMapArchive = cipherSpecMapNew();
+
+                if (cipherSpecType(cipherSpecArchive) != cipherTypeNone && format < REPOSITORY_FORMAT_6)
+                    cipherSpecMapAdd(cipherSpecMapArchive, CIPHER_SPEC_MAP_ID_DEFAULT_STR, cipherSpecArchive);
 
                 // Create and save archive info
-                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, format, cipherSpecArchive);
+                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, format, cipherSpecMapArchive);
+
+                if (cipherSpecType(cipherSpecArchive) != cipherTypeNone && format >= REPOSITORY_FORMAT_6)
+                    infoArchiveCipherRotate(infoArchive, cipherSpecArchive, time(NULL));
 
                 infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 

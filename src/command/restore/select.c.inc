@@ -25,7 +25,7 @@ restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, c
     {
         restoreBackup.backupSet = strDup(backupLabel);
         restoreBackup.repoIdx = repoIdx;
-        restoreBackup.cipherSpecManifest = cipherSpecDup(cipherSpecManifest);
+        restoreBackup.cipherSpecManifest = cipherSpecDupP(cipherSpecManifest);
     }
     MEM_CONTEXT_PRIOR_END();
 

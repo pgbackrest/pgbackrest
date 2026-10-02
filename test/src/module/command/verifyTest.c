@@ -896,7 +896,7 @@ testRun(void)
         TEST_RESULT_LOG("");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("encrypted info files at format 6");
+        TEST_TITLE("encrypted format 6 info files");
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .format = REPOSITORY_FORMAT_6, .header = true,
@@ -935,6 +935,13 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("verifyFile()"))
     {
+        // Backup files contain no key id, so the key goes under the default id
+        CipherSpecMap *const cipherSpecMapNone = cipherSpecMapNew();
+        CipherSpecMap *const cipherSpecMapPass = cipherSpecMapNew();
+        cipherSpecMapAdd(
+            cipherSpecMapPass, CIPHER_SPEC_MAP_ID_DEFAULT_STR,
+            cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("pass"), .digest = hashTypeSha1));
+
         // Load Parameters
         StringList *argList = strLstDup(argListBase);
         HRN_CFG_LOAD(cfgCmdVerify, argList);
@@ -945,7 +952,8 @@ testRun(void)
         String *filePathName = strNewZ(STORAGE_REPO_ARCHIVE "/testfile");
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), strZ(filePathName));
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeNone, hashTypeSha256, HASH_TYPE_SHA256_ZERO_BUF, 0, cipherSpecNewNone()),
+            verifyFile(
+                filePathName, 0, NULL, compressTypeNone, hashTypeSha256, HASH_TYPE_SHA256_ZERO_BUF, 0, cipherSpecMapNone, false),
             verifyOk, "file ok");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -953,7 +961,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storageRepoWrite(), strZ(filePathName), fileContents);
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeNone, hashTypeSha1, fileChecksum, 0, cipherSpecNewNone()),
+            verifyFile(filePathName, 0, NULL, compressTypeNone, hashTypeSha1, fileChecksum, 0, cipherSpecMapNone, false),
             verifySizeInvalid, "file size invalid");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -962,7 +970,7 @@ testRun(void)
         TEST_RESULT_UINT(
             verifyFile(
                 strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), 0, NULL, compressTypeNone, hashTypeSha1, fileChecksum, 0,
-                cipherSpecNewNone()),
+                cipherSpecMapNone, false),
             verifyFileMissing, "file missing");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -978,12 +986,12 @@ testRun(void)
         TEST_RESULT_UINT(
             verifyFile(
                 filePathName, 0, NULL, compressTypeGz, hashTypeSha1, fileChecksum, fileSize,
-                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("pass"), .digest = hashTypeSha1)),
+                cipherSpecMapPass, false),
             verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
             verifyFile(
                 filePathName, 0, NULL, compressTypeGz, hashTypeSha1, bufNewDecode(encodingHex, STRDEF("aa")), fileSize,
-                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("pass"), .digest = hashTypeSha1)),
+                cipherSpecMapPass, false),
             verifyChecksumMismatch, "file encrypted compressed checksum mismatch");
     }
 

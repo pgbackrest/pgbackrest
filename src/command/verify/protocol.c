@@ -42,12 +42,13 @@ verifyFileProtocol(PackRead *const param)
         const HashType hashType = (HashType)pckReadStrIdP(param);
         const Buffer *const fileChecksum = pckReadBinP(param);
         const uint64_t fileSize = pckReadU64P(param);
-        const CipherSpec *const cipherSpec = cipherSpecNewPack(param);
+        const CipherSpecMap *const cipherSpecMap = cipherSpecMapNewPack(param);
+        const bool formatHeader = pckReadBoolP(param);
 
         // Return result
         pckWriteU32P(
             protocolServerResultData(result),
-            verifyFile(filePathName, offset, limit, compressType, hashType, fileChecksum, fileSize, cipherSpec));
+            verifyFile(filePathName, offset, limit, compressType, hashType, fileChecksum, fileSize, cipherSpecMap, formatHeader));
     }
     MEM_CONTEXT_TEMP_END();
 
