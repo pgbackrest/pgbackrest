@@ -302,7 +302,9 @@ cryptoHmacOne(const HashType type, const Buffer *const key, const Buffer *const 
     bufUsedSet(result, bufSize(result));
 
     // Calculate the HMAC
-    HMAC(hashType, bufPtrConst(key), (int)bufUsed(key), bufPtrConst(message), bufUsed(message), bufPtr(result), NULL);
+    cryptoError(
+        HMAC(hashType, bufPtrConst(key), (int)bufUsed(key), bufPtrConst(message), bufUsed(message), bufPtr(result), NULL) == NULL,
+        "unable to calculate hmac");
 
     FUNCTION_LOG_RETURN(BUFFER, result);
 }
