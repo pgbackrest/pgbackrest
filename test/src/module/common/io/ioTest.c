@@ -251,8 +251,7 @@ ioTestFilterMultiplyNew(const StringId type, unsigned int multiplier, unsigned i
 }
 
 /***********************************************************************************************************************************
-Test filter that holds its input and only writes it to the output on flush, as a filter must when it cannot tell what to do with
-what it holds until it has seen the end of the input
+Test filter that holds all input and writes it to the output on flush
 ***********************************************************************************************************************************/
 typedef struct IoTestFilterHold
 {
@@ -570,10 +569,9 @@ testRun(void)
         TEST_RESULT_STR_Z(ioReadLineParam(read, true), "1234", "read line without eof");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("eof is not set while output that a filter wrote on flush is still to be read");
+        TEST_TITLE("eof with flushed output remaining");
 
-        // The filter writes all its output on flush, which is more than the buffer holds, so it is written over several calls. The
-        // last of them leaves two lines in the buffer, which must both be read before eof.
+        // Flush output is larger than the buffer and is written over several calls. The last call leaves two lines in the buffer.
         ioBufferSizeSet(8);
 
         read = ioBufferReadNew(BUFSTRDEF("1\n2\n3\n4\n5\n6\n7\n8\n9\nA\n"));

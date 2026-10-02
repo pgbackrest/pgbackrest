@@ -146,9 +146,8 @@ ioReadInternal(IoRead *const this, Buffer *const buffer, const bool block)
                 ioFilterGroupProcess(this->pub.filterGroup, this->input, buffer);
         }
 
-        // Stop if not blocking -- we don't need to fill the buffer as long as we got some data. Eof is not set here even when the
-        // filter group is done, since the data may be in the internal output buffer, which callers read until eof. It will be set
-        // by the next read, which gets no data.
+        // Stop if not blocking -- we don't need to fill the buffer as long as we got some data. Eof is set on a later read that
+        // gets no data.
         if (!block && bufUsed(buffer) > bufferUsedBegin)
             break;
 
