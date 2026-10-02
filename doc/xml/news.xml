@@ -13,7 +13,7 @@
         <section id="impact">
             <title>Impact</title>
 
-            <p>The WAL subkey is stored in <file>archive.info</file>, the manifest subkey is stored in <file>backup.info</file>, and the subkey for the files in each backup is stored in its <file>backup.manifest</file>. A weak subkey is easier to guess than a random subkey, and a guessed subkey decrypts the files encrypted with it without <br-option>repo-cipher-pass</br-option>. How much easier depends on what was in memory, which varies by platform and build. A weak subkey in <file>backup.info</file> also exposes the subkey of every backup, since the manifests are encrypted with it.</p>
+            <p>The WAL subkey is stored in <file>archive.info</file>, the manifest subkey is stored in <file>backup.info</file>, and the subkey for the files in each backup is stored in its <file>backup.manifest</file>. A weak subkey is easier to guess than a random subkey, and a guessed subkey decrypts the files encrypted with it without <setting>repo-cipher-pass</setting>. How much easier depends on what was in memory, which varies by platform and build. A weak subkey in <file>backup.info</file> also exposes the subkey of every backup, since the manifests are encrypted with it.</p>
 
             <p>A weak salt does not expose a subkey. Files encrypted with the same subkey and salt use the same key and IV, so identical data in those files produces identical encrypted data. The salt is stored unencrypted at the start of each file, and a weak salt may contain up to eight bytes of data that was previously in memory.</p>
         </section>
@@ -21,7 +21,7 @@
         <section id="check-subkey">
             <title>Check Subkeys</title>
 
-            <p>Run the following on a host that has access to the repository, with <code>STANZA</code> set to the stanza name. Add <br-option>--repo</br-option> to the <cmd>pgbackrest</cmd> commands to check a repository other than the first.</p>
+            <p>Run the following on a host that has access to the repository, with <code>STANZA</code> set to the stanza name. Add <setting>--repo</setting> to the <cmd>pgbackrest</cmd> commands to check a repository other than the first.</p>
 
             <code-block>
 STANZA=demo
