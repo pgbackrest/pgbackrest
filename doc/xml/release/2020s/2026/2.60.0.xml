@@ -184,6 +184,7 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2866"/>
                 <github-pull-request id="2867"/>
 
                 <release-item-contributor-list>
