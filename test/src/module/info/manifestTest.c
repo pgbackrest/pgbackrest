@@ -1992,6 +1992,20 @@ testRun(void)
             manifestNewLoad(
                 ioBufferReadNew(BUFSTRDEF("[backup:bundle]\n1={\"checksum\":\"aa\",\"size\":1}")), cipherSpecNewNone()),
             FormatError, "invalid bundle checksum size");
+        TEST_ERROR(
+            manifestNewLoad(
+                ioBufferReadNew(BUFSTRDEF("[backup:bundle]\n0={\"checksum\":\"" HASH_TYPE_SHA256_ZERO "\",\"size\":1}")),
+                cipherSpecNewNone()),
+            FormatError, "bundle id must not be 0");
+        TEST_ERROR(
+            manifestNewLoad(
+                ioBufferReadNew(
+                    BUFSTRDEF(
+                        "[backup:bundle]\n"
+                        "1={\"checksum\":\"" HASH_TYPE_SHA256_ZERO "\",\"size\":1}\n"
+                        "1={\"checksum\":\"" HASH_TYPE_SHA256_ZERO "\",\"size\":1}")),
+                cipherSpecNewNone()),
+            FormatError, "duplicate bundle id 1");
     }
 
     // *****************************************************************************************************************************

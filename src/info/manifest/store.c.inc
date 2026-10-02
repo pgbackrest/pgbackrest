@@ -45,7 +45,7 @@ manifestBundleAdd(Manifest *const this, const ManifestBundle *const bundle)
 
     ASSERT(this != NULL);
     ASSERT(bundle != NULL);
-    ASSERT(bundle->id != 0);
+    CHECK(FormatError, bundle->id != 0, "bundle id must not be 0");
 
     // Search back from the end of the list for the position of the id
     unsigned int bundleIdx = manifestBundleTotal(this);
@@ -53,7 +53,9 @@ manifestBundleAdd(Manifest *const this, const ManifestBundle *const bundle)
     while (bundleIdx > 0 && manifestBundle(this, bundleIdx - 1)->id > bundle->id)
         bundleIdx--;
 
-    ASSERT(bundleIdx == 0 || manifestBundle(this, bundleIdx - 1)->id != bundle->id);
+    CHECK_FMT(
+        FormatError, bundleIdx == 0 || manifestBundle(this, bundleIdx - 1)->id != bundle->id, "duplicate bundle id %" PRIu64,
+        bundle->id);
 
     lstInsert(this->pub.bundleList, bundleIdx, bundle);
 
