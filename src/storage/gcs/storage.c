@@ -55,10 +55,14 @@ STRING_STATIC(GCS_QUERY_USER_PROJECT_STR,                           "userProject
 JSON tokens
 ***********************************************************************************************************************************/
 VARIANT_STRDEF_STATIC(GCS_JSON_ACCESS_TOKEN_VAR,                    "access_token");
+VARIANT_STRDEF_STATIC(GCS_JSON_AUDIENCE_VAR,                        "audience");
 VARIANT_STRDEF_STATIC(GCS_JSON_CLIENT_EMAIL_VAR,                    "client_email");
+VARIANT_STRDEF_STATIC(GCS_JSON_CREDENTIAL_SOURCE_VAR,               "credential_source");
 VARIANT_STRDEF_STATIC(GCS_JSON_ERROR_VAR,                           "error");
 VARIANT_STRDEF_STATIC(GCS_JSON_ERROR_DESCRIPTION_VAR,               "error_description");
 VARIANT_STRDEF_STATIC(GCS_JSON_EXPIRES_IN_VAR,                      "expires_in");
+VARIANT_STRDEF_STATIC(GCS_JSON_FILE_VAR,                            "file");
+VARIANT_STRDEF_STATIC(GCS_JSON_FORMAT_VAR,                          "format");
 #define GCS_JSON_ITEMS                                              "items"
 VARIANT_STRDEF_STATIC(GCS_JSON_ITEMS_VAR,                           GCS_JSON_ITEMS);
 VARIANT_STRDEF_EXTERN(GCS_JSON_GENERATION_VAR,                      GCS_JSON_GENERATION);
@@ -69,9 +73,12 @@ VARIANT_STRDEF_STATIC(GCS_JSON_NEXT_PAGE_TOKEN_VAR,                 GCS_JSON_NEX
 #define GCS_JSON_PREFIXES                                           "prefixes"
 VARIANT_STRDEF_STATIC(GCS_JSON_PREFIXES_VAR,                        GCS_JSON_PREFIXES);
 VARIANT_STRDEF_STATIC(GCS_JSON_PRIVATE_KEY_VAR,                     "private_key");
+VARIANT_STRDEF_STATIC(GCS_JSON_SA_IMPERSONATION_URL_VAR,            "service_account_impersonation_url");
 VARIANT_STRDEF_EXTERN(GCS_JSON_SIZE_VAR,                            GCS_JSON_SIZE);
 VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_TYPE_VAR,                      "token_type");
 VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_URI_VAR,                       "token_uri");
+VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_URL_VAR,                       "token_url");
+VARIANT_STRDEF_STATIC(GCS_JSON_TYPE_VAR,                            "type");
 #define GCS_JSON_UPDATED                                            "updated"
 VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                         GCS_JSON_UPDATED);
 
@@ -103,8 +110,10 @@ struct StorageGcs
 
     StorageGcsKeyType keyType;                                      // Auth key type
     const String *key;                                              // Key (value depends on key type)
+    const String *webIdTokenFile;                                   // Web identity token file
+    const String *webIdAudience;                                    // Web identity provider audience
     String *token;                                                  // Token
-    time_t tokenTimeExpire;                                         // Token expiration time (if service auth)
+    time_t tokenTimeExpire;                                         // Token expiration time (if renewable auth)
     HttpUrl *authUrl;                                               // URL for authentication server
     HttpClient *authClient;                                         // Client to service auth requests
 };
@@ -122,6 +131,8 @@ typedef struct
     time_t timeExpire;
 } StorageGcsAuthTokenResult;
 
+typedef StorageGcsAuthTokenResult (*StorageGcsAuthFunction)(StorageGcs *this, time_t timeBegin);
+
 static StorageGcsAuthTokenResult
 storageGcsAuthToken(HttpRequest *const request, const time_t timeBegin)
 {
@@ -137,16 +148,37 @@ storageGcsAuthToken(HttpRequest *const request, const time_t timeBegin)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the response
-        const KeyValue *const kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(httpRequestResponse(request, true)))));
+        HttpResponse *const response = httpRequestResponse(request, true);
+        const String *const contentType = httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR);
+
+        // Error when the response is not OK and is not JSON, e.g. an HTML error page returned by a misconfigured authentication
+        // server. Otherwise the JSON error fields checked below provide a more detailed report of the error.
+        if (!httpResponseCodeOk(response) && (contentType == NULL || !strBeginsWithZ(contentType, "application/json")))
+            httpRequestError(request, response);
+
+        const Variant *const responseVariant = jsonToVar(strNewBuf(httpResponseContent(response)));
+        CHECK(
+            FormatError, responseVariant != NULL && varType(responseVariant) == varTypeKeyValue,
+            "token response must be an object");
+        const KeyValue *const kvResponse = varKv(responseVariant);
 
         // Check for an error
-        const String *const error = varStr(kvGet(kvResponse, GCS_JSON_ERROR_VAR));
+        const Variant *const error = kvGet(kvResponse, GCS_JSON_ERROR_VAR);
 
         if (error != NULL)
         {
-            THROW_FMT(
-                ProtocolError, "unable to get authentication token: [%s] %s", strZ(error),
-                strZNull(varStr(kvGet(kvResponse, GCS_JSON_ERROR_DESCRIPTION_VAR))));
+            // Report flat OAuth-style errors, e.g. {"error":"invalid_grant","error_description":"..."}
+            if (varType(error) == varTypeString)
+            {
+                const Variant *const description = kvGet(kvResponse, GCS_JSON_ERROR_DESCRIPTION_VAR);
+
+                THROW_FMT(
+                    ProtocolError, "unable to get authentication token: [%s] %s", strZ(varStr(error)),
+                    description != NULL && varType(description) == varTypeString ? strZ(varStr(description)) : "null");
+            }
+
+            // Some errors are nested objects, e.g. {"error":{"code":403,...}}, so report the entire response
+            httpRequestError(request, response);
         }
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -295,6 +327,65 @@ storageGcsAuthService(StorageGcs *const this, const time_t timeBegin)
 }
 
 /***********************************************************************************************************************************
+Exchange a web identity token for an access token using the STS token exchange API
+(https://docs.cloud.google.com/iam/docs/reference/sts/rest/v1/TopLevel/token). The resulting token authenticates the federated
+principal directly, https://docs.cloud.google.com/iam/docs/workload-identity-federation#direct-resource-access
+***********************************************************************************************************************************/
+static StorageGcsAuthTokenResult
+storageGcsAuthWebId(StorageGcs *const this, const time_t timeBegin)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_GCS, this);
+        FUNCTION_TEST_PARAM(TIME, timeBegin);
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_STRUCT();
+
+    ASSERT(this != NULL);
+    ASSERT(timeBegin > 0);
+
+    StorageGcsAuthTokenResult result = {0};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Reload on every exchange because the projected token may rotate
+        const String *const subjectToken =
+            strTrim(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->webIdTokenFile))));
+        CHECK(FormatError, !strEmpty(subjectToken), "web identity token is empty");
+
+        // Build form content
+        HttpQuery *const contentQuery = httpQueryNewP();
+        httpQueryAdd(contentQuery, STRDEF("audience"), this->webIdAudience);
+        httpQueryAdd(contentQuery, STRDEF("grant_type"), STRDEF("urn:ietf:params:oauth:grant-type:token-exchange"));
+        httpQueryAdd(contentQuery, STRDEF("requested_token_type"), STRDEF("urn:ietf:params:oauth:token-type:access_token"));
+        httpQueryAdd(
+            contentQuery, STRDEF("scope"),
+            strNewFmt("https://www.googleapis.com/auth/devstorage.read%s", this->write ? "_write" : "_only"));
+        httpQueryAdd(contentQuery, STRDEF("subject_token"), subjectToken);
+        httpQueryAdd(contentQuery, STRDEF("subject_token_type"), STRDEF("urn:ietf:params:oauth:token-type:jwt"));
+
+        String *const content = httpQueryRenderP(contentQuery);
+
+        HttpHeader *const header = httpHeaderNew(NULL);
+        httpHeaderAdd(header, HTTP_HEADER_HOST_STR, httpUrlHost(this->authUrl));
+        httpHeaderAdd(header, HTTP_HEADER_CONTENT_TYPE_STR, HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR);
+        httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, strNewFmt("%zu", strSize(content)));
+
+        HttpRequest *const request = httpRequestNewP(
+            this->authClient, HTTP_VERB_POST_STR, httpUrlPath(this->authUrl), .header = header, .content = BUFSTR(content));
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = storageGcsAuthToken(request, timeBegin);
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_TYPE(StorageGcsAuthTokenResult, result);
+}
+
+/***********************************************************************************************************************************
 Get authentication token automatically for instances running in GCE.
 
 Based on the documentation at https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#applications
@@ -352,19 +443,35 @@ storageGcsAuth(StorageGcs *const this, HttpHeader *const httpHeader)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the token if it was not supplied by the user
-        if (this->keyType != storageGcsKeyTypeToken)
-        {
-            ASSERT(this->keyType == storageGcsKeyTypeAuto || this->keyType == storageGcsKeyTypeService);
+        StorageGcsAuthFunction authFunction = NULL;
 
+        switch (this->keyType)
+        {
+            case storageGcsKeyTypeAuto:
+                authFunction = storageGcsAuthAuto;
+                break;
+
+            case storageGcsKeyTypeService:
+                authFunction = storageGcsAuthService;
+                break;
+
+            case storageGcsKeyTypeWebId:
+                authFunction = storageGcsAuthWebId;
+                break;
+
+            case storageGcsKeyTypeToken:
+                break;
+        }
+
+        // Get the token if it was not supplied by the user
+        if (authFunction != NULL)
+        {
             const time_t timeBegin = time(NULL);
 
             // If the current token has expired then request a new one
             if (timeBegin >= this->tokenTimeExpire)
             {
-                const StorageGcsAuthTokenResult tokenResult =
-                    this->keyType == storageGcsKeyTypeAuto ?
-                        storageGcsAuthAuto(this, timeBegin) : storageGcsAuthService(this, timeBegin);
+                const StorageGcsAuthTokenResult tokenResult = authFunction(this, timeBegin);
 
                 MEM_CONTEXT_OBJ_BEGIN(this)
                 {
@@ -1301,6 +1408,87 @@ storageGcsNew(
             case storageGcsKeyTypeToken:
                 this->token = strDup(key);
                 break;
+
+            // Read data from an external account credential file, https://google.aip.dev/auth/4117. This is the file generated by
+            // gcloud iam workload-identity-pools create-cred-config and contains the audience, token url, and token file.
+            case storageGcsKeyTypeWebId:
+            {
+                ASSERT(key != NULL);
+
+                MEM_CONTEXT_TEMP_BEGIN()
+                {
+                    const Variant *const keyVariant =
+                        jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key))));
+                    CHECK(
+                        FormatError, keyVariant != NULL && varType(keyVariant) == varTypeKeyValue,
+                        "not an external account credential file");
+                    const KeyValue *const kvKey = varKv(keyVariant);
+
+                    const Variant *const typeVariant = kvGet(kvKey, GCS_JSON_TYPE_VAR);
+                    const String *const type =
+                        typeVariant != NULL && varType(typeVariant) == varTypeString ? varStr(typeVariant) : NULL;
+                    CHECK(FormatError, type != NULL && strEqZ(type, "external_account"), "not an external account credential file");
+
+                    // Impersonation would require a second exchange so the federated identity must have direct access
+                    CHECK(
+                        FormatError, kvGet(kvKey, GCS_JSON_SA_IMPERSONATION_URL_VAR) == NULL,
+                        "service account impersonation is not supported");
+
+                    const Variant *const audienceVariant = kvGet(kvKey, GCS_JSON_AUDIENCE_VAR);
+                    CHECK(FormatError, audienceVariant != NULL, "audience missing");
+                    CHECK(FormatError, varType(audienceVariant) == varTypeString, "audience must be a string");
+                    const String *const audience = varStr(audienceVariant);
+
+                    const Variant *const tokenUrlVariant = kvGet(kvKey, GCS_JSON_TOKEN_URL_VAR);
+                    CHECK(FormatError, tokenUrlVariant != NULL, "token url missing");
+                    CHECK(FormatError, varType(tokenUrlVariant) == varTypeString, "token url must be a string");
+                    const String *const tokenUrl = varStr(tokenUrlVariant);
+
+                    const Variant *const credentialSourceVariant = kvGet(kvKey, GCS_JSON_CREDENTIAL_SOURCE_VAR);
+                    CHECK(FormatError, credentialSourceVariant != NULL, "credential source missing");
+                    CHECK(
+                        FormatError, varType(credentialSourceVariant) == varTypeKeyValue,
+                        "credential source must be an object");
+                    const KeyValue *const credentialSource = varKv(credentialSourceVariant);
+
+                    const Variant *const tokenFileVariant = kvGet(credentialSource, GCS_JSON_FILE_VAR);
+                    CHECK(FormatError, tokenFileVariant != NULL, "only the file credential source is supported");
+                    CHECK(FormatError, varType(tokenFileVariant) == varTypeString, "token file must be a string");
+                    const String *const tokenFile = varStr(tokenFileVariant);
+
+                    // Only the default text format is supported
+                    const Variant *const format = kvGet(credentialSource, GCS_JSON_FORMAT_VAR);
+
+                    if (format != NULL)
+                    {
+                        CHECK(
+                            FormatError, varType(format) == varTypeKeyValue, "credential source format is not supported");
+                        const Variant *const formatTypeVariant = kvGet(varKv(format), GCS_JSON_TYPE_VAR);
+                        const String *const formatType =
+                            formatTypeVariant != NULL && varType(formatTypeVariant) == varTypeString ?
+                                varStr(formatTypeVariant) : NULL;
+                        CHECK(
+                            FormatError, formatType != NULL && strEqZ(formatType, "text"),
+                            "credential source format is not supported");
+                    }
+
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        this->webIdTokenFile = strDup(tokenFile);
+                        this->webIdAudience = strDup(audience);
+                        this->authUrl = httpUrlNewParseP(tokenUrl, .type = httpProtocolTypeHttps);
+                        this->authClient = httpClientNew(
+                            tlsClientNewP(
+                                sckClientNew(httpUrlHost(this->authUrl), httpUrlPort(this->authUrl), timeout, timeout),
+                                httpUrlHost(this->authUrl), timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
+                            timeout);
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+                }
+                MEM_CONTEXT_TEMP_END();
+
+                break;
+            }
         }
 
         // Parse the endpoint to extract the host, port, and protocol

@@ -737,7 +737,7 @@
                         <summary>GCS repository key.</summary>
 
                         <text>
-                            <p>A token or service key file depending on the <br-option>repo-gcs-key-type</br-option> option.</p>
+                            <p>A token, service key file, or external account credential file depending on the <br-option>repo-gcs-key-type</br-option> option.</p>
                         </text>
 
                         <example>/etc/pgbackrest/gcs-key.json</example>
@@ -751,9 +751,14 @@
                                 <allow-item id="auto">Authorize using the instance service account.</allow-item>
                                 <allow-item id="service">Service account from locally stored key.</allow-item>
                                 <allow-item id="token">For local testing, e.g. <file>fakegcs</file>.</allow-item>
+                                <allow-item id="web-id">Authorize using Workload Identity Federation.</allow-item>
                             </allow-list>
 
                             <p>When <br-option>repo-gcs-key-type=service</br-option> the credentials will be reloaded when the authentication token is renewed.</p>
+
+                            <p>When <br-option>repo-gcs-key-type=web-id</br-option> the <br-option>repo-gcs-key</br-option> option must contain an external account credential file and the web identity token will be reloaded when the authentication token is renewed.</p>
+
+                            <p><id>service_account_impersonation_url</id> is not supported. Only <id>credential_source.file</id> is supported and when <id>credential_source.format</id> is specified the type must be <id>text</id>.</p>
                         </text>
 
                         <example>auto</example>
