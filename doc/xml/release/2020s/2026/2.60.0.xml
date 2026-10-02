@@ -27,6 +27,7 @@
                     <release-item-contributor id="j0uinim"/>
                     <release-item-reviewer id="david.steele"/>
                     <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
                 </release-item-contributor-list>
 
                 <p>Fix possible weak encryption subkeys/salts.</p>
