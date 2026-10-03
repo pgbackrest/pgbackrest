@@ -18,6 +18,7 @@ Verify contents of the repository.
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/format/cipherBlockFormat.h"
+#include "common/format/format.h"
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -109,7 +110,24 @@ typedef struct VerifyBackupResult
     String *archiveStart;                                           // First WAL segment in the backup
     String *archiveStop;                                            // Last WAL segment in the backup
     List *invalidFileList;                                          // List of invalid files found in the backup
+    List *bundleFileList;                                           // List of VerifyBundleFile (Format >= 6)
 } VerifyBackupResult;
+
+// Bundle to verify (Format >= 6)
+typedef struct VerifyBundle
+{
+    String *fileName;                                               // Name of the bundle (includes backup label)
+    VerifyResult result;                                            // Result of the bundle verification
+    unsigned int fileTotal;                                         // Files stored in the bundle for the backup being processed
+} VerifyBundle;
+
+// Files in a backup that are stored in a bundle. Each backup has an entry for every bundle its files are stored in, including
+// bundles stored by a prior backup (Format >= 6).
+typedef struct VerifyBundleFile
+{
+    const String *fileName;                                         // Name of the bundle (includes backup label)
+    unsigned int fileTotal;                                         // Total files in the backup stored in the bundle
+} VerifyBundleFile;
 
 // Job data structure for processing and results collection
 typedef struct VerifyJobData
@@ -121,6 +139,8 @@ typedef struct VerifyJobData
     StringList *backupList;                                         // List of backups to verify
     Manifest *manifest;                                             // Manifest contents with list of files to verify
     unsigned int manifestFileIdx;                                   // Index of the file within the manifest file list to process
+    unsigned int manifestBundleIdx;                                 // Index of the bundle within the manifest bundle list
+    List *bundleList;                                               // List of VerifyBundle for all backups
     String *currentBackup;                                          // In progress backup, if any
     const InfoPg *pgHistory;                                        // Database history list
     bool backupProcessing;                                          // Are we processing WAL or are we processing backups
@@ -160,6 +180,108 @@ verifyInvalidFileAdd(List *const invalidFileList, const VerifyResult reason, con
         lstAdd(invalidFileList, &invalidFile);
     }
     MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Construct bundle name, e.g. 20260929-070640F/bundle/1
+***********************************************************************************************************************************/
+static String *
+verifyBundleName(const String *const backupLabel, const uint64_t bundleId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Backup that stored the bundle
+        FUNCTION_TEST_PARAM(UINT64, bundleId);                      // Bundle id
+    FUNCTION_TEST_END();
+
+    ASSERT(backupLabel != NULL);
+    ASSERT(bundleId != 0);
+
+    FUNCTION_TEST_RETURN(STRING, strNewFmt("%s/" MANIFEST_PATH_BUNDLE "/%" PRIu64, strZ(backupLabel), bundleId));
+}
+
+/***********************************************************************************************************************************
+Add a bundled file to the file total of the bundle it is stored in
+***********************************************************************************************************************************/
+static void
+verifyBundleFileAdd(
+    List *const bundleList, const String *const backupLabel, const uint64_t bundleId, unsigned int *const jobErrorTotal)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, bundleList);                      // List of bundles for all backups
+        FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Backup that stored the bundle
+        FUNCTION_TEST_PARAM(UINT64, bundleId);                      // Bundle id
+        FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);                 // Pointer to overall job error total
+    FUNCTION_TEST_END();
+
+    ASSERT(bundleList != NULL);
+    ASSERT(jobErrorTotal != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *const fileName = verifyBundleName(backupLabel, bundleId);
+        VerifyBundle *bundle = lstFind(bundleList, &fileName);
+
+        // Add the bundle when it is not in a backup manifest, e.g. the manifest of the backup that stored it is missing
+        if (bundle == NULL)
+        {
+            LOG_INFO_FMT("bundle '%s' not found in backup manifest", strZ(fileName));
+            (*jobErrorTotal)++;
+
+            MEM_CONTEXT_BEGIN(lstMemContext(bundleList))
+            {
+                const VerifyBundle bundleAdd =
+                {
+                    .fileName = strDup(fileName),
+                    .result = verifyOtherError,
+                };
+
+                lstAdd(bundleList, &bundleAdd);
+            }
+            MEM_CONTEXT_END();
+
+            lstSort(bundleList, sortOrderAsc);
+            bundle = lstFind(bundleList, &fileName);
+        }
+
+        bundle->fileTotal++;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Move bundle file totals to the bundle file list of a backup
+***********************************************************************************************************************************/
+static void
+verifyBundleFileMove(List *const bundleList, List *const bundleFileList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, bundleList);                      // List of bundles for all backups
+        FUNCTION_TEST_PARAM(LIST, bundleFileList);                  // Bundle file list of the backup
+    FUNCTION_TEST_END();
+
+    ASSERT(bundleList != NULL);
+    ASSERT(bundleFileList != NULL);
+
+    for (unsigned int bundleIdx = 0; bundleIdx < lstSize(bundleList); bundleIdx++)
+    {
+        VerifyBundle *const bundle = lstGet(bundleList, bundleIdx);
+
+        if (bundle->fileTotal != 0)
+        {
+            const VerifyBundleFile bundleFile =
+            {
+                .fileName = bundle->fileName,
+                .fileTotal = bundle->fileTotal,
+            };
+
+            lstAdd(bundleFileList, &bundleFile);
+            bundle->fileTotal = 0;
+        }
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -641,23 +763,25 @@ verifyBackupSet(VerifyJobData *const jobData, const String *const backupLabel)
                 storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
                 jobData->cipherSpecManifest);
 
-            // Check files for block incremental
-            bool hasBlockIncr = false;
+            // Check files for block incremental or for bundled files in a prior backup
+            bool referenceVerify = false;
 
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
                 const ManifestFile file = manifestFile(manifest, fileIdx);
 
-                if (file.blockIncrMapSize != 0)
+                if (file.blockIncrMapSize != 0 ||
+                    (file.bundleId != 0 && file.reference != NULL && manifestFormat(manifest) >= REPOSITORY_FORMAT_6))
                 {
-                    hasBlockIncr = true;
+                    referenceVerify = true;
                     break;
                 }
             }
 
             // Block incremental backups can depend on any referenced backups through block maps which means we have to verify all
-            // referenced backups as well. ??? Make this more efficient by verifying only required blocks.
-            if (hasBlockIncr)
+            // referenced backups as well. ??? Make this more efficient by verifying only required blocks. When Format >= 6 a
+            // bundled file in a prior backup is verified with the bundle checksum stored in the manifest of the prior backup.
+            if (referenceVerify)
             {
                 const StringList *const referenceList = manifestReferenceList(manifest);
 
@@ -854,6 +978,7 @@ verifyArchive(VerifyJobData *const jobData)
                         pckWriteStrP(param, filePathName);
                         pckWriteBoolP(param, false);
                         pckWriteU32P(param, compressTypeFromName(filePathName));
+                        pckWriteStrIdP(param, hashTypeSha1);
                         pckWriteBinP(param, checksum);
                         pckWriteU64P(param, archiveResult->pgWalInfo.size);
                         cipherSpecMapPack(param, jobData->cipherSpecArchive);
@@ -940,6 +1065,7 @@ verifyBackup(VerifyJobData *const jobData)
                     {
                         .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
                         .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator = lstComparatorStr),
+                        .bundleFileList = lstNewP(sizeof(VerifyBundleFile)),
                     };
 
                     // Add the backup to the result list
@@ -975,6 +1101,26 @@ verifyBackup(VerifyJobData *const jobData)
                     // Move the manifest to the jobData for processing
                     jobData->manifest = manifestMove(manifest, jobData->memContext);
                     jobData->manifestFileIdx = 0;
+                    jobData->manifestBundleIdx = 0;
+
+                    // Add bundles to the bundle list (Format >= 6)
+                    MEM_CONTEXT_BEGIN(lstMemContext(jobData->bundleList))
+                    {
+                        for (unsigned int bundleIdx = 0; bundleIdx < manifestBundleTotal(jobData->manifest); bundleIdx++)
+                        {
+                            const VerifyBundle bundle =
+                            {
+                                .fileName = verifyBundleName(
+                                    backupResult->backupLabel, manifestBundle(jobData->manifest, bundleIdx)->id),
+                                .result = verifyOtherError,
+                            };
+
+                            lstAdd(jobData->bundleList, &bundle);
+                        }
+                    }
+                    MEM_CONTEXT_END();
+
+                    lstSort(jobData->bundleList, sortOrderAsc);
 
                     const ManifestData *const manData = manifestData(jobData->manifest);
 
@@ -993,6 +1139,38 @@ verifyBackup(VerifyJobData *const jobData)
 
             VerifyBackupResult *const backupResult = lstGetLast(jobData->backupResultList);
 
+            // Process bundles before files (Format >= 6). Bundled files are resolved against the bundle results after all jobs
+            // complete.
+            if (jobData->manifestBundleIdx < manifestBundleTotal(jobData->manifest))
+            {
+                const ManifestBundle *const bundle = manifestBundle(jobData->manifest, jobData->manifestBundleIdx);
+                const String *const filePathName = backupFileRepoPathP(backupResult->backupLabel, .bundleId = bundle->id);
+
+                // Set up the job
+                PackWrite *const param = protocolPackNew();
+
+                pckWriteStrP(param, filePathName);
+                pckWriteBoolP(param, false);
+                pckWriteU32P(param, compressTypeNone);
+                pckWriteStrIdP(param, hashTypeSha256);
+                pckWriteBinP(param, BUF(bundle->checksumSha256, HASH_TYPE_SHA256_SIZE));
+                pckWriteU64P(param, bundle->size);
+                cipherSpecMapPack(param, cipherSpecMapNew());
+                pckWriteBoolP(param, false);
+
+                // Assign job to result
+                const String *const jobKey = strNewFmt("%s/%s", strZ(backupResult->backupLabel), strZ(filePathName));
+
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result = protocolParallelJobNew(VARSTR(jobKey), PROTOCOL_COMMAND_VERIFY_FILE, param);
+                }
+                MEM_CONTEXT_PRIOR_END();
+
+                jobData->manifestBundleIdx++;
+                break;
+            }
+
             // Process any files in the manifest
             if (jobData->manifestFileIdx < manifestFileTotal(jobData->manifest))
             {
@@ -1003,8 +1181,15 @@ verifyBackup(VerifyJobData *const jobData)
                     // Track the files verified in order to determine when the processing of the backup is complete
                     backupResult->totalFileVerify++;
 
-                    // Check the file if it is not zero-length or not bundled
-                    if (fileData.size != 0 || !manifestData(jobData->manifest)->bundle)
+                    // Bundled files are resolved against the result of the bundle (Format >= 6)
+                    if (fileData.bundleId != 0 && manifestFormat(jobData->manifest) >= REPOSITORY_FORMAT_6)
+                    {
+                        verifyBundleFileAdd(
+                            jobData->bundleList, fileData.reference != NULL ? fileData.reference : backupResult->backupLabel,
+                            fileData.bundleId, &jobData->jobErrorTotal);
+                    }
+                    // Else check the file if it is not zero-length or not bundled
+                    else if (fileData.size != 0 || !manifestData(jobData->manifest)->bundle)
                     {
                         // Check if the file is referenced in a prior backup
                         const String *fileBackupLabel = NULL;
@@ -1089,6 +1274,7 @@ verifyBackup(VerifyJobData *const jobData)
                             if (fileData.checksumRepoSha1 != NULL)
                             {
                                 pckWriteU32P(param, compressTypeNone);
+                                pckWriteStrIdP(param, hashTypeSha1);
                                 pckWriteBinP(param, BUF(fileData.checksumRepoSha1, HASH_TYPE_SHA1_SIZE));
                                 pckWriteU64P(param, fileData.sizeRepo);
                                 cipherSpecMapPack(param, cipherSpecMapNew());
@@ -1098,6 +1284,7 @@ verifyBackup(VerifyJobData *const jobData)
                             else
                             {
                                 pckWriteU32P(param, manifestData(jobData->manifest)->backupOptionCompressType);
+                                pckWriteStrIdP(param, hashTypeSha1);
                                 pckWriteBinP(param, BUF(fileData.checksumSha1, HASH_TYPE_SHA1_SIZE));
                                 pckWriteU64P(param, fileData.size);
                                 // Backup files contain no key id so their key goes under the default id
@@ -1127,10 +1314,11 @@ verifyBackup(VerifyJobData *const jobData)
                     // Increment the index to point to the next file
                     jobData->manifestFileIdx++;
 
-                    // If this was the last file to process for this backup, then free the manifest and remove this backup from the
-                    // processing list
+                    // If this was the last file to process for this backup, then move bundle file totals to the backup, free the
+                    // manifest, and remove this backup from the processing list
                     if (jobData->manifestFileIdx == backupResult->totalFileManifest)
                     {
+                        verifyBundleFileMove(jobData->bundleList, backupResult->bundleFileList);
                         manifestFree(jobData->manifest);
                         jobData->manifest = NULL;
                         strLstRemoveIdx(jobData->backupList, 0);
@@ -1369,6 +1557,47 @@ verifyAddInvalidWalFile(
         }
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Resolve bundled files against the result of the bundle they are stored in (Format >= 6)
+***********************************************************************************************************************************/
+static void
+verifyBundleFileResolve(const List *const bundleList, const List *const backupResultList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, bundleList);                      // List of bundles for all backups
+        FUNCTION_TEST_PARAM(LIST, backupResultList);                // Result list for all backups in the repo
+    FUNCTION_TEST_END();
+
+    ASSERT(bundleList != NULL);
+    ASSERT(backupResultList != NULL);
+
+    for (unsigned int backupIdx = 0; backupIdx < lstSize(backupResultList); backupIdx++)
+    {
+        VerifyBackupResult *const backupResult = lstGet(backupResultList, backupIdx);
+
+        for (unsigned int bundleFileIdx = 0; bundleFileIdx < lstSize(backupResult->bundleFileList); bundleFileIdx++)
+        {
+            const VerifyBundleFile *const bundleFile = lstGet(backupResult->bundleFileList, bundleFileIdx);
+            const VerifyBundle *const bundle = lstFind(bundleList, &bundleFile->fileName);
+            ASSERT(bundle != NULL);
+
+            // Files are valid when the bundle is valid
+            if (bundle->result == verifyOk)
+                backupResult->totalFileValid += bundleFile->fileTotal;
+            // Else the backup is invalid and the bundle is added to the invalid file list once
+            else
+            {
+                backupResult->status = backupInvalid;
+
+                if (!lstExists(backupResult->invalidFileList, &bundleFile->fileName))
+                    verifyInvalidFileAdd(backupResult->invalidFileList, bundle->result, bundleFile->fileName);
+            }
+        }
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1627,6 +1856,7 @@ verifyProcess(const bool verboseText)
                 .cipherSpecArchive = infoArchiveCipherSpecMap(archiveInfo),
                 .archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator = archiveIdComparator),
                 .backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr),
+                .bundleList = lstNewP(sizeof(VerifyBundle), .comparator = lstComparatorStr),
             };
 
             // Use backup label if specified via --set
@@ -1797,8 +2027,18 @@ verifyProcess(const bool verboseText)
                                 }
                                 else
                                 {
+                                    // Store the result when this is a bundle
+                                    VerifyBundle *const bundle = lstFind(jobData.bundleList, &filePathName);
+
+                                    if (bundle != NULL)
+                                        bundle->result = verifyResult;
+
+                                    // Files stored in a bundle are counted when bundled files are resolved
                                     if (verifyResult == verifyOk)
-                                        backupResult->totalFileValid++;
+                                    {
+                                        if (bundle == NULL)
+                                            backupResult->totalFileValid++;
+                                    }
                                     else
                                     {
                                         jobData.jobErrorTotal += verifyLogInvalidResult(
@@ -1851,6 +2091,9 @@ verifyProcess(const bool verboseText)
                     while (!protocolParallelDone(parallelExec));
                 }
                 MEM_CONTEXT_TEMP_END();
+
+                // Resolve bundled files against the result of the bundle they are stored in
+                verifyBundleFileResolve(jobData.bundleList, jobData.backupResultList);
 
                 // ??? Need to do the final reconciliation - checking backup required WAL against, valid WAL
 

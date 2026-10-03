@@ -33,6 +33,36 @@ manifestOwnerCache(Manifest *const this, const String *const owner)
 }
 
 /***********************************************************************************************************************************
+Bundle functions
+***********************************************************************************************************************************/
+FN_EXTERN void
+manifestBundleAdd(Manifest *const this, const ManifestBundle *const bundle)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(MANIFEST_BUNDLE, bundle);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(bundle != NULL);
+    CHECK(FormatError, bundle->id != 0, "bundle id must not be 0");
+
+    // Search back from the end of the list for the position of the id
+    unsigned int bundleIdx = manifestBundleTotal(this);
+
+    while (bundleIdx > 0 && manifestBundle(this, bundleIdx - 1)->id > bundle->id)
+        bundleIdx--;
+
+    CHECK_FMT(
+        FormatError, bundleIdx == 0 || manifestBundle(this, bundleIdx - 1)->id != bundle->id, "duplicate bundle id %" PRIu64,
+        bundle->id);
+
+    lstInsert(this->pub.bundleList, bundleIdx, bundle);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Db functions
 ***********************************************************************************************************************************/
 static void
