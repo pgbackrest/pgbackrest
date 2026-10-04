@@ -1,7 +1,7 @@
-<release date="XXXX-XX-XX" version="2.59.3dev" title="Under Development">
+<release date="2026-10-04" version="2.59.3" title="Weak Encryption Subkey Bug">
     <release-core-list>
         <text>
-            <p><b>IMPORTANT NOTE</b>: In prior versions it was possible for weak encryption subkeys and salts to be generated if there was an error accessing system random data.</p>
+            <p><b>IMPORTANT NOTE</b>: In prior versions it was possible for weak encryption subkeys and salts to be generated if there was an error accessing system random data. See <link page="news" section="/weak-encryption">Weak Encryption Subkeys and Salts</link> for more information.</p>
         </text>
 
         <release-bug-list>

@@ -43,9 +43,9 @@
     <section if="'{[news]}' eq 'y'" id="news">
         <title>News</title>
 
+        <p><b>October 4, 2026</b> - <link page="news" section="/weak-encryption">Weak Encryption Subkeys and Salts</link></p>
+        <p><b>October 4, 2026</b> - <link page="news" section="/release-2-59-3">{[project]} 2.59.3 Released</link></p>
         <p><b>September 27, 2026</b> - <link page="news" section="/release-2-59-2">{[project]} 2.59.2 Released</link></p>
-        <p><b>August 17, 2026</b> - <link page="news" section="/release-2-59-1">{[project]} 2.59.1 Released</link></p>
-        <p><b>July 20, 2026</b> - <link page="news" section="/distribution-tarball">New Distribution Tarball</link></p>
     </section>
 
     <!-- ======================================================================================================================= -->

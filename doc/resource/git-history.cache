@@ -1,5 +1,22 @@
 [
     {
+        "commit": "47ed78f8d54a44466a872852939edc0273172bf1",
+        "date": "2026-10-02 18:29:39 +0200",
+        "subject": "Fix possible weak encryption subkeys/salts.",
+        "body": "The result of RAND_bytes() was ignored in cryptoRandomBytes(). When OpenSSL is unable to get random data from the operating system, RAND_bytes() fails and leaves the buffer unchanged, so a subkey was generated from uninitialized stack memory and a salt from data already in the output buffer. No error was reported and the repository was written with weak subkeys and salts.\n\nThrow a CryptoError when RAND_bytes() fails, as other OpenSSL failures do. Test the error with a RAND_bytes() shim in the test module."
+    },
+    {
+        "commit": "2def063e06c6f0b7e137309c7ed0d7631a42f6cf",
+        "date": "2026-10-02 18:25:14 +0200",
+        "subject": "Fix possible checksum error loading encrypted info and manifest files.",
+        "body": "A read that does not block stops as soon as it has output, and end of file is set on a later read that gets no output. When a filter needed the same input again the read did not stop, so end of file could be set while output remained in the internal buffer used by the line and small readers. A read that loops until end of file then lost whatever remained in that buffer.\n\nThe block cipher filter needs the same input again on flush when the buffer has less room than the final block. A large encrypted info or manifest file could lose its last lines on load, which fails the checksum. This requires the lost lines to fit in the final block, so it is unlikely in practice. A filter that holds its output until the end of its input, such as the authenticated cipher proposed in #2866, would hit this on any file larger than the buffer.\n\nStop a read that does not block as soon as it has output, whether or not a filter needs the same input again."
+    },
+    {
+        "commit": "5b104c13460c6698dd165853be9900af334f5ba2",
+        "date": "2026-10-02 18:07:27 +0200",
+        "subject": "Begin v2.59.3 development."
+    },
+    {
         "commit": "d5138e2e3b92fe806505bc8b9c69f36bd70cea18",
         "date": "2026-09-27 14:15:45 +0300",
         "subject": "v2.59.2: PostgreSQL 19beta4 Support"

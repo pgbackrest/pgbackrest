@@ -4,6 +4,112 @@
     <description>News</description>
 
     <!-- ======================================================================================================================= -->
+    <section id="weak-encryption">
+        <title>Weak Encryption Subkeys and Salts</title>
+
+        <p><b>October 4, 2026</b></p>
+
+        <p>Versions of <backrest/> prior to 2.59.3 did not check for an error when generating random data for encryption. If OpenSSL was unable to get random data from the operating system, then encryption subkeys and salts were generated from data already in memory and no error was reported. Repositories without encryption are not affected.</p>
+
+        <p>This error should be rare. Possible causes include a sandbox or seccomp policy that blocks the <code>getrandom()</code> system call and an invalid OpenSSL configuration.</p>
+
+        <p>The subkeys in <file>archive.info</file> and <file>backup.info</file> are the main concern. They are generated once by <cmd>stanza-create</cmd> and used for the life of the stanza, so upgrading does not replace a weak subkey. Weak backup subkeys and salts are removed as backups and WAL expire.</p>
+
+        <section id="impact">
+            <title>Impact</title>
+
+            <p>The WAL subkey is stored in <file>archive.info</file> and the manifest subkey is stored in <file>backup.info</file>. A weak subkey is easier to guess than a random subkey, and a guessed subkey decrypts the files encrypted with it without <setting>repo-cipher-pass</setting>. How much easier depends on what was in memory, which varies by platform and build. A weak subkey in <file>archive.info</file> exposes all WAL in the repository. A weak subkey in <file>backup.info</file> exposes every backup, since the manifests are encrypted with it and each manifest stores the subkey for the files in its backup. This includes WAL and backups added after upgrading.</p>
+
+            <p>The subkey for the files in a backup is generated for each full backup and also used by the differential and incremental backups based on it. A weak backup subkey exposes the files in those backups.</p>
+
+            <p>A weak salt does not expose a subkey. Files encrypted with the same subkey and salt use the same key and IV, so identical data in those files produces identical encrypted data. The salt is stored unencrypted at the start of each file, and a weak salt may contain up to eight bytes of data that was previously in memory.</p>
+        </section>
+
+        <section id="check-subkey">
+            <title>Check Subkeys</title>
+
+            <p>Run the following on a host that has access to the repository, with <code>STANZA</code> set to the stanza name. Add <setting>--repo</setting> to the <cmd>pgbackrest</cmd> commands to check a repository other than the first one.</p>
+
+            <code-block>
+STANZA=demo
+
+for file in archive/$STANZA/archive.info backup/$STANZA/backup.info; do
+    for key in $(pgbackrest --stanza=$STANZA repo-get $file | grep '^cipher-pass=' | grep -oE '[A-Za-z0-9+/]{64}'); do
+        echo "$(printf '%s' $key | base64 -d | od -An -v -tx1 | tr -s ' ' '\n' | grep -c '^00$') $file"
+    done
+done
+            </code-block>
+
+            <p>The first column is the number of zero bytes in the subkey. A random subkey has six or more zero bytes less than once in 25 million, while the weak subkeys found in testing had 13 or more. A subkey with six or more zero bytes should be considered weak.</p>
+        </section>
+
+        <section id="openssl-1-0">
+            <title>OpenSSL 1.0</title>
+
+            <p>Versions of <backrest/> prior to 2.53 could be built with OpenSSL 1.0, which generates random data from a state that was not seeded with random data when it is unable to get random data from the operating system. Weak subkeys generated this way cannot be detected with the check above.</p>
+        </section>
+
+        <section id="remediation">
+            <title>Remediation</title>
+
+            <list>
+                <list-item>Upgrade to <backrest/> 2.59.3 or later, which reports an error when random data cannot be generated.</list-item>
+                <list-item>If the subkey in <file>archive.info</file> or <file>backup.info</file> is weak, create the stanza in a new repository and keep the old repository only as long as its backups are needed.</list-item>
+                <list-item>Consider making a new full backup after upgrading, since differential and incremental backups use the subkey of their full backup.</list-item>
+                <list-item>Weak backup subkeys and salts are removed as backups and WAL from before the upgrade expire. Backups with a long retention period keep them until they expire.</list-item>
+            </list>
+        </section>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="release-2-59-3">
+        <title><backrest/> 2.59.3 Released</title>
+
+        <p><b>October 4, 2026</b></p>
+
+        <p>The <backrest/> community is pleased to announce the release of <link url="{[backrest-url-base]}">{[project]}</link> 2.59.3, the latest version of the reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads.</p>
+
+        <p><backrest/> supports a robust set of features for managing your backup and recovery infrastructure, including: parallel backup/restore, full/differential/incremental backups, block incremental backup, multiple repositories, delta restore, parallel asynchronous archiving, malware/ransomware protection, per-file checksums, page checksums (when enabled) validated during backup, multiple compression types, encryption, partial/failed backup resume, backup from standby, tablespace and link support, S3/Azure/GCS/SFTP support, backup expiration, local/remote operation via SSH or TLS, flexible configuration, and more.</p>
+
+        <p><backrest/> can be installed from the <link url="https://yum.postgresql.org">{[postgres]} Yum Repository</link> or the <link url="https://apt.postgresql.org">{[postgres]} APT Repository</link> and packages are also available for many other distributions. Source code can be downloaded from <link page="release">releases</link>.</p>
+
+        <section id="feature">
+            <title>Bug Fixes</title>
+
+            <list>
+                <list-item>Fix possible weak encryption subkeys/salts (j0uinim)</list-item>
+                <list-item>Fix possible checksum error loading encrypted info and manifest files (j0uinim)</list-item>
+            </list>
+
+            <p>See the <link page="release" section="/2.59.3">2.59.3 Release Notes</link> for additional fixes and improvements.</p>
+        </section>
+
+        <section id="note">
+            <title>Important Notes</title>
+
+            <list>
+                <list-item>In prior versions it was possible for weak encryption subkeys and salts to be generated if there was an error accessing system random data. See <link url="{[backrest-url-base]}/news.html#weak-encryption">Weak Encryption Subkeys and Salts</link> for more information.</list-item>
+            </list>
+        </section>
+
+        <section id="link">
+            <title>Links</title>
+
+            <list>
+                <list-item><link url="{[backrest-url-base]}">Website</link></list-item>
+                <list-item><link page="user-guide-index">User Guides</link></list-item>
+                <list-item><link page="release">Release Notes</link></list-item>
+            </list>
+        </section>
+
+        <section id="Sponsorship">
+            <title>Sponsorship</title>
+
+            <p>This release was made possible by the generous sponsorship of <link url="https://aws.amazon.com">AWS</link>, <link url="https://supabase.com">Supabase</link>, <link url="https://pgedge.com">pgEdge</link>, <link url="https://tigerdata.com">Tiger Data</link>, <link url="https://percona.com">Percona</link>, <link url="https://eon.io">Eon</link>, <link url="https://xata.io">Xata</link>, <link url="https://dalibo.com">Dalibo</link>, and <link url="https://dataegret.com/">Data Egret</link>.</p>
+        </section>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="release-2-59-2">
         <title><backrest/> 2.59.2 Released</title>
 
