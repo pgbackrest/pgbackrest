@@ -1,0 +1,35 @@
+<release date="2026-10-04" version="2.59.3" title="Weak Encryption Subkey Bug">
+    <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: In prior versions it was possible for weak encryption subkeys and salts to be generated if there was an error accessing system random data. See <link page="news" section="/weak-encryption">Weak Encryption Subkeys and Salts</link> for more information.</p>
+        </text>
+
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2866"/>
+                <github-pull-request id="2868"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="j0uinim"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix possible checksum error loading encrypted info and manifest files.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2866"/>
+                <github-pull-request id="2867"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="j0uinim"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix possible weak encryption subkeys/salts.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

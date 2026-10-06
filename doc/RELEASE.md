@@ -146,9 +146,9 @@ Wait for CI testing to complete before proceeding to the next step.
 
 Set the release variables. `GITHUB_TOKEN` needs the `contents: write` permission to create the release and `actions: read` to download the tarball artifact (a classic token with the `repo` scope covers both):
 ```
-export GITHUB_TOKEN=?
 export GITHUB_REPO=pgbackrest/pgbackrest
 export GIT_BRANCH=integration
+export GITHUB_TOKEN=?
 ```
 
 Release the distribution tarball that CI built and tested for the release commit rather than building one locally. Every push to the release branch builds the tarball, checks it for missing files, and smoke tests it on a range of distributions, so the most recent run's artifact is the exact tested bytes to release. Run the commands below from an empty directory.

@@ -9,7 +9,7 @@
     <table-cell>build/config</table-cell>
     <table-cell>39/39 (100.00%)</table-cell>
     <table-cell>564/564 (100.00%)</table-cell>
-    <table-cell>1143/1143 (100.00%)</table-cell>
+    <table-cell>1142/1142 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -72,7 +72,7 @@
     <table-cell>command/backup</table-cell>
     <table-cell>50/50 (100.00%)</table-cell>
     <table-cell>790/790 (100.00%)</table-cell>
-    <table-cell>1645/1645 (100.00%)</table-cell>
+    <table-cell>1641/1641 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -261,7 +261,7 @@
     <table-cell>config</table-cell>
     <table-cell>93/93 (100.00%)</table-cell>
     <table-cell>1025/1026 (99.90%)</table-cell>
-    <table-cell>1652/1652 (100.00%)</table-cell>
+    <table-cell>1649/1649 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -310,14 +310,14 @@
     <table-cell>storage</table-cell>
     <table-cell>68/68 (100.00%)</table-cell>
     <table-cell>304/304 (100.00%)</table-cell>
-    <table-cell>762/762 (100.00%)</table-cell>
+    <table-cell>759/759 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>storage/azure</table-cell>
     <table-cell>26/26 (100.00%)</table-cell>
     <table-cell>162/162 (100.00%)</table-cell>
-    <table-cell>488/488 (100.00%)</table-cell>
+    <table-cell>487/487 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -331,7 +331,7 @@
     <table-cell>storage/gcs</table-cell>
     <table-cell>34/34 (100.00%)</table-cell>
     <table-cell>176/176 (100.00%)</table-cell>
-    <table-cell>575/575 (100.00%)</table-cell>
+    <table-cell>574/574 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -352,7 +352,7 @@
     <table-cell>storage/s3</table-cell>
     <table-cell>31/31 (100.00%)</table-cell>
     <table-cell>200/200 (100.00%)</table-cell>
-    <table-cell>663/663 (100.00%)</table-cell>
+    <table-cell>661/661 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -366,5 +366,5 @@
     <table-cell>TOTAL</table-cell>
     <table-cell>1705/1705 (100.00%)</table-cell>
     <table-cell>10616/10618 (99.98%)</table-cell>
-    <table-cell>25163/25163 (100.00%)</table-cell>
+    <table-cell>25148/25148 (100.00%)</table-cell>
 </table-row>
