@@ -73,7 +73,7 @@ cmdRestore(void)
                 strNewFmt("%s-%u", strZ(pgVersionToStr(data->pgVersion)), data->pgId), data->pgVersion,
                 cvtZToUIntBase(strZ(strSubN(data->archiveStart, 0, 8)), 16), pgLsnFromStr(data->lsnStart),
                 cfgOptionStrNull(cfgOptTargetTimeline), cfgOptionSeq(cfgOptType),
-                infoArchiveCipherSpec(archiveInfo));
+                infoArchiveCipherSpecMap(archiveInfo));
         }
 
         // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
@@ -146,6 +146,8 @@ cmdRestore(void)
             .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeRestored),
             .size = VARUINT64(sizeTotal));
 
+        unsigned int checksumErrorFileTotal = 0;
+
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             do
@@ -156,7 +158,7 @@ cmdRestore(void)
                 {
                     sizeRestored = restoreJobResult(
                         jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeRestored,
-                        &currentPercentComplete);
+                        &checksumErrorFileTotal, &currentPercentComplete);
                 }
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
@@ -261,6 +263,13 @@ cmdRestore(void)
         // Restore info
         LOG_INFO_FMT(
             "restore size = %s, file total = %u", strZ(strSizeFormat(sizeRestored)), manifestFileTotal(jobData.manifest));
+
+        if (checksumErrorFileTotal > 0)
+        {
+            LOG_WARN_FMT(
+                CFGCMD_RESTORE " command encountered page checksum error(s) in %u file(s), check the log file for details",
+                checksumErrorFileTotal);
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

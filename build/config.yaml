@@ -1161,6 +1161,19 @@ option:
     command-role:
       main: {}
 
+  checksum-page-error:
+    section: global
+    type: boolean
+    command:
+      backup:
+        default: false
+      restore:
+        default: true
+      expire:
+        default: true
+    command-role:
+      main: {}
+
   page-header-check:
     section: global
     type: boolean
@@ -1729,6 +1742,22 @@ option:
     group: repo
     deprecate:
       repo-cipher-pass: {}
+
+  repo-cipher-rotate:
+    section: global
+    group: repo
+    type: time
+    default: 90d
+    allow-range: [15d, 9999999d]
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+    depend:
+      option: repo-cipher-type
+      list:
+        - aes-256-cbc
 
   repo-hardlink:
     section: global

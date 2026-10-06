@@ -88,7 +88,9 @@ testRun(void)
             infoBackup,
             infoBackupNew(
                 PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_6,
-                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
+                cipherSpecNewP(
+                    cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"),
+                    .digest = hashTypeSha256)),
             "infoBackupNew() - cipher sub");
 
         const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
@@ -96,7 +98,7 @@ testRun(void)
         contentSave = bufNew(0);
 
         IoWrite *write = ioBufferWriteNew(contentSave);
-        cipherBlockFormatFilterGroupWriteAdd(contentSave, ioWriteFilterGroup(write), cipherSpec, REPOSITORY_FORMAT_6);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, REPOSITORY_FORMAT_6);
 
         TEST_RESULT_VOID(infoBackupSave(infoBackup, write), "save new with cipher sub");
         TEST_RESULT_STR_Z(

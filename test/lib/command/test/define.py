@@ -381,6 +381,33 @@ def test_def_file(module):
 
 
 ####################################################################################################################################
+def test_def_coverage_file(name, lang=TEST_LANG_C):
+    """Map a code module name to the file name coverage reports it under.
+
+    For example "common/error/error" becomes "src/common/error/error.c", and the python module "test/common/string_id" becomes
+    "test/lib/common/string_id.py"."""
+
+    # The python each tool is written in lives in its library rather than beside the tests
+    if lang == TEST_LANG_PYTHON:
+        lib, module = test_lib_split(name)
+
+        return "%s/%s.py" % (test_lib_path(lib), module)
+
+    if name.startswith("test/"):
+        result = "test/src/" + name[len("test/") :] + ".c"
+    else:
+        result = "src/" + name + ".c"
+
+    # A vendored module is included rather than compiled, as is a module named .inc
+    if result.endswith(".vendor.c"):
+        result += ".inc"
+    elif result.endswith(".inc.c"):
+        result = result[: -len(".inc.c")] + ".c.inc"
+
+    return result
+
+
+####################################################################################################################################
 def test_def_find(module_list, name):
     """Find a test module by name."""
 

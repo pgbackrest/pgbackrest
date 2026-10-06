@@ -1453,8 +1453,7 @@ testRun(void)
                 "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
                 "\n"
                 "[cipher]\n"
-                "cipher-digest=\"sha256\"\n"
-                "cipher-pass=\"somepass\"\n"
+                "cipher-pass={\"0\":{\"digest\":\"sha256\",\"key\":\"somepass\"}}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20190808-163540F\""
@@ -1478,7 +1477,7 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
+            const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"), .digest = hashTypeSha1);
             IoRead *const read = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec));
             cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, cipherSpec);
 

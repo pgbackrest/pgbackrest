@@ -19,6 +19,7 @@ Backup Command
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
 #include "common/regExp.h"
@@ -260,7 +261,7 @@ cmdBackup(void)
         backupManifestSaveCopy(manifest, cipherSpecManifest, false);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, cipherSpecManifest);
+        const unsigned int warningTotal = backupProcess(backupData, manifest, cipherSpecManifest);
 
         // Check that the clusters are alive and correctly configured after the backup
         backupDbPing(backupData, true);
@@ -304,6 +305,9 @@ cmdBackup(void)
             "%s backup size = %s, file total = %u", zNewStrId(manifestData(manifest)->backupType),
             strZ(strSizeFormat(infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
             manifestFileTotal(manifest));
+
+        if (warningTotal > 0)
+            LOG_WARN_FMT(CFGCMD_BACKUP " command encountered %u checksum warning(s), check the log file for details", warningTotal);
     }
     MEM_CONTEXT_TEMP_END();
 

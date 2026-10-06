@@ -749,7 +749,7 @@ def _render_parse_auto_c(bld_cfg, label):
     value = _value_render(OPT_TYPE_STRING, rule_val_map, label, "StringPubConst", "String", "Str", "STR", "val/str")
     value += _value_render(OPT_TYPE_INTEGER, rule_val_map, label, "int", "Int", "Int", "INT", "val/int")
     value += _value_render(OPT_TYPE_SIZE, rule_val_map, label, "int64_t", "Size", "Size", "SIZE", "val/size")
-    value += _value_render(OPT_TYPE_TIME, rule_val_map, label, "unsigned int", "Time", "Time", "TIME", "val/time")
+    value += _value_render(OPT_TYPE_TIME, rule_val_map, label, "int64_t", "Time", "Time", "TIME", "val/time")
 
     value += "\n" + bld_comment_block("Dynamic default values")
     value += (

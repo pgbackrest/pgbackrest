@@ -10,10 +10,12 @@ Archive Info Handler
 
 #include "common/debug.h"
 #include "common/format/cipherBlockFormat.h"
+#include "common/format/format.h"
 #include "common/ini.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
+#include "common/type/convert.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
@@ -58,13 +60,14 @@ infoArchiveNewInternal(void)
 /**********************************************************************************************************************************/
 FN_EXTERN InfoArchive *
 infoArchiveNew(
-    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int format, const CipherSpec *const cipherSpecSub)
+    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int format,
+    const CipherSpecMap *const cipherSpecMapSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(UINT, format);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecSub);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC_MAP, cipherSpecMapSub);
     FUNCTION_LOG_END();
 
     ASSERT(pgVersion > 0 && pgSystemId > 0);
@@ -76,7 +79,8 @@ infoArchiveNew(
         this = infoArchiveNewInternal();
 
         // Initialize the pg data
-        this->pub.infoPg = infoPgNew(infoPgArchive, format, cipherSpecSub);
+        this->pub.infoPg = infoPgNew(infoPgArchive, format, NULL);
+        infoCipherSpecMapSet(infoPgInfo(this->pub.infoPg), cipherSpecMapSub);
         infoArchivePgSet(this, pgVersion, pgSystemId);
     }
     OBJ_NEW_END();
@@ -105,6 +109,35 @@ infoArchiveNewLoad(IoRead *const read, const CipherSpec *const cipherSpec)
     OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+infoArchiveCipherRotate(InfoArchive *const this, const CipherSpec *const cipherSpec, const time_t rotateTime)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_LOG_PARAM(TIME, rotateTime);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(infoArchiveFormat(this) >= REPOSITORY_FORMAT_6);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // The next key id follows the current key id, or is the first key id when there is no current key
+        const String *const idCurrent = cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(this));
+        const String *const id = strNewFmt("%u", idCurrent == NULL ? 1 : cvtZToUInt(strZ(idCurrent)) + 1);
+
+        Info *const info = infoPgInfo(infoArchivePg(this));
+
+        infoCipherSpecAdd(info, id, cipherSpec);
+        infoCipherRotateTimeSet(info, rotateTime);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -339,7 +372,7 @@ infoArchiveSaveFile(
         // Write output into a buffer since it needs to be saved to storage twice
         Buffer *const buffer = bufNew(ioBufferSize());
         IoWrite *const write = ioBufferWriteNew(buffer);
-        cipherBlockFormatFilterGroupWriteAdd(buffer, ioWriteFilterGroup(write), cipherSpec, infoArchiveFormat(infoArchive));
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, infoArchiveFormat(infoArchive));
         infoArchiveSave(infoArchive, write);
 
         // Save the file and make a copy

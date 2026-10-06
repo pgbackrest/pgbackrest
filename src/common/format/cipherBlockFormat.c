@@ -31,19 +31,23 @@ that tool expects.
 A file that begins with the magic rather than the header was written at format 5, the only format there was before the header, so
 that is not an error when a header was expected.
 
-For the four bytes after the header magic, the first three are the format and the last is reserved for future use, e.g. naming
-which key the file was encrypted with once a repository can hold more than one. The format comes first so that it is always at the
-same place, which is what lets a version work out whether it can read the file at all. Once the format is identified as compatible
-with this version, the spare byte is examined, and it must only be the underscore this version writes.
+The first three bytes of the header magic are the format and the last is a marker indicating whether a key id follows. The format
+comes first so it is always in the same place, which is how a version decides whether it can read the file. The marker is only
+checked once the format turns out to be readable, and it must be valid for this version.
+
+If a key id is indicated by the marker, there is first a byte to indicate the length of the key id and then the key id as a string.
 ***********************************************************************************************************************************/
 #define CIPHER_BLOCK_FORMAT_MAGIC                                   "PGBR"
 #define CIPHER_BLOCK_FORMAT_MAGIC_SIZE                              (sizeof(CIPHER_BLOCK_FORMAT_MAGIC) - 1)
-#define CIPHER_BLOCK_FORMAT_RESERVED                                '_'
+#define CIPHER_BLOCK_FORMAT_MARKER_NONE                             '_'
+#define CIPHER_BLOCK_FORMAT_MARKER_KEY                              'K'
 #define CIPHER_BLOCK_FORMAT_SIZE                                    3
 
-// Total length of the header, which is the magic, the format, and the reserved byte
-#define CIPHER_BLOCK_FORMAT_HEADER_SIZE                                                                                            \
-    (CIPHER_BLOCK_FORMAT_MAGIC_SIZE + CIPHER_BLOCK_FORMAT_SIZE + 1)
+// The key id length is encoded as a single byte with a max of 255 characters
+#define CIPHER_BLOCK_FORMAT_KEY_SIZE_MAX                            255
+
+// Total header length: magic, format, and marker
+#define CIPHER_BLOCK_FORMAT_HEADER_SIZE                             (CIPHER_BLOCK_FORMAT_MAGIC_SIZE + CIPHER_BLOCK_FORMAT_SIZE + 1)
 
 // The header is written in place of the magic, so the two must add up to exactly the same size or the salt would no longer begin at
 // the same place
@@ -54,17 +58,22 @@ static_assert(
 static_assert(REPOSITORY_FORMAT_MAX < 1000, "repository format must fit in the header digits");
 static_assert(CIPHER_BLOCK_FORMAT_SIZE == 3, "format digits must match the digits the header is written with");
 
+// Max possible size of the header, the fixed part plus a length byte and the longest key id it can contain
+#define CIPHER_BLOCK_FORMAT_HEADER_SIZE_MAX                                                                                        \
+    (CIPHER_BLOCK_FORMAT_HEADER_SIZE + 1 + CIPHER_BLOCK_FORMAT_KEY_SIZE_MAX)
+
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct CipherBlockFormat
 {
-    const CipherSpec *cipherSpec;                                   // Cipher spec the content is decrypted with
+    const CipherSpecMap *cipherSpecMap;                             // Keys to choose from
     unsigned int formatExpected;                                    // Format the caller expects, zero when any will do
     unsigned int format;                                            // Format the header gave
 
-    uint8_t header[CIPHER_BLOCK_FORMAT_HEADER_SIZE];                // Header bytes held until there are enough to read
+    uint8_t header[CIPHER_BLOCK_FORMAT_HEADER_SIZE_MAX];            // Header bytes held until there are enough to read
     size_t headerSize;                                              // Header bytes held so far
+    size_t headerSizeExpected;                                      // Total header size, which grows as the header is read
     IoFilter *cipherBlock;                                          // Block cipher the content behind the header is decrypted by
     size_t sourceOffset;                                            // Bytes of the current source taken for the header
 } CipherBlockFormat;
@@ -112,9 +121,12 @@ cipherBlockFormatHeaderRead(const uint8_t *const header)
         // Error on a format this version cannot read before anything is decrypted
         repoFormatValidate(result);
 
-        // The format is one this version can read, so the reserved byte must be the value this version writes
-        if (headerZ[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] != CIPHER_BLOCK_FORMAT_RESERVED)
+        // Check that the marker is valid for this version
+        if (headerZ[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] != CIPHER_BLOCK_FORMAT_MARKER_NONE &&
+            headerZ[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] != CIPHER_BLOCK_FORMAT_MARKER_KEY)
+        {
             THROW(FormatError, "invalid cipher header");
+        }
     }
     // Else the bytes must be the magic, since that is all a file with no header can begin with
     else if (memcmp(headerZ, CIPHER_BLOCK_MAGIC, CIPHER_BLOCK_MAGIC_SIZE) != 0)
@@ -124,8 +136,8 @@ cipherBlockFormatHeaderRead(const uint8_t *const header)
 }
 
 /***********************************************************************************************************************************
-Build the block cipher the content behind the header is decrypted by, which is only possible once the header has been read since the
-header is what gives the format and the format is what gives the digest
+Build the block cipher that decrypts the content, which is only possible once the header has been read since the header defines the
+format and the key id
 ***********************************************************************************************************************************/
 static void
 cipherBlockFormatCipherNew(CipherBlockFormat *const this)
@@ -137,20 +149,33 @@ cipherBlockFormatCipherNew(CipherBlockFormat *const this)
     ASSERT(this != NULL);
     ASSERT(this->cipherBlock == NULL);
 
-    this->format = cipherBlockFormatHeaderRead(this->header);
-
     // Error when the format the caller expected is not the one the file was written with
     if (this->formatExpected != 0 && this->formatExpected != this->format)
         THROW_FMT(FormatError, "expected repository format %u but found %u", this->formatExpected, this->format);
 
-    // The eight bytes at the front have been read and are not passed on, whichever of the two they were, so what reaches the block
-    // cipher begins with the salt either way and it is told to expect no header of its own
+    // Get the key specified in the header or the default key when none is specified
+    const CipherSpec *cipherSpec;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *keyId = CIPHER_SPEC_MAP_ID_DEFAULT_STR;
+
+        if (this->headerSize > CIPHER_BLOCK_FORMAT_HEADER_SIZE)
+        {
+            keyId = strNewZN(
+                (const char *)this->header + CIPHER_BLOCK_FORMAT_HEADER_SIZE + 1,
+                this->headerSize - CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1);
+        }
+
+        cipherSpec = cipherSpecMapGet(this->cipherSpecMap, keyId);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    // Decrypt raw since the format header has already been parsed
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->cipherBlock = cipherBlockNewP(
-            cipherModeDecrypt,
-            cipherSpecNewP(
-                cipherSpecType(this->cipherSpec), cipherSpecPass(this->cipherSpec), .digest = repoFormatDigest(this->format)),
+            cipherModeDecrypt, cipherSpecDupP(cipherSpec, .digestDefault = repoFormatDigest(this->format)),
             .header = cipherBlockHeaderNone);
     }
     MEM_CONTEXT_OBJ_END();
@@ -177,20 +202,47 @@ cipherBlockFormatProcess(THIS_VOID, const Buffer *const source, Buffer *const de
 
     if (source != NULL)
     {
-        // Hold back the header until there is enough of it to read
+        // Read until the header is complete. The total size is not known until the marker and key id length have been read.
         if (this->cipherBlock == NULL)
         {
-            this->sourceOffset = CIPHER_BLOCK_FORMAT_HEADER_SIZE - this->headerSize;
+            this->sourceOffset = 0;
 
-            if (this->sourceOffset > bufUsed(source))
-                this->sourceOffset = bufUsed(source);
+            do
+            {
+                size_t copySize = this->headerSizeExpected - this->headerSize;
 
-            memcpy(this->header + this->headerSize, bufPtrConst(source), this->sourceOffset);
-            this->headerSize += this->sourceOffset;
+                if (copySize > bufUsed(source) - this->sourceOffset)
+                    copySize = bufUsed(source) - this->sourceOffset;
 
-            // Nothing can be decrypted until the header is complete
-            if (this->headerSize < CIPHER_BLOCK_FORMAT_HEADER_SIZE)
-                FUNCTION_LOG_RETURN_VOID();
+                memcpy(this->header + this->headerSize, bufPtrConst(source) + this->sourceOffset, copySize);
+                this->headerSize += copySize;
+                this->sourceOffset += copySize;
+
+                // Nothing can be decrypted until the header is complete
+                if (this->headerSize < this->headerSizeExpected)
+                    FUNCTION_LOG_RETURN_VOID();
+
+                // Parse the fixed part first to reject an invalid header before using the marker
+                if (this->headerSizeExpected == CIPHER_BLOCK_FORMAT_HEADER_SIZE)
+                {
+                    this->format = cipherBlockFormatHeaderRead(this->header);
+
+                    if (this->header[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] == CIPHER_BLOCK_FORMAT_MARKER_KEY)
+                        this->headerSizeExpected++;
+                }
+                // Else the length is complete so wait for the key id
+                else if (this->headerSizeExpected == CIPHER_BLOCK_FORMAT_HEADER_SIZE + 1)
+                {
+                    const size_t keySize = this->header[CIPHER_BLOCK_FORMAT_HEADER_SIZE];
+
+                    // Marker indicates a key id but the length is zero
+                    if (keySize == 0)
+                        THROW(FormatError, "invalid cipher header");
+
+                    this->headerSizeExpected += keySize;
+                }
+            }
+            while (this->headerSize < this->headerSizeExpected);
 
             cipherBlockFormatCipherNew(this);
         }
@@ -286,24 +338,25 @@ cipherBlockFormatResultPack(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilter *
-cipherBlockFormatNew(const CipherSpec *const cipherSpec, const CipherBlockFormatNewParam param)
+cipherBlockFormatNew(const CipherSpecMap *const cipherSpecMap, const CipherBlockFormatNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC_MAP, cipherSpecMap);
         FUNCTION_LOG_PARAM(UINT, param.format);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
 
-    ASSERT(cipherSpec != NULL);
-    ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
+    ASSERT(cipherSpecMap != NULL);
+    ASSERT(cipherSpecMapSize(cipherSpecMap) != 0);
 
     OBJ_NEW_BEGIN(CipherBlockFormat, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         *this = (CipherBlockFormat)
         {
-            .cipherSpec = cipherSpecDup(cipherSpec),
+            .cipherSpecMap = cipherSpecMapDup(cipherSpecMap),
             .formatExpected = param.format,
+            .headerSizeExpected = CIPHER_BLOCK_FORMAT_HEADER_SIZE,
         };
     }
     OBJ_NEW_END();
@@ -315,7 +368,7 @@ cipherBlockFormatNew(const CipherSpec *const cipherSpec, const CipherBlockFormat
     {
         PackWrite *const packWrite = pckWriteNewP();
 
-        cipherSpecPack(packWrite, cipherSpec);
+        cipherSpecMapPack(packWrite, cipherSpecMap);
         pckWriteU32P(packWrite, param.format);
         pckWriteEndP(packWrite);
 
@@ -339,10 +392,10 @@ cipherBlockFormatNewPack(const Pack *const paramList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *const paramListPack = pckReadNew(paramList);
-        const CipherSpec *const cipherSpec = cipherSpecNewPack(paramListPack);
+        const CipherSpecMap *const cipherSpecMap = cipherSpecMapNewPack(paramListPack);
         const unsigned int format = pckReadU32P(paramListPack);
 
-        result = ioFilterMove(cipherBlockFormatNewP(cipherSpec, .format = format), memContextPrior());
+        result = ioFilterMove(cipherBlockFormatNewP(cipherSpecMap, .format = format), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -362,50 +415,195 @@ cipherBlockFormatResult(PackRead *const packRead)
     FUNCTION_TEST_RETURN(UINT, pckReadU32P(packRead));
 }
 
+/***********************************************************************************************************************************
+Filter to write the header before the content. The header must be plaintext so this filter runs after the block cipher.
+***********************************************************************************************************************************/
+typedef struct CipherBlockFormatHeader
+{
+    const Buffer *header;                                           // Header to write before any content
+    size_t headerOffset;                                            // Header bytes written so far
+    size_t sourceOffset;                                            // Content bytes written from the current source
+    bool inputSame;                                                 // Is the same input required on the next process call?
+} CipherBlockFormatHeader;
+
+static void
+cipherBlockFormatHeaderProcess(THIS_VOID, const Buffer *const source, Buffer *const destination)
+{
+    THIS(CipherBlockFormatHeader);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, this);
+        FUNCTION_LOG_PARAM(BUFFER, source);
+        FUNCTION_LOG_PARAM(BUFFER, destination);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(source != NULL);
+    ASSERT(destination != NULL);
+
+    // Write the header before any content
+    if (this->headerOffset < bufUsed(this->header))
+    {
+        size_t copySize = bufUsed(this->header) - this->headerOffset;
+
+        if (copySize > bufRemains(destination))
+            copySize = bufRemains(destination);
+
+        bufCatC(destination, bufPtrConst(this->header), this->headerOffset, copySize);
+        this->headerOffset += copySize;
+    }
+
+    // Write the content once the header is complete
+    if (this->headerOffset == bufUsed(this->header))
+    {
+        size_t copySize = bufUsed(source) - this->sourceOffset;
+
+        if (copySize > bufRemains(destination))
+            copySize = bufRemains(destination);
+
+        bufCatC(destination, bufPtrConst(source), this->sourceOffset, copySize);
+        this->sourceOffset += copySize;
+    }
+
+    this->inputSame = this->headerOffset < bufUsed(this->header) || this->sourceOffset < bufUsed(source);
+
+    // Reset source offset when source has been completely processed
+    if (!this->inputSame)
+        this->sourceOffset = 0;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+static bool
+cipherBlockFormatHeaderInputSame(const THIS_VOID)
+{
+    THIS(const CipherBlockFormatHeader);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, this->inputSame);
+}
+
+static IoFilter *
+cipherBlockFormatHeaderNew(const Buffer *const header)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, header);
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ASSERT(header != NULL);
+    ASSERT(!bufEmpty(header));
+
+    OBJ_NEW_BEGIN(CipherBlockFormatHeader, .childQty = MEM_CONTEXT_QTY_MAX)
+    {
+        *this = (CipherBlockFormatHeader){.header = bufDup(header)};
+    }
+    OBJ_NEW_END();
+
+    // Create param list
+    Pack *paramList;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        PackWrite *const packWrite = pckWriteNewP();
+
+        pckWriteBinP(packWrite, header);
+        pckWriteEndP(packWrite);
+
+        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(
+        IO_FILTER,
+        ioFilterNewP(
+            CIPHER_BLOCK_FORMAT_HEADER_FILTER_TYPE, this, paramList, .inOut = cipherBlockFormatHeaderProcess,
+            .inputSame = cipherBlockFormatHeaderInputSame));
+}
+
+FN_EXTERN IoFilter *
+cipherBlockFormatHeaderNewPack(const Pack *const paramList)
+{
+    IoFilter *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        result = ioFilterMove(cipherBlockFormatHeaderNew(pckReadBinP(pckReadNew(paramList))), memContextPrior());
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return result;
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN void
 cipherBlockFormatFilterGroupWriteAdd(
-    Buffer *const buffer, IoFilterGroup *const filterGroup, const CipherSpec *const cipherSpec, const unsigned int format)
+    IoFilterGroup *const filterGroup, const CipherSpec *const cipherSpec, const unsigned int format,
+    const CipherBlockFormatFilterGroupWriteAddParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BUFFER, buffer);
         FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
         FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_LOG_PARAM(UINT, format);
+        FUNCTION_LOG_PARAM(STRING, param.keyId);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
 
-    ASSERT(buffer != NULL);
     ASSERT(filterGroup != NULL);
     ASSERT(cipherSpec != NULL);
     ASSERT(format >= REPOSITORY_FORMAT_MIN && format <= REPOSITORY_FORMAT_MAX);
+    ASSERT(param.keyId == NULL || !strEmpty(param.keyId));
+    ASSERT(param.keyId == NULL || strSize(param.keyId) <= CIPHER_BLOCK_FORMAT_KEY_SIZE_MAX);
+
+    // Key id is only valid for format >= 6
+    ASSERT(param.keyId == NULL || format >= REPOSITORY_FORMAT_6);
 
     if (cipherSpecType(cipherSpec) != cipherTypeNone)
     {
-        // A format from 6 writes the header in place of the magic, so the content behind it is encrypted raw
+        // Format >= 6 writes the header in place of the magic and the content behind it is encrypted raw
         const bool header = format >= REPOSITORY_FORMAT_6;
-
-        if (header)
-        {
-            char headerZ[CIPHER_BLOCK_FORMAT_HEADER_SIZE + 1];
-
-            // Write the format zero-padded so it is always the same size, taking the digits it is written in from the value so
-            // that a format too large to fit could not run past them. The terminator lands on the byte after the header, which is
-            // not written to the buffer.
-            snprintf(
-                headerZ, sizeof(headerZ), CIPHER_BLOCK_FORMAT_MAGIC "%03u%c", format % 1000, CIPHER_BLOCK_FORMAT_RESERVED);
-
-            bufCatC(buffer, (const uint8_t *)headerZ, 0, CIPHER_BLOCK_FORMAT_HEADER_SIZE);
-        }
 
         ioFilterGroupAdd(
             filterGroup,
             cipherBlockNewP(
-                cipherModeEncrypt,
-                cipherSpecNewP(
-                    cipherSpecType(cipherSpec), cipherSpecPass(cipherSpec), .digest = repoFormatDigest(format)),
+                cipherModeEncrypt, cipherSpecDupP(cipherSpec, .digestDefault = repoFormatDigest(format)),
                 .header = header ? cipherBlockHeaderNone : cipherBlockHeaderMagic));
+
+        // The filter is added after the block cipher so the plaintext header is placed before the cipher output
+        if (header)
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                char headerZ[CIPHER_BLOCK_FORMAT_HEADER_SIZE + 1];
+
+                // Zero-pad the format and add the marker, depending on whether or not there is a key
+                snprintf(
+                    headerZ, sizeof(headerZ), CIPHER_BLOCK_FORMAT_MAGIC "%03u%c", format % 1000,
+                    param.keyId == NULL ? CIPHER_BLOCK_FORMAT_MARKER_NONE : CIPHER_BLOCK_FORMAT_MARKER_KEY);
+
+                Buffer *const headerBuffer = bufNew(CIPHER_BLOCK_FORMAT_HEADER_SIZE_MAX);
+                bufCatC(headerBuffer, (const uint8_t *)headerZ, 0, CIPHER_BLOCK_FORMAT_HEADER_SIZE);
+
+                // Write the key size and id when present
+                if (param.keyId != NULL)
+                {
+                    const uint8_t keySize = (uint8_t)strSize(param.keyId);
+
+                    bufCatC(headerBuffer, &keySize, 0, sizeof(keySize));
+                    bufCatC(headerBuffer, (const uint8_t *)strZ(param.keyId), 0, strSize(param.keyId));
+                }
+
+                ioFilterGroupAdd(filterGroup, cipherBlockFormatHeaderNew(headerBuffer));
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -426,7 +624,37 @@ cipherBlockFormatFilterGroupReadAdd(IoFilterGroup *const filterGroup, const Ciph
     ASSERT(cipherSpec != NULL);
 
     if (cipherSpecType(cipherSpec) != cipherTypeNone)
-        ioFilterGroupAdd(filterGroup, cipherBlockFormatNewP(cipherSpec));
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            CipherSpecMap *const cipherSpecMap = cipherSpecMapNew();
+            cipherSpecMapAdd(cipherSpecMap, CIPHER_SPEC_MAP_ID_DEFAULT_STR, cipherSpec);
+
+            ioFilterGroupAdd(filterGroup, cipherBlockFormatNewP(cipherSpecMap));
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN(IO_FILTER_GROUP, filterGroup);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN IoFilterGroup *
+cipherBlockFormatFilterGroupReadAddMap(IoFilterGroup *const filterGroup, const CipherSpecMap *const cipherSpecMap)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC_MAP, cipherSpecMap);
+    FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ASSERT(filterGroup != NULL);
+    ASSERT(cipherSpecMap != NULL);
+
+    // An unencrypted repository has no keys, so there is nothing to decrypt
+    if (cipherSpecMapSize(cipherSpecMap) != 0)
+        ioFilterGroupAdd(filterGroup, cipherBlockFormatNewP(cipherSpecMap));
 
     FUNCTION_LOG_RETURN(IO_FILTER_GROUP, filterGroup);
 }

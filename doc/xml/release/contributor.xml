@@ -95,6 +95,11 @@
     <contributor-id type="github">AndrewJackson2020</contributor-id>
 </contributor>
 
+<contributor id="andrew.kroh">
+    <contributor-name-display>Andrew Kroh</contributor-name-display>
+    <contributor-id type="github">andrewkroh</contributor-id>
+</contributor>
+
 <contributor id="andrew.lecuyer">
     <contributor-name-display>Andrew L'Ecuyer</contributor-name-display>
     <contributor-id type="github">andrewlecuyer</contributor-id>
@@ -708,6 +713,11 @@
 <contributor id="hyunkyu.han">
     <contributor-name-display>hyunkyu han</contributor-name-display>
     <contributor-id type="github">hancci</contributor-id>
+</contributor>
+
+<contributor id="j0uinim">
+    <contributor-name-display>j0uinim</contributor-name-display>
+    <contributor-id type="github">j0uinim</contributor-id>
 </contributor>
 
 <contributor id="jeanette.bromage">
