@@ -20,6 +20,7 @@ Azure Storage
 #include "common/type/xml.h"
 #include "storage/azure/read.h"
 #include "storage/azure/write.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Defaults
@@ -75,6 +76,8 @@ STRING_STATIC(AZURE_CREDENTIAL_HOST_STR,                            "169.254.169
 #define AZURE_CREDENTIAL_PATH                                       "/metadata/identity/oauth2/token"
 #define AZURE_CREDENTIAL_API_VERSION                                "2018-02-01"
 
+#define AZURE_FEDERATED_CREDENTIAL_PORT                             443
+
 VARIANT_STRDEF_STATIC(AZURE_JSON_TAG_ACCESS_TOKEN_VAR,              "access_token");
 VARIANT_STRDEF_STATIC(AZURE_JSON_TAG_EXPIRES_IN_VAR,                "expires_in");
 
@@ -110,8 +113,16 @@ struct StorageAzure
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
 
     // For Azure managed identities authentication
-    HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     const String *credHost;                                         // Credentials host
+
+    // For federated identity authentication
+    const String *tenantId;                                         // Tenant Id
+    const String *clientId;                                         // Client Id
+    const String *authorityHost;                                    // Host for authentication requests
+    const String *federatedTokenFile;                               // Location of the jwt used for exchange
+
+    // Used by methods that require fetching an access token for auth (managed & federated identities)
+    HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     String *accessToken;                                            // Access token
     time_t accessTokenExpirationTime;                               // Time the access token expires
 };
@@ -247,6 +258,73 @@ storageAzureAuth(
                 HttpRequest *const request = httpRequestNewP(
                     this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(AZURE_CREDENTIAL_PATH), .header = authHeader,
                     .query = authQuery);
+                HttpResponse *const response = httpRequestResponse(request, true);
+
+                // Set the access_token on success and store an expiration time when we should re-fetch it
+                if (httpResponseCodeOk(response))
+                {
+                    // Get credentials and expiration from the JSON response
+                    const KeyValue *const credential = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
+                    const String *const accessToken = varStr(kvGet(credential, AZURE_JSON_TAG_ACCESS_TOKEN_VAR));
+                    CHECK(FormatError, accessToken != NULL, "access token missing");
+
+                    const Variant *const expiresInStr = kvGet(credential, AZURE_JSON_TAG_EXPIRES_IN_VAR);
+                    CHECK(FormatError, expiresInStr != NULL, "expiry missing");
+
+                    MEM_CONTEXT_OBJ_BEGIN(this)
+                    {
+                        strCat(strTrunc(this->accessToken), accessToken);
+
+                        // Subtract http client timeout * 2 so the token does not expire in the middle of http retries
+                        const time_t clientTimeoutPeriod = ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
+                        const time_t expiresIn = (time_t)varInt64Force(expiresInStr);
+
+                        this->accessTokenExpirationTime = timeBegin + expiresIn - clientTimeoutPeriod;
+                    }
+                    MEM_CONTEXT_OBJ_END();
+                }
+                else
+                    httpRequestError(request, response);
+            }
+
+            // Add authorization header
+            httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("Bearer %s", strZ(this->accessToken)));
+        }
+        // WebId authentication
+        else if (this->keyType == storageAzureKeyTypeWebId)
+        {
+            const time_t timeBegin = time(NULL);
+
+            if (timeBegin >= this->accessTokenExpirationTime)
+            {
+                // Retrive a new access token by exchanging the federated identity token. Documentation for the process can
+                // be found at: https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation
+                // Exact implementation details for the request needed to make the exchange can be found at:
+                // https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-client-creds-grant-flow
+                // (see the case for federated credentials).
+
+                // Load the token from the given file for each request since the token may be updated during execution
+                const String *const jwt = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR),
+                                                                                this->federatedTokenFile)));
+
+                // Get credentials. Redact the web identity token so it is not exposed if the query is logged, e.g. in an error.
+                StringList *const queryRedactList = strLstNew();
+                strLstAddZ(queryRedactList, "client_assertion");
+
+                HttpHeader *const authHeader = httpHeaderNew(NULL);
+                httpHeaderAdd(authHeader, STRDEF("Content-Type"), STRDEF("application/x-www-form-urlencoded"));
+
+                HttpQuery *const authQuery = httpQueryNewP(.redactList = queryRedactList);
+                httpQueryAdd(authQuery, STRDEF("scope"), STRDEF("https://graph.microsoft.com/.default"));
+                httpQueryAdd(authQuery, STRDEF("client_id"), this->clientId);
+                httpQueryAdd(authQuery, STRDEF("client_assertion"), jwt);
+                httpQueryAdd(authQuery, STRDEF("client_assertion_type"),
+                        STRDEF("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"));
+                httpQueryAdd(authQuery, STRDEF("grant_type"), STRDEF("client_credentials"));
+
+                const String *const path = strNewFmt("%s/oauth2/v2.0/token", strZ(this->authorityHost));
+                HttpRequest *const request = httpRequestNewP(
+                    this->credHttpClient, HTTP_VERB_POST_STR, path, .header = authHeader, .query = authQuery);
                 HttpResponse *const response = httpRequestResponse(request, true);
 
                 // Set the access_token on success and store an expiration time when we should re-fetch it
@@ -1001,6 +1079,7 @@ FN_EXTERN Storage *
 storageAzureNew(
     const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *const container, const String *const account, const StorageAzureKeyType keyType, const String *const key,
+    const String *const tenantId, const String *const clientId, const String *authorityHost, const String *const federatedTokenFile,
     const size_t blockSize, const KeyValue *const tag, const String *const endpoint, const StorageAzureUriStyle uriStyle,
     const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType, const bool verifyPeer,
     const String *const caFile, const String *const caPath, const unsigned int prefetch, const uint64_t readOver)
@@ -1072,6 +1151,22 @@ storageAzureNew(
                 this->credHost = AZURE_CREDENTIAL_HOST_STR;
                 this->credHttpClient = httpClientNew(
                     sckClientNew(this->credHost, AZURE_CREDENTIAL_PORT, timeout, timeout), timeout);
+                break;
+
+            case storageAzureKeyTypeWebId:
+                ASSERT(tenantId != NULL);
+                ASSERT(clientId != NULL);
+                ASSERT(authorityHost != NULL);
+                ASSERT(federatedTokenFile != NULL);
+
+                this->tenantId = tenantId;
+                this->clientId = clientId;
+                this->authorityHost = authorityHost;
+                this->federatedTokenFile = federatedTokenFile;
+
+                this->accessToken = strNew();
+                this->credHttpClient = httpClientNew(
+                    sckClientNew(this->authorityHost, AZURE_FEDERATED_CREDENTIAL_PORT, timeout, timeout), timeout);
                 break;
 
             // Store shared key

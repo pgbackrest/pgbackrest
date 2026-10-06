@@ -20,6 +20,7 @@ typedef enum
     storageAzureKeyTypeShared,
     storageAzureKeyTypeSas,
     storageAzureKeyTypeAuto,
+    storageAzureKeyTypeWebId,
 } StorageAzureKeyType;
 
 /***********************************************************************************************************************************
@@ -36,9 +37,10 @@ Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Storage *storageAzureNew(
     const String *path, bool write, time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
-    const String *container, const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize,
-    const KeyValue *tag, const String *endpoint, StorageAzureUriStyle uriStyle, unsigned int port, TimeMSec timeout,
-    HttpProtocolType protocolType, bool verifyPeer, const String *caFile, const String *caPath, unsigned int prefetch,
-    uint64_t readOver);
+    const String *container, const String *account, StorageAzureKeyType keyType, const String *key,
+    const String *tenantId, const String *clientId, const String *authorityHost, const String *federatedTokenFile,
+    size_t blockSize, const KeyValue *tag, const String *endpoint, StorageAzureUriStyle uriStyle, unsigned int port,
+    TimeMSec timeout, HttpProtocolType protocolType, bool verifyPeer, const String *caFile, const String *caPath,
+    unsigned int prefetch, uint64_t readOver);
 
 #endif

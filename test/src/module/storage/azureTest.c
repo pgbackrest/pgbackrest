@@ -420,8 +420,8 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
-                    TEST_KEY_SHARED_STR, 16, NULL, STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000,
-                    httpProtocolTypeHttps, true, NULL, NULL, 1, 0)),
+                    TEST_KEY_SHARED_STR, NULL, NULL, NULL, NULL, 16, NULL, STRDEF("blob.core.windows.net"),
+                    storageAzureUriStyleHost, 443, 1000, httpProtocolTypeHttps, true, NULL, NULL, 1, 0)),
             "new azure storage - shared key");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -463,6 +463,7 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeSas, TEST_KEY_SAS_STR,
+                    NULL, NULL, NULL, NULL,
                     16, NULL, STRDEF("blob.core.usgovcloudapi.net"), storageAzureUriStyleHost, 443, 1000, httpProtocolTypeHttps,
                     true, NULL, NULL, 1, 0)),
             "new azure storage - sas key");
