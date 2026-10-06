@@ -2354,6 +2354,7 @@ option:
       - service
       - token
       - auto
+      - web-id
     command: repo-type
     depend:
       option: repo-type
@@ -2371,6 +2372,7 @@ option:
       list:
         - service
         - token
+        - web-id
 
   repo-gcs-user-project:
     section: global
