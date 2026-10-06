@@ -741,8 +741,9 @@ hrnHostConfig(HrnHost *const this)
 
                         this->pub.repo1Storage = storageAzureNew(
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_AZURE_CONTAINER), STRDEF(HRN_HOST_AZURE_ACCOUNT),
-                            storageAzureKeyTypeShared, STRDEF(HRN_HOST_AZURE_KEY), 4 * 1024 * 1024, NULL, hrnHostIp(azure),
-                            storageAzureUriStylePath, 443, ioTimeoutMs(), httpProtocolTypeHttps, false, NULL, NULL, 2, 8192);
+                            storageAzureKeyTypeShared, STRDEF(HRN_HOST_AZURE_KEY), NULL, NULL,NULL,NULL, 4 * 1024 * 1024, NULL,
+                            hrnHostIp(azure), storageAzureUriStylePath, 443, ioTimeoutMs(), httpProtocolTypeHttps, false, NULL,
+                            NULL, 2, 8192);
                     }
                     MEM_CONTEXT_OBJ_END();
 
