@@ -607,6 +607,7 @@
                                 <allow-item id="shared">Shared key</allow-item>
                                 <allow-item id="sas">Shared access signature</allow-item>
                                 <allow-item id="auto">Automatically authorize using Azure managed identities</allow-item>
+                                <allow-item id="web-id">Authorize using Workload Identity Federation</allow-item>
                             </allow-list>
                         </text>
 

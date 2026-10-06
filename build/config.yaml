@@ -2323,6 +2323,7 @@ option:
       - shared
       - sas
       - auto
+      - web-id
 
   repo-azure-uri-style:
     section: global
