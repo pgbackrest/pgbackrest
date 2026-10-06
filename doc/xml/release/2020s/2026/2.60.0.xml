@@ -20,6 +20,19 @@
 
                 <p>Add <br-option>checksum-page-error</br-option> option to error on invalid page checksums.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2838"/>
+                <github-pull-request id="2839"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="adol.rodriguez"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Support for <proper>GCS</proper> Workload Identity Federation.</p>
+            </release-item>
         </release-feature-list>
 
         <release-improvement-list>
