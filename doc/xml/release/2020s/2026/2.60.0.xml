@@ -143,6 +143,9 @@
                     <github-pull-request id="2864"/>
                 </commit>
                 <commit subject="Make the repo-format and repo-cipher-rotate options internal."/>
+                <commit subject="Restore the archive.info save to backup.">
+                    <github-pull-request id="2869"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
