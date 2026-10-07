@@ -1708,6 +1708,7 @@ option:
   repo-format:
     group: repo
     type: integer
+    internal: true
     default: 5
     allow-list:
       - 5
@@ -1747,6 +1748,7 @@ option:
     section: global
     group: repo
     type: time
+    internal: true
     default: 90d
     allow-range: [15d, 9999999d]
     command:

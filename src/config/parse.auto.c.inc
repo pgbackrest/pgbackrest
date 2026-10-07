@@ -6002,6 +6002,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                      // opt/repo-cipher-rotate
         PARSE_RULE_OPTION_NAME("repo-cipher-rotate"),                                                      // opt/repo-cipher-rotate
         PARSE_RULE_OPTION_TYPE(Time),                                                                      // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_INTERNAL(true)                                                                   // opt/repo-cipher-rotate
         PARSE_RULE_OPTION_RESET(true),                                                                     // opt/repo-cipher-rotate
         PARSE_RULE_OPTION_REQUIRED(true),                                                                  // opt/repo-cipher-rotate
         PARSE_RULE_OPTION_SECTION(Global),                                                                 // opt/repo-cipher-rotate
@@ -6124,6 +6125,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                             // opt/repo-format
         PARSE_RULE_OPTION_NAME("repo-format"),                                                                    // opt/repo-format
         PARSE_RULE_OPTION_TYPE(Integer),                                                                          // opt/repo-format
+        PARSE_RULE_OPTION_INTERNAL(true)                                                                          // opt/repo-format
         PARSE_RULE_OPTION_REQUIRED(true),                                                                         // opt/repo-format
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                   // opt/repo-format
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                         // opt/repo-format
