@@ -230,6 +230,12 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
         // -------------------------------------------------------------------------------------------------------------------------
         infoBackupDataAdd(infoBackup, manifest);
         infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
+
+        // Save archive.info/copy so the timestamps will be updated to prevent lifecycle settings from removing the files early
+        // -------------------------------------------------------------------------------------------------------------------------
+        infoArchiveSaveFile(
+            infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMain()), storageRepoWrite(),
+            INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMain());
     }
     MEM_CONTEXT_TEMP_END();
 
