@@ -132,6 +132,8 @@
         <text>
             <p><backrest/> release numbers consist of two parts, major and minor. A major release <i>may</i> break compatibility with the prior major release, but <proper>v2</proper> releases are fully compatible with <proper>v1</proper> repositories and will accept all <proper>v1</proper> options. Minor releases can include bug fixes and features but do not change the repository format and strive to avoid changing options and naming.</p>
 
+            <p>Feature releases are scheduled for the third Monday of January, April, July, and October. Patch releases are scheduled for the third Monday of any other month as required.</p>
+
             <p>Documentation for the <proper>v1</proper> release can be found <link url="{[backrest-url-base]}/1">here</link>.</p>
 
             <p>The notes for a release may also contain <quote>Additional Notes</quote> but changes in this section are only to documentation or the test suite and have no direct impact on the <backrest/> codebase.</p>
