@@ -130,7 +130,7 @@
 
     <intro>
         <text>
-            <p><backrest/> release numbers consist of two parts, major and minor. A major release <i>may</i> break compatibility with the prior major release, but <proper>v2</proper> releases are fully compatible with <proper>v1</proper> repositories and will accept all <proper>v1</proper> options. Minor releases can include bug fixes and features but do not change the repository format and strive to avoid changing options and naming.</p>
+            <p><backrest/> release numbers consist of three parts: major, minor, and patch. A major release <i>may</i> break compatibility with the prior major release, but <proper>v2</proper> releases are fully compatible with <proper>v1</proper> repositories and will accept all <proper>v1</proper> options. Minor releases can include bug fixes and features but do not change the repository format and strive to avoid changing options and naming. Patch releases contain bug fixes for the most recent minor release.</p>
 
             <p>Feature releases are scheduled for the third Monday of January, April, July, and October. Patch releases are scheduled for the third Monday of any other month as required.</p>
 
