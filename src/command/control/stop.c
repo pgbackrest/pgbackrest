@@ -1,11 +1,6 @@
 /***********************************************************************************************************************************
 Stop Command
 ***********************************************************************************************************************************/
-#ifdef __illumos__
-#define _POSIX_C_SOURCE 200809L
-#include <sys/types.h>
-#endif
-
 #include <build.h>
 
 #include <errno.h>
@@ -14,8 +9,6 @@ Stop Command
 #include <string.h>
 #include <sys/file.h>
 #include <unistd.h>
-
-
 
 #include "command/control/common.h"
 #include "command/control/stop.h"

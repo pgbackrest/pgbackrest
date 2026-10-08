@@ -1,7 +1,3 @@
-socket_dep = []
-if host_machine.system() == 'sunos'
-    socket_dep += cc.find_library('socket', required: true)
-endif
 ####################################################################################################################################
 # Make externed functions/variables static when unity is enabled
 ####################################################################################################################################
@@ -264,11 +260,11 @@ pgbackrest_exe = executable(
         lib_lz4,
         lib_systemd,
         lib_pq,
+        lib_socket,
         lib_ssh2,
         lib_xml,
         lib_z,
         lib_zstd,
-        socket_dep
     ],
     install: true,
 )

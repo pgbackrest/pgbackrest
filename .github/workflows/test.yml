@@ -49,6 +49,9 @@ jobs:
   bsd:
     uses: ./.github/workflows/test-bsd.yml
 
+  illumos:
+    uses: ./.github/workflows/test-illumos.yml
+
   compile:
     uses: ./.github/workflows/test-compile.yml
 
