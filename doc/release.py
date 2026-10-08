@@ -35,7 +35,7 @@ from command.render.release import release_last  # noqa: E402
 from common.error import EXIT_ERROR, EXIT_TERM, ToolError, error_trace  # noqa: E402
 from common.exec import exec_result  # noqa: E402
 from common.log import *  # noqa: E402
-from common.storage import file_read, file_remove, file_write  # noqa: E402
+from common.storage import file_read, file_remove, file_write, path_list_recurse  # noqa: E402
 from common.xml import xml_document_parse, xml_node_attribute, xml_node_normalize  # noqa: E402
 from config.project import PROJECT_NAME, project_version  # noqa: E402
 
@@ -48,6 +48,10 @@ _PATH_SITE = "site"
 # Files at the top of the site that belong to the site rather than to a build of the documentation, so a deploy leaves them alone.
 # CNAME is what points the domain at the site, so removing it takes the site off its domain until someone puts it back.
 _SITE_KEEP_LIST = ("CNAME",)
+
+# The footer of a page, and a release date as date_render() writes it or a release year within the footer
+_FOOTER_EXP = re.compile(r'<div class="page-footer">.*?</div>', re.DOTALL)
+_FOOTER_DATE_EXP = re.compile(r"[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}|[0-9]{4}")
 
 # The distributions the documentation is built for, named for the os type the documentation generates commands for. The user guide
 # for each is kept under a name of its own, since a reader picks the one for the system they are on.
@@ -242,6 +246,25 @@ def host_remove():
 
 
 ####################################################################################################################################
+def footer_date_remove(content):
+    """Remove the release date and year from the footer of a page."""
+
+    return _FOOTER_EXP.sub(lambda match: _FOOTER_DATE_EXP.sub("", match.group(0)), content)
+
+
+####################################################################################################################################
+def site_file_copy(source, target):
+    """Copy a file to the site unless it is a page that differs from the copy on the site only in the release date and year."""
+
+    if not (
+        source.endswith(".html")
+        and os.path.isfile(target)
+        and footer_date_remove(file_read(source)) == footer_date_remove(file_read(target))
+    ):
+        shutil.copy2(source, target)
+
+
+####################################################################################################################################
 def cmd_deploy(config, dev):
     """Deploy the documentation to the website."""
 
@@ -264,8 +287,12 @@ def cmd_deploy(config, dev):
 
     path_prior = os.path.join(path_site, "prior", version)
 
-    shutil.rmtree(path_prior, ignore_errors=True)
-    shutil.copytree(path_html, path_prior)
+    # Remove files the build did not write
+    for name in path_list_recurse(path_prior):
+        if not os.path.isfile(os.path.join(path_html, name)):
+            file_remove(os.path.join(path_prior, name))
+
+    shutil.copytree(path_html, path_prior, dirs_exist_ok=True, copy_function=site_file_copy)
 
     # The main website is only replaced by a release, since a development build is of what is not out yet
     if not dev:
@@ -283,11 +310,17 @@ def cmd_deploy(config, dev):
             path = os.path.join(path_site, name)
 
             # Only what this build writes, which is regular files the site does not own. A link is the site's too, e.g. a retired
-            # platform name pointed at the guide that replaced it, so it is left where it is.
-            if name not in _SITE_KEEP_LIST and os.path.isfile(path) and not os.path.islink(path):
+            # platform name pointed at the guide that replaced it, so it is left where it is. A file the build wrote again is not
+            # removed.
+            if (
+                name not in _SITE_KEEP_LIST
+                and os.path.isfile(path)
+                and not os.path.islink(path)
+                and not os.path.isfile(os.path.join(path_html, name))
+            ):
                 os.remove(path)
 
-        shutil.copytree(path_html, path_site, dirs_exist_ok=True)
+        shutil.copytree(path_html, path_site, dirs_exist_ok=True, copy_function=site_file_copy)
 
         for name in ("README.md", "LICENSE"):
             shutil.copyfile(os.path.join(config.repo_path, name), os.path.join(path_site, name))
