@@ -260,6 +260,7 @@ pgbackrest_exe = executable(
         lib_lz4,
         lib_systemd,
         lib_pq,
+        lib_socket,
         lib_ssh2,
         lib_xml,
         lib_z,

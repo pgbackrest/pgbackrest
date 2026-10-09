@@ -50,6 +50,8 @@ if host_machine.system() == 'linux'
     add_global_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
 elif host_machine.system() == 'darwin'
     add_global_arguments('-D_DARWIN_C_SOURCE', language: 'c')
+elif host_machine.system() == 'sunos'
+    add_global_arguments('-D_POSIX_C_SOURCE=200809L', '-D__EXTENSIONS__', language: 'c')
 endif
 
 ####################################################################################################################################
@@ -222,6 +224,13 @@ lib_xml = dependency('libxml-2.0')
 lib_z = dependency('zlib')
 
 configuration.set('ZLIB_CONST', true, description: 'Require zlib const input buffer')
+
+# Find socket library on illumos/Solaris, where sockets are not in libc
+lib_socket = dependency('', required: false)
+
+if host_machine.system() == 'sunos'
+    lib_socket = cc.find_library('socket')
+endif
 
 # Find optional systemd library
 lib_systemd = dependency('libsystemd', required: get_option('libsystemd'))
