@@ -106,6 +106,18 @@
 
                 <p>Add context to block map read errors during backup.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2870"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="kalevi.kolttonen"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Support building on <proper>illumos</proper>.</p>
+            </release-item>
         </release-improvement-list>
 
         <release-development-list>
