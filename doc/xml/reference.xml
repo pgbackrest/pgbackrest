@@ -2881,6 +2881,8 @@
 
                 <text>
                     <p>Verify determines if the backups and archives in a repository are valid.</p>
+
+                    <p>At repository format 6 or higher, files stored in a bundle are verified with a checksum of the entire bundle rather than individually. Since verification is performed at the bundle level, all files stored in a bundle that fails verification are counted as invalid, even when only part of the bundle is damaged. The bundle is reported once for each backup that has files stored in it.</p>
                 </text>
 
                 <option-list>
@@ -2888,7 +2890,7 @@
                         <summary>Backup set to verify.</summary>
 
                         <text>
-                            <p>Verify all database and archive files associated with the specified backup set.</p>
+                            <p>Verify all database and archive files associated with the specified backup set. Prior backups that the backup set depends on for block incremental or bundled files are verified as well.</p>
                         </text>
 
                         <example>20150131-153358F_20150131-153401I</example>

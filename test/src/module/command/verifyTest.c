@@ -3,6 +3,7 @@ Test Verify Command
 ***********************************************************************************************************************************/
 #include "command/backup/protocol.h"
 #include "command/stanza/create.h"
+#include "command/stanza/upgrade.h"
 #include "common/io/bufferRead.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -951,7 +952,8 @@ testRun(void)
         String *filePathName = strNewZ(STORAGE_REPO_ARCHIVE "/testfile");
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), strZ(filePathName));
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeNone, HASH_TYPE_SHA1_ZERO_BUF, 0, cipherSpecMapNone, false),
+            verifyFile(
+                filePathName, 0, NULL, compressTypeNone, hashTypeSha256, HASH_TYPE_SHA256_ZERO_BUF, 0, cipherSpecMapNone, false),
             verifyOk, "file ok");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -959,7 +961,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storageRepoWrite(), strZ(filePathName), fileContents);
         TEST_RESULT_UINT(
-            verifyFile(filePathName, 0, NULL, compressTypeNone, fileChecksum, 0, cipherSpecMapNone, false),
+            verifyFile(filePathName, 0, NULL, compressTypeNone, hashTypeSha1, fileChecksum, 0, cipherSpecMapNone, false),
             verifySizeInvalid, "file size invalid");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -967,8 +969,8 @@ testRun(void)
 
         TEST_RESULT_UINT(
             verifyFile(
-                strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), 0, NULL, compressTypeNone, fileChecksum, 0, cipherSpecMapNone,
-                false),
+                strNewFmt(STORAGE_REPO_ARCHIVE "/missingFile"), 0, NULL, compressTypeNone, hashTypeSha1, fileChecksum, 0,
+                cipherSpecMapNone, false),
             verifyFileMissing, "file missing");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -983,12 +985,12 @@ testRun(void)
         strCatZ(filePathName, ".gz");
         TEST_RESULT_UINT(
             verifyFile(
-                filePathName, 0, NULL, compressTypeGz, fileChecksum, fileSize,
+                filePathName, 0, NULL, compressTypeGz, hashTypeSha1, fileChecksum, fileSize,
                 cipherSpecMapPass, false),
             verifyOk, "file encrypted compressed ok");
         TEST_RESULT_UINT(
             verifyFile(
-                filePathName, 0, NULL, compressTypeGz, bufNewDecode(encodingHex, STRDEF("aa")), fileSize,
+                filePathName, 0, NULL, compressTypeGz, hashTypeSha1, bufNewDecode(encodingHex, STRDEF("aa")), fileSize,
                 cipherSpecMapPass, false),
             verifyChecksumMismatch, "file encrypted compressed checksum mismatch");
     }
@@ -2627,6 +2629,265 @@ testRun(void)
             "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D9758F000000FF, wal stop: 0000000105D9759000000000");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full backup at format 6");
+
+        hrnLogReplaceAdd("\\) checksum [a-f0-9]{40}", "[a-f0-9]{40}$", "SHA1", false);
+
+        // Repository that contains only the backups at format 6
+        StringList *const argListFormat6 = strLstNew();
+        hrnCfgArgRawZ(argListFormat6, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argListFormat6, cfgOptRepoPath, TEST_PATH "/repo6");
+
+        StringList *const argListFormat6Backup = strLstDup(argListFormat6);
+        hrnCfgArgRawZ(argListFormat6Backup, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawZ(argListFormat6Backup, cfgOptPgPath, TEST_PATH "/pg1");
+        hrnCfgArgRawBool(argListFormat6Backup, cfgOptRepoBundle, true);
+        hrnCfgArgRawBool(argListFormat6Backup, cfgOptRepoBlock, true);
+
+        argList = strLstDup(argListFormat6);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptRepoFormat, "6");
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
+        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+
+        argList = strLstDup(argListFormat6Backup);
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 300000);
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+        TEST_RESULT_LOG(
+            "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
+            "P00   INFO: backup start archive = 0000000105D98E0000000000, lsn = 5d98e00/0\n"
+            "P00   INFO: check archive for prior segment 0000000105D98DFF000000FF\n"
+            "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/postgresql.auto.conf\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/44 (bundle 1/0, 16KB, 5.71%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/57, 256KB, 97.14%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/535, 2B, 97.14%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/545, 8KB, 100.00%) checksum [SHA1]\n"
+            "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
+            "P00   INFO: backup stop archive = 0000000105D98E0000000000, lsn = 5d98e00/800000\n"
+            "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+            "P00   INFO: check archive for segment(s) 0000000105D98E0000000000:0000000105D98E0000000000\n"
+            "P00   INFO: new backup label = 20191005-182640F\n"
+            "P00   INFO: full backup size = 280KB, file total = 6");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("diff backup at format 6");
+
+        relation = bufNew(256 * 1024);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        memset(bufPtr(relation), 2, 1024);
+        bufUsedSet(relation, bufSize(relation));
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = BACKUP_EPOCH + 300000);
+
+        argList = strLstDup(argListFormat6Backup);
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 400000);
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+        TEST_RESULT_LOG(
+            "P00   INFO: last backup label = 20191005-182640F, version = " PROJECT_VERSION "\n"
+            "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
+            "P00   INFO: backup start archive = 0000000105D9A67000000000, lsn = 5d9a670/0\n"
+            "P00   INFO: check archive for prior segment 0000000105D9A66F000000FF\n"
+            "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/postgresql.auto.conf\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/0, 256KB, 96.97%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/238, 8KB, 100.00%) checksum [SHA1]\n"
+            "P00 DETAIL: reference pg_data/PG_VERSION to 20191005-182640F\n"
+            "P00 DETAIL: reference pg_data/base/1/44 to 20191005-182640F\n"
+            "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
+            "P00   INFO: backup stop archive = 0000000105D9A67000000000, lsn = 5d9a670/800000\n"
+            "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+            "P00   INFO: check archive for segment(s) 0000000105D9A67000000000:0000000105D9A67000000000\n"
+            "P00   INFO: new backup label = 20191005-182640F_20191006-221320D\n"
+            "P00   INFO: diff backup size = 264KB, file total = 6");
+
+        hrnLogReplaceClear();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verify bundles at format 6");
+
+        argList = strLstDup(argListFormat6);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20191005-182640F_20191006-221320D");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: ok\n"
+            "  archiveId: 11-1, total WAL checked: 1, total valid WAL: 1\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191005-182640F, status: valid, total files checked: 6, total valid files: 6\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191005-182640F_20191006-221320D, status: valid, total files checked: 6, total valid files: 6\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0",
+            "--set with bundled files in a prior backup");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: path '11-1/0000000105D98DFF' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-1/0000000105D98E00' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-1/0000000105D9A66F' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D9A67000000000, wal stop: 0000000105D9A67000000000");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid bundle in prior backup at format 6");
+
+        const String *const bundleFile = STRDEF("backup/db/20191005-182640F/bundle/1");
+        const Buffer *const bundle = storageGetP(storageNewReadP(storageRepoIdx(0), bundleFile));
+        Buffer *const bundleInvalid = bufDup(bundle);
+        bufPtr(bundleInvalid)[0] ^= 0xFF;
+
+        HRN_STORAGE_PUT(storageRepoIdxWrite(0), strZ(bundleFile), bundleInvalid);
+
+        argList = strLstDup(argListFormat6);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: error\n"
+            "  archiveId: 11-1, total WAL checked: 4, total valid WAL: 4\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191005-182640F, status: invalid, total files checked: 6, total valid files: 2\n"
+            "    missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n"
+            "  backup: 20191005-182640F_20191006-221320D, status: invalid, total files checked: 6, total valid files: 4\n"
+            "    missing: 0, checksum invalid: 1, size invalid: 0, other: 0",
+            "invalid bundle");
+        TEST_RESULT_LOG(
+            "P01   INFO: invalid checksum '20191005-182640F/bundle/1'\n"
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D98DFF000000FF, wal stop: 0000000105D98E0000000000\n"
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D9A66F000000FF, wal stop: 0000000105D9A67000000000");
+
+        HRN_STORAGE_PUT(storageRepoIdxWrite(0), strZ(bundleFile), bundle);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("missing manifest in prior backup at format 6");
+
+        HRN_STORAGE_MOVE(
+            storageRepoIdxWrite(0), "backup/db/20191005-182640F/" BACKUP_MANIFEST_FILE,
+            "backup/db/20191005-182640F/" BACKUP_MANIFEST_FILE ".save");
+        HRN_STORAGE_MOVE(
+            storageRepoIdxWrite(0), "backup/db/20191005-182640F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            "backup/db/20191005-182640F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT ".save");
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: error\n"
+            "  archiveId: 11-1, total WAL checked: 4, total valid WAL: 4\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191005-182640F, status: manifest missing, total files checked: 0, total valid files: 0\n"
+            "  backup: 20191005-182640F_20191006-221320D, status: invalid, total files checked: 6, total valid files: 4\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 1",
+            "missing manifest");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo6/backup/db/20191005-182640F/backup.manifest' for read\n"
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo6/backup/db/20191005-182640F/backup.manifest.copy' for"
+            " read\n"
+            "P00 DETAIL: manifest missing for '20191005-182640F' - backup may have expired\n"
+            "P00   INFO: bundle '20191005-182640F/bundle/1' not found in backup manifest\n"
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D98DFF000000FF, wal stop: 0000000105D98E0000000000\n"
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D9A66F000000FF, wal stop: 0000000105D9A67000000000");
+
+        HRN_STORAGE_MOVE(
+            storageRepoIdxWrite(0), "backup/db/20191005-182640F/" BACKUP_MANIFEST_FILE ".save",
+            "backup/db/20191005-182640F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_MOVE(
+            storageRepoIdxWrite(0), "backup/db/20191005-182640F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT ".save",
+            "backup/db/20191005-182640F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("--set with full backup at format 6");
+
+        argList = strLstDup(argListFormat6);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20191005-182640F");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: ok\n"
+            "  archiveId: 11-1, total WAL checked: 1, total valid WAL: 1\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191005-182640F, status: valid, total files checked: 6, total valid files: 6\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0",
+            "full backup");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: path '11-1/0000000105D98DFF' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-1/0000000105D9A66F' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-1/0000000105D9A670' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D98E0000000000, wal stop: 0000000105D98E0000000000");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("incr backup that does not use all prior bundles at format 6");
+
+        hrnLogReplaceAdd("\\) checksum [a-f0-9]{40}", "[a-f0-9]{40}$", "SHA1", false);
+
+        argList = strLstDup(argListFormat6Backup);
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        relation = bufNew(256 * 1024);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        memset(bufPtr(relation), 3, 1024);
+        bufUsedSet(relation, bufSize(relation));
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = BACKUP_EPOCH + 400000);
+
+        hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 500000);
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+        TEST_RESULT_LOG(
+            "P00   INFO: last backup label = 20191005-182640F_20191006-221320D, version = " PROJECT_VERSION "\n"
+            "P00   INFO: execute backup start: backup begins after the next regular checkpoint completes\n"
+            "P00   INFO: backup start archive = 0000000105D9BED000000000, lsn = 5d9bed0/0\n"
+            "P00   INFO: check archive for prior segment 0000000105D9BECF000000FF\n"
+            "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/postgresql.auto.conf\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/0, 256KB, 96.97%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/238, 8KB, 100.00%) checksum [SHA1]\n"
+            "P00 DETAIL: reference pg_data/PG_VERSION to 20191005-182640F\n"
+            "P00 DETAIL: reference pg_data/base/1/44 to 20191005-182640F\n"
+            "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
+            "P00   INFO: backup stop archive = 0000000105D9BED000000000, lsn = 5d9bed0/800000\n"
+            "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+            "P00   INFO: check archive for segment(s) 0000000105D9BED000000000:0000000105D9BED000000000\n"
+            "P00   INFO: new backup label = 20191005-182640F_20191008-020000I\n"
+            "P00   INFO: incr backup size = 264KB, file total = 6");
+
+        hrnLogReplaceClear();
+
+        argList = strLstDup(argListFormat6);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: ok\n"
+            "  archiveId: 11-1, total WAL checked: 6, total valid WAL: 6\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191005-182640F, status: valid, total files checked: 6, total valid files: 6\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191005-182640F_20191006-221320D, status: valid, total files checked: 6, total valid files: 6\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191005-182640F_20191008-020000I, status: valid, total files checked: 6, total valid files: 6\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0",
+            "incr backup");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D98DFF000000FF, wal stop: 0000000105D98E0000000000\n"
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D9A66F000000FF, wal stop: 0000000105D9A67000000000\n"
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D9BECF000000FF, wal stop: 0000000105D9BED000000000");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
