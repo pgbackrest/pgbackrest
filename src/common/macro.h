@@ -86,4 +86,15 @@ int *intList;
 ***********************************************************************************************************************************/
 #define LENGTH_OF(array) (sizeof(array) / sizeof((array)[0]))
 
+/***********************************************************************************************************************************
+Hint to the compiler that a condition is unlikely to be true, e.g. a check for an error. Returns the boolean value of the condition.
+
+Adapted from PostgreSQL src/include/c.h.
+***********************************************************************************************************************************/
+#ifdef HAVE_BUILTIN_EXPECT
+#define UNLIKELY(condition)                                         __builtin_expect((condition) != 0, 0)
+#else
+#define UNLIKELY(condition)                                         ((condition) != 0)
+#endif
+
 #endif

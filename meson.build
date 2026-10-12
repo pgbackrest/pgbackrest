@@ -198,6 +198,11 @@ if cc.compiles('''int main(void) {__builtin_types_compatible_p(char *, const cha
     configuration.set('HAVE_BUILTIN_TYPES_COMPATIBLE_P', true, description: 'Is __builtin_types_compatible_p present?')
 endif
 
+# Check C compiler support for __builtin_expect()
+if cc.links('''int main(void) {__builtin_expect(0, 0);}''')
+    configuration.set('HAVE_BUILTIN_EXPECT', true, description: 'Is __builtin_expect present?')
+endif
+
 # Find optional backtrace library
 lib_backtrace = cc.find_library('backtrace', required: false, has_headers: 'backtrace.h')
 
