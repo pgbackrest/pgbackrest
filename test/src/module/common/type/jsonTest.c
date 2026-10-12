@@ -62,6 +62,21 @@ testRun(void)
         TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u1111"))), JsonFormatError, "unable to decode at: \\u1111");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on maximum depth");
+
+        String *const depthArray = strNew();
+        String *const depthObject = strNew();
+
+        for (unsigned int depthIdx = 0; depthIdx < 32; depthIdx++)
+        {
+            strCatChr(depthArray, '[');
+            strCatZ(depthObject, "{\"a\":");
+        }
+
+        TEST_ERROR(jsonToVar(strNewFmt("%s{", strZ(depthArray))), JsonFormatError, "maximum depth of 32 exceeded at: {");
+        TEST_ERROR(jsonValidate(strNewFmt("%s[", strZ(depthObject))), JsonFormatError, "maximum depth of 32 exceeded at: [");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid escape");
 
         TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\xy"))), JsonFormatError, "invalid escape character at: \\xy");

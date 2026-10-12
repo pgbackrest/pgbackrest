@@ -11,7 +11,13 @@ Convert JSON to/from KeyValue
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/type/json.h"
+
+/***********************************************************************************************************************************
+Maximum depth of nested containers when reading
+***********************************************************************************************************************************/
+#define JSON_READ_DEPTH_MAX                                         32
 
 /***********************************************************************************************************************************
 Object types
@@ -322,7 +328,12 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
 
     // Add container to the stack
     if (jsonTypeContainer(type))
+    {
+        if (lstSize(this->stack) >= JSON_READ_DEPTH_MAX)
+            THROW_FMT(JsonFormatError, "maximum depth of " STRINGIFY(JSON_READ_DEPTH_MAX) " exceeded at: %s", this->json);
+
         lstAdd(this->stack, &(JsonReadStack){.type = type});
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
