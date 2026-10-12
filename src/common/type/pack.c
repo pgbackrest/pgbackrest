@@ -1048,6 +1048,9 @@ pckReadPackReadConst(PackRead *const this, PckReadPackParam param)
     // Read the tag
     pckReadTag(this, &param.id, pckTypeMapPack, false);
 
+    // A pack has at least the end tag
+    CHECK(FormatError, this->tagNextSize > 0, "invalid pack size");
+
     PackRead *const result = pckReadNewC(pckReadBufPtr(this), pckReadSize(this));
 
     pckReadConsumeBuffer(this);
@@ -1070,6 +1073,9 @@ pckReadPack(PackRead *const this, PckReadPackParam param)
 
     // Read the tag
     pckReadTag(this, &param.id, pckTypeMapPack, false);
+
+    // A pack has at least the end tag
+    CHECK(FormatError, this->tagNextSize > 0, "invalid pack size");
 
     // Get the pack size
     Buffer *const result = OBJ_NAME(bufNew(this->tagNextSize), Pack::Buffer);

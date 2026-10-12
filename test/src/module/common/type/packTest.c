@@ -361,6 +361,15 @@ testRun(void)
         TEST_ERROR(pckReadNext(packRead), FormatError, "invalid field id");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on zero-size pack");
+
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\360\002\000"))), "new read");
+        TEST_ERROR(pckReadPackReadP(packRead), FormatError, "invalid pack size");
+
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\360\002\000"))), "new read");
+        TEST_ERROR(pckReadPackReadConstP(packRead), FormatError, "invalid pack size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read const packs");
 
         TEST_ASSIGN(packWrite, pckWriteNewP(.size = 1), "new write");
