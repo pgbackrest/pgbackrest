@@ -592,6 +592,9 @@ pckReadTagNext(PackRead *const this)
         // Increment the next tag id
         this->tagNextId += this->tagStack.top->idLast + 1;
 
+        // Error when the id wrapped or is UINT_MAX (end of container)
+        CHECK(FormatError, this->tagNextId > this->tagStack.top->idLast && this->tagNextId != UINT_MAX, "invalid field id");
+
         // Get tag size if it exists
         if (packTypeMapData[this->tagNextTypeMap].size &&
             (this->tagNextValue > 0 || !packTypeMapData[this->tagNextTypeMap].valueSingleBit))

@@ -341,6 +341,16 @@ testRun(void)
         TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unterminated varint-128 integer");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid field id");
+
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\046\377\377\377\377\177"))), "new read");
+        TEST_ERROR(pckReadNext(packRead), FormatError, "invalid field id");
+
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\040\046\377\377\377\377\177"))), "new read");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "read bool");
+        TEST_ERROR(pckReadNext(packRead), FormatError, "invalid field id");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read const packs");
 
         TEST_ASSIGN(packWrite, pckWriteNewP(.size = 1), "new write");
