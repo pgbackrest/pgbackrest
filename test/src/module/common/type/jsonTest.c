@@ -74,6 +74,7 @@ testRun(void)
         TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u1111"))), JsonFormatError, "unable to decode at: \\u1111");
         TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u00x1"))), JsonFormatError, "unable to decode at: \\u00x1");
         TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u00a"))), JsonFormatError, "unable to decode at: \\u00a");
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u0000\""))), JsonFormatError, "unable to decode at: \\u0000\"");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on maximum depth");

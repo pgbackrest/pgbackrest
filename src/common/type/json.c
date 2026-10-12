@@ -1047,9 +1047,14 @@ jsonReadStr(JsonRead *const this)
                         THROW_FMT(JsonFormatError, "unable to decode at: %s", this->json - 2);
                     }
 
-                    // Decode char
+                    // Decode char. A null character cannot be stored in a string.
                     this->json += 2;
-                    strCatChr(result, (char)cvtZSubNToUIntBase(this->json, 0, 2, 16));
+                    const char decode = (char)cvtZSubNToUIntBase(this->json, 0, 2, 16);
+
+                    if (decode == '\0')
+                        THROW_FMT(JsonFormatError, "unable to decode at: %s", this->json - 4);
+
+                    strCatChr(result, decode);
                     this->json++;
 
                     break;
