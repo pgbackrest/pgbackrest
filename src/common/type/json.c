@@ -836,12 +836,12 @@ jsonReadSkipStr(JsonRead *const this)
                 {
                     this->json++;
 
-                    // Expect four digits
+                    // Expect four hex digits
                     unsigned int digitIdx = 0;
 
                     for (; digitIdx < 4; digitIdx++)
                     {
-                        if (!isdigit(this->json[digitIdx]))
+                        if (!isxdigit((unsigned char)this->json[digitIdx]))
                             break;
                     }
 

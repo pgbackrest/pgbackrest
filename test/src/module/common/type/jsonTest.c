@@ -245,6 +245,7 @@ testRun(void)
 
         TEST_RESULT_VOID(jsonValidate(json), "valid");
         TEST_RESULT_VOID(jsonValidate(STRDEF("[\"\\u0041\",\"\\u1234\"]")), "valid escapes before end of string");
+        TEST_RESULT_VOID(jsonValidate(STRDEF("[\"\\u003c\",\"\\uFFFF\"]")), "valid hex escapes");
         TEST_ERROR(jsonValidate(STRDEF("\"\\u0041")), JsonFormatError, "expected '\"' but found null delimiter");
         TEST_ERROR(jsonValidate(STRDEF("\"\\u000")), JsonFormatError, "unable to decode at: \\u000");
         TEST_ERROR(jsonValidate(STRDEF("\"")), JsonFormatError, "expected '\"' but found null delimiter");
