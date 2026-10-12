@@ -334,6 +334,16 @@ testRun(void)
         TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF(""))), "new read");
         TEST_ERROR(pckReadBuffer(packRead, 2), FormatError, "unexpected EOF");
 
+        TEST_ASSIGN(packWrite, pckWriteNewP(), "new write");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("abc")), "write string");
+        TEST_RESULT_VOID(pckWriteEndP(packWrite), "write end");
+
+        const Buffer *const packStr = pckToBuf(pckWriteResult(packWrite));
+
+        TEST_ASSIGN(
+            packRead, pckReadNewC(bufPtrConst(packStr), bufUsed(packStr) - 2), "new read without the last string byte and end");
+        TEST_ERROR(pckReadStrP(packRead), FormatError, "unexpected EOF");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid uint64");
 

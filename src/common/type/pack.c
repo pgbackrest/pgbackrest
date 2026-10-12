@@ -600,6 +600,9 @@ pckReadTagNext(PackRead *const this)
             (this->tagNextValue > 0 || !packTypeMapData[this->tagNextTypeMap].valueSingleBit))
         {
             this->tagNextSize = (size_t)pckReadU64Internal(this);
+
+            // A pack read from a buffer cannot have a field larger than the bytes remaining
+            CHECK(FormatError, this->read != NULL || this->tagNextSize <= this->bufferUsed - this->bufferPos, "unexpected EOF");
         }
         else
             this->tagNextSize = 0;
