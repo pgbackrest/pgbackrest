@@ -26,6 +26,21 @@ testFree(void *thisVoid)
 }
 
 /***********************************************************************************************************************************
+testStackFull - fill the stack with switches and then create or switch to a context
+***********************************************************************************************************************************/
+static void
+testStackFull(MemContext *const memContext, const bool contextNew)
+{
+    while (memContextMaxStackIdx < MEM_CONTEXT_STACK_MAX - 1)
+        memContextSwitch(memContext);
+
+    if (contextNew)
+        memContextNewP("test-full");
+    else
+        memContextSwitch(memContext);
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -455,6 +470,12 @@ testRun(void)
             // {uncrustify_on}
             AssertError, "error in test block");
 
+        TEST_RESULT_Z(memContextCurrent()->name, "TOP", "context is now top");
+
+        // Error when the stack is full
+        TEST_ERROR(testStackFull(memContext, false), AssertError, "mem context stack is full");
+        TEST_RESULT_Z(memContextCurrent()->name, "TOP", "context is now top");
+        TEST_ERROR(testStackFull(memContext, true), AssertError, "mem context stack is full");
         TEST_RESULT_Z(memContextCurrent()->name, "TOP", "context is now top");
 
         // Reset temp mem context after a single interaction

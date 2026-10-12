@@ -749,6 +749,7 @@ memContextNew(
     ASSERT(param.callbackQty <= 1);
     // Check context name length
     ASSERT(name[0] != '\0');
+    CHECK(AssertError, memContextMaxStackIdx < MEM_CONTEXT_STACK_MAX - 1, "mem context stack is full");
 
     // Pad allocExtra so that optional structures will be aligned. There may not be any optional structures but it doesn't seem
     // worth the cost of checking since memory allocations are aligned so the extra bytes would be wasted anyway.
@@ -1170,7 +1171,7 @@ memContextSwitch(MemContext *const this)
 
     ASSERT(this != NULL);
     ASSERT(this->active);
-    ASSERT(memContextCurrentStackIdx < MEM_CONTEXT_STACK_MAX - 1);
+    CHECK(AssertError, memContextMaxStackIdx < MEM_CONTEXT_STACK_MAX - 1, "mem context stack is full");
 
     memContextMaxStackIdx++;
     memContextCurrentStackIdx = memContextMaxStackIdx;
