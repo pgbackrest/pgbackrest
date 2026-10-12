@@ -36,6 +36,18 @@ testRun(void)
         TEST_ERROR(jsonReadBool(read), JsonFormatError, "missing comma at: true]");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on unexpected comma");
+
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF(" ,\"a\""))), JsonFormatError, "unexpected comma at: ,\"a\"");
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("[,true]")), "new read");
+
+        TEST_RESULT_VOID(jsonReadArrayBegin(read), "array begin");
+        TEST_ERROR(jsonReadBool(read), JsonFormatError, "unexpected comma at: ,true]");
+
+        TEST_ERROR(jsonValidate(STRDEF("{\"a\":,\"b\"}")), JsonFormatError, "unexpected comma at: ,\"b\"}");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on mismatched container end");
 
         TEST_ASSIGN(read, jsonReadNew(STRDEF("\r{ ] ")), "new read");

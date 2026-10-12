@@ -270,6 +270,10 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
     {
         ASSERT(!key);
 
+        // No comma before a value outside a container
+        if (*this->json == ',')
+            THROW_FMT(JsonFormatError, "unexpected comma at: %s", this->json);
+
         // If a scalar then no need to create the stack since the read is complete
         if (jsonTypeScalar(type))
         {
@@ -323,7 +327,13 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
             jsonReadConsumeWhiteSpace(this);
         }
         else
+        {
+            // No comma before the first value in a container or before an object value
+            if (*this->json == ',')
+                THROW_FMT(JsonFormatError, "unexpected comma at: %s", this->json);
+
             item->first = true;
+        }
     }
 
     // Add container to the stack
