@@ -838,10 +838,15 @@ jsonReadSkipStr(JsonRead *const this)
                     if (digitIdx != 4)
                         THROW_FMT(JsonFormatError, "unable to decode at: %s", this->json - 2);
 
-                    this->json += 4;
+                    // Move to the last digit
+                    this->json += 3;
 
                     break;
                 }
+
+                // End of string after the escape
+                case '\0':
+                    THROW(JsonFormatError, "expected '\"' but found null delimiter");
 
                 // Any other escape
                 default:
@@ -1026,8 +1031,11 @@ jsonReadStr(JsonRead *const this)
                     this->json++;
 
                     // We don't know how to decode anything except ASCII so fail if it looks like Unicode
-                    if (strncmp(this->json, "00", 2) != 0)
+                    if (strncmp(this->json, "00", 2) != 0 || !isxdigit((unsigned char)this->json[2]) ||
+                        !isxdigit((unsigned char)this->json[3]))
+                    {
                         THROW_FMT(JsonFormatError, "unable to decode at: %s", this->json - 2);
+                    }
 
                     // Decode char
                     this->json += 2;

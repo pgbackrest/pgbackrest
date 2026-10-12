@@ -60,6 +60,8 @@ testRun(void)
         TEST_TITLE("error on invalid ascii encoding");
 
         TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u1111"))), JsonFormatError, "unable to decode at: \\u1111");
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u00x1"))), JsonFormatError, "unable to decode at: \\u00x1");
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u00a"))), JsonFormatError, "unable to decode at: \\u00a");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on maximum depth");
@@ -229,8 +231,11 @@ testRun(void)
         TEST_TITLE("validate");
 
         TEST_RESULT_VOID(jsonValidate(json), "valid");
+        TEST_RESULT_VOID(jsonValidate(STRDEF("[\"\\u0041\",\"\\u1234\"]")), "valid escapes before end of string");
+        TEST_ERROR(jsonValidate(STRDEF("\"\\u0041")), JsonFormatError, "expected '\"' but found null delimiter");
         TEST_ERROR(jsonValidate(STRDEF("\"\\u000")), JsonFormatError, "unable to decode at: \\u000");
         TEST_ERROR(jsonValidate(STRDEF("\"")), JsonFormatError, "expected '\"' but found null delimiter");
+        TEST_ERROR(jsonValidate(STRDEF("\"\\")), JsonFormatError, "expected '\"' but found null delimiter");
         TEST_ERROR(jsonValidate(STRDEF("{\"key\"x")), JsonFormatError, "expected : after key at: x");
         TEST_ERROR(jsonValidate(strNewFmt("%s]", strZ(json))), JsonFormatError, "characters after JSON at: ]");
     }
