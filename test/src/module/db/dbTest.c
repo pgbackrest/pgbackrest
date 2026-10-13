@@ -1174,6 +1174,46 @@ testRun(void)
 
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("the only standby is stalled so it is used and left for dbReplayWait() to wait for at backup start");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
+        hrnCfgArgRawZ(argList, cfgOptDbTimeout, "200ms");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_12, .timeline = 5);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_12, .timeline = 5);
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_12, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", PG_VERSION_12, TEST_PATH "/pg2", true, NULL, NULL),
+
+            // pg2 is lagging and not replaying so it becomes the fallback
+            HRN_PQ_SCRIPT_REPLAY_LSN_GE_10(2, "5/1000000"), HRN_PQ_SCRIPT_CURRENT_LSN_GE_10(1, "5/4000000"),
+            HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(2, "5/1000000", 100),
+            HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(2, "5/1000000", 100),
+            HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(2, "5/1000000", 100),
+
+            // Close pg2 (standby) and pg1 (primary), which the caller frees after examining the result
+            HRN_PQ_SCRIPT_CLOSE(2), HRN_PQ_SCRIPT_CLOSE(1));
+
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y), "get primary and standby");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: standby pg2 is lagging behind the primary and replay is not progressing\n"
+            "P00   WARN: using standby pg2 though it is not progressing");
+
+        TEST_RESULT_INT(result.standbyIdx, 1, "check standby idx (pg2)");
+        TEST_RESULT_BOOL(result.standby != NULL, true, "check standby");
+
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+        TEST_RESULT_VOID(dbFree(result.primary), "free primary");
     }
 
     protocolFree();
