@@ -93,7 +93,9 @@
             </release-item>
 
             <release-item>
-                <github-pull-request id="2603"/>
+                <commit subject="PostgreSQL 18 experimental support.">
+                    <github-pull-request id="2603"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>

@@ -22,8 +22,10 @@
             </release-item>
 
             <release-item>
-                <github-issue id="2838"/>
-                <github-pull-request id="2839"/>
+                <commit subject="Add web-id key type for GCS Workload Identity Federation.">
+                    <github-issue id="2838"/>
+                    <github-pull-request id="2839"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="adol.rodriguez"/>
@@ -249,6 +251,7 @@
                 <commit subject="Fade an end the menu carries on past rather than cutting it flat."/>
                 <commit subject="Put the bar of a section2 header under the title rather than beside it."/>
                 <commit subject="Center the page title beside the logo and left align it when wrapped."/>
+                <commit subject="Add expandable details to the release notes."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>

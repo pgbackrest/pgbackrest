@@ -7,6 +7,7 @@ Each item is checked against the git history: a release item with no commit behi
 commit whose subject no longer matches what the release reports it did."""
 
 ####################################################################################################################################
+import html
 import json
 import os
 import re
@@ -59,7 +60,21 @@ _CONTRIBUTOR_LIST = (
     ("release-item-ideator", "Reported", "Suggested"),
 )
 
-_VERSION_BUG_FIX_EXP = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
+# Links to an issue and to a pull request, in the order they are listed
+_REF_LIST = (
+    ("github-issue", "Issue", "{[github-url-issues]}/%s"),
+    ("github-pull-request", "Pull request", "{[github-url-base]}/pull/%s"),
+)
+
+# Link to a commit and the length of the hash it is named by
+_COMMIT_URL = "{[github-url-base]}/commit/%s"
+_COMMIT_SIZE = 7
+
+# Releases with version >= this have the paragraphs after the first and the links of an item in details
+_DETAIL_VERSION_MIN = "2.60"
+
+# A bug fix release is x.y.z with z > 0
+_VERSION_BUG_FIX_EXP = re.compile(r"^[0-9]+\.[0-9]+\.[1-9][0-9]*$")
 _VERSION_DATE_EXP = re.compile(r"^(XXXX-XX-XX)|([0-9]{4}-[0-9]{2}-[0-9]{2})$")
 
 
@@ -317,33 +332,109 @@ class _Release:
         return commit_list, remaining_list, commit_map, check
 
     ################################################################################################################################
-    def _item_check(self, item, text, version, commit_list, remaining_list, commit_map):
-        """Check that every commit a release item claims is in the history of the release."""
+    def _item_commit(self, item, text, version, commit_list, remaining_list, commit_map, check):
+        """Find every commit a release item claims in the history of the release.
 
+        Each commit is returned with the commit element that names it. The commit element is None when the item names no commit and
+        the commit is None when it is not found. A commit that is not found is an error when check is true."""
+
+        result = []
         commit_xml_list = xml_node_child_list(item, "commit")
 
         # An item with no commit named uses what it says as the subject to look for
         if len(commit_xml_list) == 0:
             subject = self.render.process_text(text)
+            commit = self._commit_find(commit_list, subject, False)
 
-            if self._commit_find(commit_list, subject, False) is None:
+            if commit is None and check:
                 self._commit_error(
                     "unable to find commit or no subject match for release %s item '%s'" % (version, subject),
                     remaining_list,
                     commit_map,
                 )
 
+            result.append((None, commit))
+
         for commit_xml in commit_xml_list:
             subject = xml_node_attribute(commit_xml, "subject", True)
             commit = self._commit_find(commit_list, subject, False)
 
             if commit is None:
-                self._commit_error(
-                    "unable to find release %s commit subject '%s' in list" % (version, subject), remaining_list, commit_map
-                )
-
-            if commit["commit"] in remaining_list:
+                if check:
+                    self._commit_error(
+                        "unable to find release %s commit subject '%s' in list" % (version, subject), remaining_list, commit_map
+                    )
+            elif commit["commit"] in remaining_list:
                 remaining_list.remove(commit["commit"])
+
+            result.append((commit_xml, commit))
+
+        return result
+
+    ################################################################################################################################
+    @staticmethod
+    def _ref_add(ref, label, url, value, code=False):
+        """Add a link to an issue, a pull request, or a commit."""
+
+        ref_item = xml_node_add(ref, "list-detail-ref-item")
+
+        if label is not None:
+            xml_node_content_add(ref_item, "%s " % label)
+
+        link = xml_node_add(ref_item, "link", {"url": url})
+        xml_node_content_add(xml_node_add(link, "code") if code else link, value)
+
+        return ref_item
+
+    ################################################################################################################################
+    def _ref_list_add(self, ref, node):
+        """Add a link to each issue and pull request a node names."""
+
+        for type, label, url in _REF_LIST:
+            for ref_xml in xml_node_child_list(node, type):
+                id = xml_node_attribute(ref_xml, "id", True)
+                self._ref_add(ref, label, url % id, "#%s" % id)
+
+    ################################################################################################################################
+    def _detail_add(self, list_item, item, item_commit_list):
+        """Add the paragraphs after the first and the issues, pull requests, and commits of an item as details.
+
+        An item with one commit has the commit on the same line as its issues and pull requests, after them. An item with more than
+        one commit has a line for each commit, with the subject of the commit and the issues and pull requests the commit element
+        names."""
+
+        detail = xml_node_add(list_item, "list-detail")
+
+        for paragraph in xml_node_child_list(item, "p")[1:]:
+            xml_node_child_add(xml_node_add(detail, "list-detail-text"), paragraph)
+
+        ref = xml_node_add(detail, "list-detail-ref")
+        self._ref_list_add(ref, item)
+
+        for commit_xml, commit in item_commit_list:
+            url = None if commit is None else _COMMIT_URL % commit["commit"]
+            hash = None if commit is None else commit["commit"][:_COMMIT_SIZE]
+
+            if len(item_commit_list) > 1:
+                ref = xml_node_add(detail, "list-detail-ref")
+
+                # Escape the subject for html
+                if commit is not None:
+                    xml_node_content_add(self._ref_add(ref, None, url, hash, True), " %s" % html.escape(commit["subject"]))
+
+            if commit_xml is not None:
+                self._ref_list_add(ref, commit_xml)
+
+            if len(item_commit_list) == 1 and commit is not None:
+                self._ref_add(ref, "Commit", url, hash, True)
+
+        # Remove lines with no links and details with nothing in them
+        for ref in xml_node_child_list(detail, "list-detail-ref"):
+            if len(ref) == 0:
+                detail.remove(ref)
+
+        if len(detail) == 0:
+            list_item.remove(detail)
 
     ################################################################################################################################
     def render_document(self):
@@ -436,6 +527,7 @@ class _Release:
         """Render what one release changed."""
 
         note = False
+        detail = version >= _DETAIL_VERSION_MIN
 
         for section_type, section_title in _SECTION_LIST:
             type_node = xml_node_child(release, section_type)
@@ -470,14 +562,19 @@ class _Release:
 
                 for item in xml_node_child_list(item_node, "release-item"):
                     text = xml_node_child_list(item, "p")[0]
+                    item_check = check and item_type != "release-development-list"
+                    item_commit_list = None
 
-                    if check and item_type != "release-development-list":
-                        self._item_check(item, text, version, commit_list, remaining_list, commit_map)
+                    if item_check or detail:
+                        item_commit_list = self._item_commit(
+                            item, text, version, commit_list, remaining_list, commit_map, item_check
+                        )
 
-                    # An item written as more than one paragraph reads as one line in the release notes
-                    for extra in xml_node_child_list(item, "p")[1:]:
-                        xml_node_content_add(text, " ")
-                        xml_node_child_add(text, extra)
+                    # An item written as more than one paragraph reads as one line in the release notes when version < 2.60
+                    if not detail:
+                        for extra in xml_node_child_list(item, "p")[1:]:
+                            xml_node_content_add(text, " ")
+                            xml_node_child_add(text, extra)
 
                     contributor_text = self._contributor_text(item, item_name)
 
@@ -486,7 +583,11 @@ class _Release:
                         xml_node_content_add(xml_node_add(text, "i"), contributor_text)
                         xml_node_content_add(text, ")")
 
-                    xml_node_child_add(xml_node_text_add(xml_node_add(list_node, "list-item")), text)
+                    list_item = xml_node_text_add(xml_node_add(list_node, "list-item"))
+                    xml_node_child_add(list_item, text)
+
+                    if detail:
+                        self._detail_add(list_item, item, item_commit_list)
 
 
 ####################################################################################################################################

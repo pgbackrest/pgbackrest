@@ -1,10 +1,10 @@
 /***********************************************************************************************************************************
 Documentation Script
 
-Four things that a page reads better with and works without. A browser that runs no script loses them and loses nothing it needs:
+Five things that a page reads better with and works without. A browser that runs no script loses them and loses nothing it needs:
 the contents are links and work as links, every block that can scroll is already reachable from the keyboard, a menu too wide for
-the window scrolls whether or not it says so, and the button that copies a command or a config file is not shown until there is a
-script to make it work.
+the window scrolls whether or not it says so, the button that copies a command or a config file is not shown until there is a
+script to make it work, and each details of a list still opens on its own.
 
 The first marks the section being read in the contents beside the text, so a long page says where the reader is rather than only
 where they can go. The section being read is the last one that begins above the menu bar, which is what a reader means by the
@@ -380,4 +380,78 @@ cannot copy never shows it at all, since a button that does nothing is worse tha
 
     for (var buttonIdx = 0; buttonIdx < buttonList.length; buttonIdx++)
         ready(buttonList[buttonIdx]);
+})();
+
+/***********************************************************************************************************************************
+Opening every details of a section
+
+A section with details in its lists has a button after its subtitles that opens every details of the section and then closes them
+when pressed again. Opening or closing one details does not change the button. The button is added here, so a page with no script
+has no button.
+***********************************************************************************************************************************/
+(function()
+{
+    var SECTION = ".section1, .section2, .section3";
+
+    var sectionList = document.querySelectorAll(SECTION);
+
+    /*******************************************************************************************************************************
+    Add the button to a section
+    *******************************************************************************************************************************/
+    function ready(section, detailList)
+    {
+        var button = document.createElement("button");
+
+        // Did the button last open the details?
+        var open = false;
+
+        button.type = "button";
+        button.className = "list-detail-all";
+
+        // The label is what pressing the button does
+        function label()
+        {
+            button.textContent = open ? "Hide details" : "Show details";
+        }
+
+        function toggle()
+        {
+            open = !open;
+
+            for (var idx = 0; idx < detailList.length; idx++)
+                detailList[idx].open = open;
+
+            label();
+        }
+
+        button.addEventListener("click", toggle);
+
+        label();
+
+        // After the subtitles of the section, or first in its body when it has none
+        var body = section.querySelector(":scope > .section-body");
+        var subtitleList = body.querySelectorAll(":scope > [class$='subtitle']");
+
+        if (subtitleList.length > 0)
+            subtitleList[subtitleList.length - 1].after(button);
+        else
+            body.prepend(button);
+    }
+
+    for (var sectionIdx = 0; sectionIdx < sectionList.length; sectionIdx++)
+    {
+        var section = sectionList[sectionIdx];
+        var detailAll = section.querySelectorAll(".list-detail");
+        var detailList = [];
+
+        // Details in a section below this one belong to that section
+        for (var detailIdx = 0; detailIdx < detailAll.length; detailIdx++)
+        {
+            if (detailAll[detailIdx].closest(SECTION) === section)
+                detailList.push(detailAll[detailIdx]);
+        }
+
+        if (detailList.length > 0)
+            ready(section, detailList);
+    }
 })();

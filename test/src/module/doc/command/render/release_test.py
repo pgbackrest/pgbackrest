@@ -15,6 +15,7 @@ from common.exec import exec_one
 from common.storage import file_read, file_write
 from common.xml import xml_node_attribute, xml_node_child, xml_node_child_list, xml_node_content, xml_parse
 from command.render.release import release_current_stable, release_history_update, release_last, release_list, release_render
+from command.render.render import DocRender
 
 # The history a release is checked against, newest first, which is the order git writes it in
 HISTORY = [
@@ -135,6 +136,85 @@ RELEASE_LIST = """
 """
 
 
+# Releases with details and the history they are checked against
+DETAIL_HISTORY = [
+    ("d0", "Improve speed."),
+    ("d1", "Add a feature."),
+    ("d2", "Fix a bug."),
+    ("d3", 'Fix a "quoted" <bug>.'),
+    ("d4", "Begin v2.60.0 development."),
+    ("d5", "v2.59.0: Prior."),
+    ("d6", "Improve a thing."),
+    ("d7", "v1.00: Initial."),
+]
+
+DETAIL_RELEASE_LIST = """
+        <release date="2026-10-01" version="2.60.0" title="Detail">
+            <release-core-list>
+                <release-feature-list>
+                    <release-item>
+                        <github-issue id="1"/>
+                        <github-pull-request id="2"/>
+
+                        <p>Add a feature.</p>
+
+                        <p>Say more about it.</p>
+
+                        <p>And <id>more</id>.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Fix a bug.">
+                            <github-pull-request id="3"/>
+                        </commit>
+                        <commit subject="Fix a &quot;quoted&quot;"/>
+
+                        <p>Fix bugs.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Improve speed.">
+                            <github-issue id="5"/>
+                            <github-pull-request id="6"/>
+                        </commit>
+
+                        <p>Speed things up.</p>
+                    </release-item>
+                </release-feature-list>
+            </release-core-list>
+        </release>
+
+        <release date="2026-09-15" version="2.59.1" title="Patch">
+            <release-core-list>
+                <release-bug-list>
+                    <release-item>
+                        <p>Fix a bug on a branch.</p>
+                    </release-item>
+                </release-bug-list>
+            </release-core-list>
+        </release>
+
+        <release date="2026-09-01" version="2.59.0" title="Prior">
+            <release-core-list>
+                <release-improvement-list>
+                    <release-item>
+                        <github-pull-request id="9"/>
+
+                        <p>Improve a thing.</p>
+
+                        <p>Say more.</p>
+                    </release-item>
+                </release-improvement-list>
+            </release-core-list>
+        </release>
+
+        <release date="2025-01-01" version="1.00" title="Initial"/>
+"""
+
+# Html of the details up to the first paragraph or line of links
+DETAIL_HTML = '\n<details class="list-detail"><summary class="list-detail-toggle" title="Details" aria-label="Details"></summary>'
+
+
 ####################################################################################################################################
 def _doc(release_list=RELEASE_LIST, contributor=CONTRIBUTOR):
     """The release document, which is the list of releases and who worked on them."""
@@ -176,6 +256,19 @@ def _section_list(root):
     """The sections of the release document, which is how the releases are grouped."""
 
     return [xml_node_attribute(section, "id") for section in xml_node_child_list(root, "section")]
+
+
+####################################################################################################################################
+def _item_html(release):
+    """The html of each item of a release."""
+
+    render = DocRender("html")
+
+    return [
+        render.process_text(item)
+        for list_node in xml_node_child_list(release, "list")
+        for item in xml_node_child_list(list_node, "list-item")
+    ]
 
 
 ####################################################################################################################################
@@ -433,6 +526,135 @@ def test_release_render_commit_ambiguous():
         _render(history=HISTORY[:3] + [("h8", "Fix a bug. Again.")] + HISTORY[3:])
 
     assert_in("subject prefix 'Fix a bug.' already found in commit", str(raised.exception))
+
+
+####################################################################################################################################
+def test_release_render_detail():
+    """Releases with version >= 2.60 have the paragraphs after the first and the links of an item in details."""
+
+    root = _render(_doc(DETAIL_RELEASE_LIST), history=DETAIL_HISTORY)
+
+    assert_equal(_section_list(root), ["introduction", "current", "supported"])
+
+    release = xml_node_child_list(xml_node_child_list(root, "section")[1], "section")[0]
+
+    assert_equal(
+        _item_html(release),
+        [
+            "Add a feature."
+            + DETAIL_HTML
+            + '\n<div class="list-detail-text">Say more about it.</div>'
+            + '\n<div class="list-detail-text">And <span class="id">more</span>.</div>'
+            + '\n<div class="list-detail-ref">'
+            + '<span class="list-detail-ref-item">Issue <a href="{[github-url-issues]}/1">#1</a></span>'
+            + '<span class="list-detail-ref-item">Pull request <a href="{[github-url-base]}/pull/2">#2</a></span>'
+            + '<span class="list-detail-ref-item">Commit '
+            + '<a href="{[github-url-base]}/commit/d1"><span class="id">d1</span></a></span>'
+            + "</div></details>",
+            # An item with more than one commit has a line for each commit
+            "Fix bugs."
+            + DETAIL_HTML
+            + '\n<div class="list-detail-ref">'
+            + '<span class="list-detail-ref-item"><a href="{[github-url-base]}/commit/d2"><span class="id">d2</span></a>'
+            + " Fix a bug.</span>"
+            + '<span class="list-detail-ref-item">Pull request <a href="{[github-url-base]}/pull/3">#3</a></span></div>'
+            + '\n<div class="list-detail-ref">'
+            + '<span class="list-detail-ref-item"><a href="{[github-url-base]}/commit/d3"><span class="id">d3</span></a>'
+            + " Fix a &quot;quoted&quot; &lt;bug&gt;.</span></div></details>",
+            # An item with one commit has the commit after the issues and pull requests the commit element names
+            "Speed things up."
+            + DETAIL_HTML
+            + '\n<div class="list-detail-ref">'
+            + '<span class="list-detail-ref-item">Issue <a href="{[github-url-issues]}/5">#5</a></span>'
+            + '<span class="list-detail-ref-item">Pull request <a href="{[github-url-base]}/pull/6">#6</a></span>'
+            + '<span class="list-detail-ref-item">Commit '
+            + '<a href="{[github-url-base]}/commit/d0"><span class="id">d0</span></a></span>'
+            + "</div></details>",
+        ],
+    )
+
+    # Releases with version < 2.60 have no details
+    supported = xml_node_child_list(root, "section")[2]
+
+    assert_equal(_item_html(xml_node_child_list(supported, "section")[1]), ["Improve a thing. Say more."])
+
+
+####################################################################################################################################
+def test_release_render_detail_dev():
+    """A development release has links for the commits that are found and no error for the commits that are not."""
+
+    root = _render(
+        _doc(
+            DETAIL_RELEASE_LIST.replace('date="2026-10-01" version="2.60.0"', 'date="XXXX-XX-XX" version="2.60.0dev"').replace(
+                "</release-feature-list>",
+                """<release-item>
+                        <p>Do a thing.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Do another thing.">
+                            <github-pull-request id="4"/>
+                        </commit>
+
+                        <p>Do another thing.</p>
+                    </release-item>
+
+                    <release-item>
+                        <commit subject="Do a third thing.">
+                            <github-pull-request id="7"/>
+                        </commit>
+                        <commit subject="Improve speed."/>
+
+                        <p>Do a third thing.</p>
+                    </release-item>
+                </release-feature-list>""",
+                1,
+            )
+        ),
+        history=DETAIL_HISTORY,
+    )
+
+    development = xml_node_child_list(xml_node_child_list(root, "section")[1], "section")[0]
+    item_list = _item_html(development)
+
+    assert_equal(len(item_list), 6)
+    assert_equal(item_list[3], "Do a thing.")
+    assert_equal(
+        item_list[4],
+        "Do another thing."
+        + DETAIL_HTML
+        + '\n<div class="list-detail-ref">'
+        + '<span class="list-detail-ref-item">Pull request <a href="{[github-url-base]}/pull/4">#4</a></span></div></details>',
+    )
+
+    # A line for a commit that is not found has only the links the commit element names
+    assert_equal(
+        item_list[5],
+        "Do a third thing."
+        + DETAIL_HTML
+        + '\n<div class="list-detail-ref">'
+        + '<span class="list-detail-ref-item">Pull request <a href="{[github-url-base]}/pull/7">#7</a></span></div>'
+        + '\n<div class="list-detail-ref">'
+        + '<span class="list-detail-ref-item"><a href="{[github-url-base]}/commit/d0"><span class="id">d0</span></a>'
+        + " Improve speed.</span></div></details>",
+    )
+
+
+####################################################################################################################################
+def test_release_render_bug_fix():
+    """A bug fix release x.y.z with z > 0 is skipped when it is not the most recent and a release x.y.0 is checked."""
+
+    # The commits of 2.60.0 end at the commit that closed 2.59.0
+    with assert_raises(ToolError) as raised:
+        _render(_doc(DETAIL_RELEASE_LIST.replace("<p>Add a feature.</p>", "<p>Improve a thing.</p>")), history=DETAIL_HISTORY)
+
+    assert_in("unable to find commit or no subject match for release 2.60.0 item 'Improve a thing.'", str(raised.exception))
+
+    # 2.59.0 is checked
+    with assert_raises(ToolError) as raised:
+        _render(_doc(DETAIL_RELEASE_LIST.replace("<p>Improve a thing.</p>", "<p>Improve two things.</p>")), history=DETAIL_HISTORY)
+
+    assert_in("unable to find commit or no subject match for release 2.59.0 item 'Improve two things.'", str(raised.exception))
 
 
 ####################################################################################################################################
