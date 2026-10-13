@@ -11,9 +11,10 @@ import tempfile
 from harness.test import *
 
 from common.error import *
-from common.storage import file_write
+from common.exec import exec_one
+from common.storage import file_read, file_write
 from common.xml import xml_node_attribute, xml_node_child, xml_node_child_list, xml_node_content, xml_parse
-from command.render.release import release_current_stable, release_last, release_list, release_render
+from command.render.release import release_current_stable, release_history_update, release_last, release_list, release_render
 
 # The history a release is checked against, newest first, which is the order git writes it in
 HISTORY = [
@@ -158,6 +159,16 @@ def _render(content=None, dev=False, history=HISTORY):
         )
 
         return release_render(xml_parse(_doc() if content is None else content, "test.xml"), path, dev)
+
+
+####################################################################################################################################
+def _commit(path, subject, body=None):
+    """Commit to a repository with nothing changed."""
+
+    exec_one(
+        "git -C %s -c user.name=test -c user.email=test@pgbackrest.org -c commit.gpgsign=false commit -q --allow-empty -m '%s'%s"
+        % (path, subject, "" if body is None else " -m '%s'" % body)
+    )
 
 
 ####################################################################################################################################
@@ -422,3 +433,45 @@ def test_release_render_commit_ambiguous():
         _render(history=HISTORY[:3] + [("h8", "Fix a bug. Again.")] + HISTORY[3:])
 
     assert_in("subject prefix 'Fix a bug.' already found in commit", str(raised.exception))
+
+
+####################################################################################################################################
+def test_release_history_update():
+    """The history is written from git when HEAD is not the newest commit in it."""
+
+    with tempfile.TemporaryDirectory() as path:
+        path_doc = os.path.join(path, "doc")
+        path_history = os.path.join(path_doc, "resource/git-history.cache")
+
+        exec_one("git -C %s init -q" % path)
+        _commit(path, "Add a feature.", "What the feature does.")
+        _commit(path, "v2.01: First.", "The release notes.")
+
+        release_history_update(path, path_doc)
+
+        history = json.loads(file_read(path_history))
+
+        assert_equal(history[0]["commit"], exec_one("git -C %s rev-parse HEAD" % path).strip())
+        assert_equal(sorted(history[1]), ["body", "commit", "date", "subject"])
+
+        # The body of a commit that closed a release is left out
+        assert_equal(
+            [(commit["subject"], commit.get("body")) for commit in history],
+            [("v2.01: First.", None), ("Add a feature.", "What the feature does.")],
+        )
+
+        # The history is not written while HEAD is the newest commit in it
+        file_write(path_history, json.dumps(history[:1]))
+
+        release_history_update(path, path_doc)
+
+        assert_equal(len(json.loads(file_read(path_history))), 1)
+
+        # A new commit is first in the history
+        _commit(path, "Fix a bug.")
+
+        release_history_update(path, path_doc)
+
+        assert_equal(
+            [commit["subject"] for commit in json.loads(file_read(path_history))], ["Fix a bug.", "v2.01: First.", "Add a feature."]
+        )

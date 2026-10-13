@@ -30,7 +30,9 @@
             </release-item>
 
             <release-item>
-                <github-pull-request id="2328"/>
+                <commit subject="PostgreSQL 17 Support.">
+                    <github-pull-request id="2328"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>

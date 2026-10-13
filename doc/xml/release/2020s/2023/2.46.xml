@@ -32,7 +32,9 @@
             </release-item>
 
             <release-item>
-                <github-pull-request id="2051"/>
+                <commit subject="PostgreSQL 16 Support.">
+                    <github-pull-request id="2051"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>

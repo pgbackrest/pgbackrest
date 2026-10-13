@@ -22,10 +22,12 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
+      # The release notes are checked against the full git history
       - name: Checkout Code
         uses: actions/checkout@v6
         with:
           path: pgbackrest
+          fetch-depth: 0
 
       - name: Update Apt
         uses: ./pgbackrest/.github/action/apt

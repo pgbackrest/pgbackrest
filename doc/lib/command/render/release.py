@@ -3,8 +3,8 @@
 Builds the release document from the release list, which is one file per release holding what changed and who changed it. What comes
 out is an ordinary document, so nothing downstream has to know the release notes are assembled rather than written.
 
-Each item is checked against the git history, which is why the history is cached in the repository: a release item with no commit
-behind it is either a note that should not be there or a commit whose subject no longer matches what the release says it did."""
+Each item is checked against the git history: a release item with no commit behind it is either a note that should not be there or a
+commit whose subject no longer matches what the release reports it did."""
 
 ####################################################################################################################################
 import json
@@ -14,7 +14,8 @@ from collections import deque
 
 from common.date import date_render
 from common.error import ToolError
-from common.storage import file_read
+from common.exec import exec_result
+from common.storage import file_read, file_write
 from common.xml import (
     xml_document_new,
     xml_node_add,
@@ -30,8 +31,11 @@ from common.xml import (
 from command.render.render import SECTION_ANCHOR, SECTION_ANCHOR_NO_INHERIT, DocRender
 from config.project import PROJECT_NAME
 
-# Where the git history is cached, since the history of a release is fixed once it is out and reading it every build is slow
+# Where the git history is cached
 _FILE_HISTORY = "resource/git-history.cache"
+
+# Subject of a commit that closed a release
+_RELEASE_SUBJECT_EXP = re.compile(r"^v[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]+)?: ")
 
 # What the release notes are grouped by, in the order they are listed
 _SECTION_LIST = (
@@ -82,6 +86,43 @@ def release_current_stable(root):
             return release
 
     raise ToolError("unable to find a released version")
+
+
+####################################################################################################################################
+def release_history_update(path_repo, path_doc):
+    """Write the git history the release notes are checked against when HEAD is not the newest commit in it.
+
+    The body of a commit that closed a release is left out."""
+
+    path_history = os.path.join(path_doc, _FILE_HISTORY)
+    head = exec_result("git -C %s rev-parse HEAD" % path_repo, suppress_stderr=True)[1].strip()
+
+    if os.path.isfile(path_history) and json.loads(file_read(path_history))[0]["commit"] == head:
+        return
+
+    # Records are separated by a byte that cannot appear in a commit message, and so are the fields within a record
+    output = exec_result(
+        "git -C %s log --pretty=format:%%H%%x00%%ci%%x00%%s%%x00%%b%%x1e %s" % (path_repo, head), suppress_stderr=True
+    )[1]
+
+    history = []
+
+    for record in output.split("\x1e"):
+        record = record.strip("\n")
+
+        if record == "":
+            continue
+
+        commit, date, subject, body = record.split("\x00", 3)
+        entry = {"commit": commit, "date": date, "subject": subject}
+        body = body.strip()
+
+        if body != "" and _RELEASE_SUBJECT_EXP.match(subject) is None:
+            entry["body"] = body
+
+        history.append(entry)
+
+    file_write(path_history, json.dumps(history, indent=4, ensure_ascii=False) + "\n")
 
 
 ####################################################################################################################################

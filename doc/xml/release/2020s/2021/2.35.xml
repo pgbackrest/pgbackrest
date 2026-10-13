@@ -282,7 +282,7 @@
                 <commit subject="Update info/manifest test to use standard patterns.">
                     <github-pull-request id="1444"/>
                 </commit>
-                <commit subject="Update command/archive tests to use standard patterns.">
+                <commit subject=" Update command/archive tests to use standard patterns.">
                     <github-pull-request id="1449"/>
                 </commit>
                 <commit subject="Update command/control and command/command tests to use standard patterns.">
@@ -292,7 +292,7 @@
                 <commit subject="Update command/backup tests to use standard patterns.">
                     <github-pull-request id="1463"/>
                 </commit>
-                <commit subject="Update command/help test to use standard patterns.">
+                <commit subject="Update command/help tests to use standard patterns.">
                     <github-pull-request id="1464"/>
                 </commit>
                 <commit subject="Update command/local and command/remote tests to use standard patterns.">
@@ -310,7 +310,7 @@
                 <commit subject="Update config tests (except parse) to use standard patterns.">
                     <github-pull-request id="1473"/>
                 </commit>
-                <commit subject="Update db/db test to use standard patterns.">
+                <commit subject=" Update db/db test to use standard patterns.">
                     <github-pull-request id="1486"/>
                 </commit>
                 <commit subject="Update protocol/protocol test to use standard patterns.">
