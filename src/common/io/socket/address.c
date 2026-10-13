@@ -180,7 +180,7 @@ addrInfoNew(const String *const host, const unsigned int port)
             struct addrinfo hints = (struct addrinfo)
             {
                 .ai_family = AF_UNSPEC,
-                .ai_flags = AI_PASSIVE | AI_NUMERICSERV,
+                .ai_flags = AI_PASSIVE | AI_NUMERICSERV | AI_ADDRCONFIG,
                 .ai_socktype = SOCK_STREAM,
                 .ai_protocol = IPPROTO_TCP,
             };
