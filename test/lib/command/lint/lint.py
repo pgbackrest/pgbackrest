@@ -39,6 +39,7 @@ _LINE_SKIP_LIST = (
     "doc/xml/",  # Documentation, which the coding standards exempt
     "test/certificate/",  # Generated certificates and keys
     "test/data/",  # Test fixtures
+    "test/fuzz/corpus/",  # Fuzz seed inputs
     "test/uncrustify.cfg",  # Written by uncrustify rather than by hand
 )
 

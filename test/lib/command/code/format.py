@@ -24,6 +24,7 @@ _FILE_EXECUTABLE_LIST = (
     "doc/release.py",
     "build/dist.sh",
     "test/ci.py",
+    "test/fuzz/build.sh",
     "test/smoke.py",
     "test/test.py",
 )

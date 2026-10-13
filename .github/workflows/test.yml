@@ -60,3 +60,6 @@ jobs:
 
   misc:
     uses: ./.github/workflows/test-misc.yml
+
+  fuzz:
+    uses: ./.github/workflows/test-fuzz.yml
