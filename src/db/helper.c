@@ -152,8 +152,9 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
         // Pick the first standby that passes a check. No primary means nothing to verify against, so just pick the first standby.
         if (standbyList != NULL && lstSize(standbyList) > 0)
         {
-            // A standby that is healthy but is lagging is kept as a fallback.
-            DbGetStandby *standbyLagging = NULL;
+            // A standby fallback if there is no live one. Later it will be checked with dbReplayWait().
+            DbGetStandby *standbyFallback = NULL;
+            DbStandbyStatus standbyFallbackStatus = dbStandbyStatusStalled;
 
             for (unsigned int standbyIdx = 0; standbyIdx < lstSize(standbyList); standbyIdx++)
             {
@@ -172,25 +173,36 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
                 {
                     TRY_BEGIN()
                     {
-                        if (dbStandbyCheck(standby->db, result.primary))
+                        const DbStandbyStatus status = dbStandbyCheck(standby->db, result.primary);
+
+                        if (status == dbStandbyStatusLive)
                         {
                             result.standbyIdx = standby->pgIdx;
                             result.standby = standby->db;
 
-                            if (standbyLagging != NULL)
+                            if (standbyFallback != NULL)
                             {
-                                dbFree(standbyLagging->db);
-                                standbyLagging = NULL;
+                                dbFree(standbyFallback->db);
+                                standbyFallback = NULL;
                             }
                         }
                         else
                         {
                             LOG_WARN_FMT(
-                                "standby %s is lagging behind the primary", cfgOptionGroupName(cfgOptGrpPg, standby->pgIdx));
+                                "standby %s is lagging behind the primary%s", cfgOptionGroupName(cfgOptGrpPg, standby->pgIdx),
+                                status == dbStandbyStatusStalled ? " and replay is not progressing" : "");
 
-                            // Keep the first lagging standby as a fallback and discard any others
-                            if (standbyLagging == NULL)
-                                standbyLagging = standby;
+                            // Keep the standby as a fallback if it is better than the current one. Stalled status might be due to
+                            // replaying from the archive or no writes on primary. Select a stalled standby as the last resort. It
+                            // will be cross-checked with dbReplayWait() later.
+                            if (standbyFallback == NULL || status < standbyFallbackStatus)
+                            {
+                                if (standbyFallback != NULL)
+                                    dbFree(standbyFallback->db);
+
+                                standbyFallback = standby;
+                                standbyFallbackStatus = status;
+                            }
                             else
                                 dbFree(standby->db);
                         }
@@ -207,14 +219,15 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
                 }
             }
 
-            if (result.standby == NULL && standbyLagging != NULL)
+            if (result.standby == NULL && standbyFallback != NULL)
             {
                 LOG_WARN_FMT(
-                    "using standby %s though it is lagging behind the primary",
-                    cfgOptionGroupName(cfgOptGrpPg, standbyLagging->pgIdx));
+                    "using standby %s though it is %s",
+                    cfgOptionGroupName(cfgOptGrpPg, standbyFallback->pgIdx),
+                    standbyFallbackStatus == dbStandbyStatusLagging ? "lagging behind the primary" : "not progressing");
 
-                result.standbyIdx = standbyLagging->pgIdx;
-                result.standby = standbyLagging->db;
+                result.standbyIdx = standbyFallback->pgIdx;
+                result.standby = standbyFallback->db;
             }
         }
 

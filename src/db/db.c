@@ -714,7 +714,7 @@ dbCurrentWalLsn(Db *const this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN bool
+FN_EXTERN DbStandbyStatus
 dbStandbyCheck(Db *const this, Db *const primary)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -725,7 +725,7 @@ dbStandbyCheck(Db *const this, Db *const primary)
     ASSERT(this != NULL);
     ASSERT(primary != NULL);
 
-    bool result;
+    DbStandbyStatus result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -767,7 +767,7 @@ dbStandbyCheck(Db *const this, Db *const primary)
         // ??? Shold the amount of segments be configurable? 2 might be too tight for a heavy load clusters ???
         if (pgLsnFromStr(primaryLsn) - pgLsnFromStr(replayLsn) <= (uint64_t)dbPgControl(primary).walSegmentSize * 2)
         {
-            result = true;
+            result = dbStandbyStatusLive;
         }
         else
         {
@@ -797,20 +797,12 @@ dbStandbyCheck(Db *const this, Db *const primary)
             }
             while (!progress && waitMore(wait));
 
-            if (!progress)
-            {
-                THROW_FMT(
-                    DbMismatchError, "standby replay lsn %s made no progress after %" PRIu64 "ms", strZ(replayLsn),
-                    progressTimeout);
-            }
-
-            // The standby makes progress but is lagging.
-            result = false;
+            result = progress ? dbStandbyStatusLagging : dbStandbyStatusStalled;
         }
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(ENUM, result);
 }
 
 /**********************************************************************************************************************************/

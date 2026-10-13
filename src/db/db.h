@@ -131,9 +131,16 @@ FN_EXTERN void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTi
 // Get the current WAL LSN.
 FN_EXTERN String *dbCurrentWalLsn(Db *this);
 
-// Check if a standby is fit to be selected for a backup. Returns false (rather than throwing) when the standby is otherwise healthy
-// but is lagging. Throws when the standby does not match the primary or is not replaying at all.
-FN_EXTERN bool dbStandbyCheck(Db *this, Db *primary);
+// Standby status in order of preference
+typedef enum
+{
+    dbStandbyStatusLive,
+    dbStandbyStatusLagging,
+    dbStandbyStatusStalled,
+} DbStandbyStatus;
+
+// Check if a standby is fit to be selected for a backup and return its status
+FN_EXTERN DbStandbyStatus dbStandbyCheck(Db *this, Db *primary);
 
 // Check that the cluster is alive and correctly configured during the backup
 FN_EXTERN void dbPing(Db *this, bool force);

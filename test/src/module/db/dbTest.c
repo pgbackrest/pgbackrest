@@ -697,7 +697,7 @@ testRun(void)
 
         HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_REPLAY_LSN_GE_10(2, "5/5"), HRN_PQ_SCRIPT_CURRENT_LSN_GE_10(1, "5/5"));
 
-        TEST_RESULT_BOOL(dbStandbyCheck(db.standby, db.primary), true, "lag is zero");
+        TEST_RESULT_UINT(dbStandbyCheck(db.standby, db.primary), dbStandbyStatusLive, "lag is zero");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("dbStandbyCheck() - lag beyond threshold but advancing on recheck");
@@ -706,7 +706,7 @@ testRun(void)
             HRN_PQ_SCRIPT_REPLAY_LSN_GE_10(2, "5/1000000"), HRN_PQ_SCRIPT_CURRENT_LSN_GE_10(1, "5/4000000"),
             HRN_PQ_SCRIPT_REPLAY_LSN_GE_10(2, "5/2000000"));
 
-        TEST_RESULT_BOOL(dbStandbyCheck(db.standby, db.primary), false, "lag is advancing");
+        TEST_RESULT_UINT(dbStandbyCheck(db.standby, db.primary), dbStandbyStatusLagging, "lag is advancing");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("dbStandbyCheck() - lag beyond threshold and no progress before db-timeout");
@@ -718,8 +718,7 @@ testRun(void)
             HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(2, "5/1000000", 100),
             HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(2, "5/1000000", 100));
 
-        TEST_ERROR(
-            dbStandbyCheck(db.standby, db.primary), DbMismatchError, "standby replay lsn 5/1000000 made no progress after 200ms");
+        TEST_RESULT_UINT(dbStandbyCheck(db.standby, db.primary), dbStandbyStatusStalled, "lag is not advancing");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("dbStandbyCheck() - not a standby on the recheck");
@@ -1112,6 +1111,65 @@ testRun(void)
             "P00   WARN: using standby pg2 though it is lagging behind the primary");
 
         TEST_RESULT_INT(result.standbyIdx, 1, "check standby idx (pg2)");
+        TEST_RESULT_BOOL(result.standby != NULL, true, "check standby");
+
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+        TEST_RESULT_VOID(dbFree(result.primary), "free primary");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stalled standby is superseded by a lagging standby, then a stalled standby does not replace the fallback");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 3, TEST_PATH "/pg3");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 3, "5434");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 4, TEST_PATH "/pg4");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 4, "5435");
+        hrnCfgArgRawZ(argList, cfgOptDbTimeout, "200ms");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(3), PG_VERSION_12, .timeline = 5);
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_12, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", PG_VERSION_12, TEST_PATH "/pg2", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(3, "dbname='postgres' port=5434", PG_VERSION_12, TEST_PATH "/pg3", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5435", PG_VERSION_12, TEST_PATH "/pg4", true, NULL, NULL),
+
+            // pg2 is lagging and not replaying so it becomes the fallback candidate
+            HRN_PQ_SCRIPT_REPLAY_LSN_GE_10(2, "5/1000000"), HRN_PQ_SCRIPT_CURRENT_LSN_GE_10(1, "5/4000000"),
+            HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(2, "5/1000000", 100),
+            HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(2, "5/1000000", 100),
+            HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(2, "5/1000000", 100),
+
+            // pg3 is lagging but still replaying so it replaces the pg2 fallback
+            HRN_PQ_SCRIPT_REPLAY_LSN_GE_10(3, "5/1000000"), HRN_PQ_SCRIPT_CURRENT_LSN_GE_10(1, "5/4000000"),
+            HRN_PQ_SCRIPT_REPLAY_LSN_GE_10(3, "5/2000000"),
+            HRN_PQ_SCRIPT_CLOSE(2),
+
+            // pg4 is lagging and not replaying so it is worse than the pg3 fallback and is closed
+            HRN_PQ_SCRIPT_REPLAY_LSN_GE_10(4, "5/1000000"), HRN_PQ_SCRIPT_CURRENT_LSN_GE_10(1, "5/4000000"),
+            HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(4, "5/1000000", 100),
+            HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(4, "5/1000000", 100),
+            HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(4, "5/1000000", 100),
+            HRN_PQ_SCRIPT_CLOSE(4),
+
+            // Close pg3 (standby) and pg1 (primary), which the caller frees after examining the result
+            HRN_PQ_SCRIPT_CLOSE(3), HRN_PQ_SCRIPT_CLOSE(1));
+
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y), "get primary and standby");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: standby pg2 is lagging behind the primary and replay is not progressing\n"
+            "P00   WARN: standby pg3 is lagging behind the primary\n"
+            "P00   WARN: standby pg4 is lagging behind the primary and replay is not progressing\n"
+            "P00   WARN: using standby pg3 though it is lagging behind the primary");
+
+        TEST_RESULT_INT(result.standbyIdx, 2, "check standby idx (pg3)");
         TEST_RESULT_BOOL(result.standby != NULL, true, "check standby");
 
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
