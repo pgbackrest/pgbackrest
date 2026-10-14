@@ -1767,6 +1767,12 @@ testRun(void)
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "prefer arg");
         TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_PREFER, "backup-standby is prefer");
 
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--backup-standby=skip");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "skip arg");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_SKIP, "backup-standby is skip");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("various configuration settings");
 

@@ -164,8 +164,11 @@ Option value constants
 #define CFGOPTVAL_BACKUP_STANDBY_PREFER                             1
 #define CFGOPTVAL_BACKUP_STANDBY_PREFER_STRID                       STRID5S("prefer", 1, 0x245316504)
 #define CFGOPTVAL_BACKUP_STANDBY_PREFER_Z                           "prefer"
-#define CFGOPTVAL_BACKUP_STANDBY_Y                                  2
-#define CFGOPTVAL_BACKUP_STANDBY_Y_STRID                            STRID5S("y", 2, 0x196)
+#define CFGOPTVAL_BACKUP_STANDBY_SKIP                               2
+#define CFGOPTVAL_BACKUP_STANDBY_SKIP_STRID                         STRID5S("skip", 2, 0x825736)
+#define CFGOPTVAL_BACKUP_STANDBY_SKIP_Z                             "skip"
+#define CFGOPTVAL_BACKUP_STANDBY_Y                                  3
+#define CFGOPTVAL_BACKUP_STANDBY_Y_STRID                            STRID5S("y", 3, 0x198)
 #define CFGOPTVAL_BACKUP_STANDBY_Y_Z                                "y"
 
 #define CFGOPTVAL_COMPRESS_TYPE_BZ2                                 STRID5("bz2", 0x73420)
