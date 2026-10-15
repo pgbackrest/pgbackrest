@@ -29,7 +29,7 @@ FN_EXTERN void logInit(
 FN_EXTERN void logClose(void);
 
 // Set the log file. Returns true if file logging is off or the log file was successfully opened, false if the log file could not be
-// opened.
+// opened. If a later write to the log file fails, the log file is closed and logging continues without it.
 FN_EXTERN bool logFileSet(const char *logFile);
 
 // Check if a log level will be logged to any output. This is useful for log messages that are expensive to generate and should be
