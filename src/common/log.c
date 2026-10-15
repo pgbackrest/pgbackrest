@@ -458,21 +458,32 @@ logPost(LogPreResult *const logData, const LogLevel logLevel, const LogLevel log
     // Log to file
     if (logLevel <= logLevelFile && logFdFile != -1 && logRange(logLevelFile, logRangeMin, logRangeMax))
     {
-        // If the banner has not been written
-        if (!logFileBanner)
+        // If the log file cannot be written, e.g. because the filesystem is full, close it and continue without it, as when it
+        // cannot be opened. Allowing the process to continue is more important than logging.
+        TRY_BEGIN()
         {
-            // Add a blank line if the file already has content
-            if (lseek(logFdFile, 0, SEEK_END) > 0)
-                logWrite(logFdFile, "\n", 1, "banner spacing to file");
+            // If the banner has not been written
+            if (!logFileBanner)
+            {
+                // Add a blank line if the file already has content
+                if (lseek(logFdFile, 0, SEEK_END) > 0)
+                    logWrite(logFdFile, "\n", 1, "banner spacing to file");
 
-            // Write process start banner
-            logWrite(logFdFile, LOG_BANNER, sizeof(LOG_BANNER) - 1, "banner to file");
+                // Write process start banner
+                logWrite(logFdFile, LOG_BANNER, sizeof(LOG_BANNER) - 1, "banner to file");
 
-            // Mark banner as written
-            logFileBanner = true;
+                // Mark banner as written
+                logFileBanner = true;
+            }
+
+            logWriteIndent(logFdFile, logBuffer, logData->indentSize, "log to file");
         }
-
-        logWriteIndent(logFdFile, logBuffer, logData->indentSize, "log to file");
+        CATCH(FileWriteError)
+        {
+            logFileClose();
+            LOG_WARN_FMT("%s\nNOTE: process will continue without log file.", errorMessage());
+        }
+        TRY_END();
     }
 
     FUNCTION_TEST_RETURN_VOID();

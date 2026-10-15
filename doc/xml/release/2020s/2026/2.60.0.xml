@@ -201,6 +201,16 @@
 
                 <p>Code is generated during the build from the option, error, help, and <postgres/> declarations by a <proper>Python</proper> tool instead of a <proper>C</proper> tool that had to be built first. Building from a git checkout requires <proper>PyYAML</proper> instead of <proper>libyaml</proper>. The release tarball includes the generated code and requires neither.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2876"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="ella.zhang"/>
+                </release-item-contributor-list>
+
+                <p>Continue without the log file when a write to it fails.</p>
+            </release-item>
         </release-improvement-list>
 
         <release-development-list>

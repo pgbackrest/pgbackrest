@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Log Handler
 ***********************************************************************************************************************************/
+#include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
@@ -267,6 +268,17 @@ testRun(void)
         TEST_RESULT_INT(logFdFile, -1, "log file is closed");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("continue without log file when it cannot be written");
+
+        TEST_RESULT_VOID(logInit(logLevelOff, logLevelWarn, logLevelInfo, false, 0, 99, false), "init");
+        TEST_RESULT_BOOL(logFileSet("/dev/full"), true, "open log file where every write fails");
+        TEST_RESULT_BOOL(logAny(logLevelInfo), true, "info is logged to file");
+        TEST_RESULT_VOID(
+            logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 99, "test.c", "test_func", 0, "info message"), "log info");
+        TEST_RESULT_INT(logFdFile, -1, "log file is closed");
+        TEST_RESULT_BOOL(logAny(logLevelInfo), false, "info is no longer logged");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error goes to stderr when stderr is not in range but stdout is");
 
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelWarn, logLevelOff, false, 0, 99, false), "init");
@@ -324,9 +336,11 @@ testRun(void)
             "INFO: [DRY-RUN] info message 2\n"
             "WARN: [DRY-RUN] unable to open log file '/BOGUS': %s\n"
             "      NOTE: process will continue without log file.\n"
+            "WARN: unable to write banner to file: [%d] %s\n"
+            "      NOTE: process will continue without log file.\n"
             "ERROR: [001]: error to stderr\n"
             "ERROR: [001]: error to stderr 2",
-            testErrorFile);
+            testErrorFile, ENOSPC, strerror(ENOSPC));
 
         testLogResult(stderrFile, buffer);
 
