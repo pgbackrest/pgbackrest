@@ -184,6 +184,7 @@ harnessInfoEncrypt(const Buffer *const content, const CipherSpec *const cipherSp
         FUNCTION_HARNESS_PARAM(BUFFER, content);
         FUNCTION_HARNESS_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_HARNESS_PARAM(UINT, param.format);
+        FUNCTION_HARNESS_PARAM(UINT, param.round);
     FUNCTION_HARNESS_END();
 
     ASSERT(content != NULL);
@@ -195,7 +196,7 @@ harnessInfoEncrypt(const Buffer *const content, const CipherSpec *const cipherSp
     if (param.format == 0)
         cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec);
     else
-        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, param.format);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, param.format, .round = param.round);
 
     ioWriteOpen(write);
     ioWrite(write, content);

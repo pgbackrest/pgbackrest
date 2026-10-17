@@ -198,20 +198,20 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("save and load archive info file");
 
-        InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_10, 6569239123849665999, REPOSITORY_FORMAT_DEFAULT, NULL);
-        TEST_RESULT_VOID(
-            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecNewNone()),
-            "save archive info");
+        const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("pass"));
 
-        TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecNewNone()),
-            "load main");
+        InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_10, 6569239123849665999, REPOSITORY_FORMAT_6, NULL);
+        TEST_RESULT_VOID(infoArchiveCipherRoundSet(infoArchive, 2), "set rounds");
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpec), "save archive info");
+
+        TEST_ASSIGN(infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpec), "load main");
         TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
+        TEST_RESULT_UINT(infoArchiveCipherRound(infoArchive), 2, "check rounds");
 
         HRN_STORAGE_REMOVE(storageTest, INFO_ARCHIVE_FILE, .errorOnMissing = true, .comment = "remove main so only copy exists");
-        TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecNewNone()),
-            "load copy");
+        TEST_ASSIGN(infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpec), "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
+        TEST_RESULT_UINT(infoArchiveCipherRound(infoArchive), 2, "check rounds");
     }
 }

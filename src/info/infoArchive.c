@@ -239,6 +239,22 @@ infoArchivePgSet(InfoArchive *const this, const unsigned int pgVersion, const ui
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
+infoArchiveCipherRoundSet(InfoArchive *const this, const unsigned int cipherRound)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_LOG_PARAM(UINT, cipherRound);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    infoCipherRoundSet(infoPgInfo(infoArchivePg(this)), cipherRound);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
 infoArchiveFormatSet(InfoArchive *const this, const unsigned int format)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -372,7 +388,8 @@ infoArchiveSaveFile(
         // Write output into a buffer since it needs to be saved to storage twice
         Buffer *const buffer = bufNew(ioBufferSize());
         IoWrite *const write = ioBufferWriteNew(buffer);
-        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, infoArchiveFormat(infoArchive));
+        cipherBlockFormatFilterGroupWriteAddP(
+            ioWriteFilterGroup(write), cipherSpec, infoArchiveFormat(infoArchive), .round = infoArchiveCipherRound(infoArchive));
         infoArchiveSave(infoArchive, write);
 
         // Save the file and make a copy

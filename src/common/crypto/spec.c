@@ -23,6 +23,7 @@ cipherSpecNew(const CipherType type, const Buffer *const pass, const CipherSpecN
         FUNCTION_TEST_PARAM(STRING_ID, type);
         FUNCTION_TEST_PARAM(BUFFER, pass);
         FUNCTION_TEST_PARAM(STRING_ID, param.digest);
+        FUNCTION_TEST_PARAM(UINT, param.round);
     FUNCTION_TEST_END();
 
     ASSERT((type == cipherTypeNone) == (pass == NULL));
@@ -35,6 +36,7 @@ cipherSpecNew(const CipherType type, const Buffer *const pass, const CipherSpecN
         if (this->pub.type != cipherTypeNone)
         {
             this->pub.digest = param.digest;
+            this->pub.round = param.round;
             this->pub.pass = bufDup(pass);
         }
     }
@@ -62,6 +64,7 @@ cipherSpecNewPack(PackRead *const packRead)
         if (this->pub.type != cipherTypeNone)
         {
             this->pub.digest = (HashType)pckReadStrIdP(packRead);
+            this->pub.round = pckReadU32P(packRead);
             this->pub.pass = pckReadBinP(packRead);
         }
     }
@@ -85,7 +88,7 @@ cipherSpecDup(const CipherSpec *const this, const CipherSpecDupParam param)
         CIPHER_SPEC,
         cipherSpecNewP(
             cipherSpecType(this), cipherSpecPass(this),
-            .digest = cipherSpecDigest(this) == 0 ? param.digestDefault : cipherSpecDigest(this)));
+            .digest = cipherSpecDigest(this) == 0 ? param.digestDefault : cipherSpecDigest(this), .round = cipherSpecRound(this)));
 }
 
 /**********************************************************************************************************************************/
@@ -106,6 +109,7 @@ cipherSpecPack(PackWrite *const packWrite, const CipherSpec *const this)
     if (cipherSpecType(this) != cipherTypeNone)
     {
         pckWriteStrIdP(packWrite, cipherSpecDigest(this));
+        pckWriteU32P(packWrite, cipherSpecRound(this));
         pckWriteBinP(packWrite, cipherSpecPass(this));
     }
 
@@ -129,6 +133,9 @@ cipherSpecToLog(const CipherSpec *const this, StringStatic *const debugLog)
 
         strStcFmt(debugLog, ", digest: %s", digestZ);
     }
+
+    if (cipherSpecRound(this) != 0)
+        strStcFmt(debugLog, ", round: %u", cipherSpecRound(this));
 
     strStcCatChr(debugLog, '}');
 }

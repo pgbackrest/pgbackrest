@@ -1473,6 +1473,20 @@
 
                         <example>30d</example>
                     </config-key>
+
+                    <config-key id="repo-cipher-round" name="Repository Cipher Rounds">
+                        <summary>Passphrase key derivation rounds.</summary>
+
+                        <text>
+                            <p>Rounds of PBKDF2 used to derive the key that encrypts <file>archive.info</file> and <file>backup.info</file> from <br-option>repo-cipher-pass</br-option>. More rounds make each guess at the passphrase more expensive for an attacker, but every command that reads or writes these files pays for the rounds as well. For example, <cmd>archive-push</cmd> and <cmd>archive-get</cmd> read <file>archive.info</file> each time they run.</p>
+
+                            <p>Rounds only help when the passphrase can be guessed. A passphrase generated from at least 256 random bits, e.g. with <code>openssl rand -base64 32</code>, cannot be guessed no matter how few rounds are used. When this option is not set, a passphrase that looks generated uses one round and any other passphrase uses the default. A passphrase looks generated when it is base64 that decodes to at least 256 bits, the decoded bytes are not all text, and they contain at least 16 distinct values and at least 16 distinct differences between adjacent bytes. The last two rule out repeated values, sequences, and short repeating patterns. Do not reduce the rounds for a passphrase that a person chose, even if it has been encoded to look generated.</p>
+
+                            <p>The rounds are set by <cmd>stanza-create</cmd> when it creates a stanza at <br-option>repo-format</br-option> 6 and by <cmd>stanza-upgrade</cmd> when it upgrades a stanza to <br-option>repo-format</br-option> 6. They are stored in the info files and every other command uses the rounds stored there. To change the rounds of a stanza already at <br-option>repo-format</br-option> 6, run <cmd>stanza-upgrade</cmd> with this option.</p>
+                        </text>
+
+                        <example>1</example>
+                    </config-key>
                 </config-key-list>
             </config-section>
 

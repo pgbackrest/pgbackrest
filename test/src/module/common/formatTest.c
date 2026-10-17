@@ -101,8 +101,11 @@ testRun(void)
 
         TEST_RESULT_STR_Z(strNewBuf(headerResult), TEST_PLAINTEXT, "content decrypted with the digest the header called for");
         TEST_RESULT_UINT(
-            cipherBlockFormatResult(ioFilterGroupResultP(headerFilterGroup, CIPHER_BLOCK_FORMAT_FILTER_TYPE)),
+            cipherBlockFormatResult(ioFilterGroupResultP(headerFilterGroup, CIPHER_BLOCK_FORMAT_FILTER_TYPE)).format,
             REPOSITORY_FORMAT_6, "filter reports the format");
+        TEST_RESULT_UINT(
+            cipherBlockFormatResult(ioFilterGroupResultP(headerFilterGroup, CIPHER_BLOCK_FORMAT_FILTER_TYPE)).round, 0,
+            "filter reports no rounds");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("content is handed on in pieces when the destination cannot take it whole");
@@ -143,24 +146,44 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(piecesResult, piecesPlainText), true, "content decrypted in pieces");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("the header is read no matter how the input is split");
+        TEST_TITLE("the header is read no matter how the input is split, here with rounds");
 
+        Buffer *const roundBuffer = bufNew(0);
+        IoWrite *const roundWrite = ioBufferWriteNew(roundBuffer);
+
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(roundWrite), cipherSpec, REPOSITORY_FORMAT_6, .round = 2);
+        ioWriteOpen(roundWrite);
+        ioWrite(roundWrite, testPlainText);
+        ioWriteClose(roundWrite);
+
+        TEST_RESULT_BOOL(
+            memcmp(
+                bufPtrConst(roundBuffer), CIPHER_BLOCK_FORMAT_MAGIC "006P\x00\x00\x00\x02",
+                CIPHER_BLOCK_FORMAT_HEADER_SIZE + CIPHER_BLOCK_FORMAT_ROUND_SIZE) == 0,
+            true, "header contains the rounds");
+
+        // The rounds come from the header
         Buffer *const splitResult = bufNew(0);
         IoWrite *const splitWrite = ioBufferWriteNew(splitResult);
 
         cipherBlockFormatFilterGroupReadAdd(ioWriteFilterGroup(splitWrite), cipherSpec);
 
-        // Write in pieces smaller than the header so it arrives in more than one part, then a piece that completes it exactly, so
-        // that what follows arrives with the header already read
+        // Write in pieces smaller than the header so it arrives in more than one part, including the rounds, then a piece that
+        // completes it exactly, so that what follows arrives with the header already read
         ioBufferSizeSet(4);
         ioWriteOpen(splitWrite);
-        ioWrite(splitWrite, BUF(bufPtrConst(headerBuffer), 4));
-        ioWrite(splitWrite, BUF(bufPtrConst(headerBuffer) + 4, 4));
-        ioWrite(splitWrite, BUF(bufPtrConst(headerBuffer) + 8, bufUsed(headerBuffer) - 8));
+        ioWrite(splitWrite, BUF(bufPtrConst(roundBuffer), 4));
+        ioWrite(splitWrite, BUF(bufPtrConst(roundBuffer) + 4, 4));
+        ioWrite(splitWrite, BUF(bufPtrConst(roundBuffer) + 8, 2));
+        ioWrite(splitWrite, BUF(bufPtrConst(roundBuffer) + 10, 2));
+        ioWrite(splitWrite, BUF(bufPtrConst(roundBuffer) + 12, bufUsed(roundBuffer) - 12));
         ioWriteClose(splitWrite);
         ioBufferSizeSet(TEST_BUFFER_SIZE);
 
         TEST_RESULT_STR_Z(strNewBuf(splitResult), TEST_PLAINTEXT, "content decrypted from split input");
+        TEST_RESULT_UINT(
+            cipherBlockFormatResult(ioFilterGroupResultP(ioWriteFilterGroup(splitWrite), CIPHER_BLOCK_FORMAT_FILTER_TYPE)).round, 2,
+            "filter reports the rounds");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("a file that begins with the magic was written before there was a header");
@@ -188,7 +211,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(strNewBuf(headerResult), TEST_PLAINTEXT, "content decrypted");
         TEST_RESULT_UINT(
-            cipherBlockFormatResult(ioFilterGroupResultP(headerFilterGroup, CIPHER_BLOCK_FORMAT_FILTER_TYPE)),
+            cipherBlockFormatResult(ioFilterGroupResultP(headerFilterGroup, CIPHER_BLOCK_FORMAT_FILTER_TYPE)).format,
             REPOSITORY_FORMAT_5, "filter reports the format before the header");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -232,11 +255,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("damaged headers");
 
-        // Decrypt the buffer above after damaging a byte of the header, which is the same buffer for each case
-        #define TEST_HEADER_DAMAGE(damageIdx, damageChar, errorType, errorMessage)                                                 \
+        // Decrypt a buffer above after damaging a byte of the header
+        #define TEST_HEADER_DAMAGE(buffer, damageIdx, damageChar, errorType, errorMessage)                                         \
             do                                                                                                                     \
             {                                                                                                                      \
-                Buffer *const damaged = bufDup(headerBuffer);                                                                      \
+                Buffer *const damaged = bufDup(buffer);                                                                            \
                 bufPtr(damaged)[damageIdx] = damageChar;                                                                           \
                                                                                                                                    \
                 IoWrite *const write = ioBufferWriteNew(bufNew(0));                                                                \
@@ -248,25 +271,29 @@ testRun(void)
             while (0)
 
         // Where the format should be, so this version cannot tell what it is looking at
-        TEST_HEADER_DAMAGE(CIPHER_BLOCK_FORMAT_MAGIC_SIZE, 'X', FormatError, "invalid cipher header");
+        TEST_HEADER_DAMAGE(headerBuffer, CIPHER_BLOCK_FORMAT_MAGIC_SIZE, 'X', FormatError, "invalid cipher header");
 
         // The byte held back for later, which must be the one this version writes
-        TEST_HEADER_DAMAGE(CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1, 'X', FormatError, "invalid cipher header");
+        TEST_HEADER_DAMAGE(headerBuffer, CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1, 'X', FormatError, "invalid cipher header");
+
+        // Rounds of zero and more rounds than this version writes
+        TEST_HEADER_DAMAGE(roundBuffer, CIPHER_BLOCK_FORMAT_HEADER_SIZE + 3, 0, FormatError, "invalid cipher header");
+        TEST_HEADER_DAMAGE(roundBuffer, CIPHER_BLOCK_FORMAT_HEADER_SIZE, 'X', FormatError, "invalid cipher header");
 
         // A format newer than this version can read, reported before anything is decrypted
         TEST_HEADER_DAMAGE(
-            CIPHER_BLOCK_FORMAT_HEADER_SIZE - 2, '7', FormatError,
+            headerBuffer, CIPHER_BLOCK_FORMAT_HEADER_SIZE - 2, '7', FormatError,
             "repository format 7 requires a newer version of " PROJECT_NAME "\n"
             "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format 5 to 6.");
 
         // A format older than this version can read
         TEST_HEADER_DAMAGE(
-            CIPHER_BLOCK_FORMAT_HEADER_SIZE - 2, '4', FormatError,
+            headerBuffer, CIPHER_BLOCK_FORMAT_HEADER_SIZE - 2, '4', FormatError,
             "repository format 4 is no longer supported by " PROJECT_NAME "\n"
             "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format 5 to 6.");
 
         // Neither a header nor the magic, which is what a file that was never encrypted looks like from here
-        TEST_HEADER_DAMAGE(0, 'X', CryptoError, "cipher header invalid");
+        TEST_HEADER_DAMAGE(headerBuffer, 0, 'X', CryptoError, "cipher header invalid");
 
         #undef TEST_HEADER_DAMAGE
 

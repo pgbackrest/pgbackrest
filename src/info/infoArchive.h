@@ -81,6 +81,15 @@ infoArchiveCipherRotateTime(const InfoArchive *const this)
     return infoCipherRotateTime(infoPgInfo(infoArchivePg(this)));
 }
 
+// PBKDF2 rounds the file is encrypted with, zero when none
+FN_INLINE_ALWAYS unsigned int
+infoArchiveCipherRound(const InfoArchive *const this)
+{
+    return infoCipherRound(infoPgInfo(infoArchivePg(this)));
+}
+
+FN_EXTERN void infoArchiveCipherRoundSet(InfoArchive *this, unsigned int cipherRound);
+
 // Repository format
 FN_INLINE_ALWAYS unsigned int
 infoArchiveFormat(const InfoArchive *const this)
