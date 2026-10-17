@@ -95,9 +95,10 @@ cmdStanzaCreate(void)
 
                 infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 
-                // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent manifests
-                const CipherSpec *const cipherSpecManifest = cipherSpecGen(
-                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), format);
+                // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent manifests. Format >= 6 adds a
+                // key for each backup set when the full backup is created.
+                const CipherSpec *const cipherSpecManifest =
+                    format < REPOSITORY_FORMAT_6 ? cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), format) : NULL;
 
                 // Create and save backup info
                 infoBackup = infoBackupNew(

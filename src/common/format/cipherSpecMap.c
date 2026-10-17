@@ -76,7 +76,7 @@ cipherSpecMapNewPack(PackRead *const packRead)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const CipherSpec *
-cipherSpecMapGet(const CipherSpecMap *const this, const String *const id)
+cipherSpecMapFind(const CipherSpecMap *const this, const String *const id)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(CIPHER_SPEC_MAP, this);
@@ -88,11 +88,28 @@ cipherSpecMapGet(const CipherSpecMap *const this, const String *const id)
 
     const CipherSpecMapItem *const item = lstFind(this->pub.list, &id);
 
+    FUNCTION_TEST_RETURN_CONST(CIPHER_SPEC, item == NULL ? NULL : item->cipherSpec);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN const CipherSpec *
+cipherSpecMapGet(const CipherSpecMap *const this, const String *const id)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CIPHER_SPEC_MAP, this);
+        FUNCTION_TEST_PARAM(STRING, id);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(id != NULL);
+
+    const CipherSpec *const result = cipherSpecMapFind(this, id);
+
     // Error when request key was not found
-    if (item == NULL)
+    if (result == NULL)
         THROW_FMT(CryptoError, "unable to find cipher key '%s'", strZ(id));
 
-    FUNCTION_TEST_RETURN_CONST(CIPHER_SPEC, item->cipherSpec);
+    FUNCTION_TEST_RETURN_CONST(CIPHER_SPEC, result);
 }
 
 /**********************************************************************************************************************************/

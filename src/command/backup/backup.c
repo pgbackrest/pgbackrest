@@ -20,6 +20,7 @@ Backup Command
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/format/cipherBlockFormat.h"
+#include "common/format/format.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
 #include "common/regExp.h"
@@ -212,7 +213,6 @@ cmdBackup(void)
         // Load backup.info
         InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-        const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(infoBackup);
 
         // Get pg storage and database objects
         BackupData *const backupData = backupInit(infoBackup);
@@ -249,13 +249,24 @@ cmdBackup(void)
             cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
         // Resume a backup when possible
-        if (!backupResume(manifest, cipherSpecManifest))
+        if (!backupResume(manifest, infoBackup))
         {
             manifestBackupLabelSet(
                 manifest,
                 backupLabelCreate(
                     (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
+
+            // Format >= 6 stores the key of a new backup set in backup.info before anything is encrypted with it
+            if (manifestFormat(manifest) >= REPOSITORY_FORMAT_6 && manifestData(manifest)->backupType == backupTypeFull &&
+                cipherSpecType(manifestCipherSpec(manifest)) != cipherTypeNone)
+            {
+                infoBackupCipherSpecAdd(infoBackup, manifestData(manifest)->backupLabel, manifestCipherSpec(manifest));
+                infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
+            }
         }
+
+        // Key for the manifest of the backup
+        const CipherSpec *const cipherSpecManifest = infoBackupCipherSpecManifest(infoBackup, manifestData(manifest)->backupLabel);
 
         // Save the manifest before processing starts
         backupManifestSaveCopy(manifest, cipherSpecManifest, false);

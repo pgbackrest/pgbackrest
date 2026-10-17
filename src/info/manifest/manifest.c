@@ -9,6 +9,7 @@ Backup Manifest Handler
 
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/format/format.h"
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/type/json.h"
@@ -104,6 +105,7 @@ manifestNewBuild(
     {
         this = manifestNewInternal();
         this->pub.info = infoNew(format, NULL);
+        this->pub.cipherSpec = infoCipherSpec(this->pub.info);
         this->pub.data.backrestVersion = strNewZ(PROJECT_VERSION);
         this->pub.data.pgVersion = pgVersion;
         this->pub.data.pgCatalogVersion = pgCatalogVersion;
@@ -708,6 +710,10 @@ manifestNewLoad(IoRead *const read, const CipherSpec *const cipherSpec)
         this->pub.info = infoNewLoad(read, cipherSpec, manifestLoadCallback, &loadData);
         this->pub.data.backrestVersion = infoBackrestVersion(this->pub.info);
 
+        // Format >= 6 encrypts the files with the key of the manifest
+        this->pub.cipherSpec =
+            manifestFormat(this) >= REPOSITORY_FORMAT_6 ? cipherSpecDupP(cipherSpec) : infoCipherSpec(this->pub.info);
+
         // Add the label to the reference list in case the manifest was created before 2.42 when the explicit reference list was
         // added. Most references are added when the file list is loaded but the current backup will never be referenced from a file
         // (the reference is assumed) so it must be added here.
@@ -861,6 +867,37 @@ manifestBackupLabelSet(Manifest *const this, const String *const backupLabel)
         strLstAdd(this->pub.referenceList, backupLabel);
     }
     MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+manifestCipherSpecSet(Manifest *const this, const CipherSpec *const cipherSpec)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(cipherSpec != NULL);
+
+    // Format >= 6 encrypts the files with the key of the manifest
+    if (manifestFormat(this) >= REPOSITORY_FORMAT_6)
+    {
+        MEM_CONTEXT_BEGIN(this->pub.memContext)
+        {
+            this->pub.cipherSpec = cipherSpecDupP(cipherSpec);
+        }
+        MEM_CONTEXT_END();
+    }
+    // Else the key is stored in the manifest
+    else
+    {
+        infoCipherSpecSet(this->pub.info, cipherSpec);
+        this->pub.cipherSpec = infoCipherSpec(this->pub.info);
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }

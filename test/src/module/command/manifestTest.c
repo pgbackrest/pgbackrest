@@ -103,6 +103,13 @@ testRun(void)
             hrnBackupPqScriptP(PG_VERSION_14, backupTimeStart, .noArchiveCheck = true, .noWal = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup repo1");
 
+            // No backup on repo2 for the manifest command to render
+            StringList *argListManifest = strLstDup(argListCommon);
+            hrnCfgArgRawZ(argListManifest, cfgOptRepo, "2");
+            HRN_CFG_LOAD(cfgCmdManifest, argListManifest);
+
+            TEST_ERROR(cmdManifestRender(), BackupSetInvalidError, "no backup set found");
+
             // Backup to repo2
             hrnCfgArgRawZ(argList, cfgOptRepo, "2");
             HRN_CFG_LOAD(cfgCmdBackup, argList);
