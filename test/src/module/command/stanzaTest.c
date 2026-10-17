@@ -214,7 +214,7 @@ testRun(void)
             infoBackupLoadFile(
                 storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
             "load backup info from encrypted repo4");
-        TEST_RESULT_UINT(cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeAes256Cbc, "cipher sub set");
+        TEST_RESULT_UINT(cipherSpecMapSize(infoCipherSpecMap(infoPgInfo(infoBackupPg(infoBackup)))), 0, "no backup keys");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cmdStanzaCreate missing files - multi-repo and encryption");

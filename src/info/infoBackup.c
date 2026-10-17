@@ -11,6 +11,7 @@ Backup Info Handler
 #include "command/backup/common.h"
 #include "common/debug.h"
 #include "common/format/cipherBlockFormat.h"
+#include "common/format/format.h"
 #include "common/ini.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
@@ -403,6 +404,57 @@ infoBackupFormatSet(InfoBackup *const this, const unsigned int format)
     ASSERT(this != NULL);
 
     infoFormatSet(infoPgInfo(infoBackupPg(this)), format);
+    this->pub.updated = true;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN const CipherSpec *
+infoBackupCipherSpecManifest(const InfoBackup *const this, const String *const backupLabel)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(backupLabel != NULL);
+
+    const CipherSpec *result;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Key of the backup set, which is stored by the label of the full backup
+        result = cipherSpecMapFind(
+            infoCipherSpecMap(infoPgInfo(infoBackupPg(this))), strSubN(backupLabel, 0, DATE_TIME_LEN + 1));
+
+        // Else the shared key
+        if (result == NULL)
+            result = infoBackupCipherSpec(this);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_CONST(CIPHER_SPEC, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+infoBackupCipherSpecAdd(InfoBackup *const this, const String *const backupLabel, const CipherSpec *const cipherSpec)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(STRING, backupLabel);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(infoBackupFormat(this) >= REPOSITORY_FORMAT_6);
+    ASSERT(backupLabel != NULL);
+    ASSERT(strSize(backupLabel) == DATE_TIME_LEN + 1);
+    ASSERT(cipherSpec != NULL);
+
+    infoCipherSpecAdd(infoPgInfo(infoBackupPg(this)), backupLabel, cipherSpec);
     this->pub.updated = true;
 
     FUNCTION_LOG_RETURN_VOID();
@@ -881,7 +933,8 @@ infoBackupLoadFileReconstruct(
                 if (storageExistsP(storage, manifestFileName))
                 {
                     bool found = false;
-                    const Manifest *const manifest = manifestLoadFile(storage, manifestFileName, infoBackupCipherSpec(infoBackup));
+                    const Manifest *const manifest = manifestLoadFile(
+                        storage, manifestFileName, infoBackupCipherSpecManifest(infoBackup, backupLabel));
                     const ManifestData *const manData = manifestData(manifest);
 
                     // If the pg data for the manifest exists in the history, then add it to current, but if something doesn't match

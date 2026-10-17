@@ -423,7 +423,7 @@ testRun(void)
             storageFixture, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE ".copy", manifestFileBuffer,
             .cipherSpec = TEST_CIPHER_SPEC_PASS("custom"));
         HRN_STORAGE_PUT(
-            storageFixture, STORAGE_PATH_BACKUP "/test/backup.history/2020/label.manifest.gz", manifestFileBuffer,
+            storageFixture, STORAGE_PATH_BACKUP "/test/backup.history/2020/20200101-000000F.manifest.gz", manifestFileBuffer,
             .cipherSpec = TEST_CIPHER_SPEC_PASS("custom"));
         HRN_STORAGE_PUT(
             storageFixture, STORAGE_PATH_BACKUP "/test/latest/pg_data/backup_label", backupLabelBuffer,
@@ -698,7 +698,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
-        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/backup.history/2020/label.manifest.gz");
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/backup.history/2020/20200101-000000F.manifest.gz");
         HRN_CFG_LOAD(cfgCmdRepoGet, argList);
 
         writeBuffer = bufNew(0);

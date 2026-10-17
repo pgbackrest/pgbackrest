@@ -443,10 +443,21 @@ cmdManifestRender(void)
         // Load backup.info and cipher
         const InfoBackup *const infoBackup = infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
 
+        // The latest backup is the newest in backup.info
+        const String *backupLabel = cfgOptionStr(cfgOptSet);
+
+        if (strEqZ(backupLabel, "latest"))
+        {
+            if (infoBackupDataTotal(infoBackup) == 0)
+                THROW(BackupSetInvalidError, "no backup set found");
+
+            backupLabel = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
+        }
+
         // Load manifest
         const Manifest *const manifest = manifestLoadFile(
-            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(cfgOptionStr(cfgOptSet))),
-            infoBackupCipherSpec(infoBackup));
+            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
+            infoBackupCipherSpecManifest(infoBackup, backupLabel));
 
         // Manifest info
         const ManifestData *const data = manifestData(manifest);
