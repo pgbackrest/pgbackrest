@@ -65,6 +65,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("5432"),                                                                                            // val/str
     PARSE_RULE_STRPUB("5MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("6"),                                                                                               // val/str
+    PARSE_RULE_STRPUB("600000"),                                                                                          // val/str
     PARSE_RULE_STRPUB("64KiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("65535"),                                                                                           // val/str
     PARSE_RULE_STRPUB("7d"),                                                                                              // val/str
@@ -207,6 +208,7 @@ typedef enum
     parseRuleValStrQT_5432_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_5MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_6_QT,                                                                                          // val/str/enum
+    parseRuleValStrQT_600000_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_64KiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_65535_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_7d_QT,                                                                                         // val/str/enum
@@ -326,6 +328,7 @@ static const int parseRuleValueInt[] =
     5432,                                                                                                                 // val/int
     8432,                                                                                                                 // val/int
     65535,                                                                                                                // val/int
+    600000,                                                                                                               // val/int
     9999999,                                                                                                              // val/int
 };
 
@@ -356,6 +359,7 @@ static const uint8_t parseRuleValueIntStrMap[] =
     parseRuleValStrQT_5432_QT,                                                                                     // val/int/strmap
     parseRuleValStrQT_8432_QT,                                                                                     // val/int/strmap
     parseRuleValStrQT_65535_QT,                                                                                    // val/int/strmap
+    parseRuleValStrQT_600000_QT,                                                                                   // val/int/strmap
     parseRuleValStrQT_9999999_QT,                                                                                  // val/int/strmap
 };
 
@@ -386,6 +390,7 @@ typedef enum
     parseRuleValInt5432,                                                                                             // val/int/enum
     parseRuleValInt8432,                                                                                             // val/int/enum
     parseRuleValInt65535,                                                                                            // val/int/enum
+    parseRuleValInt600000,                                                                                           // val/int/enum
     parseRuleValInt9999999,                                                                                          // val/int/enum
 } ParseRuleValueInt;
 
@@ -6037,6 +6042,40 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                             // opt/repo-cipher-rotate
         ),                                                                                                 // opt/repo-cipher-rotate
     ),                                                                                                     // opt/repo-cipher-rotate
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                       // opt/repo-cipher-round
+    (                                                                                                       // opt/repo-cipher-round
+        PARSE_RULE_OPTION_NAME("repo-cipher-round"),                                                        // opt/repo-cipher-round
+        PARSE_RULE_OPTION_TYPE(Integer),                                                                    // opt/repo-cipher-round
+        PARSE_RULE_OPTION_INTERNAL(true)                                                                    // opt/repo-cipher-round
+        PARSE_RULE_OPTION_RESET(true),                                                                      // opt/repo-cipher-round
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                   // opt/repo-cipher-round
+        PARSE_RULE_OPTION_SECTION(Global),                                                                  // opt/repo-cipher-round
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                   // opt/repo-cipher-round
+                                                                                                            // opt/repo-cipher-round
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/repo-cipher-round
+        (                                                                                                   // opt/repo-cipher-round
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-cipher-round
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-cipher-round
+        ),                                                                                                  // opt/repo-cipher-round
+                                                                                                            // opt/repo-cipher-round
+        PARSE_RULE_OPTIONAL                                                                                 // opt/repo-cipher-round
+        (                                                                                                   // opt/repo-cipher-round
+            PARSE_RULE_OPTIONAL_GROUP                                                                       // opt/repo-cipher-round
+            (                                                                                               // opt/repo-cipher-round
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                             // opt/repo-cipher-round
+                (                                                                                           // opt/repo-cipher-round
+                    PARSE_RULE_VAL_INT(1),                                                                  // opt/repo-cipher-round
+                    PARSE_RULE_VAL_INT(600000),                                                             // opt/repo-cipher-round
+                ),                                                                                          // opt/repo-cipher-round
+                                                                                                            // opt/repo-cipher-round
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                 // opt/repo-cipher-round
+                (                                                                                           // opt/repo-cipher-round
+                    PARSE_RULE_VAL_INT(600000),                                                             // opt/repo-cipher-round
+                ),                                                                                          // opt/repo-cipher-round
+            ),                                                                                              // opt/repo-cipher-round
+        ),                                                                                                  // opt/repo-cipher-round
+    ),                                                                                                      // opt/repo-cipher-round
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                        // opt/repo-cipher-type
     (                                                                                                        // opt/repo-cipher-type
@@ -12212,6 +12251,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoBundle,                                                                                           // opt-resolve-order
     cfgOptRepoBundleLimit,                                                                                      // opt-resolve-order
     cfgOptRepoBundleSize,                                                                                       // opt-resolve-order
+    cfgOptRepoCipherRound,                                                                                      // opt-resolve-order
     cfgOptRepoCipherType,                                                                                       // opt-resolve-order
     cfgOptRepoFormat,                                                                                           // opt-resolve-order
     cfgOptRepoGcsUserProject,                                                                                   // opt-resolve-order

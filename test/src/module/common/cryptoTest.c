@@ -144,17 +144,25 @@ testRun(void)
         TEST_RESULT_UINT(
             cipherSpecType(cipherSpecNewPack(pckReadNew(pckWriteResult(packWrite)))), cipherTypeNone, "unpack none");
 
-        // Else it contains the type, digest, and pass
+        // Else it contains the type, digest, rounds, and pass
         packWrite = pckWriteNewP();
 
-        cipherSpecPack(packWrite, cipherSpecNewP(cipherTypeAes256Cbc, testPass, .digest = hashTypeSha1));
+        cipherSpecPack(
+            packWrite, cipherSpecDupP(cipherSpecNewP(cipherTypeAes256Cbc, testPass, .digest = hashTypeSha1, .round = 2)));
         pckWriteEndP(packWrite);
 
         const CipherSpec *const cipherSpecUnpack = cipherSpecNewPack(pckReadNew(pckWriteResult(packWrite)));
 
         TEST_RESULT_UINT(cipherSpecType(cipherSpecUnpack), cipherTypeAes256Cbc, "unpack type");
         TEST_RESULT_UINT(cipherSpecDigest(cipherSpecUnpack), hashTypeSha1, "unpack digest");
+        TEST_RESULT_UINT(cipherSpecRound(cipherSpecUnpack), 2, "unpack round");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecUnpack)), TEST_PASS, "unpack pass");
+
+        // The pass is never logged
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(cipherSpecUnpack, cipherSpecToLog, logBuf, sizeof(logBuf)), "cipherSpecToLog");
+        TEST_RESULT_Z(logBuf, "{type: aes-256-cbc, digest: sha1, round: 2}", "check log");
 
         CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(cipherBlockNewP(cipherModeEncrypt, cipherSpec));
         TEST_RESULT_UINT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");
@@ -313,6 +321,27 @@ testRun(void)
         TEST_RESULT_UINT(bufUsed(decryptBuffer), 0, "0 bytes processed");
         ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer);
         TEST_RESULT_UINT(bufUsed(decryptBuffer), 0, "0 bytes on flush");
+
+        ioFilterFree(blockDecryptFilter);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("decrypt with PBKDF2 rounds");
+
+        // Salt and output of: printf plaintext | openssl enc -aes-256-cbc -pbkdf2 -iter 2 -md sha256
+        //     -pass pass:areallybadpassphrase -S 0001020304050607
+        blockDecryptFilter = cipherBlockNewPack(
+            ioFilterParamList(
+                cipherBlockNewP(
+                    cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, testPass, .digest = hashTypeSha256, .round = 2),
+                    .header = cipherBlockHeaderNone)));
+
+        bufUsedZero(decryptBuffer);
+
+        ioFilterProcessInOut(
+            blockDecryptFilter, bufNewDecode(encodingHex, STRDEF("0001020304050607e5a4b36e38b409aa730bf7087ee58e92")),
+            decryptBuffer);
+        ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer);
+        TEST_RESULT_STR_Z(strNewBuf(decryptBuffer), TEST_PLAINTEXT, "check decrypt");
 
         ioFilterFree(blockDecryptFilter);
 

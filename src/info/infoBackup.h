@@ -111,6 +111,15 @@ infoBackupCipherSpec(const InfoBackup *const this)
     return infoPgCipherSpec(infoBackupPg(this));
 }
 
+// PBKDF2 rounds the file is encrypted with, zero when none
+FN_INLINE_ALWAYS unsigned int
+infoBackupCipherRound(const InfoBackup *const this)
+{
+    return infoCipherRound(infoPgInfo(infoBackupPg(this)));
+}
+
+FN_EXTERN void infoBackupCipherRoundSet(InfoBackup *this, unsigned int cipherRound);
+
 // Repository format
 FN_INLINE_ALWAYS unsigned int
 infoBackupFormat(const InfoBackup *const this)

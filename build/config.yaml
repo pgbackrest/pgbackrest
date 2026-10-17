@@ -1761,6 +1761,19 @@ option:
       list:
         - aes-256-cbc
 
+  repo-cipher-round:
+    section: global
+    group: repo
+    type: integer
+    internal: true
+    default: 600000
+    allow-range: [1, 600000]
+    command:
+      stanza-create: {}
+      stanza-upgrade: {}
+    command-role:
+      main: {}
+
   repo-hardlink:
     section: global
     group: repo

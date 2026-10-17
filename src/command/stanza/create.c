@@ -78,6 +78,7 @@ cmdStanzaCreate(void)
 
                 // Format for the new stanza
                 const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
+                cipherRoundCheck(repoIdx, format);
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting archive files. Format >= 6 adds it by
                 // rotating to the first key id and earlier formats store it as the default key with no id.
@@ -90,8 +91,12 @@ cmdStanzaCreate(void)
                 // Create and save archive info
                 infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, format, cipherSpecMapArchive);
 
+                // Format >= 6 also encrypts the info files with PBKDF2 rounds
                 if (cipherSpecType(cipherSpecArchive) != cipherTypeNone && format >= REPOSITORY_FORMAT_6)
+                {
                     infoArchiveCipherRotate(infoArchive, cipherSpecArchive, time(NULL));
+                    infoArchiveCipherRoundSet(infoArchive, cipherRoundGet(repoIdx));
+                }
 
                 infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 
@@ -102,6 +107,7 @@ cmdStanzaCreate(void)
                 // Create and save backup info
                 infoBackup = infoBackupNew(
                     pgControl.version, pgControl.systemId, pgControl.catalogVersion, format, cipherSpecManifest);
+                infoBackupCipherRoundSet(infoBackup, infoArchiveCipherRound(infoArchive));
 
                 infoBackupSaveFile(infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
             }

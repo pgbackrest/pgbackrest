@@ -409,6 +409,23 @@ infoBackupFormatSet(InfoBackup *const this, const unsigned int format)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN void
+infoBackupCipherRoundSet(InfoBackup *const this, const unsigned int cipherRound)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(UINT, cipherRound);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    infoCipherRoundSet(infoPgInfo(infoBackupPg(this)), cipherRound);
+    this->pub.updated = true;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN InfoBackupData
 infoBackupData(const InfoBackup *const this, const unsigned int backupDataIdx)
 {
@@ -938,7 +955,8 @@ infoBackupSaveFile(
             // Write output into a buffer since it needs to be saved to storage twice
             Buffer *const buffer = bufNew(ioBufferSize());
             IoWrite *const write = ioBufferWriteNew(buffer);
-            cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, infoBackupFormat(infoBackup));
+            cipherBlockFormatFilterGroupWriteAddP(
+                ioWriteFilterGroup(write), cipherSpec, infoBackupFormat(infoBackup), .round = infoBackupCipherRound(infoBackup));
             infoBackupSave(infoBackup, write);
 
             // Save the file and make a copy

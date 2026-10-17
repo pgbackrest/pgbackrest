@@ -31,20 +31,29 @@ that tool expects.
 A file that begins with the magic rather than the header was written at format 5, the only format there was before the header, so
 that is not an error when a header was expected.
 
-The first three bytes of the header magic are the format and the last is a marker indicating whether a key id follows. The format
-comes first so it is always in the same place, which is how a version decides whether it can read the file. The marker is only
-checked once the format turns out to be readable, and it must be valid for this version.
+The first three bytes of the header magic are the format and the last is a marker indicating whether a key id or PBKDF2 rounds
+follow. The format comes first so it is always in the same place, which is how a version decides whether it can read the file. The
+marker is only checked once the format turns out to be readable, and it must be valid for this version.
 
 If a key id is indicated by the marker, there is first a byte to indicate the length of the key id and then the key id as a string.
+
+If PBKDF2 rounds are indicated by the marker, the rounds follow as four bytes in big-endian (network) byte order. The key and
+initialization vector are derived the way openssl enc -pbkdf2 derives them, so the openssl command-line tool can still open the file
+once the header and rounds are replaced with the magic.
 ***********************************************************************************************************************************/
 #define CIPHER_BLOCK_FORMAT_MAGIC                                   "PGBR"
 #define CIPHER_BLOCK_FORMAT_MAGIC_SIZE                              (sizeof(CIPHER_BLOCK_FORMAT_MAGIC) - 1)
 #define CIPHER_BLOCK_FORMAT_MARKER_NONE                             '_'
 #define CIPHER_BLOCK_FORMAT_MARKER_KEY                              'K'
+#define CIPHER_BLOCK_FORMAT_MARKER_ROUND                            'P'
 #define CIPHER_BLOCK_FORMAT_SIZE                                    3
 
 // The key id length is encoded as a single byte with a max of 255 characters
 #define CIPHER_BLOCK_FORMAT_KEY_SIZE_MAX                            255
+
+// PBKDF2 rounds are encoded as four bytes. The max is the max of the repo-cipher-round option.
+#define CIPHER_BLOCK_FORMAT_ROUND_SIZE                              4
+#define CIPHER_BLOCK_FORMAT_ROUND_MAX                               600000
 
 // Total header length: magic, format, and marker
 #define CIPHER_BLOCK_FORMAT_HEADER_SIZE                             (CIPHER_BLOCK_FORMAT_MAGIC_SIZE + CIPHER_BLOCK_FORMAT_SIZE + 1)
@@ -70,6 +79,7 @@ typedef struct CipherBlockFormat
     const CipherSpecMap *cipherSpecMap;                             // Keys to choose from
     unsigned int formatExpected;                                    // Format the caller expects, zero when any will do
     unsigned int format;                                            // Format the header gave
+    unsigned int round;                                             // PBKDF2 rounds the header gave, zero when none
 
     uint8_t header[CIPHER_BLOCK_FORMAT_HEADER_SIZE_MAX];            // Header bytes held until there are enough to read
     size_t headerSize;                                              // Header bytes held so far
@@ -123,7 +133,8 @@ cipherBlockFormatHeaderRead(const uint8_t *const header)
 
         // Check that the marker is valid for this version
         if (headerZ[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] != CIPHER_BLOCK_FORMAT_MARKER_NONE &&
-            headerZ[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] != CIPHER_BLOCK_FORMAT_MARKER_KEY)
+            headerZ[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] != CIPHER_BLOCK_FORMAT_MARKER_KEY &&
+            headerZ[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] != CIPHER_BLOCK_FORMAT_MARKER_ROUND)
         {
             THROW(FormatError, "invalid cipher header");
         }
@@ -136,8 +147,30 @@ cipherBlockFormatHeaderRead(const uint8_t *const header)
 }
 
 /***********************************************************************************************************************************
+Cipher spec with the digest the format specifies when the spec has none and with the rounds the header records
+***********************************************************************************************************************************/
+static CipherSpec *
+cipherBlockFormatCipherSpec(const CipherSpec *const cipherSpec, const unsigned int format, const unsigned int round)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_TEST_PARAM(UINT, format);
+        FUNCTION_TEST_PARAM(UINT, round);
+    FUNCTION_TEST_END();
+
+    ASSERT(cipherSpec != NULL);
+
+    FUNCTION_TEST_RETURN(
+        CIPHER_SPEC,
+        cipherSpecNewP(
+            cipherSpecType(cipherSpec), cipherSpecPass(cipherSpec),
+            .digest = cipherSpecDigest(cipherSpec) == 0 ? repoFormatDigest(format) : cipherSpecDigest(cipherSpec),
+            .round = round));
+}
+
+/***********************************************************************************************************************************
 Build the block cipher that decrypts the content, which is only possible once the header has been read since the header defines the
-format and the key id
+format, the key id, and the rounds
 ***********************************************************************************************************************************/
 static void
 cipherBlockFormatCipherNew(CipherBlockFormat *const this)
@@ -160,7 +193,7 @@ cipherBlockFormatCipherNew(CipherBlockFormat *const this)
     {
         const String *keyId = CIPHER_SPEC_MAP_ID_DEFAULT_STR;
 
-        if (this->headerSize > CIPHER_BLOCK_FORMAT_HEADER_SIZE)
+        if (this->header[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] == CIPHER_BLOCK_FORMAT_MARKER_KEY)
         {
             keyId = strNewZN(
                 (const char *)this->header + CIPHER_BLOCK_FORMAT_HEADER_SIZE + 1,
@@ -175,7 +208,7 @@ cipherBlockFormatCipherNew(CipherBlockFormat *const this)
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->cipherBlock = cipherBlockNewP(
-            cipherModeDecrypt, cipherSpecDupP(cipherSpec, .digestDefault = repoFormatDigest(this->format)),
+            cipherModeDecrypt, cipherBlockFormatCipherSpec(cipherSpec, this->format, this->round),
             .header = cipherBlockHeaderNone);
     }
     MEM_CONTEXT_OBJ_END();
@@ -229,6 +262,21 @@ cipherBlockFormatProcess(THIS_VOID, const Buffer *const source, Buffer *const de
 
                     if (this->header[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] == CIPHER_BLOCK_FORMAT_MARKER_KEY)
                         this->headerSizeExpected++;
+                    else if (this->header[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] == CIPHER_BLOCK_FORMAT_MARKER_ROUND)
+                        this->headerSizeExpected += CIPHER_BLOCK_FORMAT_ROUND_SIZE;
+                }
+                // Else the rounds are complete
+                else if (this->header[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] == CIPHER_BLOCK_FORMAT_MARKER_ROUND)
+                {
+                    const uint8_t *const round = this->header + CIPHER_BLOCK_FORMAT_HEADER_SIZE;
+
+                    this->round =
+                        (unsigned int)round[0] << 24 | (unsigned int)round[1] << 16 | (unsigned int)round[2] << 8 |
+                        (unsigned int)round[3];
+
+                    // Error on rounds outside the range this version writes
+                    if (this->round == 0 || this->round > CIPHER_BLOCK_FORMAT_ROUND_MAX)
+                        THROW(FormatError, "invalid cipher header");
                 }
                 // Else the length is complete so wait for the key id
                 else if (this->headerSizeExpected == CIPHER_BLOCK_FORMAT_HEADER_SIZE + 1)
@@ -307,7 +355,7 @@ cipherBlockFormatInputSame(const THIS_VOID)
 }
 
 /***********************************************************************************************************************************
-Report the format the header gave
+Report the format and rounds the header gave
 ***********************************************************************************************************************************/
 static Pack *
 cipherBlockFormatResultPack(THIS_VOID)
@@ -327,6 +375,7 @@ cipherBlockFormatResultPack(THIS_VOID)
         PackWrite *const packWrite = pckWriteNewP();
 
         pckWriteU32P(packWrite, this->format);
+        pckWriteU32P(packWrite, this->round);
         pckWriteEndP(packWrite);
 
         result = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -403,7 +452,7 @@ cipherBlockFormatNewPack(const Pack *const paramList)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN unsigned int
+FN_EXTERN CipherBlockFormatResult
 cipherBlockFormatResult(PackRead *const packRead)
 {
     FUNCTION_TEST_BEGIN();
@@ -412,7 +461,10 @@ cipherBlockFormatResult(PackRead *const packRead)
 
     ASSERT(packRead != NULL);
 
-    FUNCTION_TEST_RETURN(UINT, pckReadU32P(packRead));
+    CipherBlockFormatResult result = {.format = pckReadU32P(packRead)};
+    result.round = pckReadU32P(packRead);
+
+    FUNCTION_TEST_RETURN_TYPE(CipherBlockFormatResult, result);
 }
 
 /***********************************************************************************************************************************
@@ -552,6 +604,7 @@ cipherBlockFormatFilterGroupWriteAdd(
         FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_LOG_PARAM(UINT, format);
         FUNCTION_LOG_PARAM(STRING, param.keyId);
+        FUNCTION_LOG_PARAM(UINT, param.round);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -562,8 +615,11 @@ cipherBlockFormatFilterGroupWriteAdd(
     ASSERT(param.keyId == NULL || !strEmpty(param.keyId));
     ASSERT(param.keyId == NULL || strSize(param.keyId) <= CIPHER_BLOCK_FORMAT_KEY_SIZE_MAX);
 
-    // Key id is only valid for format >= 6
+    // Key id and rounds are only valid for format >= 6, and a file stores one or the other
     ASSERT(param.keyId == NULL || format >= REPOSITORY_FORMAT_6);
+    ASSERT(param.round == 0 || format >= REPOSITORY_FORMAT_6);
+    ASSERT(param.round == 0 || param.keyId == NULL);
+    ASSERT(param.round <= CIPHER_BLOCK_FORMAT_ROUND_MAX);
 
     if (cipherSpecType(cipherSpec) != cipherTypeNone)
     {
@@ -573,7 +629,7 @@ cipherBlockFormatFilterGroupWriteAdd(
         ioFilterGroupAdd(
             filterGroup,
             cipherBlockNewP(
-                cipherModeEncrypt, cipherSpecDupP(cipherSpec, .digestDefault = repoFormatDigest(format)),
+                cipherModeEncrypt, cipherBlockFormatCipherSpec(cipherSpec, format, param.round),
                 .header = header ? cipherBlockHeaderNone : cipherBlockHeaderMagic));
 
         // The filter is added after the block cipher so the plaintext header is placed before the cipher output
@@ -583,10 +639,12 @@ cipherBlockFormatFilterGroupWriteAdd(
             {
                 char headerZ[CIPHER_BLOCK_FORMAT_HEADER_SIZE + 1];
 
-                // Zero-pad the format and add the marker, depending on whether or not there is a key
+                // Zero-pad the format and add the marker, depending on whether there is a key id or rounds
                 snprintf(
                     headerZ, sizeof(headerZ), CIPHER_BLOCK_FORMAT_MAGIC "%03u%c", format % 1000,
-                    param.keyId == NULL ? CIPHER_BLOCK_FORMAT_MARKER_NONE : CIPHER_BLOCK_FORMAT_MARKER_KEY);
+                    param.keyId != NULL ?
+                        CIPHER_BLOCK_FORMAT_MARKER_KEY :
+                        param.round != 0 ? CIPHER_BLOCK_FORMAT_MARKER_ROUND : CIPHER_BLOCK_FORMAT_MARKER_NONE);
 
                 Buffer *const headerBuffer = bufNew(CIPHER_BLOCK_FORMAT_HEADER_SIZE_MAX);
                 bufCatC(headerBuffer, (const uint8_t *)headerZ, 0, CIPHER_BLOCK_FORMAT_HEADER_SIZE);
@@ -598,6 +656,17 @@ cipherBlockFormatFilterGroupWriteAdd(
 
                     bufCatC(headerBuffer, &keySize, 0, sizeof(keySize));
                     bufCatC(headerBuffer, (const uint8_t *)strZ(param.keyId), 0, strSize(param.keyId));
+                }
+                // Else write the rounds when present
+                else if (param.round != 0)
+                {
+                    const uint8_t roundBytes[CIPHER_BLOCK_FORMAT_ROUND_SIZE] =
+                    {
+                        (uint8_t)(param.round >> 24), (uint8_t)(param.round >> 16), (uint8_t)(param.round >> 8),
+                        (uint8_t)param.round,
+                    };
+
+                    bufCatC(headerBuffer, roundBytes, 0, sizeof(roundBytes));
                 }
 
                 ioFilterGroupAdd(filterGroup, cipherBlockFormatHeaderNew(headerBuffer));
