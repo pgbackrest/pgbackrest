@@ -11,11 +11,12 @@
                     <release-item-ideator id="brent.graveland"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="stephen.frost"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="brent.graveland"/>
+                    <release-item-tester id="brent.graveland"/>
                 </release-item-contributor-list>
 
                 <p>Fix short read in block incremental restore.</p>
+
+                <p>A compressed super block can end with bytes that are not needed to decompress it but mark the end of the data. Depending on how a buffer lined up with the data, these bytes were not read and the restore failed.</p>
             </release-item>
 
             <release-item>
@@ -30,6 +31,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix overflow suppressing backup progress in <cmd>info</cmd> output.</p>
+
+                <p>The sizes in the lock file were read as 32-bit values, so the <cmd>info</cmd> command did not report progress for a backup larger than 4GiB.</p>
             </release-item>
         </release-bug-list>
 
@@ -43,6 +46,8 @@
                 </release-item-contributor-list>
 
                 <p>Preserve partial files during block incremental delta restore.</p>
+
+                <p>A file smaller than expected was not kept for a block incremental delta restore, although its blocks can be reused, e.g. when retrying a restore that failed or restoring over a smaller file.</p>
             </release-item>
 
             <release-item>
@@ -54,6 +59,8 @@
                 </release-item-contributor-list>
 
                 <p>Add support for alternate compile-time page sizes.</p>
+
+                <p><postgres/> can be built with a different page size, e.g. 4096, and forks such as <proper>Greenplum</proper> do this.</p>
             </release-item>
 
             <release-item>
@@ -69,6 +76,8 @@
                 </release-item-contributor-list>
 
                 <p>Skip files truncated during backup when bundling.</p>
+
+                <p>A file truncated to zero after the files were assigned to bundles was still stored in its bundle, and a debug build failed an assertion. These files are now skipped.</p>
             </release-item>
 
             <release-item>
@@ -99,6 +108,81 @@
 
                 <p>Refactor backup incremental manifest generation.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Allow custom type/message for errRetryAdd()."/>
+                <commit subject="Refactor backupFile() to remove backupCopyResultReCopy."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor backup and retry code.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Use original file size to log size changes during backup."/>
+                <commit subject="Update warning for backup resume invalid repo file."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve logging of file size changes and resume warnings during backup.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Improve comments in socket test harness."/>
+                <commit subject="Fix incorrect test comment."/>
+                <commit subject="Remove resolved comment."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Fix comments.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update LICENSE.txt and PostgreSQL copyright for 2024.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Use unique port for each server unit test."/>
+                <commit subject="Fix flapping test on older ninja versions in test unit."/>
+                <commit subject="Add block incremental test where timestamp changes but file is the same."/>
+                <commit subject="Add tests to command/backup and info/manifest modules."/>
+                <commit subject="Move block testBlockDelta() to harness module."/>
+                <commit subject="Break up scripts in db unit test module."/>
+                <commit subject="Cleanup tablespace tests in command/backup module."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Output coverage report on test failure in CI."/>
+                <commit subject="Remove FreeBSD 12 and add FreeBSD 14 to Cirrus CI."/>
+                <commit subject="Remove installation of old yum.p.o repository key."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

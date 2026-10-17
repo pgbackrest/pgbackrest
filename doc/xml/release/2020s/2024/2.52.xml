@@ -14,6 +14,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <proper>GCS</proper> batch delete support.</p>
+
+                <p>Files are removed with batch requests instead of one request per file, which speeds up <cmd>expire</cmd> and other commands that remove files from the repository.</p>
             </release-item>
 
             <release-item>
@@ -27,6 +29,8 @@
                 </release-item-contributor-list>
 
                 <p><proper>S3</proper> <id>SSE-C</id> encryption support.</p>
+
+                <p>Set <setting>repo-s3-sse-customer-key</setting> to have <proper>S3</proper> encrypt the data with the provided key after it is transmitted. This is not as secure as encrypting the data before it is transmitted with <setting>repo-cipher-type</setting>.</p>
             </release-item>
 
             <release-item>
@@ -40,6 +44,8 @@
                 </release-item-contributor-list>
 
                 <p><proper>PostgreSQL</proper> 17beta1 support.</p>
+
+                <p>Adds the catalog version and WAL magic number for <postgres/> 17.</p>
             </release-item>
         </release-feature-list>
 
@@ -53,6 +59,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow explicit disabling of optional dependencies in meson builds.</p>
+
+                <p>An optional feature can be disabled in the <proper>meson</proper> build even when its library is installed, as some platforms require, e.g. <proper>FreeBSD</proper>. By default a feature is enabled when its library is found.</p>
             </release-item>
 
             <release-item>
@@ -67,6 +75,8 @@
                 </release-item-contributor-list>
 
                 <p>Dynamically find <proper>python</proper> in <proper>meson</proper> build.</p>
+
+                <p>The <proper>meson</proper> build now finds the <proper>python</proper> installation instead of requiring a <file>python3</file> binary on the path, e.g. when only <file>python3.9</file> is installed. The minimum <proper>meson</proper> version is now 0.47.</p>
             </release-item>
 
             <release-item>
@@ -92,6 +102,46 @@
 
                 <p>Update Fedora test image to Fedora 38.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Update command module to recent coding standards."/>
+                <commit subject="Update common module to recent coding standards."/>
+                <commit subject="Update config module to recent coding standards."/>
+                <commit subject="Update db/postgres modules to recent coding standards."/>
+                <commit subject="Update info module to recent coding standards."/>
+                <commit subject="Update storage (except remote) module to recent coding standards."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update modules to recent coding standards.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove ASSERT() in sckClientOpen() to silence Coverity complaint."/>
+                <commit subject="Silence invalid Coverity complaint in jsonReadPush()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Silence Coverity complaints.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove extra space before colons in meson.build files."/>
+                <commit subject="Allow strIdToLog() to output &quot;null&quot; values."/>
+                <commit subject="Fix comment typo."/>
+                <commit subject="Replace erroneous THROW_SYS_ERROR_FMT() in storageInfo()."/>
+                <commit subject="Fix comment typos and formatting."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code and comments.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -110,5 +160,48 @@
                 <p>Update <cmd>start</cmd>/<cmd>stop</cmd> documentation to reflect actual functionality.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Update contributor name."/>
+                <commit subject="Move packager note about meson to new version."/>
+                <commit subject="Exclude documentation code coverage from metrics report."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the contributors, release notes, and metrics report.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Remove test data files made obsolete by d41b21c8."/>
+                <commit subject="Improve unit testing of valid page sizes in pg_control."/>
+                <commit subject="Add hrnTzSet() to set timezone in tests."/>
+                <commit subject="Explicitly run test servers on ipv4 localhost."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update Fedora test image to Fedora 40."/>
+                <commit subject="Update GitHub test checkout and codeql action versions."/>
+                <commit subject="New CI container build for PostgreSQL 17 beta1."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

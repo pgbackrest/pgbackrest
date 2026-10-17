@@ -12,6 +12,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix empty block map when file is truncated to zero during backup.</p>
+
+                <p>A block incremental file larger than <setting>repo-bundle-limit</setting> and truncated to zero by <postgres/> during a backup was stored as a block map with no blocks. Every later backup that referenced the file failed with <quote>unexpected eof</quote> until the next full backup.</p>
             </release-item>
 
             <release-item>
@@ -25,6 +27,8 @@
                 </release-item-contributor-list>
 
                 <p>Disable read retry when filters are passed to the driver.</p>
+
+                <p>A retried read from a repository on an object store, accessed through a repository host, crashed. These reads are no longer retried by the client. The repository host still retries its read from the object store.</p>
             </release-item>
 
             <release-item>
@@ -39,6 +43,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix pagination of <proper>S3</proper> version listing.</p>
+
+                <p>Reading a repository at a target time with <setting>repo-target-time</setting> failed with <quote>unable to find child 'NextContinuationToken'</quote> when more than a thousand versions were listed under a prefix.</p>
             </release-item>
 
             <release-item>
@@ -52,6 +58,8 @@
                 </release-item-contributor-list>
 
                 <p>Set the <proper>Azure</proper> version header for <id>SAS</id> authentication.</p>
+
+                <p>Batch deletes require the version header, so with <id>SAS</id> authentication every batch was rejected. The rejection looked like a single failed file, and the rest of each batch was not deleted while <cmd>expire</cmd> reported success, leaving expired backups and WAL in the repository.</p>
             </release-item>
 
             <release-item>
@@ -65,6 +73,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix async <cmd>archive-push</cmd> stalling on a zero-size backup history file.</p>
+
+                <p>A zero-size backup history file, e.g. in a cluster copied from a storage snapshot, failed every asynchronous <cmd>archive-push</cmd> run, so no WAL was archived. <setting>archive-push-batch-size</setting> is now converted to a segment count using the size of the first ready WAL segment.</p>
             </release-item>
 
             <release-item>
@@ -76,6 +86,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix <cmd>annotate</cmd> command on a remote encrypted repository.</p>
+
+                <p>When the repository was encrypted and the cipher was configured only on the repository host, <cmd>annotate</cmd> failed to load <file>backup.info</file>.</p>
             </release-item>
         </release-bug-list>
 
@@ -86,6 +98,8 @@
                 </release-item-contributor-list>
 
                 <p><proper>PostgreSQL 19beta4</proper> support.</p>
+
+                <p><postgres/> 19beta4 reverted online page checksum changes, so the page checksum version is again limited to 0 and 1. It also changed the <file>pg_control</file> version and the WAL page magic number.</p>
             </release-item>
         </release-feature-list>
     </release-core-list>

@@ -19,11 +19,12 @@
                     <release-item-contributor id="thibault.vincent"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="david.christensen"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="antoine.millet"/>
+                    <release-item-tester id="antoine.millet"/>
                 </release-item-contributor-list>
 
                 <p>Fix <postgres/> query performance for large datasets.</p>
+
+                <p>The query timeout logic delayed reading query results, which could make a query that returned a large result take up to <setting>db-timeout</setting>. Results are now read as soon as they are available.</p>
             </release-item>
         </release-bug-list>
 
@@ -38,6 +39,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow repositories on versioned storage to be read at a target time.</p>
+
+                <p>The <cmd>archive-get</cmd>, <cmd>info</cmd>, <cmd>repo-get</cmd>, <cmd>repo-ls</cmd>, <cmd>restore</cmd>, and <cmd>verify</cmd> commands can read a repository on versioned <proper>Azure</proper>, <proper>GCS</proper>, or <proper>S3</proper> storage as it was at <setting>repo-target-time</setting>. This allows recovery even when the repository has been deleted or corrupted, accidentally or maliciously.</p>
             </release-item>
 
             <release-item>
@@ -49,6 +52,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow requested standby backup to proceed with no standby.</p>
+
+                <p>Set <br-option>backup-standby=prefer</br-option> to back up from a standby when one is available and from the primary otherwise. This does not help when the standby responds but fails to sync with the primary after the backup starts.</p>
             </release-item>
         </release-feature-list>
 
@@ -62,6 +67,8 @@
                 </release-item-contributor-list>
 
                 <p>Summarize backup reference list for <cmd>info</cmd> command text output.</p>
+
+                <p>The backup reference list can be very long, so the text output of the <cmd>info</cmd> command now summarizes it. The full list is shown when <br-option>--set</br-option> is specified.</p>
             </release-item>
 
             <release-item>
@@ -74,6 +81,8 @@
                 </release-item-contributor-list>
 
                 <p>Refresh web-id token for each <proper>S3</proper> authentication.</p>
+
+                <p>The token file named by <id>AWS_WEB_IDENTITY_TOKEN_FILE</id> was read once at startup, so the token could expire during a long operation. The token is now read for each authentication.</p>
             </release-item>
 
             <release-item>
@@ -85,6 +94,8 @@
                 </release-item-contributor-list>
 
                 <p>Correctly display current values for indexed options in help.</p>
+
+                <p>The current value shown for an indexed option was always the value for the first index, e.g. <setting>pg1-path</setting>. The option help now lists the value for each index, and the option list shows <id>&lt;multi&gt;</id> when there is more than one.</p>
             </release-item>
 
             <release-item>
@@ -96,10 +107,17 @@
                 </release-item-contributor-list>
 
                 <p>Save <file>backup.info</file> only when contents have changed.</p>
+
+                <p><cmd>expire</cmd> saved <file>backup.info</file> even when it had not changed. Fewer saves also make it easier to choose a target time on versioned storage.</p>
             </release-item>
 
             <release-item>
-                <github-pull-request id="2436"/>
+                <commit subject="Protocol command multiplexing.">
+                    <github-pull-request id="2108"/>
+                </commit>
+                <commit subject="Remove limitation on reading files in parallel during restore.">
+                    <github-pull-request id="2436"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -107,6 +125,8 @@
                 </release-item-contributor-list>
 
                 <p>Remove limitation on reading files in parallel during restore.</p>
+
+                <p>The protocol could only read or write one file at a time on a remote, so a restore read one file at a time from the repository. Protocol commands can now be multiplexed, so a restore can read more than one file at a time, e.g. a bundle and the block incremental data for a file in it.</p>
             </release-item>
 
             <release-item>
@@ -118,19 +138,54 @@
                 </release-item-contributor-list>
 
                 <p>Improve <proper>SFTP</proper> error messages.</p>
+
+                <p><proper>SFTP</proper> errors were reported as numbers only. They now include a description of the error.</p>
             </release-item>
         </release-improvement-list>
 
         <release-development-list>
             <release-item>
-                <github-pull-request id="2108"/>
+                <commit subject="Remove internal repo-create command."/>
+                <commit subject="Refactor config parse to remove none command, add version/help options."/>
+                <commit subject="Simplify main() functions in core, doc, and test."/>
+                <commit subject="Reduce logging for help functions."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="david.christensen"/>
                 </release-item-contributor-list>
 
-                <p>Protocol command multiplexing.</p>
+                <p>Refactor config parsing and the help and version commands.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update protocol and storage/remote modules to recent coding standards."/>
+                <commit subject="Use Posix driver to complete dummy storage driver."/>
+                <commit subject="Move getEpoch() to cvtZToTime() and refactor."/>
+                <commit subject="Refactor interface/driver getters for IoRead/Write and StorageRead/Write."/>
+                <commit subject="Update comment in storage/list module."/>
+                <commit subject="Remove invalid const keywords from info/infoBackup module."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor the storage and protocol modules.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Finalize catalog number for PostgreSQL 17 release.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Retry socket bind.</p>
             </release-item>
         </release-development-list>
     </release-core-list>
@@ -146,6 +201,8 @@
                 </release-item-contributor-list>
 
                 <p>Add performance tuning section to user guide.</p>
+
+                <p>The options that commonly improve performance were spread through the documentation. The quickstart now has a section that lists them.</p>
             </release-item>
         </release-feature-list>
 
@@ -161,6 +218,8 @@
                 </release-item-contributor-list>
 
                 <p>Clarify source for <setting>data_directory</setting>.</p>
+
+                <p><setting>pg-path</setting> should match the <setting>data_directory</setting> reported by <postgres/>, which may differ from the value in <file>postgresql.conf</file>.</p>
             </release-item>
 
             <release-item>
@@ -172,7 +231,80 @@
                 </release-item-contributor-list>
 
                 <p>Better logic for deciding when a summary should be lower-cased.</p>
+
+                <p>Summaries that start with a proper name or an acronym, e.g. <postgres/>, are no longer lower-cased in the documentation.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Skip command-line options in configuration reference."/>
+                <commit subject="Use `uname -m` to get architecture for RHEL package in user guide."/>
+                <commit subject="Render command help summaries the same as option help summaries."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update documentation.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Use output path for temp config files during documentation build."/>
+                <commit subject="Use systemctl replacement to generate documentation."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve documentation build.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Improve TEST_STORAGE_GET() to allow testing of missing files."/>
+                <commit subject="Improve file removal performed after each unit test."/>
+                <commit subject="Improve reporting of partial reads in server test harness."/>
+                <commit subject="Add hrnSleepRemainder() to time test harness."/>
+                <commit subject="Refactor storage/remote module to move more repository storage tests."/>
+                <commit subject="Refactor storage/remote module to move repository storage tests."/>
+                <commit subject="Simplify command/repo tests."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve test harness and unit tests.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update Cirrus CI MacOS running to Sonoma."/>
+                <commit subject="Shuffle PostgreSQL versions between test containers."/>
+                <commit subject="Move SFTP test off of PostgreSQL version tested by 32-bit."/>
+                <commit subject="Update CI containers to include newest PostgreSQL patch releases."/>
+                <commit subject="Update CI tests for ppc64le/s390x architectures."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+
+    <release-backpatch-list>
+        <release-backpatch version="2.53.1">
+            <commit subject="Do not allow help for command roles other than main."/>
+            <commit subject="Fix typo in user guide."/>
+            <commit subject="Fix permissions when restore run as root user."/>
+            <commit subject="PostgreSQL 17beta3 support."/>
+            <commit subject="Skip local repository duplicate check for SFTP."/>
+            <commit subject="Fix segfault on delayed connection errors."/>
+            <commit subject="Merge v2.53.1 release."/>
+        </release-backpatch>
+    </release-backpatch-list>
 </release>

@@ -181,7 +181,7 @@ def _build(config, var_store):
     var_store.add("release-date", date)
     var_store.add("release-year", year)
 
-    release_history_update(path_repo, config.doc_path)
+    claim = release_history_update(path_repo, config.doc_path)
 
     document_map = {
         "command": reference_command_render(bld_cfg, bld_hlp),
@@ -189,7 +189,7 @@ def _build(config, var_store):
         "index": news_index_render(index, news),
         "news": news_render(news),
         "user-guide": build_pre(user_guide, bld_hlp, var_store),
-        "release": release_render(release, config.doc_path, config.var_map.get("dev") == "y"),
+        "release": release_render(release, config.doc_path, config.var_map.get("dev") == "y", claim),
     }
 
     return document_map, reference_man_render(index, bld_cfg, bld_hlp)

@@ -130,6 +130,9 @@ html
     font-family: var(--font-body);
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
+
+    /* Opening details does not scroll the page */
+    overflow-anchor: none;
 }
 
 body

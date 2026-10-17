@@ -17,6 +17,8 @@
                 </release-item-contributor-list>
 
                 <p>Block incremental backup.</p>
+
+                <p>Block incremental stores only the parts of a file that changed since the prior backup, which saves space and time in diff and incr backups of large files. Enable it with <setting>repo-block</setting>, which requires <setting>repo-bundle</setting>.</p>
             </release-item>
 
             <release-item>
@@ -29,6 +31,8 @@
                 </release-item-contributor-list>
 
                 <p><proper>SFTP</proper> support for repository storage.</p>
+
+                <p>Set <br-option>repo-type=sftp</br-option> and <setting>repo-sftp-host</setting> to store the repository on an <proper>SFTP</proper> server.</p>
             </release-item>
 
             <release-item>
@@ -42,6 +46,8 @@
                 </release-item-contributor-list>
 
                 <p><postgres/> 16 support.</p>
+
+                <p>Adds the catalog version and WAL magic number for <postgres/> 16.</p>
             </release-item>
         </release-feature-list>
 
@@ -56,6 +62,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow page header checks to be skipped.</p>
+
+                <p>The page header checks made while verifying page checksums can report false errors for encrypted pages. Set <br-option>page-header-check=n</br-option> to skip them. They are enabled by default.</p>
             </release-item>
 
             <release-item>
@@ -70,13 +78,22 @@
                 </release-item-contributor-list>
 
                 <p>Avoid <code>chown()</code> on recovery files during restore.</p>
+
+                <p>Restore skipped <code>chown()</code> for restored files that already had the right owner but not for the recovery files it writes. The <proper>Posix</proper> driver now also skips <code>chown()</code> when the owner is already correct.</p>
             </release-item>
 
             <release-item>
                 <commit subject="Move error modules to common/error directory."/>
                 <commit subject="Improve retry error messages."/>
+                <commit subject="Add error retry detail for HTTP retries."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
 
                 <p>Add error retry detail for HTTP retries.</p>
+
+                <p>An error after HTTP retries now reports how many retries were made and for how long.</p>
             </release-item>
         </release-improvement-list>
 
@@ -89,6 +106,86 @@
                 </release-item-contributor-list>
 
                 <p>Improve internal <cmd>manifest</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Clear buffer limit when buffer is limited to allocated size."/>
+                <commit subject="Improve interface handling in remaining modules."/>
+                <commit subject="Simplify object creation with OBJ_NEW_BEGIN() macro."/>
+                <commit subject="Cleanup for objects that do not require allocations."/>
+                <commit subject="Convert XmlNode from allocation to object."/>
+                <commit subject="Convert the result of zNewFmt() into an object."/>
+                <commit subject="Remove allocations from common crypto module."/>
+                <commit subject="Use Buffer object for page buffer in PageChecksum filter."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve object and allocation handling.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Convert lockAcquire() to lockAcquireP()."/>
+                <commit subject="Add lock module initialization."/>
+                <commit subject="Parameterize configLoad() as cfgLoadP()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor the lock and configuration load modules.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Sleep using nanosleep() instead of select().</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Autogenerate PostgreSQL versions."/>
+                <commit subject="Rename PG_VERSION_*_STR constants to PG_VERSION_*_Z."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Autogenerate PostgreSQL versions.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update command/backup module to recent coding standards."/>
+                <commit subject="Update command/check module to recent coding standards."/>
+                <commit subject="Fix missing void parameter."/>
+                <commit subject="Use boolean variant constants where possible instead of redeclaring."/>
+                <commit subject="Fix groupId type in StorageInfo."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update modules to recent coding standards.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix indentation in config.yaml."/>
+                <commit subject="Remove extra linefeed."/>
+                <commit subject="Add 1bd5530a (remove double spacing) to .git-blame-ignore-revs."/>
+                <commit subject="Remove double spaces from comments and documentation."/>
+                <commit subject="Remove extraneous space from error messages."/>
+                <commit subject="Add efac3474 (remove double spacing) to .git-blame-ignore-revs."/>
+                <commit subject="Remove double spaces missed in 1bd5530a."/>
+                <commit subject="Fix incorrect commit hash in 2f322e2a."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Remove double spaces and extraneous whitespace.</p>
             </release-item>
         </release-development-list>
     </release-core-list>
@@ -105,6 +202,8 @@
                 </release-item-contributor-list>
 
                 <p>Add warning about using recovery <br-option>type=none</br-option>.</p>
+
+                <p>Recovery <br-option>type=none</br-option> does not increment the timeline at the end of recovery, which can cause <postgres/> to archive duplicate WAL that is rejected and fills the disk, and can make tools like <id>pg_rewind</id> fail or corrupt the cluster. The documentation now warns against it.</p>
             </release-item>
 
             <release-item>
@@ -113,7 +212,52 @@
                 </release-item-contributor-list>
 
                 <p>Add note about running <cmd>stanza-create</cmd> on already-created repositories.</p>
+
+                <p>Stanzas that already exist are skipped, so <cmd>stanza-create</cmd> is safe to run again, e.g. after a new repository is configured.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Remove extraneous spaces in user guide."/>
+                <commit subject="Update Debian user guide to build on Ubuntu 20.04."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the user guide.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Fix command/manifest unit test title."/>
+                <commit subject="Remove unused strOS parameter in Common::HostTest."/>
+                <commit subject="Fix typos in test titles."/>
+                <commit subject="Increase check timeouts in real/all integration tests."/>
+                <commit subject="Add bundling and block incremental to stress testing."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit and integration tests.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update Github actions to new versions."/>
+                <commit subject="Update 32-bit CI host to Debian 10 from Ubuntu 18.04."/>
+                <commit subject="Add MacOS back to CirrusCI."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

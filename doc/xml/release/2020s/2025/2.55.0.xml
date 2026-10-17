@@ -9,11 +9,12 @@
                     <release-item-ideator id="aleksander.lukasz"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="david.christensen"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="aleksander.lukasz"/>
+                    <release-item-tester id="aleksander.lukasz"/>
                 </release-item-contributor-list>
 
                 <p>Fix block incremental restore issue on non-default repository.</p>
+
+                <p>When the backup being restored used block incremental and was not in the lowest numbered repository, the restore read part of the block incremental data from the lowest numbered repository. Setting <setting>repo</setting> worked around the problem.</p>
             </release-item>
 
             <release-item>
@@ -25,6 +26,8 @@
                 </release-item-contributor-list>
 
                 <p>Do not set <br-option>recovery_target_timeline=current</br-option> for PostgreSQL &amp;lt; 12.</p>
+
+                <p>Before <postgres/> 12, explicitly setting <pg-setting>recovery_target_timeline</pg-setting> to <id>current</id> behaves as <id>latest</id>, although <id>current</id> is the default. The setting is now left out of <file>recovery.conf</file> when it is set to <id>current</id> for these versions.</p>
             </release-item>
 
             <release-item>
@@ -38,6 +41,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix expire archive range logging.</p>
+
+                <p>Only the last archive path removed was logged as the start of the range, so the log suggested that far fewer files were expired than were.</p>
             </release-item>
 
             <release-item>
@@ -50,6 +55,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix error reporting for queries with no results.</p>
+
+                <p>An error from a query that expected no results was reported as an unexpected result instead of as the error.</p>
             </release-item>
         </release-bug-list>
 
@@ -63,9 +70,12 @@
                 </release-item-contributor-list>
 
                 <p>Verify recovery target timeline.</p>
+
+                <p>A backup that cannot follow the target timeline, e.g. one made after a standby was promoted and the new timeline forked off, failed only when recovery started, with a <postgres/> error that is hard to interpret. The timeline is now checked against the history files before the restore starts.</p>
             </release-item>
 
             <release-item>
+                <github-issue id="2419"/>
                 <github-pull-request id="2544"/>
 
                 <release-item-contributor-list>
@@ -74,6 +84,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow verification of a specified backup.</p>
+
+                <p>The <cmd>verify</cmd> option <br-option>--set</br-option> verifies only the specified backup and the WAL required to make it consistent.</p>
             </release-item>
 
             <release-item>
@@ -90,6 +102,8 @@
                 </release-item-contributor-list>
 
                 <p>Add support for S3/GCS requester pays.</p>
+
+                <p>Set <setting>repo-s3-requester-pays</setting> or <setting>repo-gcs-user-project</setting> to bill the requester instead of the bucket owner, e.g. so a hosted service can give customers access to their backups.</p>
             </release-item>
 
             <release-item>
@@ -103,6 +117,8 @@
                 </release-item-contributor-list>
 
                 <p><proper>PostgreSQL</proper> 18 support.</p>
+
+                <p>This release was made before <postgres/> 18 had a beta, so support was initially experimental. Nothing that affects <backrest/> changed before <postgres/> 18.0.</p>
             </release-item>
 
             <release-item>
@@ -112,11 +128,12 @@
                 <release-item-contributor-list>
                     <release-item-ideator id="chris.bandy"/>
                     <release-item-contributor id="david.steele"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="chris.bandy"/>
+                    <release-item-tester id="chris.bandy"/>
                 </release-item-contributor-list>
 
                 <p>Allow connections to <postgres/> on abstract domain sockets.</p>
+
+                <p><setting>pg-socket-path</setting> no longer has to be an absolute path, so it can name an abstract domain socket. <proper>libpq</proper> reports a path that is not valid.</p>
             </release-item>
 
             <release-item>
@@ -129,12 +146,17 @@
                 </release-item-contributor-list>
 
                 <p>Add numeric output to <cmd>version</cmd> command.</p>
+
+                <p>Set <br-option>--output=num</br-option> to output the version as a number, e.g. 2055000, which is easier to compare.</p>
             </release-item>
         </release-feature-list>
 
         <release-improvement-list>
             <release-item>
-                <github-pull-request id="2512"/>
+                <commit subject="Refactor protocol helper."/>
+                <commit subject="Allow backup command to operate on remote repositories.">
+                    <github-pull-request id="2512"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -142,6 +164,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow backup command to operate on remote repositories.</p>
+
+                <p>The <cmd>backup</cmd> command can now run on a host where the repository is remote, which allows more flexibility in where backups are run.</p>
             </release-item>
 
             <release-item>
@@ -156,6 +180,8 @@
                 </release-item-contributor-list>
 
                 <p>Use <proper>lz4</proper> for protocol compression.</p>
+
+                <p><proper>lz4</proper> compresses much faster than gz and gives similar ratios at the low levels used for protocol compression. Setting <br-option>compress-level-network=0</br-option> no longer disables protocol compression.</p>
             </release-item>
 
             <release-item>
@@ -167,6 +193,8 @@
                 </release-item-contributor-list>
 
                 <p>Calculate <id>content-md5</id> on <proper>S3</proper> only when required.</p>
+
+                <p>The <id>content-md5</id> header is only calculated for batch delete requests, which require it, to save CPU when files are uploaded. This change was reverted in v2.55.1.</p>
             </release-item>
 
             <release-item>
@@ -180,6 +208,8 @@
                 </release-item-contributor-list>
 
                 <p>Warn when a value for a multi-key option is overwritten.</p>
+
+                <p>Options with key/value pairs, e.g. <setting>recovery-option</setting>, silently overwrote a value when its key was specified again. A warning is now logged.</p>
             </release-item>
 
             <release-item>
@@ -195,6 +225,8 @@
                 </release-item-contributor-list>
 
                 <p>Add detail logging for expired archive path.</p>
+
+                <p>Removing a large number of archive files could look like a hang. A message at detail level now shows progress.</p>
             </release-item>
 
             <release-item>
@@ -206,6 +238,8 @@
                 </release-item-contributor-list>
 
                 <p>Remove support for <proper>PostgreSQL</proper> <id>9.4</id>.</p>
+
+                <p><postgres/> 9.4 is no longer supported, per the policy of supporting five end-of-life versions of <postgres/>. Backups of 9.4 clusters can still be expired.</p>
             </release-item>
 
             <release-item>
@@ -217,6 +251,8 @@
                 </release-item-contributor-list>
 
                 <p>Remove <proper>autoconf</proper>/<proper>make</proper> build.</p>
+
+                <p>v2.54.0 was the last release to support the <proper>autoconf</proper>/<proper>make</proper> build. Use <proper>meson</proper> to build.</p>
             </release-item>
         </release-improvement-list>
 
@@ -225,7 +261,7 @@
                 <commit subject="Full/incremental backup method.">
                     <github-pull-request id="2306"/>
                 </commit>
-                <commit subject='Revert "full/incremental backup method."'>
+                <commit subject='Revert "full/incremental backup method".'>
                     <github-pull-request id="2588"/>
                 </commit>
 
@@ -268,6 +304,129 @@
 
                 <p>Remove extraneous const from <code>cvtIntToZ()</code> prototype.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Enable cast-qual compiler warning."/>
+                <commit subject="Enable missing-prototypes compiler warning."/>
+                <commit subject="Enable redundant-decls compiler warning."/>
+                <commit subject="Fix misplaced volatile qualifiers in GCS authorization JWT generation."/>
+                <commit subject="Update String, Buffer, and Variant constants to work with cast-qual."/>
+                <commit subject="Enable float-equal and init-self compiler warnings."/>
+                <commit subject="Enable missing-variable-declarations compiler warning."/>
+                <commit id="d96966065" subject="Add missing const qualifier."/>
+                <commit id="690c9803c" subject="Add missing const qualifier."/>
+                <commit subject="Remove extraneous const qualifier."/>
+                <commit subject="Enable format-overflow=2 compiler warning."/>
+                <commit subject="Remove -Wno-implicit-fallthrough and explicitly mark fallthrough."/>
+                <commit subject="Remove implied -Wformat-nonliteral warning."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Enable additional compiler warnings.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Exclude function logging macros from coverage reporting."/>
+                <commit subject="Fix incorrect log macros."/>
+                <commit subject="Exclude function void return logging macros from coverage reporting."/>
+                <commit subject="Lower log level of backupDbPing()/dbPing() to trace."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve logging macros and their coverage.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow negative values for integer options.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove conditional compilation for lz4."/>
+                <commit subject="Move compression driver param list management to a common module."/>
+                <commit subject="Move linkCreate interface function to alphabetical order."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor the compression and protocol modules.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update LICENSE.txt and PostgreSQL copyright for 2025.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Separate version into component parts."/>
+                <commit subject="Use three part version in development builds."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Separate version into component parts.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Specify length of encoding strings."/>
+                <commit subject="Add StringId linter."/>
+                <commit subject="Convert 5-bit test StringId to 6-bit."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add StringId linter.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add assertions to satisfy Coverity about possible underflows."/>
+                <commit subject="Add Coverity build to release instructions."/>
+                <commit subject="Add cast to suppress Coverity complaint about volatile used in assert()."/>
+                <commit subject="Refactor backupBlockIncrMapSize() range handling to satisfy Coverity."/>
+                <commit subject="Refactor loop in restoreManifestMap() to satisfy Coverity."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor code to satisfy Coverity.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2493"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="kian-meng.ang"/>
+                </release-item-contributor-list>
+
+                <p>Fix typos.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove makefile formatting from editor config."/>
+                <commit subject="Fix typo."/>
+                <commit subject="Add LSTDEF() macro."/>
+                <commit subject="Remove unmaintained/unused development environment build files."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -285,6 +444,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix documentation for specifying multiple stanzas with <setting>tls-server-auth</setting>.</p>
+
+                <p>Multiple stanzas are specified for <setting>tls-server-auth</setting> as a comma-separated list. The documentation said to repeat the option.</p>
             </release-item>
 
             <release-item>
@@ -296,9 +457,12 @@
                 </release-item-contributor-list>
 
                 <p>Clarify incremental backup expiration.</p>
+
+                <p>The documentation implied that incremental backups are expired by count. It now explains how incremental backups are expired and that full backups count as differential backups for differential retention.</p>
             </release-item>
 
             <release-item>
+                <github-issue id="2540"/>
                 <github-pull-request id="2541"/>
 
                 <release-item-contributor-list>
@@ -318,6 +482,8 @@
                 </release-item-contributor-list>
 
                 <p>Add FAQ about exporting self-contained cluster.</p>
+
+                <p>The FAQ explains how to create a self-contained export of a cluster with a backup made with <br-option>--archive-copy</br-option> and restored with <br-option>--type=none</br-option>.</p>
             </release-item>
 
             <release-item>
@@ -331,6 +497,8 @@
                 </release-item-contributor-list>
 
                 <p>Caveat <setting>--tablespace-map-all</setting> regarding tablespace creation.</p>
+
+                <p>A tablespace created after the backup starts is not in the manifest, so <setting>tablespace-map-all</setting> cannot map it.</p>
             </release-item>
 
             <release-item>
@@ -355,6 +523,8 @@
                 </release-item-contributor-list>
 
                 <p>Change <setting>--process-max</setting> recommendation for object stores to <setting>--repo-bundle</setting>.</p>
+
+                <p>On object stores <setting>repo-bundle</setting> reduces the time spent creating files far more than <setting>process-max</setting> does, because fewer files are created.</p>
             </release-item>
 
             <release-item>
@@ -366,10 +536,12 @@
                 </release-item-contributor-list>
 
                 <p>Update <setting>unix_socket_directory</setting> to <setting>unix_socket_directories</setting>.</p>
+
+                <p><pg-setting>unix_socket_directory</pg-setting> has not been valid since <postgres/> 9.2, so only <pg-setting>unix_socket_directories</pg-setting> is documented.</p>
             </release-item>
 
             <release-item>
-                <github-issue id="2600"/>
+                <github-pull-request id="2600"/>
 
                 <release-item-contributor-list>
                     <release-item-ideator id="martin.marques"/>
@@ -379,6 +551,8 @@
                 </release-item-contributor-list>
 
                 <p>Recommend not placing <setting>spool-path</setting> within <path>pg_xlog</path>/<path>pg_wal</path>.</p>
+
+                <p>A spool path inside <path>pg_xlog</path> or <path>pg_wal</path> can cause problems for <postgres/> tools such as <file>pg_rewind</file>.</p>
             </release-item>
         </release-improvement-list>
 
@@ -392,6 +566,26 @@
                 </release-item-contributor-list>
 
                 <p>Fix instances of <quote>of of</quote>.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update release notes for PostgreSQL 17 support."/>
+                <commit subject="Change &quot;find&quot; to &quot;visit&quot; in introduction."/>
+                <commit subject="Rephrase invitation to star on Github."/>
+                <commit subject="Clarify that unhandled errors may occur in edge cases."/>
+                <commit subject="Remove &quot;Additional Notes&quot; header from release notes."/>
+                <commit subject="Fix case in option summary."/>
+                <commit subject="Remove unneeded verbiage from option descriptions."/>
+                <commit subject="Strip version from RHEL label in user guide."/>
+                <commit subject="Update PostgresQL versions in user guide."/>
+                <commit subject="Update verify command summary."/>
+                <commit subject="Fix highlight error in user guide."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update and correct the documentation.</p>
             </release-item>
         </release-development-list>
     </release-doc-list>
@@ -419,6 +613,52 @@
 
                 <p>Fix tests, logging, and comments in unit tests.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Update Cirrus MacOS runner to OpenSSL 3."/>
+                <commit subject="Update Fedora test image to Fedora 41."/>
+                <commit subject="Update runner versions on Github actions."/>
+                <commit subject="Update CI containers to include newest PostgreSQL patch releases."/>
+                <commit subject="Update Cirrus-CI FreeBSD runner versions."/>
+                <commit subject="Fix multi-architecture unit testing."/>
+                <commit subject="Use latest Minio image for testing."/>
+                <commit subject="Fix integration tests on alternate architectures."/>
+                <commit subject="Another fix for integration tests on alternate architectures."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add wait for async archive log exists check in integration test."/>
+                <commit subject="Remove --min-gen option from test.pl."/>
+                <commit subject="Fix compression type in integration tests."/>
+                <commit subject="Replace constant version with macro in backup test module."/>
+                <commit subject="Set noResetLogLevel in config/parse unit tests where required."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve the integration and unit tests.</p>
+            </release-item>
         </release-development-list>
     </release-test-list>
+
+    <release-backpatch-list>
+        <release-backpatch version="2.54.1">
+            <commit subject="Fix issue with version/help commands attempting to load pgbackrest.conf."/>
+            <commit subject="Stabilize async archiving in integration tests."/>
+            <commit subject="Merge v2.54.1 release."/>
+        </release-backpatch>
+
+        <release-backpatch version="2.54.2">
+            <commit subject="Fix issue after disabling bundling with block incremental enabled."/>
+            <commit subject="Clarify behavior of multiple configuration files."/>
+            <commit subject="Merge v2.54.2 release."/>
+        </release-backpatch>
+    </release-backpatch-list>
 </release>

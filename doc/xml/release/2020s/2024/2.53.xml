@@ -19,6 +19,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix <proper>SFTP</proper> renaming failure when file already exists.</p>
+
+                <p>Some <proper>SFTP</proper> servers report that a file already exists with an error that was not handled, so renaming a file over an existing file failed.</p>
             </release-item>
         </release-bug-list>
 
@@ -39,6 +41,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow backups to run concurrently on different repositories.</p>
+
+                <p>Backups of the same stanza can now run at the same time on different repositories, since locks are now per stanza and repository instead of per stanza. This is not possible for <postgres/> &lt;= 9.5.</p>
             </release-item>
 
             <release-item>
@@ -51,6 +55,8 @@
                 </release-item-contributor-list>
 
                 <p>Support IP-based SANs for <proper>TLS</proper> certificate validation.</p>
+
+                <p>Certificates with an IP address as the subject alternative name, e.g. <id>IP:1.2.3.4</id>, are now validated. IPv4 and IPv6 addresses must match exactly.</p>
             </release-item>
         </release-feature-list>
 
@@ -65,6 +71,8 @@
                 </release-item-contributor-list>
 
                 <p>Default <setting>log-level-stderr</setting> option to <id>off</id>.</p>
+
+                <p>Warnings and errors written to stderr were often lost when only stdout was redirected while collecting logs. An explicitly set <setting>log-level-stderr</setting> is not affected.</p>
             </release-item>
 
             <release-item>
@@ -78,6 +86,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow alternative WAL segment sizes for PostgreSQL &amp;le; 10.</p>
+
+                <p><postgres/> &lt;= 10 can be built with a different WAL segment size, and forks such as <proper>Greenplum</proper> set it with <file>initdb</file>.</p>
             </release-item>
 
             <release-item>
@@ -91,8 +101,102 @@
                 </release-item-contributor-list>
 
                 <p>Add hint to check <proper>SFTP</proper> authorization log.</p>
+
+                <p>When <proper>SFTP</proper> authentication fails the error now hints that the authorization log on the server may have more detail.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Display time option defaults and allowed values with appropriate units.</p>
+
+                <p>Time option defaults and allowed values were shown in seconds, which was hard to read for large values. Fractional seconds are no longer allowed, so a value such as <br-option>archive-timeout=0.5</br-option> must be written as <br-option>archive-timeout=500ms</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Require OpenSSL &gt;= 1.1.1."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Require <proper>OpenSSL</proper> &gt;= 1.1.1.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Require compiler support for __builtin_clzl() and __builtin_bswap64()."/>
+                <commit subject="Require the lz4 library in the meson build."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Require the lz4 library and compiler builtins in the meson build.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix invalid default inherited in job-retry-interval."/>
+                <commit subject="Add units to all option sizes."/>
+                <commit subject="Improve error messages for allow range and allow list options."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve option units, defaults, and error messages.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Optimize assignment of command/option rules."/>
+                <commit subject="Remove PARSE_RULE_OPTION_GROUP_MEMBER() macro from parse.auto.c.inc."/>
+                <commit subject="Shorten enums used in parse.auto.c.inc."/>
+                <commit subject="Improve command/role parsing."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve option and command parsing.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Avoid possible race condition while reading lock files in info command."/>
+                <commit subject="Simplify lock file scanning in stop command."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve reading lock files in the <cmd>info</cmd> and <cmd>stop</cmd> commands.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Improve efficiency of incremental manifest build."/>
+                <commit subject="Refactor backup to use flag for backup standby state rather than option."/>
+                <commit subject="Replace strftime() with cvtTimeToZP() and strNew/CatTimeP()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor the backup and manifest code.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Replace tabs with spaces in meson.build files."/>
+                <commit subject="Fix overly long lines."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix formatting.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 
     <release-doc-list>
@@ -106,7 +210,62 @@
                 </release-item-contributor-list>
 
                 <p>Clarify <cmd>archive-push</cmd> multi-repo behavior.</p>
+
+                <p>When one repository is failing, <cmd>archive-push</cmd> cannot push ahead to the other repositories unless <setting>archive-async</setting> is enabled.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Clarify when code generation is run when modifying config.yaml."/>
+                <commit subject="Remove references to mock integration tests."/>
+                <commit subject="Fix incorrect examples in doc/test help."/>
+                <commit subject="Improve config file handling in doc/test config load."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the contributing documentation and the documentation and test tools.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Migrate coverage testing to C and remove dependency on lcov."/>
+                <commit subject="Fix --run and --scale options for unit tests."/>
+                <commit subject="Increase width of unsigned integration in performance/type module."/>
+                <commit subject="Auto-generate code before building test binary."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Migrate coverage testing to C and remove dependency on lcov.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Migrate CentOS 7 integration tests to Rocky 8."/>
+                <commit subject="Specify test images that get valgrind installed."/>
+                <commit subject="Remove obsolete vm constants."/>
+                <commit subject="Update EOL Debian 10 to Debian 11/Ubuntu 20.04 in CI."/>
+                <commit subject="Update Minio test/documentation container version."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+
+    <release-backpatch-list>
+        <release-backpatch version="2.52.1">
+            <commit subject="Add unit tests for backup from standby with block incremental."/>
+            <commit subject="Fix issue with files larger on the replica than on the primary."/>
+        </release-backpatch>
+    </release-backpatch-list>
 </release>

@@ -21,11 +21,12 @@
                     <release-item-ideator id="anderson.a.mallmann"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="cynthia.shang"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="marco.montagna"/>
+                    <release-item-tester id="marco.montagna"/>
                 </release-item-contributor-list>
 
                 <p>Detect errors in <proper>S3</proper> multi-part upload finalize.</p>
+
+                <p>Completing a multi-part upload can fail even when <proper>S3</proper> returns HTTP success. A response without an <id>ETag</id> is now treated as a failure, and the job is retried.</p>
             </release-item>
 
             <release-item>
@@ -39,10 +40,12 @@
                 </release-item-contributor-list>
 
                 <p>Fix detection of circular symlinks.</p>
+
+                <p>Links were followed before they were checked, and a circular link sent the manifest build into endless recursion and a crash.</p>
             </release-item>
 
             <release-item>
-                <github-issue id="1480"/>
+                <github-pull-request id="1480"/>
 
                 <release-item-contributor-list>
                     <release-item-ideator id="greg.sabino.mullane"/>
@@ -53,6 +56,8 @@
                 </release-item-contributor-list>
 
                 <p>Only pass selected <setting>repo</setting> options to the remote.</p>
+
+                <p>Options for other repositories could cause conflicts on the remote, which uses exactly one repository.</p>
             </release-item>
         </release-bug-list>
 
@@ -71,6 +76,8 @@
                 </release-item-contributor-list>
 
                 <p>Binary protocol.</p>
+
+                <p>Local and remote processes now communicate with the binary pack format rather than JSON. Packs are more compact, faster to render and parse, and strictly typed. Each message is written in one place, which makes an error less likely to leave the protocol in a bad state, and messages have no size limit.</p>
             </release-item>
 
             <release-item>
@@ -84,11 +91,13 @@
                 </release-item-contributor-list>
 
                 <p>Automatically create data directory on <cmd>restore</cmd>.</p>
+
+                <p>A check migrated from Perl prevented restore from creating the data directory.</p>
             </release-item>
 
             <release-item>
-                <github-issue id="1462"/>
-                <github-pull-request id="1339"/>
+                <github-issue id="1339"/>
+                <github-pull-request id="1462"/>
 
                 <release-item-contributor-list>
                     <release-item-ideator id="james.coleman"/>
@@ -97,6 +106,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow <cmd>restore</cmd> <setting>--type=lsn</setting>.</p>
+
+                <p>Set <br-option>type=lsn</br-option> and an LSN in <br-option>target</br-option> to recover to an LSN on <postgres/> &gt;= 10.</p>
             </release-item>
 
             <release-item>
@@ -110,11 +121,13 @@
                 </release-item-contributor-list>
 
                 <p>Change level of <cmd>backup</cmd>/<cmd>restore</cmd> copied file logging to detail.</p>
+
+                <p>This makes the <id>info</id> log level less noisy. Set the log level to <id>detail</id> to see each copied file.</p>
             </release-item>
 
             <release-item>
-                <github-issue id="1460"/>
-                <github-pull-request id="1450"/>
+                <github-issue id="1450"/>
+                <github-pull-request id="1460"/>
 
                 <release-item-contributor-list>
                     <release-item-ideator id="fatih.mencutekin"/>
@@ -123,6 +136,8 @@
                 </release-item-contributor-list>
 
                 <p>Loop while waiting for checkpoint LSN to reach replay LSN.</p>
+
+                <p>On a standby the checkpoint LSN can lag slightly behind the replay LSN until <file>pg_control</file> is updated. The backup now keeps checking rather than failing.</p>
             </release-item>
 
             <release-item>
@@ -134,12 +149,18 @@
                 </release-item-contributor-list>
 
                 <p>Log <cmd>backup</cmd> file total and <cmd>restore</cmd> size/file total.</p>
+
+                <p>The backup size is now logged at the end of the backup and includes files added to the manifest after the main copy, e.g. <file>backup_label</file> and WAL. Restore now logs its size and file total.</p>
             </release-item>
         </release-improvement-list>
 
         <release-development-list>
             <release-item>
-                <github-pull-request id="1421"/>
+                <commit subject="Add support for more Pack types.">
+                    <github-pull-request id="1421"/>
+                </commit>
+                <commit subject="Add mode, Pack, and StringId to the Pack type."/>
+                <commit subject="Add pckReadMove() and pckWriteMove()."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -159,6 +180,102 @@
 
                 <p>Clear error when a <code>CATCH()</code> block finishes.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Remove parse.auto.h."/>
+                <commit subject="Remove unused command string constants."/>
+                <commit subject="Partial migration of config code generation to C."/>
+                <commit subject="Update order of configuration options."/>
+                <commit subject="Use consistent separator comment spacing in parse.auto.c."/>
+                <commit subject="Automatically generate option value StringIds in make build-config."/>
+                <commit subject="Updates to build/config/config.yaml."/>
+                <commit subject="Complete migration of config code generation to C."/>
+                <commit subject="Remove generated config.auto.c file."/>
+                <commit subject="Remove code made obsolete by f3f0c64a."/>
+                <commit subject="Remove unused struct member noted in f3f0c64a."/>
+                <commit subject="Add line and column to build yaml error messages."/>
+                <commit subject="Update error.yaml comment to remove Perl reference."/>
+                <commit subject="Migrate error code generation to C."/>
+                <commit subject="Move bldStrId() into a C file."/>
+                <commit subject="Improve comments."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Migrate config and error code generation to C.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix miscalculation in time option command defaults.</p>
+            </release-item>
+
+            <release-item>
+                <release-note version="2.37" subject="Add TLS server."/>
+                <commit subject="Refactor cmdLocal()/cmdRemote() to accept a ProtocolServer object."/>
+                <commit subject="Move noop from protocolClientNew() to local/remote initialization."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor local/remote startup.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix infinite loop in <code>protocolServerProcess()</code> on error.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add temp mem context reset blocks in job processing loops.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Handle NULL VariantList in JSON."/>
+                <commit subject="Rename param structs to match function names."/>
+                <commit subject="Fix comments."/>
+                <commit subject="Skip sleep in sleepMSec() when sleep time is zero."/>
+                <commit subject="Make pgControlFromBuffer() static."/>
+                <commit subject="Add ioFdReadNewOpen() and ioFdWriteNewOpen()."/>
+                <commit id="f70ddc16d" subject="Fix typo."/>
+                <commit subject="Add lstComparatorZ()."/>
+                <commit id="07f0a5901" subject="Fix typo."/>
+                <commit subject="Protect against mixed FUNCTION_TEST* and FUNCTION_LOG* macros."/>
+                <commit subject="Remove dead loop in verifyArchive()."/>
+                <commit subject="Fix EOF behavior of ioReadSmall() to match ioRead()."/>
+                <commit subject="Change ASSERT() to CHECK() in infoLoad()."/>
+                <commit subject="Mark contextTop static."/>
+                <commit subject="Rename stringz.h to stringZ.h."/>
+                <commit subject="Rearrange MemContext struct members to save space on 64-bit."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-contributor id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code and comments.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess and config.sub to latest versions.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -174,6 +291,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix incorrect host names in user guide.</p>
+
+                <p>Some examples showed <id>pg1</id> rather than the host name, and the install block installed packages on the build host no matter which host was specified.</p>
             </release-item>
         </release-bug-list>
 
@@ -192,6 +311,8 @@
                 </release-item-contributor-list>
 
                 <p>Update contributing documentation and add pull request template.</p>
+
+                <p>The contributing guide now has a table of contents and sections on understanding test output and submitting a pull request. GitHub now shows a template for new pull requests.</p>
             </release-item>
 
             <release-item>
@@ -203,6 +324,8 @@
                 </release-item-contributor-list>
 
                 <p>Rearrange backup documentation in user guide.</p>
+
+                <p>The <quote>Fast Start Option</quote> and <quote>Archive Timeout</quote> sections moved to <quote>Quick Start - Perform Backup</quote>. The <quote>Automatic Stop Option</quote> section, which applies only to <postgres/> &lt;= 9.6, was removed.</p>
             </release-item>
 
             <release-item>
@@ -212,6 +335,8 @@
                 </release-item-contributor-list>
 
                 <p>Clarify <cmd>restore</cmd> <br-option>--type</br-option> behavior in command reference.</p>
+
+                <p>The reference now states that <br-option>set</br-option> must be specified when the target is before the latest backup and <br-option>type</br-option> is not <id>time</id>.</p>
             </release-item>
 
             <release-item>
@@ -225,6 +350,29 @@
                 <p>Fix documentation and comment typos.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Add optional stress test section to the user guide."/>
+                <commit subject="Add variables for build paths in the user guide."/>
+                <commit subject="Reduce memory requirements of stress test section in the user guide."/>
+                <commit subject="Add instructions for dev builds to stress test in user guide."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add optional stress test section to the user guide.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add linefeeds around content even when not in pretty mode.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
 
     <release-test-list>
@@ -240,6 +388,8 @@
                 </release-item-contributor-list>
 
                 <p>Add check for test path inside repo path.</p>
+
+                <p>A test path inside the repository path caused strange failures because the repository is copied into the test path. <file>test.pl</file> now errors in this case.</p>
             </release-item>
 
             <release-item>
@@ -251,6 +401,8 @@
                 </release-item-contributor-list>
 
                 <p>Add CodeQL static code analysis.</p>
+
+                <p>CodeQL now runs in CI. Issues it found were fixed, e.g. <code>gmtime()</code>/<code>localtime()</code> were replaced with <code>gmtime_r()</code>/<code>localtime_r()</code>.</p>
             </release-item>
 
             <release-item>
@@ -328,5 +480,73 @@
                 <p>Update tests to use standard patterns.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Add optional remove to TEST_STORAGE_EXISTS()."/>
+                <commit subject="Add HRN_STORAGE_MOVE() macro."/>
+                <commit subject="Add error test harness/shim."/>
+                <commit subject="Add mode parameter to HRN_STORAGE_PUT() macro."/>
+                <commit subject="Add HRN_STORAGE_COPY() macro."/>
+                <commit subject="Add expression parameter to TEST_STORAGE_LIST() macro."/>
+                <commit subject="Remove TEST_PATH_REPO, TEST_PATH_PG, and TEST_PATH_SPOOL constants."/>
+                <commit subject="Allow NULL path in HRN_STORAGE_MODE() macro."/>
+                <commit subject="Add compressType parameter to TEST_STORAGE_GET() macro."/>
+                <commit subject="Error in TEST_STORAGE_LIST() when path does not exist."/>
+                <commit subject="Rename HARNESS_FORK*() macros to HRN_FORK*()."/>
+                <commit subject="Improve HRN_FORK*() macros."/>
+                <commit subject="Automatically create IoRead/IoWrite interfaces in HRN_FORK*() macros."/>
+                <commit subject="Add noParentCreate parameter to HRN_STORAGE_PATH_CREATE() macro."/>
+                <commit subject="Allow NULL path in HRN_STORAGE_PATH_CREATE() macro."/>
+                <commit subject="Allow NULL path in TEST_STORAGE_LIST() macro."/>
+                <commit subject="Allow NULL path in HRN_STORAGE_PATH_REMOVE() macro."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Improve test harness macros.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Switch order of remote startup in storage/remote test."/>
+                <commit subject="Use lower-case names from Azure identifiers in integration tests."/>
+                <commit subject="Update pg-path options in db test module to be valid."/>
+                <commit subject="Ignore mismatched close requests in the pq shim during error processing."/>
+                <commit subject="Improve error handling in db test module."/>
+                <commit subject="Increase harness log level to detail in command/backup test."/>
+                <commit subject="Fix flapping coverage in storage/remote test."/>
+                <commit subject="Remove last vestiges of key replacement missed in b270253a."/>
+                <commit subject="Remove test.pl --vm-host option."/>
+                <commit subject="Remove test.pl --smart, --dev, and --dev-test options."/>
+                <commit id="eb98b8d2d" subject="Fix typo."/>
+                <commit subject="Update db test module error for newer libpq versions."/>
+                <commit subject="Clean src path in test.pl before attempting vpath builds."/>
+                <commit subject="Increase timeouts in storage/remote test."/>
+                <commit subject="Fix rsync include list removed from test.pl in 9ee9b1fa."/>
+                <commit subject="Fix test added for lstComparatorZ() in 9abf6a27."/>
+                <commit subject="Cleanup inherited clients in protocol test harness."/>
+                <commit subject="Add additional checks to performance/storage test."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests and test tools.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update test container OS versions."/>
+                <commit subject="Update Vagrantfile box version."/>
+                <commit subject="Update containers for new PostgreSQL releases."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
     </release-test-list>
 </release>

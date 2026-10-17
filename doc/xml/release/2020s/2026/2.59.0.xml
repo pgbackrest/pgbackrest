@@ -20,6 +20,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix <cmd>expire</cmd> removing a backup in progress on another host.</p>
+
+                <p>A backup is not added to <file>backup.info</file> until it completes, so when <cmd>expire</cmd> ran on one host while a backup was running on another, e.g. <cmd>expire</cmd> on a standby while the primary is backed up, the backup in progress was removed. Expiration no longer removes the latest backup when it is in progress or resumable.</p>
             </release-item>
 
             <release-item>
@@ -33,6 +35,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix <setting>archive-push-queue-max</setting> not enforced when a WAL file errors.</p>
+
+                <p>In asynchronous mode the queue was measured against the WAL yet to be pushed. When a WAL file errored repeatedly the WAL files after it were pushed and no longer counted, although they stayed in <path>pg_wal</path>, so the queue limit was never reached and <path>pg_wal</path> could fill the disk. The queue is now measured against all the WAL <postgres/> is waiting to archive, as in synchronous mode.</p>
             </release-item>
 
             <release-item>
@@ -46,6 +50,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix async <cmd>archive-get</cmd> failure during recovery across a timeline switch.</p>
+
+                <p>Two async processes could race for the archive lock, and the one that lost exited before fetching the segment it was started for. The <cmd>archive-get</cmd> that started it then waited for <setting>archive-timeout</setting> and returned an error for a segment that exists, which could end recovery early, especially across a timeline switch. The segment is now fetched directly when the async process that should fetch it is not running.</p>
             </release-item>
 
             <release-item>
@@ -59,6 +65,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix potential buffer overrun in error module.</p>
+
+                <p>A stack trace too long for its buffer was not terminated and could be read past the end of the buffer, and an error message too long for its buffer could write past the end of it when a system error was appended. Both require an unusually long message.</p>
             </release-item>
 
             <release-item>
@@ -72,6 +80,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix use-after-free of parallel protocol client.</p>
+
+                <p>A client that ran out of work was freed but left in the client list and freed again on a later call. With debug or trace logging this read freed memory and could crash, e.g. a parallel backup with <br-option>log-level-file=trace</br-option>.</p>
             </release-item>
 
             <release-item>
@@ -85,6 +95,20 @@
                 </release-item-contributor-list>
 
                 <p>Fix heap overflow when a pg option is set without pg1.</p>
+
+                <p>When <id>pg</id> options were set for other indexes without <setting>pg1-path</setting>, e.g. <setting>pg2-path</setting> and <setting>pg3-path</setting>, the index map was overwritten. This corrupted the heap on musl, e.g. <proper>Alpine</proper>, and caused a segmentation fault. The highest numbered <setting>pg-path</setting> was also dropped.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Prevent recursive exit() on signal."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix crash when a signal arrives during exit on musl 1.2.6.</p>
+
+                <p>musl 1.2.6, e.g. on <proper>Alpine</proper> 3.24, crashes when <code>exit()</code> is called while an exit is already in progress. This happened when a signal arrived during exit, e.g. when the <cmd>server</cmd> command terminated a child process that was already exiting. A signal that arrives during exit is now ignored.</p>
             </release-item>
         </release-bug-list>
 
@@ -101,6 +125,8 @@
                 </release-item-contributor-list>
 
                 <p><proper>PostgreSQL 19beta2</proper> support.</p>
+
+                <p>Adds support for <postgres/> 19beta2. <postgres/> 19 can enable and disable page checksums online, and page checksums are not validated while either is in progress.</p>
             </release-item>
 
             <release-item>
@@ -115,6 +141,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <setting>archive-expire-before</setting> option to clean up WAL archive.</p>
+
+                <p>The <cmd>expire</cmd> option <setting>archive-expire-before</setting> removes WAL before a given segment from the archive but never WAL that a retained backup requires. It can clean up the archive from the restartpoint of a standby with <pg-setting>archive_cleanup_command</pg-setting> instead of <file>pg_archivecleanup</file>, which does not know about retention.</p>
             </release-item>
 
             <release-item>
@@ -127,6 +155,8 @@
                 </release-item-contributor-list>
 
                 <p>Add batch delete for <proper>Azure</proper> storage.</p>
+
+                <p>Files are removed with the <proper>Azure</proper> Blob Batch API, up to 256 per request, instead of one request per file. This speeds up <cmd>expire</cmd> and other commands that remove files from the repository.</p>
             </release-item>
 
             <release-item>
@@ -139,6 +169,8 @@
                 </release-item-contributor-list>
 
                 <p>Add support for <proper>S3 Outposts</proper>.</p>
+
+                <p>Set <br-option>repo-s3-service=s3-outposts</br-option> when using an <proper>S3 Outposts</proper> endpoint. The option sets the service name used for request signing and defaults to <id>s3</id>.</p>
             </release-item>
 
             <release-item>
@@ -151,14 +183,29 @@
                 </release-item-contributor-list>
 
                 <p>Add <proper>S3</proper> process authentication.</p>
+
+                <p>Set <br-option>repo-s3-key-type=process</br-option> and set <setting>repo-s3-process-cmd</setting> to a command that outputs temporary credentials in the JSON format of the <proper>AWS</proper> process credential provider. The credentials are refreshed before they expire.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Provide a distribution tarball with generated code and documentation.</p>
+
+                <p>The tarball includes the generated code and the rendered man page and HTML documentation, so it builds and installs without the code generation and documentation tooling, including <id>libyaml</id>.</p>
             </release-item>
         </release-feature-list>
 
         <release-improvement-list>
             <release-item>
-                <github-issue id="2739"/>
-                <github-issue id="2772"/>
-                <github-pull-request id="2793"/>
+                <commit subject="Fetch the libssh2 session from storage in SFTP read/write objects."/>
+                <commit subject="Reconnect SFTP storage after the server drops an idle connection.">
+                    <github-issue id="2739"/>
+                    <github-issue id="2772"/>
+                    <github-pull-request id="2793"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-ideator id="mustafa0x"/>
@@ -168,6 +215,8 @@
                 </release-item-contributor-list>
 
                 <p>Reconnect SFTP storage after the server drops an idle connection.</p>
+
+                <p><proper>SFTP</proper> servers and firewalls may drop a connection that has been idle for a while, e.g. the repository read connection during the copy phase of a backup, and the next use failed with a socket error. A dropped connection is now reopened and the operation is retried once.</p>
             </release-item>
 
             <release-item>
@@ -179,6 +228,8 @@
                 </release-item-contributor-list>
 
                 <p>Add user/group caching for faster manifest build.</p>
+
+                <p>When user and group names are looked up through a remote name service, e.g. <proper>sssd</proper> or <proper>LDAP</proper>, each lookup is a round trip, which dominated the manifest build for clusters with millions of files. User and group names are now cached.</p>
             </release-item>
 
             <release-item>
@@ -192,6 +243,8 @@
                 </release-item-contributor-list>
 
                 <p>Add per-repo backup progress to <cmd>info</cmd> command output.</p>
+
+                <p>When backups run on more than one repository at once, the <cmd>info</cmd> command now reports progress for each repository as well as overall progress. The JSON output has a <id>repo</id> array for each backup lock.</p>
             </release-item>
 
             <release-item>
@@ -205,6 +258,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <file>backup.info</file> checks to <cmd>verify</cmd> command.</p>
+
+                <p>The <cmd>verify</cmd> command now warns when a backup in the repository is not in <file>backup.info</file> and when a backup in <file>backup.info</file> is missing from the repository. A missing backup is reported as having a missing manifest.</p>
             </release-item>
 
             <release-item>
@@ -217,6 +272,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow the <proper>S3</proper> STS endpoint to be configured.</p>
+
+                <p>Set <setting>repo-s3-sts-host</setting> to use a regional STS endpoint with <br-option>repo-s3-key-type=web-id</br-option>, e.g. <id>sts.eu-central-2.amazonaws.com</id>. <proper>AWS</proper> opt-in regions do not accept credentials from the global endpoint, which is still the default.</p>
             </release-item>
 
             <release-item>
@@ -228,6 +285,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <setting>archive-push-batch-size</setting> to limit WAL pushed per asynchronous run.</p>
+
+                <p>In asynchronous mode <setting>archive-push-queue-max</setting> is only checked at the start of a run, so a run working through a large backlog could let the queue grow well past the limit. <setting>archive-push-batch-size</setting> (default 16GiB) limits the WAL pushed per run, so the queue is checked again sooner.</p>
             </release-item>
 
             <release-item>
@@ -241,6 +300,8 @@
                 </release-item-contributor-list>
 
                 <p>Exit async <cmd>archive-push</cmd> on first error.</p>
+
+                <p>When the repository was unavailable the async process kept trying every ready WAL segment, so a run could take long enough for <path>pg_wal</path> to fill before <setting>archive-push-queue-max</setting> was checked again. The run now exits on the first error, after the jobs in progress finish.</p>
             </release-item>
 
             <release-item>
@@ -252,6 +313,8 @@
                 </release-item-contributor-list>
 
                 <p>Harden HTTP chunked response parsing.</p>
+
+                <p>Chunk extensions and trailers are now accepted, <id>transfer-encoding</id> is compared without regard to case, and a response with both <id>transfer-encoding</id> and <id>content-length</id> is rejected.</p>
             </release-item>
 
             <release-item>
@@ -264,6 +327,8 @@
                 </release-item-contributor-list>
 
                 <p>Error when running as root unless <setting>allow-root</setting> is enabled.</p>
+
+                <p>Running a command other than <cmd>restore</cmd> as root could create files in the repository, e.g. <file>backup.info</file>, that the <postgres/> user cannot access. <setting>allow-root</setting> is disabled by default for every command except <cmd>restore</cmd>, and the check also applies on remote hosts.</p>
             </release-item>
 
             <release-item>
@@ -275,6 +340,8 @@
                 </release-item-contributor-list>
 
                 <p>Fewer binary searches when building manifest.</p>
+
+                <p>The manifest build for a diff or incr backup searched the prior manifest three times for each file. It now searches once, which saves millions of searches for clusters with millions of files.</p>
             </release-item>
 
             <release-item>
@@ -287,6 +354,8 @@
                 </release-item-contributor-list>
 
                 <p>Improve seek performance during block incremental delta restore.</p>
+
+                <p>A seek and a flush of the write buffer were done for every block written during a block incremental delta restore, and blocks are often 8KiB. The file position is now tracked and the seek and flush are only done when needed.</p>
             </release-item>
 
             <release-item>
@@ -298,6 +367,8 @@
                 </release-item-contributor-list>
 
                 <p>Bundle backup files in order rather than scanning for a better fit.</p>
+
+                <p>A file that would push a bundle over <setting>repo-bundle-size</setting> was skipped for a smaller file later in the queue. Files are now added in order and a bundle is closed once it reaches <setting>repo-bundle-size</setting>, so a bundle may exceed it by up to <setting>repo-bundle-limit</setting>.</p>
             </release-item>
 
             <release-item>
@@ -311,6 +382,8 @@
                 </release-item-contributor-list>
 
                 <p>Report the underlying error when a query fails to complete.</p>
+
+                <p>When the connection was lost after the first result of a query was delivered, e.g. under load, the error was the generic <quote>NULL result required to complete request</quote>. The error from <postgres/> is now reported, with hints about a lost connection and about aggressive <pg-setting>idle_session_timeout</pg-setting> and <pg-setting>idle_in_transaction_session_timeout</pg-setting> settings.</p>
             </release-item>
 
             <release-item>
@@ -324,6 +397,8 @@
                 </release-item-contributor-list>
 
                 <p>Report the actual error when an <proper>S3</proper> credential request fails.</p>
+
+                <p>An error from <proper>AWS</proper> for a <id>web-id</id> or <id>pod-id</id> credential request was reported as a failure to parse the response. The error returned by <proper>AWS</proper> is now reported, and the tokens are redacted when the request is logged.</p>
             </release-item>
 
             <release-item>
@@ -337,6 +412,8 @@
                 </release-item-contributor-list>
 
                 <p>Report <cmd>archive-push</cmd> spool path errors to the PostgreSQL log.</p>
+
+                <p>When the async spool path could not be created, e.g. permission was denied, the error could not be written to the spool and <cmd>archive-push</cmd> failed with a generic timeout that pointed at the async log. The spool path is now created before the async process starts, so the error appears in the <postgres/> log.</p>
             </release-item>
 
             <release-item>
@@ -345,6 +422,8 @@
                 </release-item-contributor-list>
 
                 <p>Hint that pgBackRest may be out of date when a version is unsupported.</p>
+
+                <p>When <backrest/> does not recognize a <postgres/> version, e.g. an older <backrest/> on the restore host reading a backup of a newer cluster, the error now hints that <backrest/> may need to be updated on all hosts. The version is reported in user-facing form, e.g. 13 rather than 130000.</p>
             </release-item>
 
             <release-item>
@@ -357,6 +436,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <proper>systemd</proper> notify integration.</p>
+
+                <p>When built with <id>libsystemd</id>, the <cmd>server</cmd> command notifies <proper>systemd</proper> when it is ready to accept connections and when it is stopping, as <postgres/> and PgBouncer do.</p>
             </release-item>
 
             <release-item>
@@ -368,6 +449,8 @@
                 </release-item-contributor-list>
 
                 <p>Suppress <id>unused parameter</id> errors in <proper>meson</proper> compiler probes.</p>
+
+                <p>The <proper>meson</proper> compiler probes declared <code>main()</code> parameters they did not use, which failed the probes when unused parameter warnings were errors.</p>
             </release-item>
 
             <release-item>
@@ -394,6 +477,148 @@
 
                 <p>Refactor restore module into included modules.</p>
             </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update LICENSE.txt and PostgreSQL copyright for 2026.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Enhance StringId with optional sequence information.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Calculate limit for Posix/SFTP during read instead of when created."/>
+                <commit subject="Move initialization of StorageRead and StorageWrite to interface."/>
+                <commit subject="Invert storage read/write interface ownership."/>
+                <commit subject="Move ignoreMissing out of the storage read drivers."/>
+                <commit subject="Unify the file remove error message."/>
+                <commit subject="Use a storage feature to gate remove errorOnMissing."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor the storage read and write interfaces.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Bring SFTP storageRemove() in line with the other repository storage drivers."/>
+                <commit subject="Error on SFTP remove failures other than missing file."/>
+                <commit subject="Remove the unused sftpHandle field from the SFTP storage driver."/>
+                <commit subject="Simplify error handling in SFTP storageWriteSftpOpen()."/>
+                <commit subject="Throw real SFTP read-open errors instead of masking them as missing."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve error handling in the <proper>SFTP</proper> storage driver.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Move info/manifest.c to info/manifest/manifest.c."/>
+                <commit subject="Refactor info/manifest module into included modules."/>
+                <commit subject="Update uncrustify to recognize .c.inc files."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor the manifest module into included modules.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Reverse sort order in backup and restore comparators.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Minor memory context optimization in restoreFile()."/>
+                <commit subject="Explicitly free block map read in restoreFile()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Free memory sooner in <code>restoreFile()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Move archiveAsyncExec() to command/command module and rename.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Prevent an out-of-bounds log buffer write on an oversized message."/>
+                <commit subject="Replace strncpy() with memcpy()/snprintf() and ban it."/>
+                <commit subject="Replace sprintf() with snprintf() and ban it."/>
+                <commit subject="Replace strcpy() with memcpy() and ban strcpy()/strcat()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Ban unsafe string functions and limit an oversized log message.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add YAML helpers for the peek-type and empty-map idioms."/>
+                <commit subject="Fix parsing of the parameter-allowed command definition."/>
+                <commit subject="Simplify the build YAML parsers with iteration macros."/>
+                <commit subject="Store help data as a C string instead of a byte array."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve code generation for the configuration and help.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix float-equal compiler warnings."/>
+                <commit subject="Use more specific warning for nonstring meson compiler probe."/>
+                <commit subject="Move static build defines to build.h."/>
+                <commit subject="Add meson check for __builtin_types_compatible_p()."/>
+                <commit subject="Update always_inline to __always_inline__."/>
+                <commit subject="Remove unused backtrace-supported.h include.">
+                    <github-pull-request id="2755"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="yegor.zhmak"/>
+                </release-item-contributor-list>
+
+                <p>Improve compiler compatibility and build checks.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix comments in common/pack module."/>
+                <commit subject="Improve designated initializers in data arrays."/>
+                <commit subject="Remove extraneous const."/>
+                <commit subject="Clarify zero-size chunk comment in HTTP response parsing."/>
+                <commit subject="Fix duplicated word in the file mode error message."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code and comments.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -408,6 +633,8 @@
                 </release-item-contributor-list>
 
                 <p>Make <setting>stanza</setting> option internal for the <cmd>repo-*</cmd> commands.</p>
+
+                <p>The <setting>stanza</setting> option only has an effect on the <cmd>repo-*</cmd> commands with undocumented storage path constants, so the documentation implied it did something it does not. The option is no longer documented for these commands and works as before.</p>
             </release-item>
 
             <release-item>
@@ -421,6 +648,8 @@
                 </release-item-contributor-list>
 
                 <p>Document that info reads encryption settings from global section.</p>
+
+                <p>When run without <setting>stanza</setting> the <cmd>info</cmd> command reads encryption settings only from the global section, so encryption settings configured for a stanza require <setting>stanza</setting>.</p>
             </release-item>
 
             <release-item>
@@ -434,6 +663,8 @@
                 </release-item-contributor-list>
 
                 <p>Document that <setting>expire-auto</setting> uses the <cmd>backup</cmd> command configuration.</p>
+
+                <p>Automatic expiration after a backup uses the configuration of the <cmd>backup</cmd> command, so options set only for the <cmd>expire</cmd> command are not applied. Disable <setting>expire-auto</setting> and run <cmd>expire</cmd> separately when it needs its own configuration.</p>
             </release-item>
 
             <release-item>
@@ -447,6 +678,8 @@
                 </release-item-contributor-list>
 
                 <p>Document adjusting the <proper>logrotate</proper> <id>su</id> directive for a dedicated user.</p>
+
+                <p>Packages may install a <proper>logrotate</proper> configuration that rotates the logs as the <id>postgres</id> user. When a dedicated user owns the repository and logs, the <id>su</id> directive must be changed to that user or rotation fails with a permission error.</p>
             </release-item>
 
             <release-item>
@@ -460,8 +693,76 @@
                 </release-item-contributor-list>
 
                 <p>Document that end-of-line comments are not supported in config files.</p>
+
+                <p>End-of-line comments have never been supported, although they may appear to work for some options. Only comments on a line of their own are supported.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Add support for sponsors in the documentation."/>
+                <commit subject="Comment out unused CSS elements."/>
+                <commit subject="Remove attribution for armchair icon since it is now licensed."/>
+                <commit subject="Add dark mode favicon."/>
+                <commit subject="Add news page."/>
+                <commit subject="Add sponsors and announcement that pgBackRest will continue."/>
+                <commit subject="Add sponsors."/>
+                <commit subject="Add ransomware and malware protection to the feature list."/>
+                <commit subject="Add logo, news, and sponsor toggles to the documentation."/>
+                <commit subject="Update the project URL to https://pgbackrest.org."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add the news page and sponsors to the website.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Documentation no longer builds on PostgreSQL &lt; 10."/>
+                <commit subject="Update PostgresQL versions in user guide."/>
+                <commit subject="Remove information about v1 releases."/>
+                <commit subject="Fix documentation typos."/>
+                <commit subject="Add repo-s3-key-type=pod-id documentation missed in 79544f64."/>
+                <commit subject="Fix neutral-umask documentation to match actual lock/log modes"/>
+                <commit subject="Update RHEL documentation to Rocky Linux 9."/>
+                <commit subject="Remove out-of-date instructions for building documentation."/>
+                <commit subject="Download the distribution tarball rather than the source archive."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update and correct the documentation.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update NEWS.md for new version and features."/>
+                <commit subject="Fix typo in NEWS.md."/>
+                <commit subject="Remove obsolete Perl code."/>
+                <commit subject="Migrate documentation block rendering to C."/>
+                <commit subject="Allow cmd-line-len to be overridden per command."/>
+                <commit subject="Remove NEWS.md in favor of generating it from news.xml."/>
+                <commit subject="Resolve markdown cross-page section links to the website."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve the documentation build.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Replace Minio with Ceph for S3 documentation and testing."/>
+                <commit subject="Retry S3 bucket creation to allow time for Ceph to start up."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Replace Minio with Ceph for S3 documentation and testing.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
 
     <release-test-list>
@@ -475,7 +776,100 @@
                 </release-item-contributor-list>
 
                 <p>Fix Alpine group conflicts in CI containers.</p>
+
+                <p>Group entries with members are now handled when the test group is renamed, and the <proper>Alpine</proper> group is only created when it does not already exist.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Remove FreeBSD 13 and add FreeBSD 15 to Cirrus CI."/>
+                <commit subject="Update Fedora test image to Fedora 43."/>
+                <commit subject="Update GitHub Actions versions."/>
+                <commit subject="New CI container builds."/>
+                <commit subject="Update lock-threads action version."/>
+                <commit subject="Update (almost) EOL Debian 11 to Debian 12 in CI."/>
+                <commit subject="Update Fedora CI container to Fedora 44."/>
+                <commit subject="Run integration tests on Alpine 3.21 (musl libc)."/>
+                <commit subject="Update FreeBSD CI versions."/>
+                <commit subject="Add RHEL 9 and 10 tests and switch RHEL 8 to native PostgreSQL."/>
+                <commit subject="Remove package build testing."/>
+                <commit subject="Allow FreeBSD tests to continue running even if one fails."/>
+                <commit subject="Migrate Cirrus CI tests to Github Actions."/>
+                <commit subject="Limit CI permissions on the repository to read."/>
+                <commit subject="Remove CodeQL CI job."/>
+                <commit subject="Move issue template to new format required by Github."/>
+                <commit subject="Cache test container base images in GHCR."/>
+                <commit subject="Upload the coverage report as a CI artifact instead of logging it."/>
+                <commit subject="Allow container cache revisions to be set per architecture."/>
+                <commit subject="Split the test workflow into reusable workflows."/>
+                <commit subject="Untap non-official taps in the MacOS test job."/>
+                <commit subject="Update the systemctl replacement to 1.5.9063."/>
+                <commit subject="Use curl instead of wget."/>
+                <commit subject="Use the custom shell to run FreeBSD tests in the VM."/>
+                <commit subject="Persist the ccache across CI runs using a container registry."/>
+                <commit subject="Run more tests on the emulated architectures."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add a smoke test to verify a build against installed PostgreSQL."/>
+                <commit subject="Log the full PostgreSQL version in the integration and smoke tests."/>
+                <commit subject="Run the smoke test in a container rather than on the runner."/>
+                <commit subject="Build and smoke test the distribution tarball on many distributions."/>
+                <commit subject="Output the architecture in the smoke test."/>
+                <commit subject="Run the smoke test on MacOS and FreeBSD."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add a smoke test to verify a build against installed PostgreSQL.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix test error message typos and add error details."/>
+                <commit subject="Fix incorrect postgres/interface unit test title."/>
+                <commit subject="Add alternate error to common/io/tls test module for WSL."/>
+                <commit subject="Rename execOne() to execOneExpect()."/>
+                <commit subject="Add valgrind suppressions for libbacktrace unwind false positives."/>
+                <commit subject="Add code count exclusion for SVG files."/>
+                <commit subject="Report a readable status when a test system command fails."/>
+                <commit subject="Add linter check for hidden characters and binary files."/>
+                <commit subject="Report the actual error when a unit test fails during coverage testing."/>
+                <commit subject="Remove code count functionality from test.pl."/>
+                <commit subject="Normalize harness definitions in define.yaml to YAML lists."/>
+                <commit subject="Move test harness files to test/src/harness and drop the prefix."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="yegor.zhmak"/>
+                </release-item-contributor-list>
+
+                <p>Improve the test harness.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Ensure backup-timestamp-start is non-zero in unit tests."/>
+                <commit subject="Test changes in preparation for additional verification of backup.info."/>
+                <commit subject="Remove extraneous pathSync test in the SFTP storage driver."/>
+                <commit subject="Test the Posix driver for syncPath rather than StorageWrite."/>
+                <commit subject="Refactor SFTP unit tests."/>
+                <commit subject="Change storage for storageMoveP() call in storage/posix unit test."/>
+                <commit subject="Prevent a flaky command/control test when stop terminates a process."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="denis.garsh"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests.</p>
+            </release-item>
+        </release-development-list>
     </release-test-list>
 </release>
