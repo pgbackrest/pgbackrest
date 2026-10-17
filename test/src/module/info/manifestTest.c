@@ -1452,6 +1452,9 @@ testRun(void)
                 "[backup:target]\n"
                 "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
                 "\n"
+                "[cipher]\n"
+                "cipher-pass={\"0\":{\"digest\":\"sha256\",\"key\":\"somepass\"}}\n"
+                "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20190808-163540F\""
                 ",\"size\":4,\"timestamp\":1565282114}\n"
@@ -1491,11 +1494,7 @@ testRun(void)
         TEST_RESULT_STR_Z(manifestData(manifest)->backupLabel, "20190808-163540F", "check manifest data");
         TEST_RESULT_UINT(manifestFormat(manifest), REPOSITORY_FORMAT_6, "check manifest format");
 
-        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpec(manifest))), "x", "files use manifest key");
-        TEST_RESULT_VOID(
-            manifestCipherSpecSet(manifest, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("somepass"), .digest = hashTypeSha256)),
-            "set files key");
-        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpec(manifest))), "somepass", "check files key");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpec(manifest))), "somepass", "check cipher subpass");
 
         TEST_RESULT_VOID(
             manifestTargetUpdate(manifest, MANIFEST_TARGET_PGDATA_STR, STRDEF("/pg/base"), NULL), "update target no change");

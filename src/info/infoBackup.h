@@ -111,8 +111,8 @@ infoBackupCipherSpec(const InfoBackup *const this)
     return infoPgCipherSpec(infoBackupPg(this));
 }
 
-// Cipher spec for the manifest of a backup. A backup set created at format >= 6 has a key of its own, stored by the label of the
-// full backup, that encrypts the manifests and files of the set. Earlier backup sets use the shared key for their manifests.
+// Cipher spec for the manifest of a backup. A backup set created at format >= 6 has a manifest key of its own, stored by the label
+// of the full backup. Earlier backup sets use the shared key.
 FN_EXTERN const CipherSpec *infoBackupCipherSpecManifest(const InfoBackup *this, const String *backupLabel);
 
 // Repository format

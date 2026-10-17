@@ -256,11 +256,13 @@ cmdBackup(void)
                 backupLabelCreate(
                     (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
 
-            // Format >= 6 stores the key of a new backup set in backup.info before anything is encrypted with it
+            // Format >= 6 stores a manifest key for a new backup set in backup.info before a manifest is encrypted with it
             if (manifestFormat(manifest) >= REPOSITORY_FORMAT_6 && manifestData(manifest)->backupType == backupTypeFull &&
-                cipherSpecType(manifestCipherSpec(manifest)) != cipherTypeNone)
+                cfgOptionStrId(cfgOptRepoCipherType) != cipherTypeNone)
             {
-                infoBackupCipherSpecAdd(infoBackup, manifestData(manifest)->backupLabel, manifestCipherSpec(manifest));
+                infoBackupCipherSpecAdd(
+                    infoBackup, manifestData(manifest)->backupLabel,
+                    cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType), manifestFormat(manifest)));
                 infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
             }
         }

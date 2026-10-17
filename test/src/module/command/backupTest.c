@@ -4440,20 +4440,29 @@ testRun(void)
             const InfoBackup *const infoBackup = infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, TEST_CIPHER_SPEC);
             const CipherSpecMap *const cipherSpecMap = infoCipherSpecMap(infoPgInfo(infoBackupPg(infoBackup)));
 
-            TEST_RESULT_UINT(cipherSpecMapSize(cipherSpecMap), 2, "key for each full backup");
+            TEST_RESULT_UINT(cipherSpecMapSize(cipherSpecMap), 2, "manifest key for each full backup");
             TEST_RESULT_STR_Z(cipherSpecMapGetIdx(cipherSpecMap, 0)->id, "20191108-080000F", "first backup set key id");
             TEST_RESULT_STR_Z(cipherSpecMapGetIdx(cipherSpecMap, 1)->id, "20191111-192000F", "second backup set key id");
 
-            const Manifest *const manifest = manifestLoadFile(
-                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/20191108-080000F_20191111-052640I/" BACKUP_MANIFEST_FILE),
-                infoBackupCipherSpecManifest(infoBackup, STRDEF("20191108-080000F_20191111-052640I")));
+            const String *const backupLabel = STRDEF("20191108-080000F_20191111-052640I");
+            const CipherSpec *const cipherSpecManifest = infoBackupCipherSpecManifest(infoBackup, backupLabel);
 
-            TEST_RESULT_UINT(cipherSpecMapSize(infoCipherSpecMap(manifest->pub.info)), 0, "manifest stores no key");
+            const Manifest *manifest = manifestLoadFile(
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)), cipherSpecManifest);
+
+            TEST_RESULT_UINT(cipherSpecType(manifestCipherSpec(manifest)), cipherTypeAes256Cbc, "manifest stores file key");
             TEST_RESULT_BOOL(
-                bufEq(
-                    cipherSpecPass(manifestCipherSpec(manifest)),
-                    cipherSpecPass(cipherSpecMapGet(cipherSpecMap, STRDEF("20191108-080000F")))),
-                true, "files use backup set key");
+                bufEq(cipherSpecPass(manifestCipherSpec(manifest)), cipherSpecPass(cipherSpecManifest)), false,
+                "file key is not manifest key");
+
+            // History manifest
+            StorageRead *const read = storageNewReadP(
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/2019/%s.manifest.gz", strZ(backupLabel)));
+            cipherBlockFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cipherModeDecrypt, cipherSpecManifest);
+            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), decompressFilterP(compressTypeGz));
+
+            TEST_ASSIGN(manifest, manifestNewLoad(storageReadIo(read), cipherSpecManifest), "load history manifest");
+            TEST_RESULT_UINT(cipherSpecType(manifestCipherSpec(manifest)), cipherTypeNone, "history manifest has no file key");
         }
     }
 

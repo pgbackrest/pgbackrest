@@ -70,7 +70,7 @@ storageGetProcess(IoWrite *const destination)
                 //      / backup  / stanza / set / (backup passphrase)
                 //      / backup  / stanza / backup.history / (manifest passphrase)
                 //
-                // Format >= 6 stores a manifest passphrase for each backup set by label and encrypts the backup files with it.
+                // Format >= 6 stores a manifest passphrase for each backup set by label.
                 //
                 // Nothing should be stored at the top level of the repo except the backup/archive paths. The backup/archive paths
                 // should contain only stanza paths.

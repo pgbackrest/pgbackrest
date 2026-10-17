@@ -227,7 +227,6 @@ typedef struct ManifestPub
 {
     MemContext *memContext;                                         // Mem context
     Info *info;                                                     // Base info object
-    const CipherSpec *cipherSpec;                                   // Cipher spec for the files this manifest describes
     ManifestData data;                                              // Manifest data and options
     List *dbList;                                                   // List of databases
     List *fileList;                                                 // List of files
@@ -244,15 +243,18 @@ manifestFormat(const Manifest *const this)
     return infoFormat(THIS_PUB(Manifest)->info);
 }
 
-// Cipher spec for the files this manifest describes. Format >= 6 encrypts them with the key of the manifest, which is the key of
-// the backup set. Earlier formats store the key in the manifest.
+// Get cipher spec for the files this manifest describes, set the pass they are encrypted with
 FN_INLINE_ALWAYS const CipherSpec *
 manifestCipherSpec(const Manifest *const this)
 {
-    return THIS_PUB(Manifest)->cipherSpec;
+    return infoCipherSpec(THIS_PUB(Manifest)->info);
 }
 
-FN_EXTERN void manifestCipherSpecSet(Manifest *this, const CipherSpec *cipherSpec);
+FN_INLINE_ALWAYS void
+manifestCipherSpecSet(Manifest *const this, const CipherSpec *const cipherSpec)
+{
+    infoCipherSpecSet(THIS_PUB(Manifest)->info, cipherSpec);
+}
 
 // Get manifest configuration and options
 FN_INLINE_ALWAYS const ManifestData *
