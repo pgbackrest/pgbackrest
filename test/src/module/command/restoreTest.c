@@ -3583,6 +3583,12 @@ testRun(void)
         // Make sure restore fails with the invalid file
         TEST_ERROR(hrnCmdRestore(), CryptoError, "raised from local-1 shim protocol: cipher header missing");
 
+        TEST_RESULT_UINT(
+            cipherSpecType(
+                manifestCipherSpec(
+                    manifestNewLoad(storageReadIo(storageNewReadP(storagePg(), BACKUP_MANIFEST_FILE_STR)), TEST_CIPHER_SPEC))),
+            cipherTypeNone, "manifest in data directory has no file passphrase");
+
         // Use detail log level to catch block incremental restore message
         harnessLogLevelSet(logLevelDetail);
 
