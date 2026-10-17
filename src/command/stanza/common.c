@@ -32,15 +32,28 @@ cipherSpecGen(const CipherType cipherType, const unsigned int format)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            uint8_t buffer[48];                                     // 48 is the amount of entropy needed to get a 64 base key
-            cryptoRandomBytes(buffer, sizeof(buffer));
+            Buffer *pass;
 
-            // The pass is the base64 text rather than the bytes it encodes, since the text is what gets stored and what the key
-            // derives from. A new pass derives with the digest its format calls for and that digest is stored with it, so a
-            // reader derives the same key.
-            result = cipherSpecNewP(
-                cipherType, BUFSTR(strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)))),
-                .digest = repoFormatDigest(format));
+            // Format >= 6 uses 256 random bits as the pass
+            if (format >= REPOSITORY_FORMAT_6)
+            {
+                pass = bufNew(32);
+                cryptoRandomBytes(bufPtr(pass), bufSize(pass));
+                bufUsedSet(pass, bufSize(pass));
+            }
+            // Else the pass is the base64 text of 48 random bytes. Earlier formats store this text and derive the key from it.
+            else
+            {
+                uint8_t buffer[48];                                 // 48 is the amount of entropy needed to get a 64 base key
+                cryptoRandomBytes(buffer, sizeof(buffer));
+
+                const String *const text = strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)));
+                pass = bufNewC(strZ(text), strSize(text));
+            }
+
+            // A new pass derives with the digest its format calls for and that digest is stored with it, so a reader derives the
+            // same key
+            result = cipherSpecNewP(cipherType, pass, .digest = repoFormatDigest(format));
             cipherSpecMove(result, memContextPrior());
         }
         MEM_CONTEXT_TEMP_END();

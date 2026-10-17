@@ -310,8 +310,8 @@ testRun(void)
         TEST_RESULT_VOID(
             infoSave(info, ioBufferWriteNew(contentSave), testInfoSaveCallback, strNewZ("1")), "save migrated info");
         TEST_RESULT_BOOL(
-            strstr(strZ(strNewBuf(contentSave)), "cipher-pass={\"0\":{\"digest\":\"sha1\",\"key\":\"somepass\"}}") != NULL, true,
-            "    check key stored by id with its digest");
+            strstr(strZ(strNewBuf(contentSave)), "cipher-pass={\"0\":{\"digest\":\"sha1\",\"key\":\"somepass\"}}") != NULL,
+            true, "    check key stored by id with its digest");
 
         TEST_ASSIGN(
             info,
@@ -337,7 +337,7 @@ testRun(void)
             REPOSITORY_FORMAT_6,
             STRDEF(
                 "[cipher]\n"
-                "cipher-pass={\"0\":{\"digest\":\"sha256\",\"key\":\"somepass\"}}\n"));
+                "cipher-pass={\"0\":{\"digest\":\"sha256\",\"key\":\"c29tZXBhc3M=\"}}\n"));
 
         callbackContent = strNew();
 
@@ -386,7 +386,7 @@ testRun(void)
             strstr(
                 strZ(strNewBuf(contentSave)),
                 "cipher-pass={\"0\":{\"digest\":\"sha1\",\"key\":\"oldpass\"}"
-                ",\"9\":{\"digest\":\"sha256\",\"key\":\"newpass\"}}\n"
+                ",\"9\":{\"digest\":\"sha256\",\"key\":\"bmV3cGFzcw==\"}}\n"
                 "cipher-pass-current=\"9\"\n"
                 "cipher-pass-rotate=1700000000\n") != NULL,
             true, "    check both keys stored by id");

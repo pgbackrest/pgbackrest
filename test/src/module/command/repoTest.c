@@ -628,7 +628,7 @@ testRun(void)
         HRN_INFO_PUT(
             storageFixture, STORAGE_PATH_ARCHIVE "/test/" INFO_ARCHIVE_FILE,
             "[cipher]\n"
-            "cipher-pass={\"0\":{\"digest\":\"sha1\",\"key\":\"custom\"},\"1\":{\"digest\":\"sha256\",\"key\":\"custom6\"}}\n"
+            "cipher-pass={\"0\":{\"digest\":\"sha1\",\"key\":\"custom\"},\"1\":{\"digest\":\"sha256\",\"key\":\"Y3VzdG9tNg==\"}}\n"
             "cipher-pass-current=\"1\"\n"
             "\n"
             "[db]\n"

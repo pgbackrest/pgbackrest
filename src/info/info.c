@@ -231,7 +231,9 @@ infoNewLoad(
                                     CipherSpecMap *const cipherSpecMap = cipherSpecMapNew();
                                     const Variant *const cipherPass = jsonToVar(value->value);
 
-                                    // Format >= 6 stores every key by id along with the digest it derives with
+                                    // Format >= 6 stores every key by id along with the digest it derives with. A key that derives
+                                    // with SHA-1 is from format 5 and is stored as text as before. Format 6 keys are stored as
+                                    // base64 and decoded to the bytes they derive with.
                                     if (infoFormat(this) >= REPOSITORY_FORMAT_6)
                                     {
                                         const KeyValue *const keyKv = varKv(cipherPass);
@@ -241,14 +243,16 @@ infoNewLoad(
                                         {
                                             const Variant *const id = varLstGet(idList, idIdx);
                                             const KeyValue *const keyData = varKv(kvGet(keyKv, id));
+                                            const String *const key = varStr(kvGet(keyData, VARSTRDEF(INFO_KEY_CIPHER_KEY)));
+                                            const HashType digest = strIdFromZ(
+                                                strZ(varStr(kvGet(keyData, VARSTRDEF(INFO_KEY_CIPHER_DIGEST)))));
 
                                             cipherSpecMapAdd(
                                                 cipherSpecMap, varStr(id),
                                                 cipherSpecNewP(
                                                     cipherType,
-                                                    BUFSTR(varStr(kvGet(keyData, VARSTRDEF(INFO_KEY_CIPHER_KEY)))),
-                                                    .digest = strIdFromZ(
-                                                        strZ(varStr(kvGet(keyData, VARSTRDEF(INFO_KEY_CIPHER_DIGEST)))))));
+                                                    digest == hashTypeSha1 ? BUFSTR(key) : bufNewDecode(encodingBase64, key),
+                                                    .digest = digest));
                                         }
                                     }
                                     // Else there is one key with no id and no digest, which every repository derives with SHA-1
@@ -461,7 +465,8 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
             {
                 JsonWrite *const json = jsonWriteNewP();
 
-                // Format >= 6 stores every key by id along with the digest it derives with
+                // Format >= 6 stores every key by id along with the digest it derives with. A key that derives with SHA-1 is from
+                // format 5 and is stored as its text. Other keys are stored as base64.
                 if (infoFormat(this) >= REPOSITORY_FORMAT_6)
                 {
                     jsonWriteObjectBegin(json);
@@ -477,7 +482,10 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
                         jsonWriteObjectBegin(jsonWriteKey(json, item->id));
                         jsonWriteStrId(jsonWriteKeyZ(json, INFO_KEY_CIPHER_DIGEST), cipherSpecDigest(item->cipherSpec));
                         jsonWriteStr(
-                            jsonWriteKeyZ(json, INFO_KEY_CIPHER_KEY), strNewBuf(cipherSpecPass(item->cipherSpec)));
+                            jsonWriteKeyZ(json, INFO_KEY_CIPHER_KEY),
+                            cipherSpecDigest(item->cipherSpec) == hashTypeSha1 ?
+                                strNewBuf(cipherSpecPass(item->cipherSpec)) :
+                                strNewEncode(encodingBase64, cipherSpecPass(item->cipherSpec)));
                         jsonWriteObjectEnd(json);
                     }
 
