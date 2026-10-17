@@ -50,6 +50,10 @@ Tokens
     --border: #e3e8ef;
     --border-strong: #cbd4e1;
 
+    --keyword-weight: 500;
+    --keyword-bg: var(--bg-surface);
+    --keyword-border: #e9edf2;
+
     /* The end of a menu that carries on past the window: the color of the rules the bar is drawn with against a light bar, and a
        shade inside them against a dark bar, where the same step away from the bar reads harder. The band holds this color across a
        fifth of its width before it gives out, and that is what carries it, so a color picked to carry on its own is too much. */
@@ -93,6 +97,10 @@ Tokens
         --text-muted: #94a3b8;
         --border: #1f2937;
         --border-strong: #334155;
+
+        --keyword-weight: 600;
+        --keyword-bg: var(--bg-surface-2);
+        --keyword-border: var(--border);
         --menu-edge: #1d2634;
 
         --accent: #64a8ef;
@@ -1367,17 +1375,17 @@ Keywords
 ***********************************************************************************************************************************/
 .backrest, .cmd, .postgres, .host, .proper
 {
-    font-weight: 600;
+    font-weight: var(--keyword-weight);
 }
 
 .path, .br-option, .br-setting, .pg-option, .pg-setting, .id, .user, .file
 {
-    border: 1px solid var(--border);
+    border: 1px solid var(--keyword-border);
     border-radius: 4px;
-    background-color: var(--bg-surface-2);
+    background-color: var(--keyword-bg);
     padding: .05em .35em;
     font-family: var(--font-mono);
-    font-size: .8125em;
+    font-size: .9em;
     unicode-bidi: embed;
 }
 
