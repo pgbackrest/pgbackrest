@@ -13,6 +13,7 @@ Stanza Create Command
 #include "command/stanza/common.h"
 #include "command/stanza/create.h"
 #include "common/debug.h"
+#include "common/encode.h"
 #include "common/format/format.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -78,6 +79,33 @@ cmdStanzaCreate(void)
 
                 // Format for the new stanza
                 const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
+
+                // Format >= 6 requires the passphrase of a new encrypted stanza to be at least 256 bits encoded as base64
+                if (format >= REPOSITORY_FORMAT_6 && cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx) != cipherTypeNone)
+                {
+                    bool valid = false;
+
+                    TRY_BEGIN()
+                    {
+                        // 32 bytes is 256 bits
+                        valid = bufUsed(bufNewDecode(encodingBase64, cfgOptionIdxStr(cfgOptRepoCipherPass, repoIdx))) >= 32;
+                    }
+                    // Invalid base64 is reported below
+                    CATCH(FormatError)
+                    {
+                    }
+                    TRY_END();
+
+                    if (!valid)
+                    {
+                        THROW_FMT(
+                            OptionInvalidValueError,
+                            "option '%s' must be at least 256 bits encoded as base64 to create a stanza at repository format "
+                            STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
+                            "HINT: generate a passphrase with 'openssl rand -base64 32'.",
+                            cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
+                    }
+                }
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting archive files. Format >= 6 adds it by
                 // rotating to the first key id and earlier formats store it as the default key with no id.
