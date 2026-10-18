@@ -93,11 +93,13 @@
 
         <release-feature-list>
             <release-item>
+                <commit subject="PostgreSQL 19beta4 support."/>
+
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
                 </release-item-contributor-list>
 
-                <p><proper>PostgreSQL 19beta4</proper> support.</p>
+                <p><proper>PostgreSQL 19beta4/rc1</proper> support.</p>
 
                 <p><postgres/> 19beta4 reverted online page checksum changes, so the page checksum version is again limited to 0 and 1. It also changed the <file>pg_control</file> version and the WAL page magic number.</p>
             </release-item>

@@ -1,4 +1,4 @@
-<release date="XXXX-XX-XX" version="2.60.0dev" title="UNDER DEVELOPMENT">
+<release date="2026-10-18" version="2.60.0" title="Page Checksum Errors and Object Store Prefetch">
     <release-core-list>
         <text>
             <p><b>IMPORTANT NOTE</b>: The <cmd>restore</cmd> command will now error and stop if any restored file contains an invalid page checksum, which leaves the cluster incomplete and unable to start, so the restore must be rerun. The <cmd>expire</cmd> command will now refuse to expire if the oldest retained backup would contain checksum errors, which also prevents archive from being expired in that repository. Set <br-option>checksum-page-error=n</br-option> to warn instead of erroring.</p>
@@ -429,6 +429,16 @@
 
                 <p>Add a line length linter and fix formatting issues.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Fix incorrect file reference in comment."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix typos.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -458,6 +468,9 @@
                 <commit subject="Put the bar of a section2 header under the title rather than beside it."/>
                 <commit subject="Center the page title beside the logo and left align it when wrapped."/>
                 <commit subject="Add expandable details to the release notes."/>
+                <commit subject="Add release note details for v2.33 through v2.60."/>
+                <commit subject="Adjust keyword styling in light mode."/>
+                <commit subject="End the release note history at upstream integration in CI."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -667,6 +680,7 @@
                 <commit subject="Run the code format check on Ubuntu 24.04."/>
                 <commit subject="Reduce RHEL container and dist test exposure to slow package mirrors."/>
                 <commit subject="Work around a slow apt mirror on the runner."/>
+                <commit subject="Bump CI container for PostgreSQL 19rc1."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>

@@ -30,9 +30,9 @@ Project version components. PROJECT_VERSION and PROJECT_VERSION_NUM are automati
 #define PROJECT_VERSION_MAJOR                                       2
 #define PROJECT_VERSION_MINOR                                       60
 #define PROJECT_VERSION_PATCH                                       0
-#define PROJECT_VERSION_SUFFIX                                      "dev"
+#define PROJECT_VERSION_SUFFIX                                      ""
 
-#define PROJECT_VERSION                                             "2.60.0dev"
+#define PROJECT_VERSION                                             "2.60.0"
 #define PROJECT_VERSION_NUM                                         2060000
 
 #endif

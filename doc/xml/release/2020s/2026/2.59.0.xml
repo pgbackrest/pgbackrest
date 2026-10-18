@@ -124,9 +124,9 @@
                     <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
-                <p><proper>PostgreSQL 19beta2</proper> support.</p>
+                <p><proper>PostgreSQL 19beta1/beta2</proper> support.</p>
 
-                <p>Adds support for <postgres/> 19beta2. <postgres/> 19 can enable and disable page checksums online, and page checksums are not validated while either is in progress.</p>
+                <p>Adds support for <postgres/> 19beta1/beta2. <postgres/> 19 can enable and disable page checksums online, and page checksums are not validated while either is in progress.</p>
             </release-item>
 
             <release-item>
