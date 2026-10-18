@@ -29,6 +29,12 @@ jobs:
           path: pgbackrest
           fetch-depth: 0
 
+      # The release notes are checked against the history of the integration branch in the project repository
+      - name: Fetch Integration
+        run: >-
+          git -C pgbackrest fetch --quiet --no-tags https://github.com/pgbackrest/pgbackrest.git
+          +refs/heads/integration:refs/remotes/upstream/integration
+
       - name: Update Apt
         uses: ./pgbackrest/.github/action/apt
 

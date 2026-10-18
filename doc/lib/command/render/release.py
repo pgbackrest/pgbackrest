@@ -35,8 +35,10 @@ from config.project import PROJECT_NAME
 # Where the git history is cached
 _FILE_HISTORY = "resource/git-history.cache"
 
-# Local branch the git history ends at when it is related to HEAD
-_HISTORY_BRANCH = "refs/heads/integration"
+# Branches the git history ends at when they are related to HEAD, in the order they are tried. The remote branch is the integration
+# branch of the project repository, which CI fetches.
+_HISTORY_BRANCH_LOCAL = "refs/heads/integration"
+_HISTORY_BRANCH_LIST = (_HISTORY_BRANCH_LOCAL, "refs/remotes/upstream/integration")
 
 # Subject of a commit that closed a release
 _RELEASE_SUBJECT_EXP = re.compile(r"^v[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]+)?: ")
@@ -111,14 +113,24 @@ def release_current_stable(root):
 def release_history_update(path_repo, path_doc):
     """Write the git history the release notes are checked against when the newest commit in it has changed.
 
-    When the local integration branch is related to HEAD the history ends at the newest commit of HEAD that is also in integration
-    and the result is true. The commits of a release branch are left out this way. Otherwise the history ends at HEAD and the result
-    is false. The body of a commit that closed a release is left out."""
+    When the local or the upstream integration branch is related to HEAD the history ends at the newest commit of HEAD that is also
+    in that branch. The commits of a release branch are left out this way. Otherwise the history ends at HEAD. The result is true
+    when the local integration branch is related to HEAD. The body of a commit that closed a release is left out."""
 
     path_history = os.path.join(path_doc, _FILE_HISTORY)
-    command = "git -C %s merge-base HEAD %s" % (path_repo, _HISTORY_BRANCH)
-    related = exec_status(command) == 0
-    head = exec_result(command if related else "git -C %s rev-parse HEAD" % path_repo, suppress_stderr=True)[1].strip()
+    head = None
+    related = False
+
+    for branch in _HISTORY_BRANCH_LIST:
+        command = "git -C %s merge-base HEAD %s" % (path_repo, branch)
+
+        if exec_status(command) == 0:
+            head = exec_result(command, suppress_stderr=True)[1].strip()
+            related = branch == _HISTORY_BRANCH_LOCAL
+            break
+
+    if head is None:
+        head = exec_result("git -C %s rev-parse HEAD" % path_repo, suppress_stderr=True)[1].strip()
 
     # The tag of each patch release with version >= _DETAIL_VERSION_MIN
     tag_map = {}

@@ -1286,3 +1286,10 @@ def test_release_history_update():
 
         assert_false(release_history_update(path, path_doc))
         assert_equal(json.loads(file_read(path_history))["head"][0]["subject"], "RELEASE: Add release notes.")
+
+        # With an upstream integration branch related to HEAD the history ends at the newest commit of HEAD that is also in the
+        # upstream branch, and the result is false
+        exec_one("git -C %s update-ref refs/remotes/upstream/integration HEAD~1" % path)
+
+        assert_false(release_history_update(path, path_doc))
+        assert_equal(json.loads(file_read(path_history))["head"][0]["subject"], "Fix a bug.")
