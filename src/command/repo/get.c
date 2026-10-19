@@ -14,6 +14,7 @@ Repository Get Command
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/regExp.h"
 #include "config/config.h"
 #include "storage/helper.h"
 
@@ -69,6 +70,8 @@ storageGetProcess(IoWrite *const destination)
                 //      / backup  / stanza / set / (backup passphrase)
                 //      / backup  / stanza / backup.history / (manifest passphrase)
                 //
+                // Format >= 6 stores a manifest passphrase for each backup set by label.
+                //
                 // Nothing should be stored at the top level of the repo except the backup/archive paths. The backup/archive paths
                 // should contain only stanza paths.
                 // -----------------------------------------------------------------------------------------------------------------
@@ -115,11 +118,20 @@ storageGetProcess(IoWrite *const destination)
 
                         if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                         {
-                            // Find the manifest passphrase
+                            // Find the manifest passphrase by the label of the backup, which begins the name of a history manifest
                             const InfoBackup *const info = infoBackupLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
                                 cfgCipherSpecMain());
-                            const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(info);
+                            const String *backupLabel = strLstGet(filePathSplitLst, 2);
+
+                            if (strEq(backupLabel, STRDEF(BACKUP_PATH_HISTORY)))
+                                backupLabel = strBase(file);
+
+                            const CipherSpec *const cipherSpecManifest =
+                                regExpMatchOne(
+                                    backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true),
+                                    backupLabel) ?
+                                    infoBackupCipherSpecManifest(info, backupLabel) : infoBackupCipherSpec(info);
 
                             // Find the backup passphrase if not a manifest
                             if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF(BACKUP_PATH_HISTORY)) &&

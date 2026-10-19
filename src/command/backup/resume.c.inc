@@ -169,14 +169,15 @@ backupResumeClean(
 
 // Helper to find a resumable backup
 static const Manifest *
-backupResumeFind(const Manifest *const manifest, const CipherSpec *const cipherSpecManifest)
+backupResumeFind(const Manifest *const manifest, const InfoBackup *const infoBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecManifest);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
+    ASSERT(infoBackup != NULL);
 
     Manifest *result = NULL;
 
@@ -217,7 +218,8 @@ backupResumeFind(const Manifest *const manifest, const CipherSpec *const cipherS
                         {
                             TRY_BEGIN()
                             {
-                                manifestResume = manifestLoadFile(storageRepo(), manifestFile, cipherSpecManifest);
+                                manifestResume = manifestLoadFile(
+                                    storageRepo(), manifestFile, infoBackupCipherSpecManifest(infoBackup, backupLabel));
                             }
                             CATCH_ANY()
                             {
@@ -303,20 +305,21 @@ backupResumeFind(const Manifest *const manifest, const CipherSpec *const cipherS
 }
 
 static bool
-backupResume(Manifest *const manifest, const CipherSpec *const cipherSpecManifest)
+backupResume(Manifest *const manifest, const InfoBackup *const infoBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecManifest);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
+    ASSERT(infoBackup != NULL);
 
     bool result = false;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const Manifest *const manifestResume = backupResumeFind(manifest, cipherSpecManifest);
+        const Manifest *const manifestResume = backupResumeFind(manifest, infoBackup);
 
         // If a resumable backup was found set the label and cipher subpass
         if (manifestResume)

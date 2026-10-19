@@ -124,7 +124,7 @@ typedef struct VerifyJobData
     String *currentBackup;                                          // In progress backup, if any
     const InfoPg *pgHistory;                                        // Database history list
     bool backupProcessing;                                          // Are we processing WAL or are we processing backups
-    const CipherSpec *cipherSpecManifest;                           // Cipher spec for reading backup manifests
+    const InfoBackup *infoBackup;                                   // Backup info with the keys for reading backup manifests
     const CipherSpecMap *cipherSpecArchive;                         // Cipher keys for reading WAL files
     unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
     List *archiveIdResultList;                                      // Archive results
@@ -639,7 +639,7 @@ verifyBackupSet(VerifyJobData *const jobData, const String *const backupLabel)
         {
             const Manifest *const manifest = manifestLoadFile(
                 storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
-                jobData->cipherSpecManifest);
+                infoBackupCipherSpecManifest(jobData->infoBackup, backupLabel));
 
             // Check files for block incremental
             bool hasBlockIncr = false;
@@ -958,7 +958,8 @@ verifyBackup(VerifyJobData *const jobData)
 
                 // Get a usable backup manifest file
                 Manifest *const manifest = verifyManifestFile(
-                    backupResult, jobData->cipherSpecManifest, inProgressBackup, jobData->pgHistory, &jobData->jobErrorTotal);
+                    backupResult, infoBackupCipherSpecManifest(jobData->infoBackup, backupResult->backupLabel), inProgressBackup,
+                    jobData->pgHistory, &jobData->jobErrorTotal);
 
                 // If a usable backup.manifest file is not found
                 if (manifest == NULL)
@@ -1623,7 +1624,7 @@ verifyProcess(const bool verboseText)
                 .walPathList = NULL,
                 .walFileList = strLstNew(),
                 .pgHistory = infoArchivePg(archiveInfo),
-                .cipherSpecManifest = infoBackupCipherSpec(backupInfo),
+                .infoBackup = backupInfo,
                 .cipherSpecArchive = infoArchiveCipherSpecMap(archiveInfo),
                 .archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator = archiveIdComparator),
                 .backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr),
