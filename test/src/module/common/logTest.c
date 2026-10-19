@@ -271,7 +271,13 @@ testRun(void)
         TEST_TITLE("continue without log file when it cannot be written");
 
         TEST_RESULT_VOID(logInit(logLevelOff, logLevelWarn, logLevelInfo, false, 0, 99, false), "init");
-        TEST_RESULT_BOOL(logFileSet("/dev/full"), true, "open log file where every write fails");
+
+        // Make every write to the log file fail with a read-only descriptor, which unlike /dev/full works on all platforms
+        const char *const fileReadOnly = TEST_PATH "/read-only.log";
+        TEST_RESULT_BOOL(logFileSet(fileReadOnly), true, "open log file");
+        TEST_RESULT_INT(close(logFdFile), 0, "close writable descriptor");
+        logFdFile = testLogOpen(fileReadOnly, O_RDONLY, 0);
+
         TEST_RESULT_BOOL(logAny(logLevelInfo), true, "info is logged to file");
         TEST_RESULT_VOID(
             logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 99, "test.c", "test_func", 0, "info message"), "log info");
@@ -340,7 +346,7 @@ testRun(void)
             "      NOTE: process will continue without log file.\n"
             "ERROR: [001]: error to stderr\n"
             "ERROR: [001]: error to stderr 2",
-            testErrorFile, ENOSPC, strerror(ENOSPC));
+            testErrorFile, EBADF, strerror(EBADF));
 
         testLogResult(stderrFile, buffer);
 
