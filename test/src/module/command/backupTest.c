@@ -4089,6 +4089,17 @@ testRun(void)
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
                 "compare file list");
+
+            // History manifest has no passphrase for the files
+            const InfoBackup *const infoBackup = infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, TEST_CIPHER_SPEC);
+            StorageRead *const read = storageNewReadP(
+                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/2019/20191108-080000F.manifest.gz"));
+            cipherBlockFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cipherModeDecrypt, infoBackupCipherSpec(infoBackup));
+            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), decompressFilterP(compressTypeGz));
+
+            TEST_RESULT_UINT(
+                cipherSpecType(manifestCipherSpec(manifestNewLoad(storageReadIo(read), infoBackupCipherSpec(infoBackup)))),
+                cipherTypeNone, "history manifest has no file passphrase");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
