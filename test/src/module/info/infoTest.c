@@ -316,11 +316,15 @@ testRun(void)
         TEST_ASSIGN(
             info,
             infoNewLoad(
-                testInfoReadHeader(harnessInfoEncryptP(contentSave, cipherSpec, .format = REPOSITORY_FORMAT_6), cipherSpec),
+                testInfoReadHeader(
+                    harnessInfoEncryptP(contentSave, cipherSpec, .format = REPOSITORY_FORMAT_6, .round = 2), cipherSpec),
                 cipherSpec, harnessInfoLoadNewCallback, strNew()),
             "load migrated info");
         TEST_RESULT_UINT(infoFormat(info), REPOSITORY_FORMAT_6, "    check format");
         TEST_RESULT_UINT(cipherSpecDigest(testInfoCipherSpec(info)), hashTypeSha1, "    check cipher sub digest unchanged");
+        TEST_RESULT_UINT(infoCipherRound(info), 2, "    check rounds from the header");
+        TEST_RESULT_VOID(infoCipherRoundSet(info, 3), "set rounds");
+        TEST_RESULT_UINT(infoCipherRound(info), 3, "    check rounds");
 
         // Header
         // -------------------------------------------------------------------------------------------------------------------------

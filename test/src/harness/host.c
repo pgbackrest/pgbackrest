@@ -708,6 +708,7 @@ hrnHostConfig(HrnHost *const this)
             {
                 strCatFmt(config, "repo1-cipher-type=%s\n", zNewStrId(cipherSpecType(hrnHostLocal.cipherSpecMain)));
                 strCatFmt(config, "repo1-cipher-pass=%s\n", strZ(strNewBuf(cipherSpecPass(hrnHostLocal.cipherSpecMain))));
+                strCatZ(config, "repo1-cipher-round=1000\n");
             }
 
             if (hrnHostLocal.bundle)

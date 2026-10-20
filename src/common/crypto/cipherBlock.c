@@ -27,6 +27,7 @@ typedef struct CipherBlock
     bool saltDone;                                                  // Has the salt been read/generated?
     bool processDone;                                               // Has any data been processed?
     const Buffer *pass;                                             // Passphrase used to generate encryption key
+    unsigned int round;                                             // PBKDF2 rounds, zero for one round of EVP_BytesToKey
     size_t headerSize;                                              // Size of header read during decrypt
     uint8_t header[CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN];       // Buffer to hold partial header during decrypt
     const EVP_CIPHER *cipher;                                       // Cipher object
@@ -175,10 +176,30 @@ cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t s
             uint8_t key[EVP_MAX_KEY_LENGTH];
             uint8_t initVector[EVP_MAX_IV_LENGTH];
 
-            cryptoError(
-                EVP_BytesToKey(
-                    this->cipher, this->digest, salt, bufPtrConst(this->pass), (int)bufSize(this->pass), 1, key, initVector) == 0,
-                "unable to generate key and initialization vector");
+            if (this->round == 0)
+            {
+                cryptoError(
+                    EVP_BytesToKey(
+                        this->cipher, this->digest, salt, bufPtrConst(this->pass), (int)bufSize(this->pass), 1, key,
+                        initVector) == 0,
+                    "unable to generate key and initialization vector");
+            }
+            // Else derive with PBKDF2, splitting the output into the key and initialization vector the way openssl enc -pbkdf2 does
+            else
+            {
+                const size_t keySize = (size_t)EVP_CIPHER_key_length(this->cipher);
+                const size_t initVectorSize = (size_t)EVP_CIPHER_iv_length(this->cipher);
+                uint8_t keyInitVector[EVP_MAX_KEY_LENGTH + EVP_MAX_IV_LENGTH];
+
+                cryptoError(
+                    PKCS5_PBKDF2_HMAC(
+                        (const char *)bufPtrConst(this->pass), (int)bufSize(this->pass), salt, PKCS5_SALT_LEN, (int)this->round,
+                        this->digest, (int)(keySize + initVectorSize), keyInitVector) == 0,
+                    "unable to generate key and initialization vector");
+
+                memcpy(key, keyInitVector, keySize);
+                memcpy(initVector, keyInitVector + keySize, initVectorSize);
+            }
 
             // Create context to track cipher
             cryptoError(!(this->cipherContext = EVP_CIPHER_CTX_new()), "unable to create context");
@@ -391,6 +412,9 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
     ASSERT(cipherSpecDigest(cipherSpec) != 0);
     ASSERT(cipherSpecPass(cipherSpec) != NULL && !bufEmpty(cipherSpecPass(cipherSpec)));
 
+    // A file with the magic derives with one round of EVP_BytesToKey
+    ASSERT(cipherSpecRound(cipherSpec) == 0 || param.header == cipherBlockHeaderNone);
+
     // Init crypto subsystem
     cryptoInit();
 
@@ -416,6 +440,7 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
             .cipher = cipher,
             .digest = digest,
             .pass = bufDup(cipherSpecPass(cipherSpec)),
+            .round = cipherSpecRound(cipherSpec),
         };
     }
     OBJ_NEW_END();

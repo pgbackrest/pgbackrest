@@ -87,6 +87,8 @@ cmdStanzaUpgrade(void)
                 format = formatRequest;
             }
 
+            cipherRoundCheck(repoIdx, format);
+
             // Since the file save of archive.info and backup.info are not atomic, then check and update each separately.
             // Update archive
             if (pgControl.version != archiveInfo.version || pgControl.systemId != archiveInfo.systemId)
@@ -103,7 +105,9 @@ cmdStanzaUpgrade(void)
             }
 
             // Update the format on both info files together so they never disagree
-            if (format != formatArchive || format != formatBackup)
+            const bool formatUpdate = format != formatArchive || format != formatBackup;
+
+            if (formatUpdate)
             {
                 // Report a repository that was found at two formats. It is repaired here but a prior upgrade did not finish, which
                 // the user has not been told about since the run it happened on did not get far enough to report it.
@@ -130,6 +134,26 @@ cmdStanzaUpgrade(void)
 
                 infoArchiveUpgrade = true;
                 infoBackupUpgrade = true;
+            }
+
+            // Set PBKDF2 rounds on the info files of an encrypted repo at format >= 6 when the format is updated or rounds are
+            // requested
+            if (format >= REPOSITORY_FORMAT_6 && cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx) != cipherTypeNone &&
+                (formatUpdate || cfgOptionIdxSource(cfgOptRepoCipherRound, repoIdx) != cfgSourceDefault))
+            {
+                const unsigned int cipherRound = cipherRoundGet(repoIdx);
+
+                if (infoArchiveCipherRound(infoArchive) != cipherRound)
+                {
+                    infoArchiveCipherRoundSet(infoArchive, cipherRound);
+                    infoArchiveUpgrade = true;
+                }
+
+                if (infoBackupCipherRound(infoBackup) != cipherRound)
+                {
+                    infoBackupCipherRoundSet(infoBackup, cipherRound);
+                    infoBackupUpgrade = true;
+                }
             }
 
             // Throw an error if the info files do not match before saving (even if only one needed to be updated)

@@ -57,6 +57,7 @@ typedef struct InfoPub
     const String *backrestVersion;                                  // pgBackRest version
     CipherSpecMap *cipherSpecMap;                                   // Cipher keys for dependent files
     time_t cipherRotateTime;                                        // Time of the last cipher key rotation
+    unsigned int cipherRound;                                       // PBKDF2 rounds the file is encrypted with, zero when none
 } InfoPub;
 
 // Repository format
@@ -95,6 +96,15 @@ infoCipherRotateTime(const Info *const this)
 }
 
 FN_EXTERN void infoCipherRotateTimeSet(Info *this, time_t cipherRotateTime);
+
+// PBKDF2 rounds the file is encrypted with, zero when none
+FN_INLINE_ALWAYS unsigned int
+infoCipherRound(const Info *const this)
+{
+    return THIS_PUB(Info)->cipherRound;
+}
+
+FN_EXTERN void infoCipherRoundSet(Info *this, unsigned int cipherRound);
 
 // pgBackRest version
 FN_INLINE_ALWAYS const String *

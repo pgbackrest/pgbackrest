@@ -12,6 +12,9 @@ copied into the object, so the caller can release whatever it read the pass from
 
 An unset digest means the repository format of the file being read or written specifies it.
 
+A pass derives the key with one round of EVP_BytesToKey unless rounds are set, in which case it derives with PBKDF2 using that many
+rounds. Rounds are for a passphrase that may be guessable. A generated key is random enough that more rounds add nothing.
+
 There is no digest or pass when the type is none, and the pass is never logged.
 ***********************************************************************************************************************************/
 #ifndef COMMON_CRYPTO_SPEC_H
@@ -35,6 +38,7 @@ typedef struct CipherSpecNewParam
 {
     VAR_PARAM_HEADER;
     HashType digest;                                                // Digest to derive the key with, unset when specified by format
+    unsigned int round;                                             // PBKDF2 rounds, zero for one round of EVP_BytesToKey
 } CipherSpecNewParam;
 
 #define cipherSpecNewP(type, pass, ...)                                                                                            \
@@ -59,6 +63,7 @@ typedef struct CipherSpecPub
 {
     CipherType type;                                                // Cipher type, none when not encrypted
     HashType digest;                                                // Digest the pass derives with, unset when specified by format
+    unsigned int round;                                             // PBKDF2 rounds, zero for one round of EVP_BytesToKey
     const Buffer *pass;                                             // Passphrase text or key bytes
 } CipherSpecPub;
 
@@ -74,6 +79,13 @@ FN_INLINE_ALWAYS HashType
 cipherSpecDigest(const CipherSpec *const this)
 {
     return THIS_PUB(CipherSpec)->digest;
+}
+
+// PBKDF2 rounds, zero for one round of EVP_BytesToKey
+FN_INLINE_ALWAYS unsigned int
+cipherSpecRound(const CipherSpec *const this)
+{
+    return THIS_PUB(CipherSpec)->round;
 }
 
 // Passphrase text or key bytes

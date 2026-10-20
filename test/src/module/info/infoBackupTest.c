@@ -918,22 +918,22 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("save and load backup info file");
 
-        InfoBackup *infoBackup = infoBackupNew(
-            PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT, NULL);
-        TEST_RESULT_VOID(
-            infoBackupSaveFile(
-                infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()), "save backup info");
+        const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("pass"));
 
-        TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()),
-            "load main");
+        InfoBackup *infoBackup = infoBackupNew(
+            PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_6, NULL);
+        TEST_RESULT_VOID(infoBackupCipherRoundSet(infoBackup, 2), "set rounds");
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpec), "save backup info");
+
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpec), "load main");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
+        TEST_RESULT_UINT(infoBackupCipherRound(infoBackup), 2, "check rounds");
 
         HRN_STORAGE_REMOVE(storageTest, INFO_BACKUP_FILE, .errorOnMissing = true, .comment = "remove main so only copy exists");
-        TEST_ASSIGN(
-            infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()),
-            "load copy");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpec), "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
+        TEST_RESULT_UINT(infoBackupCipherRound(infoBackup), 2, "check rounds");
     }
 
     // *****************************************************************************************************************************

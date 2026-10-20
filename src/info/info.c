@@ -325,13 +325,17 @@ infoNewLoad(
 
             if (cipherResult != NULL)
             {
-                const unsigned int formatHeader = cipherBlockFormatResult(cipherResult);
+                const CipherBlockFormatResult formatResult = cipherBlockFormatResult(cipherResult);
 
-                if (this->pub.format != formatHeader)
+                if (this->pub.format != formatResult.format)
                 {
                     THROW_FMT(
-                        FormatError, "repository format %u does not match header format %u", this->pub.format, formatHeader);
+                        FormatError, "repository format %u does not match header format %u", this->pub.format,
+                        formatResult.format);
                 }
+
+                // Rounds the file is encrypted with
+                this->pub.cipherRound = formatResult.round;
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -646,6 +650,23 @@ infoCipherRotateTimeSet(Info *const this, const time_t cipherRotateTime)
     ASSERT(cipherRotateTime > 0);
 
     this->pub.cipherRotateTime = cipherRotateTime;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+infoCipherRoundSet(Info *const this, const unsigned int cipherRound)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+        FUNCTION_TEST_PARAM(UINT, cipherRound);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(cipherRound == 0 || infoFormat(this) >= REPOSITORY_FORMAT_6);
+
+    this->pub.cipherRound = cipherRound;
 
     FUNCTION_TEST_RETURN_VOID();
 }

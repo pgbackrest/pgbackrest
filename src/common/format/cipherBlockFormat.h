@@ -47,18 +47,25 @@ FN_EXTERN IoFilter *cipherBlockFormatHeaderNewPack(const Pack *paramList);
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-// The format the header gave, which is what the header was read for
-FN_EXTERN unsigned int cipherBlockFormatResult(PackRead *packRead);
+// What the header gave
+typedef struct CipherBlockFormatResult
+{
+    unsigned int format;                                            // Format the file was written at
+    unsigned int round;                                             // PBKDF2 rounds the file is encrypted with, zero when none
+} CipherBlockFormatResult;
+
+FN_EXTERN CipherBlockFormatResult cipherBlockFormatResult(PackRead *packRead);
 
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
 // Write the header the format requires into the buffer the content will be written into and add encryption to the filter group. A
-// key id is stored in the header when one is specified. No header is added when the repository is not encrypted.
+// key id or PBKDF2 rounds are stored in the header when specified. No header is added when the repository is not encrypted.
 typedef struct CipherBlockFormatFilterGroupWriteAddParam
 {
     VAR_PARAM_HEADER;
     const String *keyId;                                            // Key id to store in the header, NULL to store no id
+    unsigned int round;                                             // PBKDF2 rounds to derive with, zero for none
 } CipherBlockFormatFilterGroupWriteAddParam;
 
 #define cipherBlockFormatFilterGroupWriteAddP(filterGroup, cipherSpec, format, ...)                                                \

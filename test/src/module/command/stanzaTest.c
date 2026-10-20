@@ -13,6 +13,12 @@ Test Stanza Commands
 #include "harness/pq.h"
 
 /***********************************************************************************************************************************
+Test data
+***********************************************************************************************************************************/
+// Passphrase generated with openssl rand -base64 32
+#define TEST_CIPHER_PASS_GENERATED                                  "SOb5SRNoVLdVRtr2K3lr/oDmocARh2c+SObK6H8CtFY="
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -119,6 +125,8 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
+        // Rounds are not used at format 5
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherRound, 2, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 3, "6");
         // Request a format for repo1 as well, where the stanza already exists
@@ -126,7 +134,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 4, cipherTypeAes256Cbc);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 4, "6");
-        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "87654321");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, TEST_CIPHER_PASS_GENERATED);
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         const time_t timeCreate = time(NULL);
@@ -136,6 +144,7 @@ testRun(void)
             "P00   INFO: stanza-create for stanza 'db' on repo1\n"
             "P00   INFO: stanza 'db' already exists on repo1 and is valid\n"
             "P00   INFO: stanza-create for stanza 'db' on repo2\n"
+            "P00   WARN: option 'repo2-cipher-round' requires repository format 6 or higher\n"
             "P00   INFO: stanza-create for stanza 'db' on repo3\n"
             "P00   INFO: stanza-create for stanza 'db' on repo4");
 
@@ -191,7 +200,8 @@ testRun(void)
         TEST_ASSIGN(
             infoArchive,
             infoArchiveLoadFile(
-                storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
+                storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR,
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_GENERATED))),
             "load archive info from encrypted repo4");
 
         const CipherSpecMap *const cipherSpecMapCreate = infoArchiveCipherSpecMap(infoArchive);
@@ -212,9 +222,39 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupLoadFile(
-                storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
+                storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR,
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_GENERATED))),
             "load backup info from encrypted repo4");
         TEST_RESULT_UINT(cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeAes256Cbc, "cipher sub set");
+
+        // A passphrase that looks generated uses one round when the rounds are not requested
+        TEST_RESULT_BOOL(
+            memcmp(
+                bufPtrConst(storageGetP(storageNewReadP(storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR))), "PGBR006P\x00\x00\x00\x01",
+                12) == 0,
+            true, "header contains the rounds");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("passphrase that looks generated");
+
+        #define TEST_CIPHER_SPEC_GENERATED(pass)                    cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(pass))
+
+        TEST_RESULT_BOOL(cipherPassGenerated(TEST_CIPHER_SPEC_GENERATED(TEST_CIPHER_PASS_GENERATED)), true, "generated");
+        TEST_RESULT_BOOL(cipherPassGenerated(TEST_CIPHER_SPEC_GENERATED("not base64")), false, "not base64");
+        TEST_RESULT_BOOL(
+            cipherPassGenerated(TEST_CIPHER_SPEC_GENERATED("SOb5SRNoVLdVRtr2K3lr/oDmocARh2c+SObK6H8CtA==")), false,
+            "less than 256 bits");
+        TEST_RESULT_BOOL(
+            cipherPassGenerated(TEST_CIPHER_SPEC_GENERATED("Y29ycmVjdAlob3JzZQ0KYmF0dGVyeSBzdGFwbGUgYW5kIG1vcmUgdGV4dA==")), false,
+            "text");
+        TEST_RESULT_BOOL(
+            cipherPassGenerated(TEST_CIPHER_SPEC_GENERATED("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")), false,
+            "too few distinct bytes");
+        TEST_RESULT_BOOL(
+            cipherPassGenerated(TEST_CIPHER_SPEC_GENERATED("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=")), false,
+            "too few distinct differences");
+
+        #undef TEST_CIPHER_SPEC_GENERATED
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cmdStanzaCreate missing files - multi-repo and encryption");
@@ -1248,6 +1288,8 @@ testRun(void)
 
         // Migrate the repository
         hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 1, "6");
+        StringList *const argListRound = strLstDup(argList);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherRound, 1, "1");
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
 
         const time_t timeMigrate = time(NULL);
@@ -1287,6 +1329,39 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(walRead)), "WAL BEFORE MIGRATION", "wal from before the migration is still readable");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-upgrade - rounds are changed only when requested");
+
+        TEST_RESULT_UINT(infoArchiveCipherRound(infoArchiveMigrate), 1, "archive info rounds set by the migration");
+
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argListRound);
+
+        TEST_RESULT_UINT(cipherRoundGet(0), 600000, "default rounds for a passphrase that does not look generated");
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - rounds not requested");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: stanza 'db' on repo1 is already up to date");
+
+        hrnCfgArgKeyRawZ(argListRound, cfgOptRepoCipherRound, 1, "2");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argListRound);
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - rounds requested");
+        TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
+
+        TEST_RESULT_UINT(
+            infoArchiveCipherRound(infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain)), 2,
+            "archive info rounds");
+        TEST_RESULT_UINT(
+            infoBackupCipherRound(infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecMain)), 2,
+            "backup info rounds");
+
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argListRound);
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - rounds requested are already set");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: stanza 'db' on repo1 is already up to date");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
 

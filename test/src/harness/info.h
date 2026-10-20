@@ -48,6 +48,7 @@ typedef struct HarnessInfoEncryptParam
 {
     VAR_PARAM_HEADER;
     unsigned int format;                                            // Repository format the file is stored at
+    unsigned int round;                                             // PBKDF2 rounds stored in the header, zero for none
 } HarnessInfoEncryptParam;
 
 #define harnessInfoEncryptP(content, cipherSpec, ...)                                                                              \
