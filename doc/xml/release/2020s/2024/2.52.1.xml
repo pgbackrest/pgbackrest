@@ -15,6 +15,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix issue with files larger on the replica than on the primary.</p>
+
+                <p>With block incremental, when a file was a different size on the primary than on the standby during a backup from standby, the next diff or incr backup stored the size from the primary. The backup after that failed with <quote>repo size must be &gt; 0</quote>.</p>
             </release-item>
         </release-bug-list>
     </release-core-list>

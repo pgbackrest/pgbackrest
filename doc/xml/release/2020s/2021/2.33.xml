@@ -12,6 +12,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix option warnings breaking async <cmd>archive-get</cmd>/<cmd>archive-push</cmd>.</p>
+
+                <p>An option warning in the async process was logged to a closed stdout, which made the process abort. Since the async role can now have different valid options than the default role, this happened more often. Option warnings are now logged only for the default role.</p>
             </release-item>
 
             <release-item>
@@ -25,6 +27,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix memory leak in backup during archive copy.</p>
+
+                <p>Copying WAL into the backup with <br-option>archive-copy</br-option> leaked memory, especially when the WAL needed to be recompressed.</p>
             </release-item>
 
             <release-item>
@@ -38,6 +42,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix stack overflow in cipher passphrase generation.</p>
+
+                <p>The buffer for the generated passphrase had no room for the terminating zero. This was found on arm64 with musl libc.</p>
             </release-item>
 
             <release-item>
@@ -51,6 +57,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix <cmd>repo-ls</cmd> <id>/</id> on <proper>S3</proper> repositories.</p>
+
+                <p><proper>S3</proper> reports <id>/</id> as a file without the expected headers, which caused an error. <id>/</id> is now reported as not existing on storage that does not support paths.</p>
             </release-item>
         </release-bug-list>
 
@@ -99,20 +107,36 @@
                 </release-item-contributor-list>
 
                 <p>Multiple repository support.</p>
+
+                <p>Up to four repositories may be configured, e.g. a local repository for fast restores and a remote repository for redundancy. <cmd>archive-push</cmd> pushes WAL to all repositories, and backups are scheduled for each repository. Some commands work with all repositories, while others require <br-option>repo</br-option>. <br-option>repo</br-option> is not required when only <id>repo1</id> is configured.</p>
             </release-item>
 
             <release-item>
-                <github-issue id="631"/>
-                <github-issue id="743"/>
-                <github-pull-request id="1320"/>
+                <commit subject="Decode JSON \u escaped characters."/>
+                <commit subject="Rename uri to path where appropriate in HTTP and storage modules."/>
+                <commit subject="Encode path before passing to HttpRequest."/>
+                <commit subject="Add strNewEncode(), strCatEncode(), and bufNewDecode()."/>
+                <commit subject="Combine encode module files into a single file."/>
+                <commit subject="Use switch rather than if-else for encoding types."/>
+                <commit subject="Do not expose valid/validate functions from encode module."/>
+                <commit subject="Add ASSERT_MSG()."/>
+                <commit subject="Add base64url encoding."/>
+                <commit subject="Make remote storage objects writeable."/>
+                <commit subject="GCS support for repository storage.">
+                    <github-issue id="631"/>
+                    <github-issue id="743"/>
+                    <github-pull-request id="1320"/>
+                </commit>
 
                 <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="cynthia.shang"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="daniel.farina"/>
+                    <release-item-tester id="daniel.farina"/>
                 </release-item-contributor-list>
 
                 <p>GCS support for repository storage.</p>
+
+                <p>Set <br-option>repo-type=gcs</br-option> to store the repository on <proper>GCS</proper> or a <proper>GCS</proper>-compatible object store.</p>
             </release-item>
 
             <release-item>
@@ -126,6 +150,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <br-option>archive-header-check</br-option> option.</p>
+
+                <p>The WAL header is checked against the <postgres/> version and system identifier to make sure WAL is pushed to the correct stanza. The check is enabled by default and can be disabled when needed, e.g. for encrypted WAL.</p>
             </release-item>
         </release-feature-list>
 
@@ -140,6 +166,8 @@
                 </release-item-contributor-list>
 
                 <p>Include recreated system databases during selective restore.</p>
+
+                <p>A system database (<id>template0</id>, <id>template1</id>, or <id>postgres</id>) that was recreated has an OID that makes it look like a user database. These databases are now always restored, whatever their OID.</p>
             </release-item>
 
             <release-item>
@@ -153,22 +181,30 @@
                 </release-item-contributor-list>
 
                 <p>Exclude <id>content-length</id> from <proper>S3</proper> signed headers.</p>
+
+                <p>Some proxies modify the <id>content-length</id> header, which made authentication fail when it was signed.</p>
             </release-item>
 
             <release-item>
                 <github-pull-request id="1321"/>
 
                 <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="cynthia.shang"/>
                 </release-item-contributor-list>
 
                 <p>Consolidate less commonly used repository storage options.</p>
+
+                <p>The <proper>S3</proper> and <proper>Azure</proper> CA, host, port, and TLS verification options are renamed to <br-option>repo-storage-*</br-option>, e.g. <br-option>repo1-s3-host</br-option> is now <br-option>repo1-storage-host</br-option>. The old names are still accepted.</p>
             </release-item>
 
             <release-item>
-                <github-issue id="1251"/>
-                <github-issue id="1293"/>
-                <github-pull-request id="1255"/>
+                <commit subject="Set config path in configure script."/>
+                <commit subject="Allow custom config-path default with ./configure --with-configdir.">
+                    <github-issue id="1251"/>
+                    <github-issue id="1293"/>
+                    <github-pull-request id="1255"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="michael.schout"/>
@@ -176,6 +212,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow custom <setting>config-path</setting> default with <id>./configure --with-configdir</id>.</p>
+
+                <p>Packagers can set a different default for <setting>config-path</setting> when building. Without the option the default is still <file>/etc/pgbackrest</file>.</p>
             </release-item>
 
             <release-item>
@@ -197,6 +235,7 @@
                 <github-pull-request id="1332"/>
 
                 <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="cynthia.shang"/>
                 </release-item-contributor-list>
 
@@ -207,10 +246,85 @@
                 <github-pull-request id="1318"/>
 
                 <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="cynthia.shang"/>
                 </release-item-contributor-list>
 
                 <p>Add <code>HttpUrl</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Move configuration definition to <file>src/build/config/config.yaml</file>.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove unused header files in S3 and Azure storage modules."/>
+                <commit subject="Make S3/Azure file missing error messages match Posix."/>
+                <commit subject="Add storageInfoLevelType."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve storage drivers.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Better exclusions for configure help."/>
+                <commit subject="Remove autoconf cache when configure is built."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve the configure script.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update to help.auto.c missed in d1aa765a."/>
+                <commit subject="Update to help.auto.c missed in 9506ffae and 92d12ccb."/>
+                <commit subject="Update to help.auto.c missed in 75987621."/>
+                <commit subject="Update to help.auto.c missed in d372dd652c9."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update help.auto.c missed in prior commits.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add missing linefeeds."/>
+                <commit subject="Use list to search for WAL segments to preserve in queueNeed()."/>
+                <commit subject="Add missing linefeed."/>
+                <commit subject="Suppress implicit-fallthrough warning."/>
+                <commit subject="Fix comments."/>
+                <commit subject="Add missing assert."/>
+                <commit subject="Print module type (e.g. c or h) in stack trace."/>
+                <commit subject="Remove extra spaces before macro continuation."/>
+                <commit subject="Pass cipher type directly to backupFileProtocol()."/>
+                <commit subject="Fix comment typo."/>
+                <commit subject="Changed unnecessary strNewFmt() to strNew()."/>
+                <commit subject="Fix comment type and phrasing."/>
+                <commit subject="Do not lower-case help summaries when first word is an acronym."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code and comments.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess and config.sub to latest versions.</p>
             </release-item>
         </release-development-list>
     </release-core-list>
@@ -226,6 +340,8 @@
                 </release-item-contributor-list>
 
                 <p>Update reference to include links to user guide examples.</p>
+
+                <p>The command reference now links to the user guide sections with examples, and some descriptions were clarified, e.g. <br-option>set</br-option> for <cmd>expire</cmd>.</p>
             </release-item>
 
             <release-item>
@@ -239,6 +355,8 @@
                 </release-item-contributor-list>
 
                 <p>Update selective restore documentation with caveats.</p>
+
+                <p>Recovery may fail unless <br-option>type=immediate</br-option> is specified, because <postgres/> reports zeroed pages as errors after consistency is reached. On <postgres/> &gt;= 13 <pg-setting>ignore_invalid_pages</pg-setting> may be used, but check the logs for invalid pages in the selected databases.</p>
             </release-item>
 
             <release-item>
@@ -252,6 +370,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <setting>compress-type</setting> clarification to <setting>archive-copy</setting> documentation.</p>
+
+                <p>WAL must be recompressed when <cmd>archive-push</cmd> and <cmd>backup</cmd> use a different <br-option>compress-type</br-option>, which can be expensive.</p>
             </release-item>
 
             <release-item>
@@ -264,6 +384,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <setting>compress-level</setting> defaults per <setting>compress-type</setting> value.</p>
+
+                <p>The defaults are 9 for <id>bz2</id>, 6 for <id>gz</id>, 1 for <id>lz4</id>, and 3 for <id>zst</id>.</p>
             </release-item>
 
             <release-item>
@@ -278,5 +400,56 @@
                 <p>Add note about required <proper>NFS</proper> settings being the same as <postgres/>.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Fix option validity by role and make sections conform to C help."/>
+                <commit subject="Update to help.auto.c missed in e7bbdf38."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix option validity by role and make sections conform to C help.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Use latex sloppypar to fix monospace wrapping in PDF rendering."/>
+                <commit subject="Fix .gitignore in doc directory."/>
+                <commit subject="Combine multi-repo release notes."/>
+                <commit subject="Link Github issues/PRs to release notes."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve the documentation build and release notes.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Ensure test user has permissions before removing test files."/>
+                <commit subject="Fix tests that ensure log levels are not set for local/remote roles."/>
+                <commit subject="Silence chmod warning of empty path when removing unit test data."/>
+                <commit subject="Reduce default file log level for integration tests."/>
+                <commit subject="Rename FUNCTION_HARNESS_RESULT*() macros to FUNCTION_HARNESS_RETURN*()."/>
+                <commit subject="Add backup delta unit test."/>
+                <commit subject="Add HRN_STORAGE_TIME() harness macro."/>
+                <commit subject="Explicitly free local processes after restore error unit test."/>
+                <commit subject="Add back performance tests lost during Github Actions switch."/>
+                <commit subject="Allow key replacements in TEST_ERROR*() macros."/>
+                <commit subject="Add --gen-check option to test.pl to check autogenerated code."/>
+                <commit subject="Fix extraneous hrnReplaceKey() calls in unit tests."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests and test tools.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

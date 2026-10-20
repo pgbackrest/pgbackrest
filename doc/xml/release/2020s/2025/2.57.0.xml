@@ -11,6 +11,8 @@
                 </release-item-contributor-list>
 
                 <p>Unnest HTTP/TLS/socket timeouts.</p>
+
+                <p>A failed socket connection was also retried by the TLS and HTTP layers, so with the default <setting>io-timeout</setting> of 60 seconds a connection took nine minutes to time out. Each layer now retries only its own failures.</p>
             </release-item>
 
             <release-item>
@@ -22,6 +24,18 @@
                 </release-item-contributor-list>
 
                 <p>Fix possible segfault in page checksum error message.</p>
+
+                <p>The error message for invalid page checksums used a string that was out of scope, which could log garbage or crash. This was most likely with <proper>pg_tde</proper>, since every encrypted file fails the page checksum.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix possible segfault in backup resume messages.</p>
+
+                <p>The message that reports why a backup cannot be resumed used a string that was out of scope, which could log garbage or crash.</p>
             </release-item>
         </release-bug-list>
 
@@ -37,6 +51,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <setting>repo-symlink</setting> option to suppress creation of repository symlinks.</p>
+
+                <p>Some filesystems that are otherwise <proper>Posix</proper>-compatible do not support symlinks. Set <br-option>repo-symlink=n</br-option> to keep the <path>latest</path> and tablespace symlinks from being created in the repository.</p>
             </release-item>
         </release-feature-list>
 
@@ -50,7 +66,74 @@
                 </release-item-contributor-list>
 
                 <p>Add HTTP retries for 408 and 429 errors.</p>
+
+                <p>HTTP 408 (Request Timeout) and 429 (Too Many Requests) errors are now retried. 429 errors are common on <proper>Cloudflare R2</proper>.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Finalize catalog number for PostgreSQL 18 release."/>
+                <commit subject="Update release note for PostgreSQL 18 experimental support."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Finalize catalog number for PostgreSQL 18 release.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix comment typo."/>
+                <commit subject="Remove unused pathSync parameter in SFTP storage driver."/>
+                <commit subject="Remove no longer used GLUE() macro."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Remove unused code and fix comments.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update user guide and tests to Ubuntu 22.04.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="New CI container build for PostgreSQL 18 beta3."/>
+                <commit subject="Allow multi-architecture tests to continue if one fails."/>
+                <commit subject="Improve support for multi-architecture builds."/>
+                <commit subject="Move aarch64 test to Github Actions."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix errant STRDEF() in command/backup unit test."/>
+                <commit subject="Use FN_NO_RETURN macro consistently in tests."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clean up unit tests.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

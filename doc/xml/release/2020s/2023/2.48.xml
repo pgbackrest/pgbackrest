@@ -9,11 +9,12 @@
                     <release-item-ideator id="burak.yurdakul"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="stephen.frost"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="burak.yurdakul"/>
+                    <release-item-tester id="burak.yurdakul"/>
                 </release-item-contributor-list>
 
                 <p>Fix issue restoring block incremental without a block list.</p>
+
+                <p>A block map with no blocks, which is written when a file timestamp changes but the file does not, was not decrypted when it followed a file stored without block incremental in the same bundle read. With enough affected files the retries were exhausted and the restore failed.</p>
             </release-item>
         </release-bug-list>
 
@@ -30,6 +31,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <br-option>--repo-storage-tag</br-option> option to create object tags.</p>
+
+                <p>Set <setting>repo-storage-tag</setting> to add tags to the objects written to an <proper>S3</proper>, <proper>GCS</proper>, or <proper>Azure</proper> repository. Tags are set for each repository.</p>
             </release-item>
 
             <release-item>
@@ -42,6 +45,8 @@
                 </release-item-contributor-list>
 
                 <p>Add known hosts checking for <proper>SFTP</proper> storage driver.</p>
+
+                <p><proper>SFTP</proper> host keys are now checked against the known hosts files by default, i.e. <br-option>repo-sftp-host-key-check-type=strict</br-option>. Set <br-option>repo-sftp-host-key-check-type=accept-new</br-option> to add new hosts automatically, or <br-option>repo-sftp-host-key-check-type=none</br-option> to skip the check as before.</p>
             </release-item>
 
             <release-item>
@@ -61,6 +66,8 @@
                 </release-item-contributor-list>
 
                 <p>Support for dual stack connections.</p>
+
+                <p>Each address a host name resolves to is now tried in turn, e.g. an IPv6 address with no route to the host and then an IPv4 address, until one connects or the timeout expires. Repeated retry errors are also summarized in error messages.</p>
             </release-item>
 
             <release-item>
@@ -73,6 +80,8 @@
                 </release-item-contributor-list>
 
                 <p>Add backup size completed/total to <cmd>info</cmd> command <proper>JSON</proper> output.</p>
+
+                <p>The JSON output of the <cmd>info</cmd> command now includes the completed and total size of a backup in progress, so progress can be monitored by other programs.</p>
             </release-item>
         </release-feature-list>
 
@@ -86,6 +95,8 @@
                 </release-item-contributor-list>
 
                 <p>Multi-stanza check command.</p>
+
+                <p>When <setting>stanza</setting> is not specified, the <cmd>check</cmd> command now checks every stanza in the configuration.</p>
             </release-item>
 
             <release-item>
@@ -98,6 +109,8 @@
                 </release-item-contributor-list>
 
                 <p>Retry reads of <file>pg_control</file> until checksum is valid.</p>
+
+                <p>On some filesystems, e.g. ext4, a read of <file>pg_control</file> during a concurrent write can return torn data. The read is now retried until the checksum is valid.</p>
             </release-item>
 
             <release-item>
@@ -109,6 +122,8 @@
                 </release-item-contributor-list>
 
                 <p>Optimize WAL segment check after successful backup.</p>
+
+                <p>The check for WAL segments after a backup listed the storage once for each segment. Each WAL directory is now listed once and the list is reused.</p>
             </release-item>
 
             <release-item>
@@ -120,6 +135,8 @@
                 </release-item-contributor-list>
 
                 <p>Improve <proper>GCS</proper> multi-part performance.</p>
+
+                <p>Chunks of a multi-part upload are now uploaded as soon as they are available.</p>
             </release-item>
 
             <release-item>
@@ -131,6 +148,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow <cmd>archive-get</cmd> command to run when stanza is stopped.</p>
+
+                <p>The <cmd>archive-get</cmd> command does not write to the repository, so it can now run while the stanza is stopped, as <cmd>restore</cmd> can.</p>
             </release-item>
 
             <release-item>
@@ -142,6 +161,8 @@
                 </release-item-contributor-list>
 
                 <p>Accept leading tilde in paths for SFTP public/private keys.</p>
+
+                <p>Paths for <setting>repo-sftp-private-key-file</setting> and <setting>repo-sftp-public-key-file</setting> may now begin with <path>~</path>, as documented.</p>
             </release-item>
 
             <release-item>
@@ -154,6 +175,8 @@
                 </release-item-contributor-list>
 
                 <p>Reload GCS credentials before renewing authentication token.</p>
+
+                <p>The service key file is now read again before the authentication token is renewed, so the key can be replaced while a command is running.</p>
             </release-item>
         </release-improvement-list>
 
@@ -167,6 +190,71 @@
                 </release-item-contributor-list>
 
                 <p>Add report option to <cmd>check</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess and config.sub to latest versions.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update xxHash to v0.8.2.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove UNCONSTIFY() from gz compression module."/>
+                <commit subject="Adjust range check per Coverity complaint."/>
+                <commit subject="Refactor IoRead handling in backupFile()."/>
+                <commit subject="Encode key in HTTP query."/>
+                <commit subject="Add missing const qualifier to errorTypeList."/>
+                <commit subject="Use PROJECT_NAME constant instead of string literal."/>
+                <commit subject="Add missing comma in protocolParallelJobToLog()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Finalize catalog number for PostgreSQL 16 release.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add prefix to meson build target to avoid conflicts.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix manifest command filter for files in a tablespace.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add block incremental info to restore detail logging.</p>
             </release-item>
         </release-development-list>
     </release-core-list>
@@ -182,6 +270,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix configuration reference example for the <br-option>tls-server-address</br-option> option.</p>
+
+                <p>The example <id>::*</id> was not valid. Use <id>*</id> for IPv4 or <id>::</id> for IPv6.</p>
             </release-item>
 
             <release-item>
@@ -192,6 +282,24 @@
                 <p>Fix command reference example for the <br-option>filter</br-option> option.</p>
             </release-item>
         </release-bug-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Split release notes into individual files.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update help title for the --annotation option.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
 
     <release-test-list>
@@ -209,5 +317,30 @@
                 <p>Allow <id>storage/sftp</id> unit test to run without <id>libssh2</id> installed.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Rename HRN_PG_CONTROL_OVERRIDE_PUT()."/>
+                <commit subject="Improve backup test harness to handle very large quantities of WAL."/>
+                <commit subject="Remove duplicate tests from storage/sftp unit test module."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix conflicting group in test containers."/>
+                <commit subject="New CI container build for PostgreSQL 16 rc1."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
     </release-test-list>
 </release>

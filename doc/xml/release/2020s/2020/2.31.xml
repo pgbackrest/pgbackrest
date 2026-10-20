@@ -46,8 +46,7 @@
                     <release-item-ideator id="brian.peterson"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="cynthia.shang"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="brian.peterson"/>
+                    <release-item-tester id="brian.peterson"/>
                 </release-item-contributor-list>
 
                 <p>Add <br-option>repo-azure-endpoint</br-option> option.</p>
@@ -77,8 +76,7 @@
             <release-item>
                 <release-item-contributor-list>
                     <release-item-reviewer id="cynthia.shang"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="MannerMan"/>
+                    <release-item-tester id="MannerMan"/>
                 </release-item-contributor-list>
 
                 <p>Improve performance of large file lists in <cmd>backup</cmd>/<cmd>restore</cmd> commands.</p>

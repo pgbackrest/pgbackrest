@@ -50,6 +50,10 @@ Tokens
     --border: #e3e8ef;
     --border-strong: #cbd4e1;
 
+    --keyword-weight: 500;
+    --keyword-bg: var(--bg-surface);
+    --keyword-border: #e9edf2;
+
     /* The end of a menu that carries on past the window: the color of the rules the bar is drawn with against a light bar, and a
        shade inside them against a dark bar, where the same step away from the bar reads harder. The band holds this color across a
        fifth of its width before it gives out, and that is what carries it, so a color picked to carry on its own is too much. */
@@ -93,6 +97,10 @@ Tokens
         --text-muted: #94a3b8;
         --border: #1f2937;
         --border-strong: #334155;
+
+        --keyword-weight: 600;
+        --keyword-bg: var(--bg-surface-2);
+        --keyword-border: var(--border);
         --menu-edge: #1d2634;
 
         --accent: #64a8ef;
@@ -130,6 +138,9 @@ html
     font-family: var(--font-body);
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
+
+    /* Opening details does not scroll the page */
+    overflow-anchor: none;
 }
 
 body
@@ -748,6 +759,158 @@ li.list-unordered::marker
 }
 
 /***********************************************************************************************************************************
+List Details
+
+An item with details has a toggle in place of the bullet. The toggle is a plus when the details have text and a chevron when they
+have only links.
+***********************************************************************************************************************************/
+li.list-unordered:has(> .list-detail)
+{
+    position: relative;
+    list-style-type: none;
+}
+
+/* The toggle fills the space the bullet is drawn in, level with the first line of the item */
+.list-detail-toggle
+{
+    position: absolute;
+    top: 0;
+    left: -1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.3rem;
+    height: 1.7em;
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    cursor: pointer;
+    list-style: none;
+}
+
+.list-detail-toggle::-webkit-details-marker
+{
+    display: none;
+}
+
+.list-detail-toggle:hover
+{
+    background-color: var(--accent-soft);
+    color: var(--accent-hover);
+}
+
+.list-detail-toggle:focus-visible
+{
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+/* A chevron that points right when closed and down when open */
+.list-detail-toggle::before
+{
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: translateX(-1px) rotate(-45deg);
+}
+
+.list-detail[open] > .list-detail-toggle::before
+{
+    transform: translateY(-2px) rotate(45deg);
+}
+
+/* A plus that is a minus when open */
+.list-detail:has(> .list-detail-text) > .list-detail-toggle
+{
+    color: var(--accent);
+}
+
+.list-detail:has(> .list-detail-text) > .list-detail-toggle::before
+{
+    width: 10px;
+    height: 10px;
+    border: none;
+    background:
+        linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat,
+        linear-gradient(currentColor, currentColor) center / 2px 100% no-repeat;
+    transform: none;
+}
+
+.list-detail[open]:has(> .list-detail-text) > .list-detail-toggle::before
+{
+    background: linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat;
+}
+
+.list-detail[open]
+{
+    margin: .35rem 0 .25rem 0;
+    border-left: 2px solid var(--border);
+    padding-left: .75rem;
+}
+
+.list-detail-text + .list-detail-text
+{
+    margin-top: .5rem;
+}
+
+.list-detail-text + .list-detail-ref
+{
+    margin-top: .4rem;
+}
+
+.list-detail-ref
+{
+    color: var(--text-muted);
+    font-size: .875rem;
+    line-height: 1.6;
+}
+
+/* A dot between the links on a line */
+.list-detail-ref-item + .list-detail-ref-item::before
+{
+    content: "\00b7";
+    margin: 0 .45em;
+}
+
+/* The hash of a commit is drawn in the code font without the box of a keyword */
+.list-detail-ref .id
+{
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: .9375em;
+}
+
+/* The button that opens or closes every details of a section, which the script adds */
+.list-detail-all
+{
+    display: block;
+    margin-top: .5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background-color: var(--bg-surface);
+    padding: .1rem .65rem;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: .8125rem;
+    line-height: 1.6;
+    cursor: pointer;
+}
+
+.list-detail-all:hover
+{
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+
+.list-detail-all:focus-visible
+{
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+/***********************************************************************************************************************************
 Table Elements
 ***********************************************************************************************************************************/
 .table
@@ -1212,17 +1375,17 @@ Keywords
 ***********************************************************************************************************************************/
 .backrest, .cmd, .postgres, .host, .proper
 {
-    font-weight: 600;
+    font-weight: var(--keyword-weight);
 }
 
 .path, .br-option, .br-setting, .pg-option, .pg-setting, .id, .user, .file
 {
-    border: 1px solid var(--border);
+    border: 1px solid var(--keyword-border);
     border-radius: 4px;
-    background-color: var(--bg-surface-2);
+    background-color: var(--keyword-bg);
     padding: .05em .35em;
     font-family: var(--font-mono);
-    font-size: .8125em;
+    font-size: .9em;
     unicode-bidi: embed;
 }
 
