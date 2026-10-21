@@ -12,6 +12,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow <quote>global</quote> as a stanza prefix.</p>
+
+                <p>A stanza name that begins with <id>global</id>, e.g. <id>global_stanza</id>, was rejected because the config parser treated it as a global section.</p>
             </release-item>
 
             <release-item>
@@ -24,6 +26,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix segfault on invalid <proper>GCS</proper> key file.</p>
+
+                <p>A <proper>GCS</proper> key file without the client email, private key, or token URI caused a segfault. It now causes an error.</p>
             </release-item>
         </release-bug-list>
 
@@ -45,6 +49,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow <br-option>link-map</br-option> option to create new links.</p>
+
+                <p><br-option>link-map</br-option> could only remap links that were in the backup. It can now create a new link for any path or file in the backup.</p>
             </release-item>
 
             <release-item>
@@ -59,9 +65,12 @@
                 </release-item-contributor-list>
 
                 <p>Increase max index allowed for <id>pg</id>/<id>repo</id> options to 256.</p>
+
+                <p>The maximum index was 8 for <id>pg</id> options and 4 for <id>repo</id> options. Both are now 256, e.g. <br-option>pg256-path</br-option>.</p>
             </release-item>
 
             <release-item>
+                <commit subject="Refactor S3 storage driver for additional auth methods."/>
                 <commit subject="Add WebIdentity authentication for AWS S3.">
                     <github-issue id="1203"/>
                     <github-pull-request id="1527"/>
@@ -72,12 +81,23 @@
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="james.callahan"/>
                     <release-item-reviewer id="reid.thompson"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="benjamin.blattberg"/>
                     <release-item-reviewer id="andrew.lecuyer"/>
+                    <release-item-tester id="benjamin.blattberg"/>
                 </release-item-contributor-list>
 
                 <p>Add <id>WebIdentity</id> authentication for <proper>AWS S3</proper>.</p>
+
+                <p>Set <br-option>repo-s3-key-type=web-id</br-option> to get credentials automatically in an <proper>EKS</proper> environment.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>repo-azure-uri-style</br-option> option.</p>
+
+                <p>Set <br-option>repo-azure-uri-style</br-option> to <id>host</id> (default) or <id>path</id> to select the URI style for <proper>Azure</proper>. <proper>Azurite</proper> uses host-style URIs when the endpoint looks like a multipart host name.</p>
             </release-item>
 
             <release-item>
@@ -90,6 +110,8 @@
                 </release-item-contributor-list>
 
                 <p>Report backup file validation errors in <file>backup.info</file>.</p>
+
+                <p>Errors found during a backup, e.g. invalid page checksums, were shown only by <cmd>info</cmd> with <br-option>set</br-option>. A flag in <file>backup.info</file> now shows in text and JSON output that a backup has errors. The details still require <br-option>set</br-option>.</p>
             </release-item>
 
             <release-item>
@@ -104,6 +126,8 @@
                 </release-item-contributor-list>
 
                 <p>Add recovery start time to online backup restore log.</p>
+
+                <p>Restore now logs the time that recovery will start from, which shows how much WAL must be replayed.</p>
             </release-item>
 
             <release-item>
@@ -119,6 +143,8 @@
                 </release-item-contributor-list>
 
                 <p>Report original error and retries on local job failure.</p>
+
+                <p>When a local job fails after its retries, the error now reports the first error with its stack trace, followed by the retry errors. Before, only the last error was reported, which was often a cascade failure such as the protocol being out of sync.</p>
             </release-item>
 
             <release-item>
@@ -130,6 +156,8 @@
                 </release-item-contributor-list>
 
                 <p>Rename page checksum error to error list in info text output.</p>
+
+                <p>The label in <cmd>info</cmd> text output is now <quote>error list</quote> rather than <quote>page checksum error</quote>. A file may have an alignment error rather than a page checksum error.</p>
             </release-item>
 
             <release-item>
@@ -143,12 +171,15 @@
                 </release-item-contributor-list>
 
                 <p>Add hints to standby replay timeout message.</p>
+
+                <p>The timeout waiting for the standby to replay now has hints to check that replication is running and to disable <br-option>backup-standby</br-option> to back up from the primary.</p>
             </release-item>
         </release-improvement-list>
 
         <release-development-list>
             <release-item>
-                <commit subject="Add TLS server.">
+                <release-note version="2.37" subject="Add TLS server."/>
+                <commit subject="Add TLS Server.">
                     <github-pull-request id="1504"/>
                 </commit>
                 <commit subject="Check return value of getsockopt()."/>
@@ -156,8 +187,7 @@
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="stephen.frost"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="andrew.lecuyer"/>
+                    <release-item-tester id="andrew.lecuyer"/>
                 </release-item-contributor-list>
 
                 <p>Add <proper>TLS</proper> server.</p>
@@ -173,10 +203,186 @@
 
                 <p>Store config values as a union instead of a variant.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Migrate command-line help generation to C."/>
+                <commit subject="Add initializer braces required by older versions of gcc."/>
+                <commit subject="Skip comments when rendering help output."/>
+                <commit subject="Specify size for helpData array."/>
+                <commit subject="Minor fix for lower-casing of option summaries."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Migrate command-line help generation to C.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Convert filter param/result to Pack type."/>
+                <commit subject="Rename pckReadNew()/pckWriteNew() to pckReadNewIo()/pckWriteNewIo()."/>
+                <commit subject="Add Pack pseudo-type."/>
+                <commit subject="Centralize and optimize tag stack management."/>
+                <commit subject="Convert page checksum filter result to a pack."/>
+                <commit subject="Add assert in pckReadNext() to prevent reading into a field."/>
+                <commit subject="Read tag size in pckReadTagNext()."/>
+                <commit subject="Add const buffer functions to Pack type."/>
+                <commit subject="Convert configuration optional rules to pack format."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve the Pack type and use it for filters and configuration rules.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Invert required in set option to simplify generated rules."/>
+                <commit subject="Remove command overrides for output options."/>
+                <commit subject="Remove command overrides for restore-only options."/>
+                <commit subject="Remove allow range from pg-socket-path option."/>
+                <commit subject="Write command configuration overrides explicitly."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Simplify configuration rules.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add const to memContextFreeing()/memContextName() parameters."/>
+                <commit subject="Remove useless if in memContextFree()."/>
+                <commit subject="Remove useless memFree() in regExpNew()."/>
+                <commit subject="Use contextParentIdx instead of a loop when moving a context."/>
+                <commit subject="Allow additional memory to be allocated with a mem context."/>
+                <commit subject="Use temp mem context when calling command handlers."/>
+                <commit subject="Add missing asserts and move temp mem context block."/>
+                <commit subject="More efficient memory allocation for Strings and String Variants."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve memory allocation and mem context handling.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add configurable storage helpers to create repository storage.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>More efficient generation of diff/incr backup label.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Set most compiler flags as late as possible in configure."/>
+                <commit subject="Add -Werror -Wfatal-errors -g flags to configure --enable-test."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add -Werror -Wfatal-errors -g flags to configure --enable-test.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1500"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="john.terrell"/>
+                </release-item-contributor-list>
+
+                <p>Add required header for Illumos.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add missing header."/>
+                <commit subject="Remove invalid comment block."/>
+                <commit subject="Automatically include all PostgreSQL version interface files."/>
+                <commit subject="Copy data page before verifying checksum."/>
+                <commit subject="Fix comment typos."/>
+                <commit subject="Add note to comment for int64 typedef."/>
+                <commit subject="Sort WAL segment names when reporting duplicates."/>
+                <commit subject="Add state to ProtocolClient."/>
+                <commit subject="Rename strNewN() to strNewZN()."/>
+                <commit id="980b777a4" subject="Fix indentation."/>
+                <commit subject="Rename PostgreSQL pid file constants and tests."/>
+                <commit subject="Update comments referring to the PostgreSQL primary."/>
+                <commit id="4c2d89eb6" subject="Fix typos."/>
+                <commit id="b11ab9f79" subject="Fix typos."/>
+                <commit subject="Fix outdated comment."/>
+                <commit subject="Fix typos in error messages."/>
+                <commit subject="Use externed instead of extern&#x27;d in comments."/>
+                <commit subject="Add assertion for Coverity."/>
+                <commit subject="Add missing assert."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-contributor id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code and comments.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Finalize catalog number for PostgreSQL 14 release.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess and config.sub to latest versions.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
     <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <github-pull-request id="1544"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Fix incorrect host name in user guide.</p>
+
+                <p>The replication setup used the IP address of <host>pg-primary</host> in <file>pg_hba.conf</file> rather than the IP address of <host>pg-standby</host>.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <commit subject="Move archive-header-check option to the archive reference section."/>
+                <commit subject="Improve documentation for buffer-size option."/>
+                <commit subject="Improve documentation for cmd-ssh, repo-host-cmd, pg-host-cmd options."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve option documentation.</p>
+
+                <p>The help for <br-option>buffer-size</br-option> now describes all the operations that use it, the descriptions of <br-option>cmd-ssh</br-option>, <br-option>repo-host-cmd</br-option>, and <br-option>pg-host-cmd</br-option> are consistent, and <br-option>archive-header-check</br-option> moved to the archive section of the configuration reference.</p>
+            </release-item>
+        </release-improvement-list>
+
         <release-development-list>
             <release-item>
                 <commit subject="Eliminate linefeed formatting from documentation."/>
@@ -193,6 +399,88 @@
 
                 <p>Eliminate linefeed formatting from documentation.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Revert Azurite version for testing to 3.14.0."/>
+                <commit subject="Improve instructions for rebuilding pgbackrest during stress testing."/>
+                <commit subject="Do not show output of PostgreSQL upgrade status check in user guide."/>
+                <commit subject="Allow S3/Azure Docker images to be specified in user guide."/>
+                <commit id="a63e73298" subject="Fix indentation."/>
+                <commit subject="Adjustments for new breaking change in Azurite."/>
+                <commit subject="Use Rocky Linux for documentation builds instead of CentOS."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the user guide and documentation build.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add analytics to the HTML documentation."/>
+                <commit subject="Make analytics optional for HTML documentation."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add analytics to the HTML documentation.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove repository format 6 notes."/>
+                <commit subject="Update documentation/links to main branch."/>
+                <commit subject="Add GitHub repository link to index.html and README.md."/>
+                <commit subject="Move v1 documentation links out of the introduction."/>
+                <commit subject="Fix typo in contributing guide."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the index page, README.md, and contributing documentation.</p>
+            </release-item>
         </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Do not use certs in container for testing."/>
+                <commit subject="Limit valgrind error output to the first error."/>
+                <commit subject="Update file mode in info/manifest test to 0600."/>
+                <commit subject="Use constant string for user/group in performance/type test."/>
+                <commit subject="Increase tolerance for 0ms sleep in common/time test."/>
+                <commit subject="Rename manifest file primary flag in tests."/>
+                <commit subject="Rename SSH connection control parameters in integration tests."/>
+                <commit subject="Add debug options to code generation make in test.pl."/>
+                <commit subject="Update RHEL package URL."/>
+                <commit subject="Allow error buffer to be resized for testing."/>
+                <commit subject="Add missing static keywords in test modules."/>
+                <commit subject="Increase some storage test timeouts."/>
+                <commit subject="Add coverage for empty CATCH() blocks."/>
+                <commit subject="Fix test descriptions in common/typeVariantTest."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests and test tools.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Build newer valgrind and move CA cert install in test containers."/>
+                <commit subject="Add arm64 testing on Cirrus CI."/>
+                <commit subject="Add libc6-dbg required by updated valgrind to Vagrantfile/Dockerfile."/>
+                <commit subject="Update Vagrantfile to Ubuntu 20.04."/>
+                <commit subject="Update 32-bit test container to Debian 9."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

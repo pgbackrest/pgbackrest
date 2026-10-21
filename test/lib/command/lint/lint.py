@@ -27,7 +27,6 @@ from common.storage import path_list_recurse
 _FILE_SKIP_LIST = (
     "doc/resource/card.png",  # Card shown where a link to the documentation is posted
     "test/data/filecopy.table.bin",  # Binary test fixture
-    "doc/resource/git-history.cache",  # Generated from git history, contains non-ASCII author names
 )
 
 # Paths that are exempt from the line length check, matched against the start of the name so an entry that ends in a slash exempts

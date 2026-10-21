@@ -1102,7 +1102,7 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE,
             "[cipher]\n"
-            "cipher-pass={\"1\":{\"digest\":\"sha256\",\"key\":\"" TEST_CIPHER_PASS_ARCHIVE "\"}}\n"
+            "cipher-pass={\"1\":{\"digest\":\"sha256\",\"key\":\"" TEST_CIPHER_PASS_ARCHIVE_BASE64 "\"}}\n"
             "cipher-pass-current=\"1\"\n"
             "\n"
             "[db]\n"

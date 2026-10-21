@@ -2,6 +2,8 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
+                <commit subject="Fix missing missing URI encoding in S3 driver."/>
+
                 <release-item-contributor-list>
                     <release-item-ideator id="dan.farrell"/>
                 </release-item-contributor-list>

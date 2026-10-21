@@ -4,17 +4,17 @@
 
 pgBackRest is a reliable backup and restore solution for PostgreSQL that seamlessly scales up to the largest databases and workloads.
 
-pgBackRest [v2.59.3](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.59.3) is the current stable release. Release notes are on the [Releases](https://pgbackrest.org/release.html) page.
+pgBackRest [v2.60.0](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.60.0) is the current stable release. Release notes are on the [Releases](https://pgbackrest.org/release.html) page.
 
 Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if you like pgBackRest!
 
 ## News
 
+**October 18, 2026** - [pgBackRest 2.60.0 Released](https://pgbackrest.org/news.html#release-2-60-0)
+
 **October 4, 2026** - [Weak Encryption Subkeys and Salts](https://pgbackrest.org/news.html#weak-encryption)
 
 **October 4, 2026** - [pgBackRest 2.59.3 Released](https://pgbackrest.org/news.html#release-2-59-3)
-
-**September 27, 2026** - [pgBackRest 2.59.2 Released](https://pgbackrest.org/news.html#release-2-59-2)
 
 ## Features
 
@@ -29,6 +29,10 @@ A custom protocol allows pgBackRest to backup, restore, and archive locally or r
 ### Multiple Repositories
 
 Multiple repositories allow, for example, a local repository with minimal retention for fast restores and a remote repository with a longer retention for redundancy and access across the enterprise.
+
+### Backup from Standby
+
+Backups can be made from a standby to reduce load on the primary. Only the few files that are not replicated are copied from the primary.
 
 ### Full, Differential, & Incremental Backups (at File or Block Level)
 
@@ -50,7 +54,7 @@ All operations utilize file and directory level fsync to ensure durability.
 
 If page checksums are enabled pgBackRest will validate the checksums for every file that is copied during a backup. All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.
 
-Validation failures do not stop the backup process, but warnings with details of exactly which pages have failed validation are output to the console and file log.
+Validation failures do not stop the backup process, but warnings with details of exactly which pages have failed validation are output to the console and file log. By default restore errors when the backup has invalid page checksums and expire will not leave a backup with invalid page checksums as the oldest backup.
 
 This feature allows page-level corruption to be detected early, before backups that contain valid copies of the data have expired.
 
@@ -63,6 +67,10 @@ An interrupted backup can be resumed from the point where it was stopped. Files 
 Compression and checksum calculations are performed in stream while files are being copied to the repository, whether the repository is located locally or remotely.
 
 If the repository is on a repository host, compression is performed on the PostgreSQL host and files are transmitted in a compressed format and simply stored on the repository host. When compression is disabled a lower level of compression is utilized to make efficient use of available bandwidth while keeping CPU cost to a minimum.
+
+### File Bundling
+
+Small files are combined into bundles in the repository so fewer files are created during backup. This is especially effective on object stores.
 
 ### Delta Restore
 
@@ -84,9 +92,9 @@ Tablespaces are fully supported and on restore tablespaces can be remapped to an
 
 File and directory links are supported for any file or directory in the PostgreSQL cluster. When restoring it is possible to restore all links to their original locations, remap some or all links, or restore some or all links as normal files or directories within the cluster directory.
 
-### S3, Azure, and GCS Support
+### S3, Azure, GCS, and SFTP Support
 
-pgBackRest repositories can be located in S3, Azure, and GCS compatible object stores to allow for virtually unlimited capacity and retention.
+pgBackRest repositories can be located in S3, Azure, and GCS compatible object stores to allow for virtually unlimited capacity and retention. Repositories can also be stored on an SFTP server. Object store credentials can be retrieved automatically in cloud environments using a variety of authentication methods.
 
 ### Encryption
 
@@ -122,7 +130,7 @@ Past sponsors: [Crunchy Data](https://crunchydata.com), [Resonate](https://reson
 
 ## Contributions
 
-Contributions to pgBackRest are always welcome! Please see our [Contributing Guidelines](https://github.com/pgbackrest/pgbackrest/blob/main/CONTRIBUTING.md) for details on how to contribute features, improvements or issues.
+Contributions to pgBackRest are always welcome! Please see our [Contributing Guidelines](https://github.com/pgbackrest/pgbackrest/blob/main/CONTRIBUTING.md) for details on how to contribute features, improvements, or issues.
 
 ## Support
 

@@ -13,6 +13,7 @@ from harness.test import *
 from command.doc import *
 from command.doc import _out_clean, _release_date, _var_parse
 from common.error import *
+from common.exec import exec_one
 from common.storage import file_read, file_write, path_list
 
 CONFIG = """command:
@@ -175,9 +176,6 @@ MANIFEST = """<doc>
 </doc>
 """
 
-HISTORY = """[{"commit": "abc", "date": "2026-07-30 00:00:00 +0000", "subject": "Make it faster."}]
-"""
-
 VERSION_H = """#define PROJECT_VERSION_MAJOR                                       2
 #define PROJECT_VERSION_MINOR                                       60
 #define PROJECT_VERSION_PATCH                                       0
@@ -197,7 +195,6 @@ def _repo(path):
     file_write(os.path.join(path, "doc/xml/reference.xml"), HELP)
     file_write(os.path.join(path, "doc/xml/user-guide.xml"), USER_GUIDE)
     file_write(os.path.join(path, "doc/xml/release.xml"), RELEASE)
-    file_write(os.path.join(path, "doc/resource/git-history.cache"), HISTORY)
     file_write(os.path.join(path, "doc/resource/html/default.css"), "body { color: black; }\n")
     file_write(os.path.join(path, "doc/resource/html/default.js"), "// script\n")
     file_write(os.path.join(path, "doc/resource/slogo.svg"), "<svg></svg>\n")
@@ -208,6 +205,13 @@ def _repo(path):
     )
     file_write(os.path.join(path, "doc/resource/logo.svg"), "svg")
     file_write(os.path.join(path, "doc/resource/sponsor/one.png"), "png")
+
+    # The git history the release notes are checked against
+    exec_one("git -C %s init -q" % path)
+    exec_one(
+        "git -C %s -c user.name=test -c user.email=test@pgbackrest.org -c commit.gpgsign=false commit -q --allow-empty"
+        " -m 'Make it faster.'" % path
+    )
 
 
 ####################################################################################################################################

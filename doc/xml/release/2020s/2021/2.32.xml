@@ -15,8 +15,7 @@
             <release-item>
                 <release-item-contributor-list>
                     <release-item-reviewer id="cynthia.shang"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-tester id="stefan.fercot"/>
                 </release-item-contributor-list>
 
                 <p>Add <cmd>repo-ls</cmd> command.</p>
@@ -36,8 +35,7 @@
                 <release-item-contributor-list>
                     <release-item-contributor id="stefan.fercot"/>
                     <release-item-reviewer id="david.steele"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="michael.banck"/>
+                    <release-item-tester id="michael.banck"/>
                 </release-item-contributor-list>
 
                 <p>Add <setting>archive-mode-check</setting> option.</p>

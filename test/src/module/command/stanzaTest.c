@@ -248,7 +248,7 @@ testRun(void)
             cipherSpecDigest(cipherSpecMapGet(cipherSpecMapCreate, STRDEF("1"))), hashTypeSha256,
             "archive key derives with sha256");
         TEST_RESULT_UINT(
-            bufSize(cipherSpecPass(cipherSpecMapGet(cipherSpecMapCreate, STRDEF("1")))), 64, "archive key is 64 characters");
+            bufSize(cipherSpecPass(cipherSpecMapGet(cipherSpecMapCreate, STRDEF("1")))), 32, "archive key is 256 bits");
 
         TEST_ASSIGN(
             infoBackup,

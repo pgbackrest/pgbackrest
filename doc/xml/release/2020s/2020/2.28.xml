@@ -19,8 +19,7 @@
 
                 <release-item-contributor-list>
                     <release-item-reviewer id="cynthia.shang"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="don.seiler"/>
+                    <release-item-tester id="don.seiler"/>
                 </release-item-contributor-list>
 
                 <p>Azure support for repository storage.</p>
