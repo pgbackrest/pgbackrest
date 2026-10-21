@@ -1412,7 +1412,7 @@
 
             <p>The repository will be configured with a cipher type and key to demonstrate encryption. Encryption is always performed client-side even if the repository type (e.g. <proper>S3</proper> or other object store) supports encryption.</p>
 
-            <p>It is important to use a long, random passphrase for the cipher key. A good way to generate one is to run: <code>openssl rand -base64 48</code>.</p>
+            <p>It is important to use a long, random passphrase for the cipher key. A good way to generate one is to run: <code>openssl rand -base64 32</code>.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <backrest/> repository encryption</title>

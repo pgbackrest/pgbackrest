@@ -146,12 +146,58 @@ testRun(void)
             encodeToStrSize(encodingBase64Url, strlen((const char *)encode) + 1), strlen(destinationEncode), "check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("decode unsupported");
+        TEST_TITLE("decode");
 
         uint8_t destinationDecode[256];
 
-        TEST_ERROR(decodeToBinSize(encodingBase64Url, "c3"), AssertError, "unsupported");
-        TEST_ERROR(decodeToBin(encodingBase64Url, "c3", destinationDecode), AssertError, "unsupported");
+        memset(destinationDecode, 0xFF, sizeof(destinationDecode));
+        const char *decode = "c3RyaW5nX3RvX2VuY29kZQ0KAA";
+        decodeToBin(encodingBase64Url, decode, destinationDecode);
+        TEST_RESULT_Z((char *)destinationDecode, (const char *)encode, "full string with \\r\\n and null decode");
+        TEST_RESULT_INT(destinationDecode[strlen((const char *)encode) + 1], 0xFF, "check for overrun");
+        TEST_RESULT_UINT(decodeToBinSize(encodingBase64Url, decode), strlen((const char *)encode) + 1, "check size");
+
+        memset(destinationDecode, 0xFF, sizeof(destinationDecode));
+        decode = "c3RyaW5nX3RvX2VuY29kZQ0K";
+        decodeToBin(encodingBase64Url, decode, destinationDecode);
+        TEST_RESULT_INT(memcmp(destinationDecode, encode, strlen((const char *)encode)), 0, "full string with \\r\\n decode");
+        TEST_RESULT_INT(destinationDecode[strlen((const char *)encode)], 0xFF, "check for overrun");
+        TEST_RESULT_UINT(decodeToBinSize(encodingBase64Url, decode), strlen((const char *)encode), "check size");
+
+        memset(destinationDecode, 0xFF, sizeof(destinationDecode));
+        decode = "c3Q";
+        decodeToBin(encodingBase64Url, decode, destinationDecode);
+        TEST_RESULT_INT(memcmp(destinationDecode, encode, 2), 0, "2 character decode");
+        TEST_RESULT_INT(destinationDecode[2], 0xFF, "check for overrun");
+        TEST_RESULT_UINT(decodeToBinSize(encodingBase64Url, decode), 2, "check size");
+
+        memset(destinationDecode, 0xFF, sizeof(destinationDecode));
+        decode = "cw";
+        decodeToBin(encodingBase64Url, decode, destinationDecode);
+        TEST_RESULT_INT(memcmp(destinationDecode, encode, 1), 0, "1 character decode");
+        TEST_RESULT_INT(destinationDecode[1], 0xFF, "check for overrun");
+        TEST_RESULT_UINT(decodeToBinSize(encodingBase64Url, decode), 1, "check size");
+
+        memset(destinationDecode, 0xFF, sizeof(destinationDecode));
+        decode = "";
+        decodeToBin(encodingBase64Url, decode, destinationDecode);
+        TEST_RESULT_INT(destinationDecode[0], 0xFF, "check for overrun");
+        TEST_RESULT_UINT(decodeToBinSize(encodingBase64Url, decode), 0, "check zero size");
+
+        decode = "-_-_";
+        decodeToBin(encodingBase64Url, decode, destinationDecode);
+        TEST_RESULT_INT(memcmp(destinationDecode, "\xfb\xff\xbf", 3), 0, "url characters decode");
+
+        TEST_ERROR(decodeToBin(encodingBase64Url, "c3Ryc", destinationDecode), FormatError, "base64url size 5 is not valid");
+        TEST_ERROR(
+            decodeToBin(encodingBase64Url, "cw==", destinationDecode), FormatError,
+            "base64url invalid character found at position 2");
+        TEST_ERROR(
+            decodeToBin(encodingBase64Url, "c+/", destinationDecode), FormatError,
+            "base64url invalid character found at position 1");
+        TEST_ERROR(
+            decodeToBin(encodingBase64Url, "c\xc3\xa9", destinationDecode), FormatError,
+            "base64url invalid character found at position 1");
     }
 
     // *****************************************************************************************************************************
