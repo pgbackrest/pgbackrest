@@ -15,8 +15,8 @@ Test Stanza Commands
 /***********************************************************************************************************************************
 Test data
 ***********************************************************************************************************************************/
-// Passphrase of 256 bits encoded as base64, as required to create a stanza at format 6
-#define TEST_CIPHER_PASS_FMT6                                       "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
+// Passphrase generated with openssl rand -base64 32, as required to create a stanza at format 6
+#define TEST_CIPHER_PASS_FMT6                                       "SOb5SRNoVLdVRtr2K3lr/oDmocARh2c+SObK6H8CtFY="
 
 /***********************************************************************************************************************************
 Test Run
@@ -119,7 +119,7 @@ testRun(void)
             true, "test and stanza backup info files are equal");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("stanza-create at format 6 requires a passphrase of at least 256 bits encoded as base64");
+        TEST_TITLE("stanza-create at format 6 requires a passphrase that looks generated");
 
         argList = strLstDup(argListBase);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
@@ -127,8 +127,8 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 4, "6");
 
         #define TEST_CIPHER_PASS_FMT6_ERROR                                                                                        \
-            "option 'repo4-cipher-pass' must be at least 256 bits encoded as base64 to create a stanza at repository format 6 or"  \
-            " higher\n"                                                                                                            \
+            "option 'repo4-cipher-pass' must be at least 256 random bits encoded as base64 to create a stanza at repository"       \
+            " format 6 or higher\n"                                                                                                \
             "HINT: generate a passphrase with 'openssl rand -base64 32'."
 
         #define TEST_CIPHER_PASS_FMT6_LOG                                                                                          \
@@ -137,7 +137,14 @@ testRun(void)
             "P00   INFO: stanza-create for stanza 'db' on repo4"
 
         // Valid base64 that is less than 256 bits
-        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "87654321");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "SOb5SRNoVLdVRtr2K3lr/oDmocARh2c+SObK6H8CtA==");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
+        TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // Hex that is less than 256 bits
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "48e6f949136854b75546daf62b796bfe80e6a1c01187673e");
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
@@ -149,6 +156,38 @@ testRun(void)
 
         TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
         TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // Text
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "Y29ycmVjdAlob3JzZQ0KYmF0dGVyeSBzdGFwbGUgYW5kIG1vcmUgdGV4dA==");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
+        TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // Too few distinct bytes
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
+        TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // Too few distinct differences
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
+        TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // base64url without padding
+        TEST_RESULT_BOOL(
+            cipherPassGenerated(cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("SOb5SRNoVLdVRtr2K3lr_oDmocARh2c-SObK6H8CtFY"))),
+            true, "base64url without padding");
+
+        // Hex
+        TEST_RESULT_BOOL(
+            cipherPassGenerated(
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("48e6f949136854b75546daf62b796bfe80e6a1c01187673e48e6cae87f02b456"))),
+            true, "hex");
 
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, STRDEF("repo4")), false, "nothing created");
 

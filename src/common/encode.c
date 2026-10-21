@@ -219,7 +219,7 @@ decodeToBinSizeBase64(const char *const source)
 }
 
 /***********************************************************************************************************************************
-Base64Url encoding
+Base64Url encoding/decoding
 ***********************************************************************************************************************************/
 VR_NON_STRING static const char encodeBase64LookupUrl[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
@@ -286,6 +286,107 @@ encodeToStrSizeBase64Url(const size_t sourceSize)
 
     // Four characters are needed to encode each 3 byte group, three characters for 2 bytes, and two characters for 1 byte
     FUNCTION_TEST_RETURN(SIZE, sourceSize / 3 * 4 + (sourceSize % 3 == 0 ? 0 : sourceSize % 3 + 1));
+}
+
+/**********************************************************************************************************************************/
+static const int8_t decodeBase64LookupUrl[256] =
+{
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1,
+    52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
+    -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, 63,
+    -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
+
+static void
+decodeToBinValidateBase64Url(const char *const source)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, source);
+    FUNCTION_TEST_END();
+
+    // A final group without padding has two or three characters
+    const size_t sourceSize = strlen(source);
+
+    if (sourceSize % 4 == 1)
+        THROW_FMT(FormatError, "base64url size %zu is not valid", sourceSize);
+
+    // Error on any invalid characters
+    for (unsigned int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx++)
+    {
+        if (decodeBase64LookupUrl[(uint8_t)source[sourceIdx]] == -1)
+            THROW_FMT(FormatError, "base64url invalid character found at position %u", sourceIdx);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+static void
+decodeToBinBase64Url(const char *const source, uint8_t *const destination)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, source);
+        FUNCTION_TEST_PARAM_P(BYTEDATA, destination);
+    FUNCTION_TEST_END();
+
+    // Validate encoded string
+    decodeToBinValidateBase64Url(source);
+
+    const size_t sourceSize = strlen(source);
+    size_t destinationIdx = 0;
+
+    // Decode the binary data from four characters to three bytes
+    for (size_t sourceIdx = 0; sourceIdx < sourceSize; sourceIdx += 4)
+    {
+        // Look up the value of each character in the group
+        const size_t groupSize = sourceSize - sourceIdx < 4 ? sourceSize - sourceIdx : 4;
+        uint8_t value[4] = {0};
+
+        for (size_t valueIdx = 0; valueIdx < groupSize; valueIdx++)
+            value[valueIdx] = (uint8_t)decodeBase64LookupUrl[(uint8_t)source[sourceIdx + valueIdx]];
+
+        // First byte is always present
+        destination[destinationIdx++] = (uint8_t)(value[0] << 2 | value[1] >> 4);
+
+        // Second byte is present when the group has three or more characters
+        if (groupSize > 2)
+            destination[destinationIdx++] = (uint8_t)(value[1] << 4 | value[2] >> 2);
+
+        // Third byte is present when the group has four characters
+        if (groupSize > 3)
+            destination[destinationIdx++] = (uint8_t)(value[2] << 6 | value[3]);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+static size_t
+decodeToBinSizeBase64Url(const char *const source)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, source);
+    FUNCTION_TEST_END();
+
+    // Validate encoded string
+    decodeToBinValidateBase64Url(source);
+
+    // Three bytes are decoded from each 4 character group, two bytes from 3 characters, and one byte from 2 characters
+    const size_t sourceSize = strlen(source);
+
+    FUNCTION_TEST_RETURN(SIZE, sourceSize / 4 * 3 + (sourceSize % 4 == 0 ? 0 : sourceSize % 4 - 1));
 }
 
 /***********************************************************************************************************************************
@@ -503,12 +604,13 @@ decodeToBin(const EncodingType type, const char *const source, uint8_t *const de
             decodeToBinBase64(source, destination);
             break;
 
+        case encodingBase64Url:
+            decodeToBinBase64Url(source, destination);
+            break;
+
         case encodingHex:
             decodeToBinHex(source, destination);
             break;
-
-        default:
-            ASSERT_MSG("unsupported");
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -533,12 +635,13 @@ decodeToBinSize(const EncodingType type, const char *const source)
             destinationSize = decodeToBinSizeBase64(source);
             break;
 
+        case encodingBase64Url:
+            destinationSize = decodeToBinSizeBase64Url(source);
+            break;
+
         case encodingHex:
             destinationSize = decodeToBinSizeHex(source);
             break;
-
-        default:
-            ASSERT_MSG("unsupported");
     }
 
     FUNCTION_TEST_RETURN(SIZE, destinationSize);
