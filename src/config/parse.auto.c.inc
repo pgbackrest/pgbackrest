@@ -132,6 +132,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("sha256"),                                                                                          // val/str
     PARSE_RULE_STRPUB("shared"),                                                                                          // val/str
     PARSE_RULE_STRPUB("shutdown"),                                                                                        // val/str
+    PARSE_RULE_STRPUB("skip"),                                                                                            // val/str
     PARSE_RULE_STRPUB("ssh"),                                                                                             // val/str
     PARSE_RULE_STRPUB("standby"),                                                                                         // val/str
     PARSE_RULE_STRPUB("storage.googleapis.com"),                                                                          // val/str
@@ -274,6 +275,7 @@ typedef enum
     parseRuleValStrQT_sha256_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_shared_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_shutdown_QT,                                                                                   // val/str/enum
+    parseRuleValStrQT_skip_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_ssh_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_standby_QT,                                                                                    // val/str/enum
     parseRuleValStrQT_storage_DT_googleapis_DT_com_QT,                                                               // val/str/enum
@@ -1459,6 +1461,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (                                                                                              // opt/backup-standby
                     PARSE_RULE_VAL_STRID(n),                                                                   // opt/backup-standby
                     PARSE_RULE_VAL_STRID(prefer),                                                              // opt/backup-standby
+                    PARSE_RULE_VAL_STRID(skip),                                                                // opt/backup-standby
                     PARSE_RULE_VAL_STRID(y),                                                                   // opt/backup-standby
                 ),                                                                                             // opt/backup-standby
                                                                                                                // opt/backup-standby
