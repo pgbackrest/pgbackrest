@@ -228,6 +228,8 @@ src_pgbackrest = [
     'storage/posix/read.c',
     'storage/posix/storage.c',
     'storage/posix/write.c',
+    'storage/posixDio/helper.c',
+    'storage/posixDio/storage.c',
     'storage/read.c',
     'storage/readMulti.c',
     'storage/remote/protocol.c',

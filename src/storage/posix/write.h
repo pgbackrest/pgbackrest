@@ -17,7 +17,7 @@ Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageWritePosix *storageWritePosixNew(
     StoragePosix *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,
-    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool truncate);
+    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool truncate, bool directIo);
 
 /***********************************************************************************************************************************
 Macros for function logging

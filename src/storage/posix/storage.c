@@ -19,6 +19,7 @@ Posix Storage
 #include "storage/posix/read.h"
 #include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
+#include "storage/posixDio/storage.h"
 
 /***********************************************************************************************************************************
 Define PATH_MAX if it is not defined
@@ -33,6 +34,7 @@ Object type
 struct StoragePosix
 {
     STORAGE_COMMON_MEMBER;
+    bool directIo;
 };
 
 /**********************************************************************************************************************************/
@@ -358,7 +360,7 @@ storagePosixNewRead(THIS_VOID, const String *const file, const StorageInterfaceN
     ASSERT(file != NULL);
     ASSERT(param.versionId == NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ_POSIX, storageReadPosixNew(this, file, param.offset, param.limit));
+    FUNCTION_LOG_RETURN(STORAGE_READ_POSIX, storageReadPosixNew(this, file, param.offset, param.limit, this->directIo));
 }
 
 /**********************************************************************************************************************************/
@@ -389,7 +391,8 @@ storagePosixNewWrite(THIS_VOID, const String *const file, const StorageInterface
         STORAGE_WRITE_POSIX,
         storageWritePosixNew(
             this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
-            param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate));
+            param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate,
+            this->directIo));
 }
 
 /**********************************************************************************************************************************/
@@ -592,7 +595,7 @@ static const StorageInterface storageInterfacePosix =
 FN_EXTERN Storage *
 storagePosixNewInternal(
     const StringId type, const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
-    StoragePathExpressionCallback pathExpressionFunction, const bool pathSync, const bool symLink)
+    StoragePathExpressionCallback pathExpressionFunction, const bool pathSync, const bool symLink, const bool directIo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -603,6 +606,7 @@ storagePosixNewInternal(
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(BOOL, pathSync);
         FUNCTION_LOG_PARAM(BOOL, symLink);
+        FUNCTION_LOG_PARAM(BOOL, directIo);
     FUNCTION_LOG_END();
 
     ASSERT(type != 0);
@@ -619,6 +623,7 @@ storagePosixNewInternal(
         *this = (StoragePosix)
         {
             .interface = storageInterfacePosix,
+            .directIo = directIo,
         };
 
         // Disable path sync when not supported
@@ -626,7 +631,7 @@ storagePosixNewInternal(
             this->interface.pathSync = NULL;
 
         // If this is a posix driver then add link features
-        if (type == STORAGE_POSIX_TYPE)
+        if (type == STORAGE_POSIX_TYPE || type == STORAGE_POSIX_DIO_TYPE)
         {
             this->interface.feature |=
                 1 << storageFeatureHardLink | (unsigned int)symLink << storageFeatureSymLink | 1 << storageFeaturePathSync |
@@ -656,5 +661,5 @@ storagePosixNew(const String *const path, const StoragePosixNewParam param)
         storagePosixNewInternal(
             STORAGE_POSIX_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
             param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, true,
-            !param.noSymLink));
+            !param.noSymLink, false));
 }

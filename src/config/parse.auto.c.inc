@@ -117,6 +117,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("pgbackrest"),                                                                                      // val/str
     PARSE_RULE_STRPUB("pod-id"),                                                                                          // val/str
     PARSE_RULE_STRPUB("posix"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("posix-dio"),                                                                                       // val/str
     PARSE_RULE_STRPUB("postgres"),                                                                                        // val/str
     PARSE_RULE_STRPUB("prefer"),                                                                                          // val/str
     PARSE_RULE_STRPUB("preserve"),                                                                                        // val/str
@@ -259,6 +260,7 @@ typedef enum
     parseRuleValStrQT_pgbackrest_QT,                                                                                 // val/str/enum
     parseRuleValStrQT_pod_DS_id_QT,                                                                                  // val/str/enum
     parseRuleValStrQT_posix_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_posix_DS_dio_QT,                                                                               // val/str/enum
     parseRuleValStrQT_postgres_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_prefer_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_preserve_QT,                                                                                   // val/str/enum
@@ -3819,6 +3821,46 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                                    // opt/pg-database
         ),                                                                                                        // opt/pg-database
     ),                                                                                                            // opt/pg-database
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                            // opt/pg-direct-io
+    (                                                                                                            // opt/pg-direct-io
+        PARSE_RULE_OPTION_NAME("pg-direct-io"),                                                                  // opt/pg-direct-io
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                         // opt/pg-direct-io
+        PARSE_RULE_OPTION_NEGATE(true),                                                                          // opt/pg-direct-io
+        PARSE_RULE_OPTION_RESET(true),                                                                           // opt/pg-direct-io
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                        // opt/pg-direct-io
+        PARSE_RULE_OPTION_SECTION(Stanza),                                                                       // opt/pg-direct-io
+        PARSE_RULE_OPTION_GROUP_ID(Pg),                                                                          // opt/pg-direct-io
+                                                                                                                 // opt/pg-direct-io
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                           // opt/pg-direct-io
+        (                                                                                                        // opt/pg-direct-io
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                    // opt/pg-direct-io
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                   // opt/pg-direct-io
+        ),                                                                                                       // opt/pg-direct-io
+                                                                                                                 // opt/pg-direct-io
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                          // opt/pg-direct-io
+        (                                                                                                        // opt/pg-direct-io
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                    // opt/pg-direct-io
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                   // opt/pg-direct-io
+        ),                                                                                                       // opt/pg-direct-io
+                                                                                                                 // opt/pg-direct-io
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                         // opt/pg-direct-io
+        (                                                                                                        // opt/pg-direct-io
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                    // opt/pg-direct-io
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                   // opt/pg-direct-io
+        ),                                                                                                       // opt/pg-direct-io
+                                                                                                                 // opt/pg-direct-io
+        PARSE_RULE_OPTIONAL                                                                                      // opt/pg-direct-io
+        (                                                                                                        // opt/pg-direct-io
+            PARSE_RULE_OPTIONAL_GROUP                                                                            // opt/pg-direct-io
+            (                                                                                                    // opt/pg-direct-io
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                      // opt/pg-direct-io
+                (                                                                                                // opt/pg-direct-io
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                   // opt/pg-direct-io
+                ),                                                                                               // opt/pg-direct-io
+            ),                                                                                                   // opt/pg-direct-io
+        ),                                                                                                       // opt/pg-direct-io
+    ),                                                                                                           // opt/pg-direct-io
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                 // opt/pg-host
     (                                                                                                                 // opt/pg-host
@@ -10445,6 +10487,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),                               // opt/repo-symlink
                     PARSE_RULE_VAL_OPT(RepoType),                                                                // opt/repo-symlink
                     PARSE_RULE_VAL_STRID(posix),                                                                 // opt/repo-symlink
+                    PARSE_RULE_VAL_STRID(posix_DS_dio),                                                          // opt/repo-symlink
                 ),                                                                                               // opt/repo-symlink
                                                                                                                  // opt/repo-symlink
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                      // opt/repo-symlink
@@ -10562,6 +10605,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_STRID(cifs),                                                                     // opt/repo-type
                     PARSE_RULE_VAL_STRID(gcs),                                                                      // opt/repo-type
                     PARSE_RULE_VAL_STRID(posix),                                                                    // opt/repo-type
+                    PARSE_RULE_VAL_STRID(posix_DS_dio),                                                             // opt/repo-type
                     PARSE_RULE_VAL_STRID(s3),                                                                       // opt/repo-type
                     PARSE_RULE_VAL_STRID(sftp),                                                                     // opt/repo-type
 #ifndef HAVE_LIBSSH2                                                                                                // opt/repo-type
@@ -11881,7 +11925,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 /***********************************************************************************************************************************
 Option deprecations
 ***********************************************************************************************************************************/
-#define CFG_OPTION_DEPRECATE_TOTAL                                  39
+#define CFG_OPTION_DEPRECATE_TOTAL                                  41
 
 static const ParseRuleOptionDeprecate parseRuleOptionDeprecate[CFG_OPTION_DEPRECATE_TOTAL] =
 {
@@ -11982,6 +12026,19 @@ static const ParseRuleOptionDeprecate parseRuleOptionDeprecate[CFG_OPTION_DEPREC
         .id = cfgOptRepoHardlink,                                                                     // opt-deprecate/repo-hardlink
         .unindexed = true,                                                                            // opt-deprecate/repo-hardlink
     },                                                                                                // opt-deprecate/repo-hardlink
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {                                                                                                  // opt-deprecate/pg-direct-io
+        .name = "pg-direct-io",                                                                        // opt-deprecate/pg-direct-io
+        .id = cfgOptPgDirectIo,                                                                        // opt-deprecate/pg-direct-io
+        .indexed = true,                                                                               // opt-deprecate/pg-direct-io
+    },                                                                                                 // opt-deprecate/pg-direct-io
+    // -----------------------------------------------------------------------------------------------------------------------------
+    {                                                                                                  // opt-deprecate/pg-direct-io
+        .name = "pg-directio",                                                                         // opt-deprecate/pg-direct-io
+        .id = cfgOptPgDirectIo,                                                                        // opt-deprecate/pg-direct-io
+        .indexed = true,                                                                               // opt-deprecate/pg-direct-io
+        .unindexed = true,                                                                             // opt-deprecate/pg-direct-io
+    },                                                                                                 // opt-deprecate/pg-direct-io
     // -----------------------------------------------------------------------------------------------------------------------------
     {                                                                                          // opt-deprecate/repo-storage-ca-file
         .name = "repo-azure-ca-file",                                                          // opt-deprecate/repo-storage-ca-file
@@ -12194,6 +12251,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptOutput,                                                                                               // opt-resolve-order
     cfgOptPageHeaderCheck,                                                                                      // opt-resolve-order
     cfgOptPg,                                                                                                   // opt-resolve-order
+    cfgOptPgDirectIo,                                                                                           // opt-resolve-order
     cfgOptPgLocal,                                                                                              // opt-resolve-order
     cfgOptPgPath,                                                                                               // opt-resolve-order
     cfgOptPgPort,                                                                                               // opt-resolve-order

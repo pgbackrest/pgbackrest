@@ -46,6 +46,7 @@ Main
 #include "storage/cifs/helper.h"
 #include "storage/gcs/helper.h"
 #include "storage/helper.h"
+#include "storage/posixDio/helper.h"
 #include "storage/s3/helper.h"
 #include "storage/sftp/helper.h"
 #include "version.h"
@@ -63,6 +64,7 @@ main(int argListSize, const char *argList[])
         STORAGE_AZURE_HELPER,
         STORAGE_CIFS_HELPER,
         STORAGE_GCS_HELPER,
+        STORAGE_POSIX_DIO_HELPER,
         STORAGE_S3_HELPER,
 #ifdef HAVE_LIBSSH2
         STORAGE_SFTP_HELPER,

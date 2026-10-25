@@ -146,7 +146,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            202
+#define CFG_OPTION_TOTAL                                            203
 
 /***********************************************************************************************************************************
 Option value constants
@@ -384,6 +384,8 @@ Option value constants
 #define CFGOPTVAL_REPO_TYPE_GCS_Z                                   "gcs"
 #define CFGOPTVAL_REPO_TYPE_POSIX                                   STRID5("posix", 0x184cdf00)
 #define CFGOPTVAL_REPO_TYPE_POSIX_Z                                 "posix"
+#define CFGOPTVAL_REPO_TYPE_POSIX_DIO                               STRID5("posix-dio", 0xf493784cdf00)
+#define CFGOPTVAL_REPO_TYPE_POSIX_DIO_Z                             "posix-dio"
 #define CFGOPTVAL_REPO_TYPE_S3                                      STRID6("s3", 0x7d31)
 #define CFGOPTVAL_REPO_TYPE_S3_Z                                    "s3"
 #define CFGOPTVAL_REPO_TYPE_SFTP                                    STRID5("sftp", 0x850d30)
@@ -546,6 +548,7 @@ typedef enum
     cfgOptPageHeaderCheck,
     cfgOptPg,
     cfgOptPgDatabase,
+    cfgOptPgDirectIo,
     cfgOptPgHost,
     cfgOptPgHostCaFile,
     cfgOptPgHostCaPath,
