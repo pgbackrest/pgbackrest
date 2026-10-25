@@ -13,18 +13,8 @@ Posix Storage Read
 #include "common/log.h"
 #include "common/type/object.h"
 #include "storage/posix/read.h"
+#include "storage/posixDio/storage.h"
 #include "storage/read.h"
-
-/***********************************************************************************************************************************
-Alignment for Direct I/O
-***********************************************************************************************************************************/
-#ifndef O_DIRECT
-#ifdef __O_DIRECT
-#define O_DIRECT __O_DIRECT
-#endif
-#endif
-
-#define STORAGE_POSIX_DIO_ALIGN 4096
 
 /***********************************************************************************************************************************
 Object types

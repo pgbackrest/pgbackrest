@@ -16,48 +16,38 @@ Posix Storage File write
 #include "common/type/object.h"
 #include "common/user.h"
 #include "storage/posix/write.h"
+#include "storage/posixDio/storage.h"
 #include "storage/write.h"
-
-/***********************************************************************************************************************************
-Alignment for Direct I/O
-***********************************************************************************************************************************/
-#ifndef O_DIRECT
-#   ifdef __O_DIRECT
-#       define O_DIRECT __O_DIRECT
-#   endif
-#endif
-
-#define STORAGE_POSIX_DIO_ALIGN                                     4096
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct StorageWritePosix
 {
-    const StorageWriteInterface *interface;                          // Interface
-    StoragePosix *storage;                                           // Storage that created this object
+    const StorageWriteInterface *interface; // Interface
+    StoragePosix *storage;                  // Storage that created this object
 
-    const String *name;                                              // File name
-    mode_t modeFile;                                                 // File mode
-    mode_t modePath;                                                 // Path mode
-    bool createPath;                                                 // Create path if missing
-    bool atomic;                                                     // Atomic write
-    bool truncate;                                                   // Truncate existing file
-    bool syncPath;                                                   // Sync path after write
-    bool syncFile;                                                   // Sync file after write
-    const String *user;                                              // User owner
-    const String *group;                                             // Group owner
-    time_t timeModified;                                             // Modified time
+    const String *name;  // File name
+    mode_t modeFile;     // File mode
+    mode_t modePath;     // Path mode
+    bool createPath;     // Create path if missing
+    bool atomic;         // Atomic write
+    bool truncate;       // Truncate existing file
+    bool syncPath;       // Sync path after write
+    bool syncFile;       // Sync file after write
+    const String *user;  // User owner
+    const String *group; // Group owner
+    time_t timeModified; // Modified time
 
     const String *nameTmp;
     const String *path;
-    int fd;                                                          // File descriptor
+    int fd; // File descriptor
 
-    bool directIo;                                                  // Use direct I/O
-    uint8_t *dioBuffer;                                             // Aligned bounce buffer for direct I/O
-    size_t dioBufferSize;                                           // Size of aligned buffer
-    size_t dioBufferUsed;                                           // Valid bytes currently in buffer
-    uint64_t totalWritten;                                          // Total unpadded bytes written
+    bool directIo;         // Use direct I/O
+    uint8_t *dioBuffer;    // Aligned bounce buffer for direct I/O
+    size_t dioBufferSize;  // Size of aligned buffer
+    size_t dioBufferUsed;  // Valid bytes currently in buffer
+    uint64_t totalWritten; // Total unpadded bytes written
 };
 
 /***********************************************************************************************************************************
@@ -65,7 +55,7 @@ File open constants
 
 Since open is called more than once use constants to make sure these parameters are always the same
 ***********************************************************************************************************************************/
-#define FILE_OPEN_PURPOSE                                           "write"
+#define FILE_OPEN_PURPOSE "write"
 
 /***********************************************************************************************************************************
 Close file descriptor
@@ -131,7 +121,7 @@ storageWritePosixOpen(THIS_VOID)
     this->fd = open(strZ(this->nameTmp), flags, this->modeFile);
 
     // Attempt to create the path if it is missing
-    if (this->fd == -1 && errno == ENOENT && this->createPath)                                                      // {vm_covered}
+    if (this->fd == -1 && errno == ENOENT && this->createPath) // {vm_covered}
     {
         // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->modePath);
@@ -143,7 +133,7 @@ storageWritePosixOpen(THIS_VOID)
     // Handle errors
     if (this->fd == -1)
     {
-        if (errno == ENOENT)                                                                                        // {vm_covered}
+        if (errno == ENOENT) // {vm_covered}
             THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->name));
         else
         {
@@ -155,7 +145,7 @@ storageWritePosixOpen(THIS_VOID)
                     strZ(this->nameTmp));
             }
 #endif
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->name));                         // {vm_covered}
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->name)); // {vm_covered}
         }
     }
 
@@ -446,8 +436,7 @@ storageWritePosixNew(
 
     OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        *this = (StorageWritePosix)
-        {
+        *this = (StorageWritePosix){
             .interface = &storageWritePosixInterface,
             .storage = storage,
             .name = strDup(name),
