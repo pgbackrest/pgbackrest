@@ -141,7 +141,7 @@ decodeToBinValidateBase64(const char *const source)
         else
         {
             // Error on any invalid characters
-            if (decodeBase64Lookup[(int)source[sourceIdx]] == -1)
+            if (decodeBase64Lookup[(uint8_t)source[sourceIdx]] == -1)
                 THROW_FMT(FormatError, "base64 invalid character found at position %u", sourceIdx);
         }
     }
@@ -168,22 +168,23 @@ decodeToBinBase64(const char *const source, uint8_t *const destination)
     {
         // Always decode the first character
         destination[destinationIdx++] =
-            (uint8_t)(decodeBase64Lookup[(int)source[sourceIdx]] << 2 | decodeBase64Lookup[(int)source[sourceIdx + 1]] >> 4);
+            (uint8_t)(decodeBase64Lookup[(uint8_t)source[sourceIdx]] << 2 |
+                      decodeBase64Lookup[(uint8_t)source[sourceIdx + 1]] >> 4);
 
         // Second character is optional
         if (source[sourceIdx + 2] != 0x3d)
         {
             destination[destinationIdx++] =
-                (uint8_t)
-                ((decodeBase64Lookup[(int)source[sourceIdx + 1]] << 4) | (decodeBase64Lookup[(int)source[sourceIdx + 2]] >> 2));
+                (uint8_t)((decodeBase64Lookup[(uint8_t)source[sourceIdx + 1]] << 4) |
+                          (decodeBase64Lookup[(uint8_t)source[sourceIdx + 2]] >> 2));
         }
 
         // Third character is optional
         if (source[sourceIdx + 3] != 0x3d)
         {
             destination[destinationIdx++] =
-                (uint8_t)
-                (((decodeBase64Lookup[(int)source[sourceIdx + 2]] << 6) & 0xc0) | decodeBase64Lookup[(int)source[sourceIdx + 3]]);
+                (uint8_t)(((decodeBase64Lookup[(uint8_t)source[sourceIdx + 2]] << 6) & 0xc0) |
+                          decodeBase64Lookup[(uint8_t)source[sourceIdx + 3]]);
         }
     }
 
@@ -477,7 +478,7 @@ decodeToBinValidateHex(const char *const source)
     // Check all characters
     for (unsigned int sourceIdx = 0; sourceIdx < sourceSize; sourceIdx++)
     {
-        if (decodeHexLookup[(int)source[sourceIdx]] == -1)
+        if (decodeHexLookup[(uint8_t)source[sourceIdx]] == -1)
             THROW_FMT(FormatError, "hex invalid character found at position %u", sourceIdx);
     }
 
@@ -502,7 +503,7 @@ decodeToBinHex(const char *const source, uint8_t *const destination)
     for (unsigned int sourceIdx = 0; sourceIdx < strlen(source); sourceIdx += 2)
     {
         destination[destinationIdx++] =
-            (uint8_t)(decodeHexLookup[(int)source[sourceIdx]] << 4 | decodeHexLookup[(int)source[sourceIdx + 1]]);
+            (uint8_t)(decodeHexLookup[(uint8_t)source[sourceIdx]] << 4 | decodeHexLookup[(uint8_t)source[sourceIdx + 1]]);
     }
 
     FUNCTION_TEST_RETURN_VOID();
