@@ -126,6 +126,16 @@ storageGetProcess(IoWrite *const destination)
 
                             if (strEq(backupLabel, STRDEF(BACKUP_PATH_HISTORY)))
                                 backupLabel = strBase(file);
+                            // Else get the label from the destination of the latest link
+                            else if (strEq(backupLabel, STRDEF(BACKUP_LINK_LATEST)))
+                            {
+                                const StorageInfo latestInfo = storageInfoP(
+                                    storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/" BACKUP_LINK_LATEST, strZ(stanza)),
+                                    .level = storageInfoLevelDetail, .ignoreMissing = true);
+
+                                if (latestInfo.type == storageTypeLink)
+                                    backupLabel = latestInfo.linkDestination;
+                            }
 
                             const CipherSpec *const cipherSpecManifest =
                                 regExpMatchOne(

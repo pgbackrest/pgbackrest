@@ -719,6 +719,55 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(writeBuffer, backupLabelBuffer), true, "get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get encrypted format 6 backup.manifest by label and through the latest link");
+
+        // Format 6 backup.info with a manifest key for the backup set
+        HRN_INFO_PUT(
+            storageFixture, STORAGE_PATH_BACKUP "/test/" INFO_BACKUP_FILE,
+            "[cipher]\n"
+            "cipher-pass={\"20200102-000000F\":{\"digest\":\"sha256\",\"key\":\"Y3VzdG9tNw==\"}}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201909212\n"
+            "db-control-version=1201\n"
+            "db-id=1\n"
+            "db-system-id=6846378200844646865\n"
+            "db-version=\"12\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201909212,\"db-control-version\":1201,\"db-system-id\":6846378200844646865"
+            ",\"db-version\":\"12\"}",
+            .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC);
+        HRN_STORAGE_PUT(
+            storageFixture, STORAGE_PATH_BACKUP "/test/20200102-000000F/" BACKUP_MANIFEST_FILE, manifestFileBuffer,
+            .cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("custom7"), .digest = hashTypeSha256));
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/20200102-000000F/" BACKUP_MANIFEST_FILE);
+        HRN_CFG_LOAD(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get by label");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "get matches put");
+
+        const String *const latestLink = storagePathP(storageFixture, STRDEF(STORAGE_PATH_BACKUP "/test/latest"));
+
+        HRN_STORAGE_PATH_REMOVE(storageFixture, STORAGE_PATH_BACKUP "/test/latest", .recurse = true);
+        TEST_RESULT_VOID(storageLinkCreateP(storageFixture, STRDEF("20200102-000000F"), latestLink), "latest link");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawStrId(argList, cfgOptRepoCipherType, cipherTypeAes256Cbc);
+        strLstAddZ(argList, STORAGE_PATH_BACKUP "/test/latest/" BACKUP_MANIFEST_FILE);
+        HRN_CFG_LOAD(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get through latest link");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "get matches put");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         // Reset env
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
