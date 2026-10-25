@@ -39,6 +39,9 @@ passphrase could still be a weak secret that was hashed or encoded some other wa
 // Distinct byte values and distinct differences between adjacent bytes the key must contain
 #define CIPHER_PASS_GENERATED_DISTINCT_MIN                          16
 
+// Prefix of the passphrase examples in the documentation
+#define CIPHER_PASS_EXAMPLE_PREFIX                                  "zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi"
+
 // Encodings to try in order. A hex passphrase may also be valid base64.
 static const EncodingType cipherPassGeneratedEncoding[] = {encodingHex, encodingBase64, encodingBase64Url};
 
@@ -173,16 +176,29 @@ cmdStanzaCreate(void)
                 // Format for the new stanza
                 const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
 
-                // Format >= 6 requires the passphrase of a new encrypted stanza to look generated
-                if (format >= REPOSITORY_FORMAT_6 && cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx) != cipherTypeNone &&
-                    !cipherPassGenerated(cfgCipherSpecMainIdx(repoIdx)))
+                // Check the passphrase of a new encrypted stanza
+                if (cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx) != cipherTypeNone)
                 {
-                    THROW_FMT(
-                        OptionInvalidValueError,
-                        "option '%s' must be at least 256 random bits encoded as hex, base64, or base64url to create a stanza at"
-                        " repository format " STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
-                        "HINT: generate a passphrase with 'openssl rand -base64 32'.",
-                        cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
+                    // Error when the passphrase is a documentation example
+                    if (strBeginsWithZ(cfgOptionIdxStr(cfgOptRepoCipherPass, repoIdx), CIPHER_PASS_EXAMPLE_PREFIX))
+                    {
+                        THROW_FMT(
+                            OptionInvalidValueError,
+                            "option '%s' must not be the example passphrase from the documentation\n"
+                            "HINT: generate a passphrase with 'openssl rand -base64 32'.",
+                            cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
+                    }
+
+                    // Format >= 6 requires the passphrase to look generated
+                    if (format >= REPOSITORY_FORMAT_6 && !cipherPassGenerated(cfgCipherSpecMainIdx(repoIdx)))
+                    {
+                        THROW_FMT(
+                            OptionInvalidValueError,
+                            "option '%s' must be at least 256 random bits encoded as hex, base64, or base64url to create a stanza"
+                            " at repository format " STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
+                            "HINT: generate a passphrase with 'openssl rand -base64 32'.",
+                            cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
+                    }
                 }
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting archive files. Format >= 6 adds it by

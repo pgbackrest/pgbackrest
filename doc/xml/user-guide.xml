@@ -84,7 +84,9 @@
 
         <variable key="backrest-repo-path">/var/lib/pgbackrest</variable>
         <variable key="backrest-repo-cipher-type">aes-256-cbc</variable>
-        <variable key="backrest-repo-cipher-pass">zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</variable>
+        <variable key="backrest-repo-cipher-pass">6Y2m6+6mgf7Z8qboYyEIk48keXTx2Sjs3X1/7SFSRMk=</variable>
+        <!-- Passphrase shown in place of the installed passphrase. stanza-create rejects a passphrase that begins with CIPHER_PASS_EXAMPLE_PREFIX in src/command/stanza/create.c. -->
+        <variable key="backrest-repo-cipher-pass-display">zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=</variable>
         <variable key="br-bin">/usr/bin/pgbackrest</variable>
         <variable key="br-user">pgbackrest</variable>
         <variable key="br-group">{[br-user]}</variable>
@@ -1418,7 +1420,7 @@
                 <title>Configure <backrest/> repository encryption</title>
 
                 <backrest-config-option section="global" key="repo1-cipher-type">{[backrest-repo-cipher-type]}</backrest-config-option>
-                <backrest-config-option section="global" key="repo1-cipher-pass">{[backrest-repo-cipher-pass]}</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-cipher-pass" display="{[backrest-repo-cipher-pass-display]}">{[backrest-repo-cipher-pass]}</backrest-config-option>
             </backrest-config>
 
             <admonition type="note">Encryption settings are placed in the <id>[global]</id> section, above, so the <cmd>info</cmd> command can read all stanzas. Without the <br-option>stanza</br-option> option the <cmd>info</cmd> command reads encryption settings only from the <id>[global]</id> section, so encryption settings configured per stanza require the <br-option>stanza</br-option> option to read an encrypted stanza.</admonition>

@@ -80,6 +80,7 @@ class DocExecute(DocRender):
 
         self.host_map = {}
         self.config_map = {}
+        self.config_display_map = {}  # Values shown in place of the installed values, by host, file, section, and option
         self.pg_config_map = {}
         self.config_show_map = {}  # Each configuration file as the document last showed it, which a change is marked against
 
@@ -293,6 +294,11 @@ class DocExecute(DocRender):
             if option.text is not None and option.text.strip() != "":
                 entry["value"] = self._replace(option.text)
 
+            display = xml_node_attribute(option, "display")
+
+            if display is not None:
+                entry["display"] = self._replace(display)
+
             name = self._replace(xml_node_attribute(option, "key", True))
 
             if backrest:
@@ -381,11 +387,14 @@ class DocExecute(DocRender):
             raise ToolError("cannot configure backrest on host %s because the host does not exist" % host_name)
 
         file_map = self.config_map.setdefault(host_name, {})
+        display_file_map = self.config_display_map.setdefault(host_name, {})
 
         if xml_node_attribute(config, "reset") == "y":
             file_map.pop(key["file"], None)
+            display_file_map.pop(key["file"], None)
 
         section_map = file_map.setdefault(key["file"], {})
+        display_map = display_file_map.setdefault(key["file"], {})
 
         for option in xml_node_child_list(config, "backrest-config-option"):
             option_section = self._replace(xml_node_attribute(option, "section", True))
@@ -414,6 +423,14 @@ class DocExecute(DocRender):
 
                 log(DEBUG, "    " * (depth + 1) + "set %s->%s = %s" % (option_section, name, value))
 
+            # Value shown in place of the installed value
+            display = xml_node_attribute(option, "display")
+
+            if display is None or value is None or value == "":
+                display_map.get(option_section, {}).pop(name, None)
+            else:
+                display_map.setdefault(option_section, {})[name] = self._replace(display)
+
         path_local = os.path.join(self.manifest.path_doc, "output/pgbackrest.conf")
 
         file_write(path_local, ini_render(section_map))
@@ -427,6 +444,11 @@ class DocExecute(DocRender):
 
         if _CONFIG_SECTION_GLOBAL in clean and len(clean[_CONFIG_SECTION_GLOBAL]) == 0:
             del clean[_CONFIG_SECTION_GLOBAL]
+
+        # Replace each installed value that has a display value
+        for option_section, display_option_map in display_map.items():
+            for name, display in display_option_map.items():
+                clean[option_section][name] = display
 
         result = ini_render(clean)
 
