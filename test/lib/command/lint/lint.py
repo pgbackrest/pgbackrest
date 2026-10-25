@@ -33,6 +33,7 @@ _FILE_SKIP_LIST = (
 # everything under it. The check is excludes rather than includes so a file that is added is checked without anyone remembering to
 # add it, which is the way lines got long in the first place.
 _LINE_SKIP_LIST = (
+    ".github/security-insights.yml",  # Security Insights metadata, which is prose written a value per line
     "doc/manifest.xml",  # Documentation variables, which are a value per line
     "doc/resource/",  # Images and caches rather than source
     "doc/xml/",  # Documentation, which the coding standards exempt
