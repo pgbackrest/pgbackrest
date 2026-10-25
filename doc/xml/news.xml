@@ -3,6 +3,61 @@
     <description>News</description>
 
     <!-- ======================================================================================================================= -->
+    <section id="release-2-60-0" date="2026-10-18">
+        <title><backrest/> 2.60.0 Released</title>
+
+        <p>The <backrest/> community is pleased to announce the release of <link url="{[backrest-url-base]}">{[project]}</link> 2.60.0, the latest version of the reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads.</p>
+
+        <p><backrest/> supports a robust set of features for managing your backup and recovery infrastructure, including: parallel backup/restore, full/differential/incremental backups, block incremental backup, multiple repositories, delta restore, parallel asynchronous archiving, malware/ransomware protection, per-file checksums, page checksums (when enabled) validated during backup, multiple compression types, encryption, partial/failed backup resume, backup from standby, tablespace and link support, S3/Azure/GCS/SFTP support, backup expiration, local/remote operation via SSH or TLS, flexible configuration, and more.</p>
+
+        <p><backrest/> can be installed from the <link url="https://yum.postgresql.org">{[postgres]} Yum Repository</link> or the <link url="https://apt.postgresql.org">{[postgres]} APT Repository</link> and packages are also available for many other distributions. Source code can be downloaded from <link page="release">releases</link>.</p>
+
+        <section id="feature">
+            <title>Significant New Features and Improvements</title>
+
+            <list>
+                <list-item>Add checksum-page-error option to error on invalid page checksums (Andrew Pogrebnoi)</list-item>
+                <list-item>Support for GCS Workload Identity Federation (Adol Rodriguez)</list-item>
+                <list-item>Prefetch multi-file/range reads from object stores (David Steele)</list-item>
+                <list-item>Reduce keep-alive requests to remote processes (David Steele)</list-item>
+                <list-item>Retry Azure batch sub-requests missing from the response (David Steele)</list-item>
+                <list-item>Reduce the manifest checks made when reconstructing backup.info (David Steele)</list-item>
+                <list-item>Support building on illumos (Kalevi Kolttonen)</list-item>
+                <list-item>Support OpenSSL 4 (David Steele)</list-item>
+                <list-item>Modernize the website (David Steele, Jan Wieremjewicz)</list-item>
+            </list>
+
+            <p>See the <link page="release" section="/2.60.0">2.60.0 Release Notes</link> for additional features and improvements.</p>
+        </section>
+
+        <section id="note">
+            <title>Important Notes</title>
+
+            <list>
+                <list-item>The restore command will now error and stop if any restored file contains an invalid page checksum, which leaves the cluster incomplete and unable to start, so the restore must be rerun. The expire command will now refuse to expire if the oldest retained backup would contain checksum errors, which also prevents archive from being expired in that repository. Set checksum-page-error=n to warn instead of erroring.</list-item>
+                <list-item>Building from a git checkout requires PyYAML instead of libyaml. The distribution tarball includes the generated code and requires neither.</list-item>
+                <list-item><postgres/> 19rc1 is supported by v2.59.2 and later, including this release.</list-item>
+            </list>
+        </section>
+
+        <section id="link">
+            <title>Links</title>
+
+            <list>
+                <list-item><link url="{[backrest-url-base]}">Website</link></list-item>
+                <list-item><link page="user-guide-index">User Guides</link></list-item>
+                <list-item><link page="release">Release Notes</link></list-item>
+            </list>
+        </section>
+
+        <section id="Sponsorship">
+            <title>Sponsorship</title>
+
+            <p>This release was made possible by the generous sponsorship of <link url="https://aws.amazon.com">AWS</link>, <link url="https://supabase.com">Supabase</link>, <link url="https://pgedge.com">pgEdge</link>, <link url="https://tigerdata.com">Tiger Data</link>, <link url="https://percona.com">Percona</link>, <link url="https://eon.io">Eon</link>, <link url="https://xata.io">Xata</link>, <link url="https://dalibo.com">Dalibo</link>, and <link url="https://dataegret.com/">Data Egret</link>.</p>
+        </section>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="weak-encryption" date="2026-10-04">
         <title>Weak Encryption Subkeys and Salts</title>
 

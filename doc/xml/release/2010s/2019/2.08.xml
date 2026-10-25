@@ -99,6 +99,8 @@
             </release-item>
 
             <release-item>
+                <commit subject="Allow arbitary InOut filters to be chained in IoFilterGroup."/>
+
                 <p>Allow arbitrary <code>InOut</code> filters to be chained in <code>IoFilterGroup</code>.</p>
             </release-item>
 

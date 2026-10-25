@@ -13,9 +13,41 @@
                 </release-item-contributor-list>
 
                 <p>Fix issue with <cmd>version</cmd>/<cmd>help</cmd> commands attempting to load <file>pgbackrest.conf</file>.</p>
+
+                <p>In v2.54.0 the <cmd>version</cmd> and <cmd>help</cmd> commands loaded <file>pgbackrest.conf</file> and failed when it could not be read or parsed.</p>
             </release-item>
         </release-bug-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Exclude function logging macros from coverage reporting."/>
+                <commit subject="Exclude function void return logging macros from coverage reporting."/>
+                <commit subject="Fix misplaced volatile qualifiers in GCS authorization JWT generation."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Exclude logging macros from coverage reporting and fix volatile qualifiers.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Update release notes for PostgreSQL 17 support."/>
+                <commit subject="Change &quot;find&quot; to &quot;visit&quot; in introduction."/>
+                <commit subject="Rephrase invitation to star on Github."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update documentation and release notes.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
 
     <release-test-list>
         <release-improvement-list>
@@ -29,7 +61,23 @@
                 </release-item-contributor-list>
 
                 <p>Stabilize async archiving in integration tests.</p>
+
+                <p>An async <cmd>archive-get</cmd> left running by one integration test could write an error to the queue of the next test and fail its recovery.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Add wait for async archive log exists check in integration test."/>
+                <commit subject="Update Cirrus MacOS runner to OpenSSL 3."/>
+                <commit subject="Update Fedora test image to Fedora 41."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update CI and integration tests.</p>
+            </release-item>
+        </release-development-list>
     </release-test-list>
 </release>

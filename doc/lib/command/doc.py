@@ -27,7 +27,7 @@ from command.render.host import image_build_cached
 from command.render.html import html_render
 from command.render.manifest import RENDER_HTML, RENDER_MAN, RENDER_MARKDOWN, Manifest
 from command.render.markdown import markdown_render
-from command.render.release import release_current_stable, release_last, release_render
+from command.render.release import release_current_stable, release_history_update, release_last, release_render
 from config.parse import bld_cfg_parse
 from config.project import PROJECT_EXE, project_version
 from help.parse import bld_hlp_parse
@@ -181,13 +181,15 @@ def _build(config, var_store):
     var_store.add("release-date", date)
     var_store.add("release-year", year)
 
+    claim = release_history_update(path_repo, config.doc_path)
+
     document_map = {
         "command": reference_command_render(bld_cfg, bld_hlp),
         "configuration": reference_configuration_render(bld_cfg, bld_hlp),
         "index": news_index_render(index, news),
         "news": news_render(news),
         "user-guide": build_pre(user_guide, bld_hlp, var_store),
-        "release": release_render(release, config.doc_path, config.var_map.get("dev") == "y"),
+        "release": release_render(release, config.doc_path, config.var_map.get("dev") == "y", claim),
     }
 
     return document_map, reference_man_render(index, bld_cfg, bld_hlp)

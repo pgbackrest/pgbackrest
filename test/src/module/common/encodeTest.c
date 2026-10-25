@@ -98,6 +98,9 @@ testRun(void)
 
         TEST_ERROR(
             decodeToBin(encodingBase64, "cc$=", destinationDecode), FormatError, "base64 invalid character found at position 2");
+        TEST_ERROR(
+            decodeToBin(encodingBase64, "c\xc3\xa9=", destinationDecode), FormatError,
+            "base64 invalid character found at position 1");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ERROR(decodeToBin(encodingBase64, "c3", destinationDecode), FormatError, "base64 size 2 is not evenly divisible by 4");
@@ -218,6 +221,9 @@ testRun(void)
         TEST_ERROR(
             decodeToBin(encodingHex, "hh", destinationDecode), FormatError,
             "hex invalid character found at position 0");
+        TEST_ERROR(
+            decodeToBin(encodingHex, "c\xc3", destinationDecode), FormatError,
+            "hex invalid character found at position 1");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

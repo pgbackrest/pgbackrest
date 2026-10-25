@@ -15,6 +15,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix possible checksum error loading encrypted info and manifest files.</p>
+
+                <p>A large encrypted info or manifest file could lose its last lines when loaded, which failed the checksum. The lost lines had to fit in the final cipher block, so this is unlikely in practice.</p>
             </release-item>
 
             <release-item>
@@ -29,6 +31,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix possible weak encryption subkeys/salts.</p>
+
+                <p>When <proper>OpenSSL</proper> could not get random data from the operating system the failure was ignored, and subkeys and salts were generated from memory that was not random. An error is now reported.</p>
             </release-item>
         </release-bug-list>
     </release-core-list>

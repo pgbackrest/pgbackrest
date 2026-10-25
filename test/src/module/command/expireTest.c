@@ -2735,7 +2735,7 @@ testRun(void)
         #define TEST_ARCHIVE_INFO_FORMAT_6(rotateTime)                                                                             \
             zNewFmt(                                                                                                               \
                 "[cipher]\n"                                                                                                       \
-                "cipher-pass={\"1\":{\"digest\":\"sha256\",\"key\":\"" TEST_CIPHER_PASS_ARCHIVE "\"}}\n"                           \
+                "cipher-pass={\"1\":{\"digest\":\"sha256\",\"key\":\"" TEST_CIPHER_PASS_ARCHIVE_BASE64 "\"}}\n"                    \
                 "cipher-pass-current=\"1\"\n"                                                                                      \
                 "cipher-pass-rotate=%" PRId64 "\n"                                                                                 \
                 "\n"                                                                                                               \
