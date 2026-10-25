@@ -5,6 +5,9 @@
                 <commit subject="Use 256-bit subkeys for repository format 6.">
                     <github-pull-request id="2879"/>
                 </commit>
+                <commit subject="Redact the backup passphrase from history and restored manifests.">
+                    <github-pull-request id="2881"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
