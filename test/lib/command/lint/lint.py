@@ -25,8 +25,8 @@ from common.storage import path_list_recurse
 # Files that are exempt from the content checks. A binary file is an unscannable place to hide content, so each entry must be a
 # deliberate, reviewable decision.
 _FILE_SKIP_LIST = (
-    "doc/resource/card.png",  # Card shown where a link to the documentation is posted
-    "test/data/filecopy.table.bin",  # Binary test fixture
+    # Card shown where a link to the documentation is posted
+    "doc/resource/card.png",
 )
 
 # Paths that are exempt from the line length check, matched against the start of the name so an entry that ends in a slash exempts
@@ -37,7 +37,6 @@ _LINE_SKIP_LIST = (
     "doc/resource/",  # Images and caches rather than source
     "doc/xml/",  # Documentation, which the coding standards exempt
     "test/certificate/",  # Generated certificates and keys
-    "test/data/",  # Test fixtures
     "test/fuzz/corpus/",  # Fuzz seed inputs
     "test/uncrustify.cfg",  # Written by uncrustify rather than by hand
 )
