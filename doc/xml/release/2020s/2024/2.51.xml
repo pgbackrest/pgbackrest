@@ -13,6 +13,8 @@
                 </release-item-contributor-list>
 
                 <p>Skip zero-length files for block incremental delta restore.</p>
+
+                <p>An existing zero-length file caused a block incremental delta restore to fail in the block checksum filter. These files are now skipped, since there is nothing in them to reuse.</p>
             </release-item>
 
             <release-item>
@@ -26,6 +28,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix performance regression in storage list.</p>
+
+                <p>Listing a path requested detailed information for each file, which could be slow, e.g. on object stores. Only the information the list needs is now requested.</p>
             </release-item>
 
             <release-item>
@@ -54,6 +58,8 @@
                 </release-item-contributor-list>
 
                 <p>Improved support for dual stack connections.</p>
+
+                <p>When a host name resolves to more than one address, e.g. IPv4 and IPv6, the next address is tried once the prior address has had reasonable time to connect, following the <quote>happy eyeballs</quote> approach of RFC 8305. A connection attempt that neither fails nor connects no longer uses up all the available time.</p>
             </release-item>
 
             <release-item>
@@ -70,6 +76,8 @@
                 </release-item-contributor-list>
 
                 <p>Make meson the primary build system.</p>
+
+                <p><proper>meson</proper> is now the build system used for testing and for building the documentation. Functions not used outside their module are now hidden, which makes the binary smaller.</p>
             </release-item>
 
             <release-item>
@@ -81,6 +89,8 @@
                 </release-item-contributor-list>
 
                 <p>Detect files that have not changed during non-delta incremental backup.</p>
+
+                <p>During a non-delta diff or incr backup, a file that fits in a single buffer, or any block incremental file, is compared to the file in the prior backup and referenced instead of stored when it has not changed.</p>
             </release-item>
 
             <release-item>
@@ -92,6 +102,8 @@
                 </release-item-contributor-list>
 
                 <p>Prevent invalid recovery when <file>backup_label</file> removed.</p>
+
+                <p>When <file>backup_label</file> is removed from a restored cluster, <postgres/> uses the checkpoint in <file>pg_control</file> for crash recovery, which nearly always corrupts the cluster. Restore now invalidates the checkpoint in <file>pg_control</file>, so recovery fails instead. <file>pg_controldata</file> shows the checkpoint as <id>0/DEAD</id>.</p>
             </release-item>
 
             <release-item>
@@ -103,6 +115,8 @@
                 </release-item-contributor-list>
 
                 <p>Improve <cmd>archive-push</cmd> WAL segment queue handling.</p>
+
+                <p>The size of every WAL segment in the queue was read to measure the queue. The size of the first segment is now used for all of them.</p>
             </release-item>
 
             <release-item>
@@ -115,6 +129,8 @@
                 </release-item-contributor-list>
 
                 <p>Limit resume functionality to full backups.</p>
+
+                <p>Resume did not work correctly for delta diff and incr backups, and a file that changed since the prior backup is likely to change again before a resume. Only full backups are resumed now.</p>
             </release-item>
 
             <release-item>
@@ -126,6 +142,8 @@
                 </release-item-contributor-list>
 
                 <p>Update resume functionality for block incremental.</p>
+
+                <p>Resume removed block incremental files, so it worked but copied all of them again. Block incremental files are now kept on resume.</p>
             </release-item>
 
             <release-item>
@@ -138,6 +156,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow <setting>--version</setting> and <setting>--help</setting> for version and help.</p>
+
+                <p><br-option>--version</br-option> and <br-option>--help</br-option> now work as they do for most programs. Use <cmd>help</cmd> for help on a specific command or option.</p>
             </release-item>
 
             <release-item>
@@ -149,6 +169,8 @@
                 </release-item-contributor-list>
 
                 <p>Add detailed backtrace to <proper>autoconf</proper>/<proper>make</proper> build.</p>
+
+                <p>Error stack traces in the <proper>autoconf</proper>/<proper>make</proper> build now include detail from <proper>libbacktrace</proper>, which performance tests showed has no noticeable cost.</p>
             </release-item>
         </release-improvement-list>
 
@@ -162,6 +184,52 @@
                 </release-item-contributor-list>
 
                 <p>Improve sort comparators.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix help not displaying help for the help command.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess and config.sub to latest versions.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add asserts to default switch cases in common/type/variant module."/>
+                <commit subject="Move assert in cmdServerSigChild()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve asserts.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add validation for WAL segment size in pg_control."/>
+                <commit subject="Add validation for page checksum version in pg_control."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Validate more fields in <file>pg_control</file>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Redact secure options in check --report.</p>
             </release-item>
         </release-development-list>
     </release-core-list>
@@ -178,7 +246,68 @@
                 </release-item-contributor-list>
 
                 <p>Update references to <file>recovery.conf</file>.</p>
+
+                <p>References to <file>recovery.conf</file> now include <file>postgresql.auto.conf</file>, which newer versions of <postgres/> use.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Migrate man page generation to C.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add release instructions to update PostgreSQL ecosystem wiki.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Disable log expect testing for non-unit tests."/>
+                <commit subject="Remove mock integration tests."/>
+                <commit subject="Migrate integration tests to C."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Migrate integration tests to C.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Simplify output in command/backup unit tests."/>
+                <commit subject="Remove unneeded backupTimeStart parameter from testBackupValidate()."/>
+                <commit subject="Add execOne() to simplify exec for build, documentation, and testing."/>
+                <commit subject="Remove obsolete valgrind suppression."/>
+                <commit subject="Make valgrind libssh2 leak check less specific."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests and test tools.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update Cirrus CI BSD image to 13.3."/>
+                <commit subject="Disable arm64 test in CirrusCI."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

@@ -17,6 +17,9 @@ Config option constants
 #define TEST_CIPHER_PASS                                            "xmainx"
 #define TEST_CIPHER_PASS_ARCHIVE                                    "xarchivex"
 
+// Archive pass encoded as base64 for format 6
+#define TEST_CIPHER_PASS_ARCHIVE_BASE64                             "eGFyY2hpdmV4"
+
 // Cipher spec for a test pass, defaulting to the main pass, since most tests encrypt with that
 #define TEST_CIPHER_SPEC_PASS(pass)                                 cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRZ(pass))
 #define TEST_CIPHER_SPEC                                            TEST_CIPHER_SPEC_PASS(TEST_CIPHER_PASS)

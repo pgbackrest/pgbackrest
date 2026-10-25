@@ -310,11 +310,6 @@ to:
 #define PROJECT_VERSION_SUFFIX                                      "dev"
 ```
 
-Run deploy to generate git history (ctrl-c as soon as the file is generated):
-```
-pgbackrest/doc/release.py --build
-```
-
 Commit and push to integration:
 ```
 git commit -m "Begin v2.15.0 development."

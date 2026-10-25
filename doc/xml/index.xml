@@ -73,6 +73,13 @@
         </section>
 
         <!-- =================================================================================================================== -->
+        <section id="backup-standby">
+            <title>Backup from Standby</title>
+
+            <p>Backups can be made from a standby to reduce load on the primary. Only the few files that are not replicated are copied from the primary.</p>
+        </section>
+
+        <!-- =================================================================================================================== -->
         <section id="backup-types">
             <title>Full, Differential, &amp; Incremental Backups (at File or Block Level)</title>
 
@@ -103,7 +110,7 @@
 
             <p>If page checksums are enabled <backrest/> will validate the checksums for every file that is copied during a backup. All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.</p>
 
-            <p>Validation failures do not stop the backup process, but warnings with details of exactly which pages have failed validation are output to the console and file log.</p>
+            <p>Validation failures do not stop the backup process, but warnings with details of exactly which pages have failed validation are output to the console and file log. By default restore errors when the backup has invalid page checksums and expire will not leave a backup with invalid page checksums as the oldest backup.</p>
 
             <p>This feature allows page-level corruption to be detected early, before backups that contain valid copies of the data have expired.</p>
         </section>
@@ -122,6 +129,13 @@
             <p>Compression and checksum calculations are performed in stream while files are being copied to the repository, whether the repository is located locally or remotely.</p>
 
             <p>If the repository is on a repository host, compression is performed on the <postgres/> host and files are transmitted in a compressed format and simply stored on the repository host. When compression is disabled a lower level of compression is utilized to make efficient use of available bandwidth while keeping CPU cost to a minimum.</p>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="file-bundling">
+            <title>File Bundling</title>
+
+            <p>Small files are combined into bundles in the repository so fewer files are created during backup. This is especially effective on object stores.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -154,10 +168,10 @@
         </section>
 
         <!-- =================================================================================================================== -->
-        <section id="object-store-support">
-            <title>S3, Azure, and GCS Support</title>
+        <section id="repo-storage">
+            <title>S3, Azure, GCS, and SFTP Support</title>
 
-            <p><backrest/> repositories can be located in <proper>S3</proper>, <proper>Azure</proper>, and GCS compatible object stores to allow for virtually unlimited capacity and retention.</p>
+            <p><backrest/> repositories can be located in <proper>S3</proper>, <proper>Azure</proper>, and <proper>GCS</proper> compatible object stores to allow for virtually unlimited capacity and retention. Repositories can also be stored on an <proper>SFTP</proper> server. Object store credentials can be retrieved automatically in cloud environments using a variety of authentication methods.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -173,7 +187,7 @@
 
             <p>When the repository is stored on versioned object storage, <backrest/> can read the repository as it was at a point-in-time. If backups are deleted or corrupted by accident, malware, or ransomware, a target time can be used to recover data from before the damage occurred.</p>
 
-            <p>Versioning is supported by <proper>S3</proper>, <proper>Azure</proper>, and GCS compatible object stores. Object locking for <proper>S3</proper> and soft delete for <proper>GCS</proper> or <proper>Azure</proper> can provide additional protection against tampering.</p>
+            <p>Versioning is supported by <proper>S3</proper>, <proper>Azure</proper>, and <proper>GCS</proper> compatible object stores. Object locking for <proper>S3</proper> and soft delete for <proper>GCS</proper> or <proper>Azure</proper> can provide additional protection against tampering.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -227,7 +241,7 @@
     <section id="contributions">
         <title>Contributions</title>
 
-        <p>Contributions to <backrest/> are always welcome! Please see our <link url="{[github-url-contributing]}">Contributing Guidelines</link> for details on how to contribute features, improvements or issues.</p>
+        <p>Contributions to <backrest/> are always welcome! Please see our <link url="{[github-url-contributing]}">Contributing Guidelines</link> for details on how to contribute features, improvements, or issues.</p>
     </section>
 
     <!-- ======================================================================================================================= -->

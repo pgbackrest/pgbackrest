@@ -60,6 +60,11 @@
     <contributor-id type="github">arogozin</contributor-id>
 </contributor>
 
+<contributor id="aleksey.tsalolikhin">
+    <contributor-name-display>Aleksey Tsalolikhin</contributor-name-display>
+    <contributor-id type="github">atsaloli</contributor-id>
+</contributor>
+
 <contributor id="ales.zeleny">
     <contributor-name-display>Ale&amp;scaron; Zelen&amp;yacute;</contributor-name-display>
     <contributor-id type="github">aleszeleny</contributor-id>
@@ -675,6 +680,11 @@
     <contributor-id type="github">j-naylor</contributor-id>
 </contributor>
 
+<contributor id="john.terrell">
+    <contributor-name-display>John W. Terrell</contributor-name-display>
+    <contributor-id type="github">john-terrell</contributor-id>
+</contributor>
+
 <contributor id="jordan.english">
     <contributor-name-display>Jordan English</contributor-name-display>
     <contributor-id type="github">jordanenglish</contributor-id>
@@ -763,6 +773,11 @@
 <contributor id="kalevi.kolttonen">
     <contributor-name-display>Kalevi Kolttonen</contributor-name-display>
     <contributor-id type="github">retrodood</contributor-id>
+</contributor>
+
+<contributor id="kian-meng.ang">
+    <contributor-name-display>Kian-Meng Ang</contributor-name-display>
+    <contributor-id type="github">kianmeng</contributor-id>
 </contributor>
 
 <contributor id="krmozejko">
