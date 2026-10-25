@@ -127,8 +127,8 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 4, "6");
 
         #define TEST_CIPHER_PASS_FMT6_ERROR                                                                                        \
-            "option 'repo4-cipher-pass' must be at least 256 random bits encoded as base64 to create a stanza at repository"       \
-            " format 6 or higher\n"                                                                                                \
+            "option 'repo4-cipher-pass' must be at least 256 random bits encoded as hex, base64, or base64url to create a"         \
+            " stanza at repository format 6 or higher\n"                                                                           \
             "HINT: generate a passphrase with 'openssl rand -base64 32'."
 
         #define TEST_CIPHER_PASS_FMT6_LOG                                                                                          \

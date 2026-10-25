@@ -179,8 +179,8 @@ cmdStanzaCreate(void)
                 {
                     THROW_FMT(
                         OptionInvalidValueError,
-                        "option '%s' must be at least 256 random bits encoded as base64 to create a stanza at repository format "
-                        STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
+                        "option '%s' must be at least 256 random bits encoded as hex, base64, or base64url to create a stanza at"
+                        " repository format " STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
                         "HINT: generate a passphrase with 'openssl rand -base64 32'.",
                         cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
                 }
