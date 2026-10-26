@@ -13,6 +13,12 @@ Test Stanza Commands
 #include "harness/pq.h"
 
 /***********************************************************************************************************************************
+Test data
+***********************************************************************************************************************************/
+// Passphrase generated with openssl rand -base64 32, as required to create a stanza at format 6
+#define TEST_CIPHER_PASS_FMT6                                       "SOb5SRNoVLdVRtr2K3lr/oDmocARh2c+SObK6H8CtFY="
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -113,12 +119,95 @@ testRun(void)
             true, "test and stanza backup info files are equal");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-create at format 6 requires a passphrase that looks generated");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 4, cipherTypeAes256Cbc);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 4, "6");
+
+        #define TEST_CIPHER_PASS_FMT6_ERROR                                                                                        \
+            "option 'repo4-cipher-pass' must be at least 256 random bits encoded as hex, base64, or base64url to create a"         \
+            " stanza at repository format 6 or higher\n"                                                                           \
+            "HINT: generate a passphrase with 'openssl rand -base64 32'."
+
+        #define TEST_CIPHER_PASS_FMT6_LOG                                                                                          \
+            "P00   INFO: stanza-create for stanza 'db' on repo1\n"                                                                 \
+            "P00   INFO: stanza 'db' already exists on repo1 and is valid\n"                                                       \
+            "P00   INFO: stanza-create for stanza 'db' on repo4"
+
+        // Valid base64 that is less than 256 bits
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "SOb5SRNoVLdVRtr2K3lr/oDmocARh2c+SObK6H8CtA==");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
+        TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // Hex that is less than 256 bits
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "48e6f949136854b75546daf62b796bfe80e6a1c01187673e");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
+        TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // Not base64
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "not base64");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
+        TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // Text
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "Y29ycmVjdAlob3JzZQ0KYmF0dGVyeSBzdGFwbGUgYW5kIG1vcmUgdGV4dA==");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
+        TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // Too few distinct bytes
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
+        TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // Too few distinct differences
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(cmdStanzaCreate(), OptionInvalidValueError, TEST_CIPHER_PASS_FMT6_ERROR);
+        TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // Prior documentation example
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(
+            cmdStanzaCreate(), OptionInvalidValueError,
+            "option 'repo4-cipher-pass' must not be the example passphrase from the documentation\n"
+            "HINT: generate a passphrase with 'openssl rand -base64 32'.");
+        TEST_RESULT_LOG(TEST_CIPHER_PASS_FMT6_LOG);
+
+        // base64url without padding
+        TEST_RESULT_BOOL(
+            cipherPassGenerated(cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("SOb5SRNoVLdVRtr2K3lr_oDmocARh2c-SObK6H8CtFY"))),
+            true, "base64url without padding");
+
+        // Hex
+        TEST_RESULT_BOOL(
+            cipherPassGenerated(
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("48e6f949136854b75546daf62b796bfe80e6a1c01187673e48e6cae87f02b456"))),
+            true, "hex");
+
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, STRDEF("repo4")), false, "nothing created");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cmdStanzaCreate success - multi-repo and encryption");
 
         argList = strLstDup(argListBase);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
-        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 3, "6");
         // Request a format for repo1 as well, where the stanza already exists
@@ -126,7 +215,19 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 4, TEST_PATH "/repo4");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 4, cipherTypeAes256Cbc);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 4, "6");
-        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, "87654321");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 4, TEST_CIPHER_PASS_FMT6);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_ERROR(
+            cmdStanzaCreate(), OptionInvalidValueError,
+            "option 'repo2-cipher-pass' must not be the example passphrase from the documentation\n"
+            "HINT: generate a passphrase with 'openssl rand -base64 32'.");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-create for stanza 'db' on repo1\n"
+            "P00   INFO: stanza 'db' already exists on repo1 and is valid\n"
+            "P00   INFO: stanza-create for stanza 'db' on repo2");
+
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         const time_t timeCreate = time(NULL);
@@ -191,7 +292,8 @@ testRun(void)
         TEST_ASSIGN(
             infoArchive,
             infoArchiveLoadFile(
-                storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
+                storageRepoIdx(3), INFO_ARCHIVE_PATH_FILE_STR,
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_FMT6))),
             "load archive info from encrypted repo4");
 
         const CipherSpecMap *const cipherSpecMapCreate = infoArchiveCipherSpecMap(infoArchive);
@@ -212,7 +314,8 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup,
             infoBackupLoadFile(
-                storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321"))),
+                storageRepoIdx(3), INFO_BACKUP_PATH_FILE_STR,
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_FMT6))),
             "load backup info from encrypted repo4");
         TEST_RESULT_UINT(cipherSpecType(infoBackupCipherSpec(infoBackup)), cipherTypeAes256Cbc, "cipher sub set");
 

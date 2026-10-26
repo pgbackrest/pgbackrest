@@ -9,11 +9,15 @@
                     <github-pull-request id="2881"/>
                 </commit>
                 <commit subject="Index the base64 and hex decode tables with unsigned bytes."/>
+                <commit subject="Require a generated repository passphrase for new format 6 stanzas.">
+                    <github-pull-request id="2880"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="douglas.j.hunley"/>
                     <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="baptiste.arnoux"/>
                 </release-item-contributor-list>
 
                 <p>Repository encryption key rotation.</p>
