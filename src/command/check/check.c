@@ -77,6 +77,13 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
             if (error)
                 THROW(ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
         }
+        // Notify that online backups will be skipped when run against this standby
+        else if (cfgOptionSeq(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_SKIP)
+        {
+            LOG_INFO(
+                "standby cluster found and " CFGOPT_BACKUP_STANDBY "=skip is set - online backups using this configuration will"
+                " be skipped");
+        }
 
         // Check the user configured path and version against the database
         checkDbConfig(dbPgControl(dbGroup.standby).version, dbGroup.standbyIdx, dbGroup.standby, true);
