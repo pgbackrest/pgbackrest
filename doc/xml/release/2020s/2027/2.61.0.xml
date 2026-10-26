@@ -23,5 +23,19 @@
                 <p>Repository encryption key rotation.</p>
             </release-item>
         </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2876"/>
+                <github-pull-request id="2878"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="ella.zhang"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Continue without the log file when a write to it fails.</p>
+            </release-item>
+        </release-improvement-list>
     </release-core-list>
 </release>
