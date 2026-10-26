@@ -3,9 +3,6 @@ File Descriptor Functions
 ***********************************************************************************************************************************/
 #include <build.h>
 
-#ifdef __sun__                                                      // Illumos needs sys/siginfo for sigset_t inside poll.h
-#include <sys/siginfo.h>
-#endif
 #include <poll.h>
 
 #include "common/debug.h"
