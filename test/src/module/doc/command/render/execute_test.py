@@ -512,6 +512,7 @@ def test_backrest_config():
         config = _doc(
             """<backrest-config host="repo" file="/etc/pgbackrest.conf"><title>Configure</title>
                 <backrest-config-option section="global" key="repo1-path">/var/lib/pgbackrest</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-cipher-pass" display="shown">installed</backrest-config-option>
                 <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="pg1-path" multi="y">/pg1</backrest-config-option>
                 <backrest-config-option section="global" key="pg1-path" multi="y">/pg2</backrest-config-option>
@@ -531,12 +532,16 @@ def test_backrest_config():
                 ("add", "[global]"),
                 ("add", "pg1-path=/pg1"),
                 ("add", "pg1-path=/pg2"),
+                ("add", "repo1-cipher-pass=shown"),
                 ("add", "repo1-path=/var/lib/pgbackrest"),
             ],
         )
 
-        # The file that is installed on the host has everything in it
-        assert_in("log-level-stderr=off", file_read(os.path.join(path, "output/pgbackrest.conf")))
+        # The file that is installed on the host has everything in it and the installed values
+        installed = file_read(os.path.join(path, "output/pgbackrest.conf"))
+
+        assert_in("log-level-stderr=off", installed)
+        assert_in("repo1-cipher-pass=installed", installed)
 
         # A later section adds to what is already there and only what it added is marked
         config = _doc(
@@ -556,6 +561,7 @@ def test_backrest_config():
                 ("same", "[global]"),
                 ("same", "pg1-path=/pg1"),
                 ("same", "pg1-path=/pg2"),
+                ("same", "repo1-cipher-pass=shown"),
                 ("same", "repo1-path=/var/lib/pgbackrest"),
             ],
         )
@@ -758,13 +764,16 @@ def test_config_key():
                 """<backrest-config host="repo" file="/etc/x" reset="y"><title>C</title>
                     <backrest-config-option section="global" key="a">1</backrest-config-option>
                     <backrest-config-option section="global" key="b" remove="y"/>
+                    <backrest-config-option section="global" key="c" display="shown">3</backrest-config-option>
                 </backrest-config>"""
             )
         )
 
         assert_equal(key["host"], "repo")
         assert_true(key["reset"])
-        assert_equal(key["option"], {"global": {"a": {"value": "1"}, "b": {"remove": True}}})
+        assert_equal(
+            key["option"], {"global": {"a": {"value": "1"}, "b": {"remove": True}, "c": {"value": "3", "display": "shown"}}}
+        )
 
         # A PostgreSQL option has no section of its own, since the file has none
         key = render.config_key(
