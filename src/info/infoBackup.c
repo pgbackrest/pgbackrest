@@ -425,7 +425,7 @@ infoBackupCipherSpecManifest(const InfoBackup *const this, const String *const b
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Key of the backup set, which is stored by the label of the full backup
+        // Key of the backup set by the label of the full backup
         result = cipherSpecMapFind(
             infoCipherSpecMap(infoPgInfo(infoBackupPg(this))), strSubN(backupLabel, 0, DATE_TIME_LEN + 1));
 

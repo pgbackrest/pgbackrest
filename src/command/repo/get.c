@@ -118,15 +118,18 @@ storageGetProcess(IoWrite *const destination)
 
                         if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                         {
-                            // Find the manifest passphrase by the label of the backup, which begins the name of a history manifest
+                            // Find the manifest passphrase by the label of the backup
                             const InfoBackup *const info = infoBackupLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
                                 cfgCipherSpecMain());
                             const String *backupLabel = strLstGet(filePathSplitLst, 2);
                             const bool history = strEq(backupLabel, STRDEF(BACKUP_PATH_HISTORY));
 
+                            // Get the label from the name of the history manifest
                             if (history)
+                            {
                                 backupLabel = strBase(file);
+                            }
                             // Else get the label from the destination of the latest link
                             else if (strEq(backupLabel, STRDEF(BACKUP_LINK_LATEST)))
                             {
