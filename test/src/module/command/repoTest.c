@@ -767,6 +767,17 @@ testRun(void)
         TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get through latest link");
         TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "get matches put");
 
+        hrnCfgArgRawBool(argList, cfgOptIgnoreMissing, true);
+        HRN_CFG_LOAD(cfgCmdRepoGet, argList);
+
+        writeBuffer = bufNew(0);
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(writeBuffer)), 0, "get through latest link with ignore missing");
+        TEST_RESULT_BOOL(bufEq(writeBuffer, manifestFileBuffer), true, "get matches put");
+
+        HRN_STORAGE_REMOVE(storageFixture, STORAGE_PATH_BACKUP "/test/latest");
+
+        TEST_RESULT_INT(storageGetProcess(ioBufferWriteNew(bufNew(0))), 1, "get missing latest link");
+
         // -------------------------------------------------------------------------------------------------------------------------
         // Reset env
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);

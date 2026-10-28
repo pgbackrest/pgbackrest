@@ -53,12 +53,19 @@ storageGetProcess(IoWrite *const destination)
         // Is the file an info file, i.e. one that has a header in front of its content?
         bool fileIsInfo = false;
 
+        // Is the file missing?
+        bool missing = false;
+
         // Add decryption if needed
         if (!cfgOptionBool(cfgOptRaw))
         {
             const CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
 
-            if (repoCipherType != cipherTypeNone)
+            // Check for a missing file before finding the passphrase when missing files are ignored
+            if (repoCipherType != cipherTypeNone && cfgOptionBool(cfgOptIgnoreMissing))
+                missing = !storageExistsP(storageRepo(), file);
+
+            if (repoCipherType != cipherTypeNone && !missing)
             {
                 // Determine the passphrase using the following pattern:
                 //
@@ -188,7 +195,7 @@ storageGetProcess(IoWrite *const destination)
         }
 
         // Open source
-        if (ioReadOpen(source))
+        if (!missing && ioReadOpen(source))
         {
             // Open the destination file now that we know the source exists and is readable
             ioWriteOpen(destination);
