@@ -123,8 +123,9 @@ storageGetProcess(IoWrite *const destination)
                                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
                                 cfgCipherSpecMain());
                             const String *backupLabel = strLstGet(filePathSplitLst, 2);
+                            const bool history = strEq(backupLabel, STRDEF(BACKUP_PATH_HISTORY));
 
-                            if (strEq(backupLabel, STRDEF(BACKUP_PATH_HISTORY)))
+                            if (history)
                                 backupLabel = strBase(file);
                             // Else get the label from the destination of the latest link
                             else if (strEq(backupLabel, STRDEF(BACKUP_LINK_LATEST)))
@@ -144,8 +145,7 @@ storageGetProcess(IoWrite *const destination)
                                     infoBackupCipherSpecManifest(info, backupLabel) : infoBackupCipherSpec(info);
 
                             // Find the backup passphrase if not a manifest
-                            if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF(BACKUP_PATH_HISTORY)) &&
-                                !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
+                            if (!history && !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
                                 !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
                             {
                                 const Manifest *const manifest = manifestLoadFile(
