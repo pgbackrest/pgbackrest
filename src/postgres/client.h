@@ -98,6 +98,10 @@ pgClientMove(PgClient *const this, MemContext *const parentNew)
 // Execute a query and return results
 FN_EXTERN Pack *pgClientQuery(PgClient *this, const String *query, PgClientQueryResult resultType);
 
+// Parse a conninfo string with libpq and return the value of a keyword. The value is empty when the keyword is set to an empty
+// string and NULL when the keyword is not set. Defaults, e.g. from environment variables or service files, are not applied.
+FN_EXTERN String *pgClientConnInfoValue(const String *connInfo, const char *keyword);
+
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/

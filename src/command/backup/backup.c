@@ -99,7 +99,11 @@ backupInit(const InfoBackup *const infoBackup)
 
     if (cfgOptionBool(cfgOptOnline))
     {
-        const DbGetResult dbInfo = dbGet(backupStandby == CFGOPTVAL_BACKUP_STANDBY_N, true, backupStandby);
+        // The standby mode is only valid when backup from standby is enabled
+        const DbGetResult dbInfo = dbGet(
+            backupStandby == CFGOPTVAL_BACKUP_STANDBY_N, true, backupStandby,
+            backupStandby == CFGOPTVAL_BACKUP_STANDBY_N ?
+                CFGOPTVAL_BACKUP_STANDBY_MODE_ANY : cfgOptionStrId(cfgOptBackupStandbyMode));
 
         // If no standby was found but using the primary is allowed then warn and proceed
         if (backupStandby == CFGOPTVAL_BACKUP_STANDBY_PREFER && dbInfo.standby == NULL)

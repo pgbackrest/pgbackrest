@@ -374,6 +374,42 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN String *
+pgClientConnInfoValue(const String *const connInfo, const char *const keyword)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, connInfo);
+        FUNCTION_TEST_PARAM(STRINGZ, keyword);
+    FUNCTION_TEST_END();
+
+    ASSERT(connInfo != NULL);
+    ASSERT(keyword != NULL);
+
+    String *result = NULL;
+    char *error = NULL;
+    PQconninfoOption *const optionList = PQconninfoParse(strZ(connInfo), &error);
+
+    // Copy the error before libpq frees it. A NULL error means libpq ran out of memory.
+    if (optionList == NULL)
+    {
+        String *const errorMsg = strNewZ(error != NULL ? error : "out of memory");        // {uncovered_branch - libpq oom}
+
+        PQfreemem(error);
+        THROW_FMT(DbQueryError, "unable to parse conninfo: %s", strZ(strTrim(errorMsg)));
+    }
+
+    for (const PQconninfoOption *option = optionList; option->keyword != NULL; option++)
+    {
+        if (strcmp(option->keyword, keyword) == 0 && option->val != NULL)
+            result = strNewZ(option->val);
+    }
+
+    PQconninfoFree(optionList);
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN void
 pgClientToLog(const PgClient *const this, StringStatic *const debugLog)
 {

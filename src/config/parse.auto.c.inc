@@ -79,7 +79,9 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("9999999d"),                                                                                        // val/str
     PARSE_RULE_STRPUB("accept-new"),                                                                                      // val/str
     PARSE_RULE_STRPUB("aes-256-cbc"),                                                                                     // val/str
+    PARSE_RULE_STRPUB("any"),                                                                                             // val/str
     PARSE_RULE_STRPUB("asc"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("async"),                                                                                           // val/str
     PARSE_RULE_STRPUB("auto"),                                                                                            // val/str
     PARSE_RULE_STRPUB("azure"),                                                                                           // val/str
     PARSE_RULE_STRPUB("blob.core.windows.net"),                                                                           // val/str
@@ -119,6 +121,8 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("posix"),                                                                                           // val/str
     PARSE_RULE_STRPUB("postgres"),                                                                                        // val/str
     PARSE_RULE_STRPUB("prefer"),                                                                                          // val/str
+    PARSE_RULE_STRPUB("prefer-async"),                                                                                    // val/str
+    PARSE_RULE_STRPUB("prefer-sync"),                                                                                     // val/str
     PARSE_RULE_STRPUB("preserve"),                                                                                        // val/str
     PARSE_RULE_STRPUB("process"),                                                                                         // val/str
     PARSE_RULE_STRPUB("progress"),                                                                                        // val/str
@@ -137,6 +141,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("storage.googleapis.com"),                                                                          // val/str
     PARSE_RULE_STRPUB("strict"),                                                                                          // val/str
     PARSE_RULE_STRPUB("sts.amazonaws.com"),                                                                               // val/str
+    PARSE_RULE_STRPUB("sync"),                                                                                            // val/str
     PARSE_RULE_STRPUB("text"),                                                                                            // val/str
     PARSE_RULE_STRPUB("time"),                                                                                            // val/str
     PARSE_RULE_STRPUB("tls"),                                                                                             // val/str
@@ -221,7 +226,9 @@ typedef enum
     parseRuleValStrQT_9999999d_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_accept_DS_new_QT,                                                                              // val/str/enum
     parseRuleValStrQT_aes_DS_256_DS_cbc_QT,                                                                          // val/str/enum
+    parseRuleValStrQT_any_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_asc_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_async_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_auto_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_azure_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_blob_DT_core_DT_windows_DT_net_QT,                                                             // val/str/enum
@@ -261,6 +268,8 @@ typedef enum
     parseRuleValStrQT_posix_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_postgres_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_prefer_QT,                                                                                     // val/str/enum
+    parseRuleValStrQT_prefer_DS_async_QT,                                                                            // val/str/enum
+    parseRuleValStrQT_prefer_DS_sync_QT,                                                                             // val/str/enum
     parseRuleValStrQT_preserve_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_process_QT,                                                                                    // val/str/enum
     parseRuleValStrQT_progress_QT,                                                                                   // val/str/enum
@@ -279,6 +288,7 @@ typedef enum
     parseRuleValStrQT_storage_DT_googleapis_DT_com_QT,                                                               // val/str/enum
     parseRuleValStrQT_strict_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_sts_DT_amazonaws_DT_com_QT,                                                                    // val/str/enum
+    parseRuleValStrQT_sync_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_text_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_time_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_tls_QT,                                                                                        // val/str/enum
@@ -1469,6 +1479,47 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                                 // opt/backup-standby
         ),                                                                                                     // opt/backup-standby
     ),                                                                                                         // opt/backup-standby
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                     // opt/backup-standby-mode
+    (                                                                                                     // opt/backup-standby-mode
+        PARSE_RULE_OPTION_NAME("backup-standby-mode"),                                                    // opt/backup-standby-mode
+        PARSE_RULE_OPTION_TYPE(StringId),                                                                 // opt/backup-standby-mode
+        PARSE_RULE_OPTION_RESET(true),                                                                    // opt/backup-standby-mode
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                 // opt/backup-standby-mode
+        PARSE_RULE_OPTION_SECTION(Global),                                                                // opt/backup-standby-mode
+                                                                                                          // opt/backup-standby-mode
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/backup-standby-mode
+        (                                                                                                 // opt/backup-standby-mode
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                             // opt/backup-standby-mode
+        ),                                                                                                // opt/backup-standby-mode
+                                                                                                          // opt/backup-standby-mode
+        PARSE_RULE_OPTIONAL                                                                               // opt/backup-standby-mode
+        (                                                                                                 // opt/backup-standby-mode
+            PARSE_RULE_OPTIONAL_GROUP                                                                     // opt/backup-standby-mode
+            (                                                                                             // opt/backup-standby-mode
+                PARSE_RULE_OPTIONAL_DEPEND                                                                // opt/backup-standby-mode
+                (                                                                                         // opt/backup-standby-mode
+                    PARSE_RULE_VAL_OPT(BackupStandby),                                                    // opt/backup-standby-mode
+                    PARSE_RULE_VAL_STRID(prefer),                                                         // opt/backup-standby-mode
+                    PARSE_RULE_VAL_STRID(y),                                                              // opt/backup-standby-mode
+                ),                                                                                        // opt/backup-standby-mode
+                                                                                                          // opt/backup-standby-mode
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                            // opt/backup-standby-mode
+                (                                                                                         // opt/backup-standby-mode
+                    PARSE_RULE_VAL_STRID(any),                                                            // opt/backup-standby-mode
+                    PARSE_RULE_VAL_STRID(async),                                                          // opt/backup-standby-mode
+                    PARSE_RULE_VAL_STRID(prefer_DS_async),                                                // opt/backup-standby-mode
+                    PARSE_RULE_VAL_STRID(prefer_DS_sync),                                                 // opt/backup-standby-mode
+                    PARSE_RULE_VAL_STRID(sync),                                                           // opt/backup-standby-mode
+                ),                                                                                        // opt/backup-standby-mode
+                                                                                                          // opt/backup-standby-mode
+                PARSE_RULE_OPTIONAL_DEFAULT                                                               // opt/backup-standby-mode
+                (                                                                                         // opt/backup-standby-mode
+                    PARSE_RULE_VAL_STRID(any),                                                            // opt/backup-standby-mode
+                ),                                                                                        // opt/backup-standby-mode
+            ),                                                                                            // opt/backup-standby-mode
+        ),                                                                                                // opt/backup-standby-mode
+    ),                                                                                                    // opt/backup-standby-mode
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                    // opt/beta
     (                                                                                                                    // opt/beta
@@ -12150,6 +12201,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptArchivePushQueueMax,                                                                                  // opt-resolve-order
     cfgOptArchiveTimeout,                                                                                       // opt-resolve-order
     cfgOptBackupStandby,                                                                                        // opt-resolve-order
+    cfgOptBackupStandbyMode,                                                                                    // opt-resolve-order
     cfgOptBeta,                                                                                                 // opt-resolve-order
     cfgOptBufferSize,                                                                                           // opt-resolve-order
     cfgOptChecksumPage,                                                                                         // opt-resolve-order

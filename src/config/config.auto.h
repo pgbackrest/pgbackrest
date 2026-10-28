@@ -57,6 +57,7 @@ Option constants
 #define CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                               "archive-push-queue-max"
 #define CFGOPT_ARCHIVE_TIMEOUT                                      "archive-timeout"
 #define CFGOPT_BACKUP_STANDBY                                       "backup-standby"
+#define CFGOPT_BACKUP_STANDBY_MODE                                  "backup-standby-mode"
 #define CFGOPT_BETA                                                 "beta"
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
@@ -146,7 +147,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            202
+#define CFG_OPTION_TOTAL                                            203
 
 /***********************************************************************************************************************************
 Option value constants
@@ -167,6 +168,17 @@ Option value constants
 #define CFGOPTVAL_BACKUP_STANDBY_Y                                  2
 #define CFGOPTVAL_BACKUP_STANDBY_Y_STRID                            STRID5S("y", 2, 0x196)
 #define CFGOPTVAL_BACKUP_STANDBY_Y_Z                                "y"
+
+#define CFGOPTVAL_BACKUP_STANDBY_MODE_ANY                           STRID5("any", 0x65c10)
+#define CFGOPTVAL_BACKUP_STANDBY_MODE_ANY_Z                         "any"
+#define CFGOPTVAL_BACKUP_STANDBY_MODE_ASYNC                         STRID5("async", 0x3766610)
+#define CFGOPTVAL_BACKUP_STANDBY_MODE_ASYNC_Z                       "async"
+#define CFGOPTVAL_BACKUP_STANDBY_MODE_PREFER_ASYNC                  STRID5("prefer-async", 0x1bb330ee45316500)
+#define CFGOPTVAL_BACKUP_STANDBY_MODE_PREFER_ASYNC_Z                "prefer-async"
+#define CFGOPTVAL_BACKUP_STANDBY_MODE_PREFER_SYNC                   STRID5("prefer-sync", 0xdd99ee45316500)
+#define CFGOPTVAL_BACKUP_STANDBY_MODE_PREFER_SYNC_Z                 "prefer-sync"
+#define CFGOPTVAL_BACKUP_STANDBY_MODE_SYNC                          STRID5("sync", 0x1bb330)
+#define CFGOPTVAL_BACKUP_STANDBY_MODE_SYNC_Z                        "sync"
 
 #define CFGOPTVAL_COMPRESS_TYPE_BZ2                                 STRID5("bz2", 0x73420)
 #define CFGOPTVAL_COMPRESS_TYPE_BZ2_Z                               "bz2"
@@ -499,6 +511,7 @@ typedef enum
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
+    cfgOptBackupStandbyMode,
     cfgOptBeta,
     cfgOptBufferSize,
     cfgOptChecksumPage,

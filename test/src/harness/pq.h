@@ -137,6 +137,58 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
+// Generic query returning any number of rows. Follow with HRN_PQ_SCRIPT_COLUMN_TYPE(), HRN_PQ_SCRIPT_VALUE*(), and
+// HRN_PQ_SCRIPT_QUERY_CLEAR().
+#define HRN_PQ_SCRIPT_QUERY(sessionParam, queryParam, rowTotalParam, columnTotalParam)                                             \
+    {.session = sessionParam, .function = HRN_PQ_SENDQUERY, .param = "[\"" queryParam "\"]", .resultInt = 1},                      \
+    {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
+    {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
+    {.session = sessionParam, .function = HRN_PQ_GETRESULT},                                                                       \
+    {.session = sessionParam, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                      \
+    {.session = sessionParam, .function = HRN_PQ_NTUPLES, .resultInt = rowTotalParam},                                             \
+    {.session = sessionParam, .function = HRN_PQ_NFIELDS, .resultInt = columnTotalParam}
+
+#define HRN_PQ_SCRIPT_COLUMN_TYPE(sessionParam, columnParam, typeParam)                                                            \
+    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[" #columnParam "]", .resultInt = typeParam}
+
+#define HRN_PQ_SCRIPT_VALUE(sessionParam, rowParam, columnParam, valueParam)                                                       \
+    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[" #rowParam "," #columnParam "]", .resultZ = valueParam}
+
+#define HRN_PQ_SCRIPT_VALUE_NULL(sessionParam, rowParam, columnParam)                                                              \
+    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[" #rowParam "," #columnParam "]", .resultZ = ""},            \
+    {.session = sessionParam, .function = HRN_PQ_GETISNULL, .param = "[" #rowParam "," #columnParam "]", .resultInt = 1}
+
+#define HRN_PQ_SCRIPT_VALUE_EMPTY(sessionParam, rowParam, columnParam)                                                             \
+    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[" #rowParam "," #columnParam "]", .resultZ = ""},            \
+    {.session = sessionParam, .function = HRN_PQ_GETISNULL, .param = "[" #rowParam "," #columnParam "]", .resultInt = 0}
+
+#define HRN_PQ_SCRIPT_QUERY_CLEAR(sessionParam)                                                                                    \
+    {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
+    {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
+
+// Synchronous standby list on the primary, followed by an application_name and sync_state value per row
+#define HRN_PQ_SCRIPT_SYNC_STANDBY_LIST_QUERY(sessionParam, rowTotalParam)                                                         \
+    HRN_PQ_SCRIPT_QUERY(                                                                                                           \
+        sessionParam, "select application_name::text, sync_state::text from pg_catalog.pg_stat_replication", rowTotalParam, 2),    \
+    HRN_PQ_SCRIPT_COLUMN_TYPE(sessionParam, 0, HRN_PQ_TYPE_TEXT),                                                                  \
+    HRN_PQ_SCRIPT_COLUMN_TYPE(sessionParam, 1, HRN_PQ_TYPE_TEXT)
+
+// primary_conninfo and cluster_name on a standby with a WAL receiver, followed by values when there is a row
+#define HRN_PQ_SCRIPT_WAL_RECEIVER_LIST_QUERY(sessionParam, rowTotalParam)                                                         \
+    HRN_PQ_SCRIPT_QUERY(                                                                                                           \
+        sessionParam,                                                                                                              \
+        "select (select setting from pg_catalog.pg_settings where name = 'primary_conninfo')::text,"                               \
+        " pg_catalog.current_setting('cluster_name')::text from pg_catalog.pg_stat_wal_receiver",                                  \
+        rowTotalParam, 2),                                                                                                         \
+    HRN_PQ_SCRIPT_COLUMN_TYPE(sessionParam, 0, HRN_PQ_TYPE_TEXT),                                                                  \
+    HRN_PQ_SCRIPT_COLUMN_TYPE(sessionParam, 1, HRN_PQ_TYPE_TEXT)
+
+#define HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(sessionParam, connInfoParam, clusterNameParam)                                            \
+    HRN_PQ_SCRIPT_WAL_RECEIVER_LIST_QUERY(sessionParam, 1),                                                                        \
+    HRN_PQ_SCRIPT_VALUE(sessionParam, 0, 0, connInfoParam),                                                                        \
+    HRN_PQ_SCRIPT_VALUE(sessionParam, 0, 1, clusterNameParam),                                                                     \
+    HRN_PQ_SCRIPT_QUERY_CLEAR(sessionParam)
+
 #define HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(sessionParam, lsnParam)                                                                 \
     {.session = sessionParam,                                                                                                      \
         .function = HRN_PQ_SENDQUERY, .param = "[\"select pg_catalog.pg_create_restore_point('pgBackRest Archive Check')::text\"]",\
