@@ -132,6 +132,10 @@ backupJobResult(
             PackRead *const jobResult = protocolParallelJobResult(job);
             unsigned int percentComplete = 0;
 
+            // Bundle checksum and size (NULL checksum when Format < 6 or no bundle was written)
+            const Buffer *const bundleChecksum = pckReadBinP(jobResult);
+            const uint64_t bundleSize = pckReadU64P(jobResult);
+
             while (!pckReadNullP(jobResult))
             {
                 ManifestFile file = manifestFileFind(manifest, pckReadStrP(jobResult));
@@ -306,6 +310,15 @@ backupJobResult(
 
                     manifestFileUpdate(manifest, &file);
                 }
+            }
+
+            // Add bundle
+            if (bundleChecksum != NULL)
+            {
+                ManifestBundle bundle = {.id = bundleId, .size = bundleSize};
+                memcpy(bundle.checksumSha256, bufPtrConst(bundleChecksum), HASH_TYPE_SHA256_SIZE);
+
+                manifestBundleAdd(manifest, &bundle);
             }
 
             // Update currentPercentComplete and lock file when the change is significant enough
@@ -685,7 +698,8 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                         bundle = false;
                     }
 
-                    // Provide the backup reference
+                    // Provide the repository format and the backup reference
+                    pckWriteU32P(param, manifestFormat(jobData->manifest));
                     pckWriteU64P(param, strLstSize(manifestReferenceList(jobData->manifest)) - 1);
 
                     pckWriteU32P(param, jobData->compressType);

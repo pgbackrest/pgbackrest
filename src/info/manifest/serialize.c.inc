@@ -3,6 +3,7 @@
 #define MANIFEST_TARGET_TYPE_PATH                                   "path"
 
 #define MANIFEST_SECTION_BACKUP                                     "backup"
+#define MANIFEST_SECTION_BACKUP_BUNDLE                              "backup:bundle"
 #define MANIFEST_SECTION_BACKUP_DB                                  "backup:db"
 #define MANIFEST_SECTION_BACKUP_OPTION                              "backup:option"
 #define MANIFEST_SECTION_BACKUP_TARGET                              "backup:target"
@@ -417,6 +418,22 @@ manifestLoadCallback(void *const callbackData, const String *const section, cons
         manifestTargetAdd(manifest, &target);
     }
     // -----------------------------------------------------------------------------------------------------------------------------
+    else if (strEqZ(section, MANIFEST_SECTION_BACKUP_BUNDLE))
+    {
+        ManifestBundle bundle = {.id = cvtZToUInt64(strZ(key))};
+
+        jsonReadObjectBegin(json);
+
+        const Buffer *const checksum = bufNewDecode(
+            encodingHex, jsonReadStr(jsonReadKeyRequireStrId(json, MANIFEST_KEY_CHECKSUM)));
+        CHECK(FormatError, bufUsed(checksum) == HASH_TYPE_SHA256_SIZE, "invalid bundle checksum size");
+        memcpy(bundle.checksumSha256, bufPtrConst(checksum), HASH_TYPE_SHA256_SIZE);
+
+        bundle.size = jsonReadUInt64(jsonReadKeyRequireStrId(json, MANIFEST_KEY_SIZE));
+
+        manifestBundleAdd(manifest, &bundle);
+    }
+    // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_DB))
     {
         ManifestDb db = {.name = key};
@@ -665,6 +682,31 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_TYPE,
             jsonFromVar(VARSTR(strNewStrId(manifest->pub.data.backupType))));
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_BACKUP_BUNDLE, sectionNext))
+    {
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
+        {
+            for (unsigned int bundleIdx = 0; bundleIdx < manifestBundleTotal(manifest); bundleIdx++)
+            {
+                const ManifestBundle *const bundle = manifestBundle(manifest, bundleIdx);
+                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
+
+                jsonWriteStr(
+                    jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM),
+                    strNewEncode(encodingHex, BUF(bundle->checksumSha256, HASH_TYPE_SHA256_SIZE)));
+                jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE), bundle->size);
+
+                infoSaveValue(
+                    infoSaveData, MANIFEST_SECTION_BACKUP_BUNDLE, zNewFmt("%" PRIu64, bundle->id),
+                    jsonWriteResult(jsonWriteObjectEnd(json)));
+
+                MEM_CONTEXT_TEMP_RESET(1000);
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
