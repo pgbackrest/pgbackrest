@@ -719,7 +719,7 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(writeBuffer, backupLabelBuffer), true, "get matches put");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("get encrypted format 6 backup.manifest by label and through the latest link");
+        TEST_TITLE("get encrypted format 6 backup.manifest");
 
         // Format 6 backup.info with a manifest key for the backup set
         HRN_INFO_PUT(
