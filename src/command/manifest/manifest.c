@@ -14,6 +14,7 @@ Manifest Command
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
+#include "common/regExp.h"
 #include "common/type/json.h"
 #include "config/config.h"
 #include "info/manifest/manifest.h"
@@ -454,6 +455,9 @@ cmdManifestRender(void)
 
             backupLabel = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
         }
+        // Else error when the set is not a backup label
+        else if (!regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), backupLabel))
+            THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupLabel));
 
         // Load manifest
         const Manifest *const manifest = manifestLoadFile(

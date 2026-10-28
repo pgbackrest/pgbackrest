@@ -110,6 +110,11 @@ testRun(void)
 
             TEST_ERROR(cmdManifestRender(), BackupSetInvalidError, "no backup set found");
 
+            hrnCfgArgRawZ(argListManifest, cfgOptSet, "bogus");
+            HRN_CFG_LOAD(cfgCmdManifest, argListManifest);
+
+            TEST_ERROR(cmdManifestRender(), BackupSetInvalidError, "backup set bogus is not valid");
+
             // Backup to repo2
             hrnCfgArgRawZ(argList, cfgOptRepo, "2");
             HRN_CFG_LOAD(cfgCmdBackup, argList);

@@ -9,6 +9,7 @@ Info Command
 #include <unistd.h>
 
 #include "command/archive/common.h"
+#include "command/backup/common.h"
 #include "command/info/info.h"
 #include "command/lock.h"
 #include "common/crypto/common.h"
@@ -1610,8 +1611,9 @@ infoRender(void)
                 // Get the repo storage in case it is remote and encryption settings need to be pulled down
                 const Storage *const storageRepo = storageRepoIdx(repoIdx);
 
-                // If a backup set was specified, see if the manifest exists
-                if (backupLabel != NULL)
+                // If a backup label was specified, see if the manifest exists
+                if (backupLabel != NULL &&
+                    regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), backupLabel))
                 {
                     // If the backup exists on this repo, set the global indicator that we found it on at least one repo and
                     // set the exists label for later loading of the manifest

@@ -420,6 +420,7 @@ infoBackupCipherSpecManifest(const InfoBackup *const this, const String *const b
 
     ASSERT(this != NULL);
     ASSERT(backupLabel != NULL);
+    ASSERT(strSize(backupLabel) > DATE_TIME_LEN);
 
     const CipherSpec *result;
 
