@@ -104,7 +104,7 @@ infoBackupPg(const InfoBackup *const this)
 
 FN_EXTERN InfoBackup *infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion);
 
-// Cipher spec shared by the manifests of backup sets created before format 6, none when there is no shared key
+// Cipher spec shared by the manifests of backup sets created before format 6, none when there are no keys
 FN_INLINE_ALWAYS const CipherSpec *
 infoBackupCipherSpec(const InfoBackup *const this)
 {
@@ -112,7 +112,8 @@ infoBackupCipherSpec(const InfoBackup *const this)
 }
 
 // Cipher spec for the manifest of a backup. A backup set created at format >= 6 has a manifest key of its own, stored by the label
-// of the full backup. Earlier backup sets use the shared key.
+// of the full backup. Earlier backup sets use the shared key. Errors when there are keys but no key for the backup set and no
+// shared key.
 FN_EXTERN const CipherSpec *infoBackupCipherSpecManifest(const InfoBackup *this, const String *backupLabel);
 
 // Repository format

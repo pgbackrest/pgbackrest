@@ -426,13 +426,20 @@ infoBackupCipherSpecManifest(const InfoBackup *const this, const String *const b
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const CipherSpecMap *const cipherSpecMap = infoCipherSpecMap(infoPgInfo(infoBackupPg(this)));
+
         // Key of the backup set by the label of the full backup
-        result = cipherSpecMapFind(
-            infoCipherSpecMap(infoPgInfo(infoBackupPg(this))), strSubN(backupLabel, 0, DATE_TIME_LEN + 1));
+        result = cipherSpecMapFind(cipherSpecMap, strSubN(backupLabel, 0, DATE_TIME_LEN + 1));
 
         // Else the shared key
         if (result == NULL)
+        {
+            // Error when there are keys but no shared key
+            if (cipherSpecMapSize(cipherSpecMap) > 0 && cipherSpecMapFind(cipherSpecMap, CIPHER_SPEC_MAP_ID_DEFAULT_STR) == NULL)
+                THROW_FMT(CryptoError, "unable to find key for backup set '%s'", strZ(backupLabel));
+
             result = infoBackupCipherSpec(this);
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
