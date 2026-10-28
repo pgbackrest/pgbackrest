@@ -6,6 +6,7 @@ Manifest Command
 #include <unistd.h>
 
 #include "command/backup/blockMap.h"
+#include "command/backup/common.h"
 #include "command/manifest/manifest.h"
 #include "command/restore/blockChecksum.h"
 #include "common/crypto/cipherBlock.h"
@@ -446,7 +447,7 @@ cmdManifestRender(void)
         // The latest backup is the newest in backup.info
         const String *backupLabel = cfgOptionStr(cfgOptSet);
 
-        if (strEqZ(backupLabel, "latest"))
+        if (strEqZ(backupLabel, BACKUP_LINK_LATEST))
         {
             if (infoBackupDataTotal(infoBackup) == 0)
                 THROW(BackupSetInvalidError, "no backup set found");
