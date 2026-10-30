@@ -1,0 +1,63 @@
+# Checks of the OpenSSF security metadata: the Security Insights file is validated against its schema and the repository is
+# assessed against the OSPS Baseline.
+name: security
+
+on: workflow_call
+
+# Limit permissions on the repository
+permissions:
+  contents: read
+
+jobs:
+  # Validate the Security Insights file against the schema for the version in its header. The schema defines #SecurityInsights and
+  # does not constrain the top level. Validation without -d '#SecurityInsights' passes any YAML.
+  insights:
+    runs-on: ubuntu-24.04
+
+    # CUE releases are at https://github.com/cue-lang/cue/releases.
+    env:
+      CUE_VERSION: 'v0.17.1'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          path: pgbackrest
+
+      - name: Install CUE
+        run: |
+          cd ${HOME?}
+          curl -fsSL https://github.com/cue-lang/cue/releases/download/${CUE_VERSION?}/cue_${CUE_VERSION?}_linux_amd64.tar.gz \
+            | tar -xz cue
+          ./cue version
+
+      - name: Validate
+        run: |
+          cd ${HOME?}
+          file=${GITHUB_WORKSPACE?}/pgbackrest/.github/security-insights.yml
+          version=$(yq '.header.schema-version' ${file?})
+          curl -fsSL -o schema.cue https://raw.githubusercontent.com/ossf/security-insights/v${version?}/spec/schema.cue
+          ./cue vet -d '#SecurityInsights' schema.cue ${file?}
+
+  # Assess the repository against OSPS Baseline Level 1. The scanner reads the files and settings of the default branch through the
+  # GitHub API, not the checkout. Failed controls are reported in the job summary and the results artifact and do not fail the job.
+  baseline:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Assess
+        uses: revanite-io/osps-baseline-action@v1.5.2
+        with:
+          owner: ${{github.repository_owner}}
+          repo: ${{github.event.repository.name}}
+          token: ${{github.token}}
+          catalog: osps-baseline-2026-08
+          fail-on-error: false
+
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: osps-baseline
+          path: evaluation_results
+          if-no-files-found: ignore
