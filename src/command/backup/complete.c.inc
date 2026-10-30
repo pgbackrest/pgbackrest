@@ -181,12 +181,13 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const String *const backupLabel = manifestData(manifest)->backupLabel;
+        const CipherSpec *const cipherSpecManifest = infoBackupCipherSpecManifest(infoBackup, backupLabel);
 
         // Validation and final save of the backup manifest. Validate in strict mode to catch as many potential issues as possible.
         // -------------------------------------------------------------------------------------------------------------------------
         manifestValidate(manifest, true);
 
-        backupManifestSaveCopy(manifest, infoBackupCipherSpec(infoBackup), true);
+        backupManifestSaveCopy(manifest, cipherSpecManifest, true);
 
         storageCopy(
             storageNewReadP(
@@ -207,8 +208,7 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), compressFilterP(compressTypeGz, 9));
 
-        cipherBlockFilterGroupAdd(
-            ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherModeEncrypt, infoBackupCipherSpec(infoBackup));
+        cipherBlockFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(manifestWrite)), cipherModeEncrypt, cipherSpecManifest);
 
         manifestSave(manifest, storageWriteIo(manifestWrite));
 

@@ -14,6 +14,7 @@ Repository Get Command
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/regExp.h"
 #include "config/config.h"
 #include "storage/helper.h"
 
@@ -52,12 +53,19 @@ storageGetProcess(IoWrite *const destination)
         // Is the file an info file, i.e. one that has a header in front of its content?
         bool fileIsInfo = false;
 
+        // Is the file missing?
+        bool missing = false;
+
         // Add decryption if needed
         if (!cfgOptionBool(cfgOptRaw))
         {
             const CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
 
-            if (repoCipherType != cipherTypeNone)
+            // Check for a missing file before finding the passphrase when missing files are ignored
+            if (repoCipherType != cipherTypeNone && cfgOptionBool(cfgOptIgnoreMissing))
+                missing = !storageExistsP(storageRepo(), file);
+
+            if (repoCipherType != cipherTypeNone && !missing)
             {
                 // Determine the passphrase using the following pattern:
                 //
@@ -68,6 +76,8 @@ storageGetProcess(IoWrite *const destination)
                 //      / backup  / stanza / (manifest passphrase)
                 //      / backup  / stanza / set / (backup passphrase)
                 //      / backup  / stanza / backup.history / (manifest passphrase)
+                //
+                // Format >= 6 stores a manifest passphrase for each backup set by label.
                 //
                 // Nothing should be stored at the top level of the repo except the backup/archive paths. The backup/archive paths
                 // should contain only stanza paths.
@@ -115,15 +125,37 @@ storageGetProcess(IoWrite *const destination)
 
                         if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                         {
-                            // Find the manifest passphrase
+                            // Find the manifest passphrase by the label of the backup
                             const InfoBackup *const info = infoBackupLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
                                 cfgCipherSpecMain());
-                            const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(info);
+                            const String *backupLabel = strLstGet(filePathSplitLst, 2);
+                            const bool history = strEq(backupLabel, STRDEF(BACKUP_PATH_HISTORY));
+
+                            // Get the label from the name of the history manifest
+                            if (history)
+                            {
+                                backupLabel = strBase(file);
+                            }
+                            // Else get the label from the destination of the latest link
+                            else if (strEq(backupLabel, STRDEF(BACKUP_LINK_LATEST)))
+                            {
+                                const StorageInfo latestInfo = storageInfoP(
+                                    storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/" BACKUP_LINK_LATEST, strZ(stanza)),
+                                    .level = storageInfoLevelDetail, .ignoreMissing = true);
+
+                                if (latestInfo.type == storageTypeLink)
+                                    backupLabel = latestInfo.linkDestination;
+                            }
+
+                            const CipherSpec *const cipherSpecManifest =
+                                regExpMatchOne(
+                                    backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true),
+                                    backupLabel) ?
+                                    infoBackupCipherSpecManifest(info, backupLabel) : infoBackupCipherSpec(info);
 
                             // Find the backup passphrase if not a manifest
-                            if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF(BACKUP_PATH_HISTORY)) &&
-                                !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
+                            if (!history && !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
                                 !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
                             {
                                 const Manifest *const manifest = manifestLoadFile(
@@ -163,7 +195,7 @@ storageGetProcess(IoWrite *const destination)
         }
 
         // Open source
-        if (ioReadOpen(source))
+        if (!missing && ioReadOpen(source))
         {
             // Open the destination file now that we know the source exists and is readable
             ioWriteOpen(destination);

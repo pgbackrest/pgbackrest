@@ -6,6 +6,7 @@ Manifest Command
 #include <unistd.h>
 
 #include "command/backup/blockMap.h"
+#include "command/backup/common.h"
 #include "command/manifest/manifest.h"
 #include "command/restore/blockChecksum.h"
 #include "common/crypto/cipherBlock.h"
@@ -13,6 +14,7 @@ Manifest Command
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
+#include "common/regExp.h"
 #include "common/type/json.h"
 #include "config/config.h"
 #include "info/manifest/manifest.h"
@@ -443,10 +445,24 @@ cmdManifestRender(void)
         // Load backup.info and cipher
         const InfoBackup *const infoBackup = infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
 
+        // The latest backup is the newest in backup.info
+        const String *backupLabel = cfgOptionStr(cfgOptSet);
+
+        if (strEqZ(backupLabel, BACKUP_LINK_LATEST))
+        {
+            if (infoBackupDataTotal(infoBackup) == 0)
+                THROW(BackupSetInvalidError, "no backup set found");
+
+            backupLabel = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
+        }
+        // Else error when the set is not a backup label
+        else if (!regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), backupLabel))
+            THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupLabel));
+
         // Load manifest
         const Manifest *const manifest = manifestLoadFile(
-            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(cfgOptionStr(cfgOptSet))),
-            infoBackupCipherSpec(infoBackup));
+            storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
+            infoBackupCipherSpecManifest(infoBackup, backupLabel));
 
         // Manifest info
         const ManifestData *const data = manifestData(manifest);

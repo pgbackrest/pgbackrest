@@ -64,6 +64,9 @@ cipherSpecMapGetIdx(const CipherSpecMap *const this, const unsigned int idx)
     return lstGet(THIS_PUB(CipherSpecMap)->list, idx);
 }
 
+// Key by id, NULL when the id is not found
+FN_EXTERN const CipherSpec *cipherSpecMapFind(const CipherSpecMap *this, const String *id);
+
 // Key by id. Errors when the id is not found.
 FN_EXTERN const CipherSpec *cipherSpecMapGet(const CipherSpecMap *this, const String *id);
 

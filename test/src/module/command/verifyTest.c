@@ -242,6 +242,9 @@ testRun(void)
             infoArchivePg(infoArchiveNewLoad(ioBufferReadNew(harnessInfoChecksumZ(TEST_ARCHIVE_INFO_BASE)), cipherSpecNewNone())),
             "infoPg from archive.info");
 
+        const InfoBackup *const infoBackup = infoBackupNew(
+            PG_VERSION_96, HRN_PG_SYSTEMID_96, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL);
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest.copy exists, no manifest main, manifest db version not in history, not current db");
 
@@ -270,7 +273,7 @@ testRun(void)
 
         backupResult.status = backupValid;
         TEST_ASSIGN(
-            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
+            manifest, verifyManifestFile(&backupResult, infoBackup, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg version mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -306,7 +309,7 @@ testRun(void)
 
         backupResult.status = backupValid;
         TEST_ASSIGN(
-            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
+            manifest, verifyManifestFile(&backupResult, infoBackup, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg system-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -341,7 +344,7 @@ testRun(void)
 
         backupResult.status = backupValid;
         TEST_ASSIGN(
-            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
+            manifest, verifyManifestFile(&backupResult, infoBackup, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg db-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -360,7 +363,7 @@ testRun(void)
             INFO_COPY_EXT, TEST_INVALID_BACKREST_INFO, .comment = "invalid manifest copy");
 
         TEST_ASSIGN(
-            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), false, infoPg, &jobErrorTotal), "verify manifest");
+            manifest, verifyManifestFile(&backupResult, infoBackup, false, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
@@ -375,7 +378,7 @@ testRun(void)
             TEST_INVALID_BACKREST_INFO, .comment = "invalid manifest");
 
         TEST_ASSIGN(
-            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), true, infoPg, &jobErrorTotal), "verify manifest");
+            manifest, verifyManifestFile(&backupResult, infoBackup, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
         TEST_RESULT_LOG(
@@ -402,10 +405,35 @@ testRun(void)
 
         backupResult.status = backupValid;
         TEST_ASSIGN(
-            manifest, verifyManifestFile(&backupResult, cipherSpecNewNone(), true, infoPg, &jobErrorTotal), "verify manifest");
+            manifest, verifyManifestFile(&backupResult, infoBackup, true, infoPg, &jobErrorTotal), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
         TEST_RESULT_UINT(backupResult.status, backupValid, "manifest usable");
         TEST_RESULT_LOG("P00 DETAIL: backup '20181119-152138F' manifest.copy does not match manifest");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no key for the backup set");
+
+        InfoBackup *const infoBackupKey = infoBackupNew(
+            PG_VERSION_96, HRN_PG_SYSTEMID_96, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_6, NULL);
+        infoBackupCipherSpecAdd(
+            infoBackupKey, STRDEF("20181119-152000F"),
+            cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("setkey"), .digest = hashTypeSha256));
+
+        backupResult.status = backupValid;
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, infoBackupKey, true, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_RESULT_PTR(manifest, NULL, "manifest not set");
+        TEST_RESULT_UINT(backupResult.status, backupInProgress, "backup in progress");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: unable to find key for backup set '20181119-152138F'\n"
+            "P00   INFO: backup '20181119-152138F' appears to be in progress, skipping");
+
+        backupResult.status = backupValid;
+        TEST_ASSIGN(
+            manifest, verifyManifestFile(&backupResult, infoBackupKey, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_RESULT_PTR(manifest, NULL, "manifest not set");
+        TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
+        TEST_RESULT_LOG("P00 DETAIL: unable to find key for backup set '20181119-152138F'");
 
         harnessLogLevelReset();
     }
