@@ -204,8 +204,8 @@ cmdEnd(const String *const errorMessage)
 
     ASSERT(cfgInited());
 
-    // Skip this log message if it won't be output. It's not too expensive but since we skipped cmdBegin(), may as well.
-    if (logAny(cfgLogLevelDefault()))
+    // Output statistics independently of the default command log level
+    if (logAny(logLevelDetail))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -214,7 +214,15 @@ cmdEnd(const String *const errorMessage)
 
             if (statJson != NULL)
                 LOG_DETAIL_FMT("statistics: %s", strZ(statJson));
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
 
+    // Skip this log message if it won't be output. It's not too expensive but since we skipped cmdBegin(), may as well.
+    if (logAny(cfgLogLevelDefault()))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
             // Basic info on command end
             String *const info = strCatFmt(strNew(), "%s command end: ", strZ(cfgCommandRoleName()));
 
