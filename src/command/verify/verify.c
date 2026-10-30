@@ -379,10 +379,6 @@ verifyManifestFile(
         }
         TRY_END();
 
-        // Get the main manifest file when there is a key
-        const VerifyInfoFile verifyManifestInfo =
-            cipherSpecManifest == NULL ? (VerifyInfoFile){0} : verifyInfoFile(fileName, true, cipherSpecManifest);
-
         // If there is no key then skip a backup that may be in progress
         if (cipherSpecManifest == NULL)
         {
@@ -393,61 +389,67 @@ verifyManifestFile(
                 LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult->backupLabel));
             }
         }
-        // Else if the main file did not error, then report on the copy's status and check checksums
-        else if (verifyManifestInfo.errorCode == 0)
-        {
-            result = verifyManifestInfo.manifest;
-
-            // The current in-progress backup is only notional until the main file is checked because the backup may have
-            // completed by the time the main manifest is checked here. So having a main manifest file means this backup is not
-            // (or is no longer) the currentBackup.
-            currentBackup = false;
-
-            // Attempt to load the copy and report on it's status but don't keep it in memory
-            const VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
-                strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), false, cipherSpecManifest);
-
-            // If the copy loaded successfully, then check the checksums
-            if (verifyManifestInfoCopy.errorCode == 0)
-            {
-                // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
-                // corrupt so log a warning but trust main
-                if (!strEq(verifyManifestInfo.checksum, verifyManifestInfoCopy.checksum))
-                    LOG_DETAIL_FMT("backup '%s' manifest.copy does not match manifest", strZ(backupResult->backupLabel));
-            }
-        }
         else
         {
-            // If this might be an in-progress backup and the main manifest is simply missing, it is assumed the backup is an
-            // actual in-progress backup and verification is skipped, otherwise, if the main is not simply missing, or this is not
-            // an in-progress backup then attempt to load the copy.
-            if (!(currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
+            // Get the main manifest file
+            const VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, cipherSpecManifest);
+
+            // If the main file did not error, then report on the copy's status and check checksums
+            if (verifyManifestInfo.errorCode == 0)
             {
+                result = verifyManifestInfo.manifest;
+
+                // The current in-progress backup is only notional until the main file is checked because the backup may have
+                // completed by the time the main manifest is checked here. So having a main manifest file means this backup is not
+                // (or is no longer) the currentBackup.
                 currentBackup = false;
 
+                // Attempt to load the copy and report on it's status but don't keep it in memory
                 const VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
-                    strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherSpecManifest);
+                    strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), false, cipherSpecManifest);
 
-                // If loaded successfully, then return the copy as usable
+                // If the copy loaded successfully, then check the checksums
                 if (verifyManifestInfoCopy.errorCode == 0)
                 {
-                    LOG_DETAIL_FMT("%s/backup.manifest is missing or unusable, using copy", strZ(backupResult->backupLabel));
-
-                    result = verifyManifestInfoCopy.manifest;
-                }
-                else if (verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError) &&
-                         verifyManifestInfoCopy.errorCode == errorTypeCode(&FileMissingError))
-                {
-                    backupResult->status = backupMissingManifest;
-
-                    LOG_DETAIL_FMT("manifest missing for '%s' - backup may have expired", strZ(backupResult->backupLabel));
+                    // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
+                    // corrupt so log a warning but trust main
+                    if (!strEq(verifyManifestInfo.checksum, verifyManifestInfoCopy.checksum))
+                        LOG_DETAIL_FMT("backup '%s' manifest.copy does not match manifest", strZ(backupResult->backupLabel));
                 }
             }
             else
             {
-                backupResult->status = backupInProgress;
+                // If this might be an in-progress backup and the main manifest is simply missing, it is assumed the backup is an
+                // actual in-progress backup and verification is skipped, otherwise, if the main is not simply missing, or this is
+                // not an in-progress backup then attempt to load the copy.
+                if (!(currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
+                {
+                    currentBackup = false;
 
-                LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult->backupLabel));
+                    const VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
+                        strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherSpecManifest);
+
+                    // If loaded successfully, then return the copy as usable
+                    if (verifyManifestInfoCopy.errorCode == 0)
+                    {
+                        LOG_DETAIL_FMT("%s/backup.manifest is missing or unusable, using copy", strZ(backupResult->backupLabel));
+
+                        result = verifyManifestInfoCopy.manifest;
+                    }
+                    else if (verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError) &&
+                             verifyManifestInfoCopy.errorCode == errorTypeCode(&FileMissingError))
+                    {
+                        backupResult->status = backupMissingManifest;
+
+                        LOG_DETAIL_FMT("manifest missing for '%s' - backup may have expired", strZ(backupResult->backupLabel));
+                    }
+                }
+                else
+                {
+                    backupResult->status = backupInProgress;
+
+                    LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult->backupLabel));
+                }
             }
         }
 
