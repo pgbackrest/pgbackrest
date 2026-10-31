@@ -4,13 +4,16 @@ Posix Storage Read
 #include <build.h>
 
 #include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/io/read.h"
 #include "common/log.h"
 #include "common/type/object.h"
 #include "storage/posix/read.h"
+#include "storage/posixDio/storage.h"
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
@@ -18,16 +21,22 @@ Object types
 ***********************************************************************************************************************************/
 struct StorageReadPosix
 {
-    const StorageReadInterface *interface;                          // Interface
-    StoragePosix *storage;                                          // Storage that created this object
+    const StorageReadInterface *interface; // Interface
+    StoragePosix *storage;                 // Storage that created this object
 
-    const String *name;                                             // File name
-    uint64_t offset;                                                // Read offset
-    const Variant *limit;                                           // Read limit (NULL for no limit)
+    const String *name;   // File name
+    uint64_t offset;      // Read offset
+    const Variant *limit; // Read limit (NULL for no limit)
 
-    int fd;                                                         // File descriptor
-    uint64_t current;                                               // Current bytes read from file
+    int fd;           // File descriptor
+    uint64_t current; // Current bytes read from file
     bool eof;
+
+    bool directIo;        // Use direct I/O
+    uint8_t *dioBuffer;   // Aligned bounce buffer for direct I/O
+    size_t dioBufferSize; // Size of aligned buffer
+    size_t dioBufferUsed; // Valid bytes currently in buffer
+    size_t dioBufferPos;  // Current read position in buffer
 };
 
 /***********************************************************************************************************************************
@@ -43,6 +52,12 @@ storageReadPosixFreeResource(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+
+    if (this->dioBuffer != NULL)
+    {
+        free(this->dioBuffer);
+        this->dioBuffer = NULL;
+    }
 
     if (this->fd != -1)
         THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_READ_CLOSE, strZ(this->name));
@@ -66,13 +81,30 @@ storageReadPosixOpen(THIS_VOID)
     ASSERT(this->fd == -1);
 
     // Open the file
-    this->fd = open(strZ(this->name), O_RDONLY, 0);
+    int flags = O_RDONLY;
+
+#ifdef O_DIRECT
+    if (this->directIo)
+        flags |= O_DIRECT;
+#endif
+
+    this->fd = open(strZ(this->name), flags, 0);
 
     // Handle errors except missing, which is reported to the caller via the result
     if (this->fd == -1)
     {
-        if (errno != ENOENT)                                                                                        // {vm_covered}
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->name));                          // {vm_covered}
+        if (errno != ENOENT)
+        {
+#ifdef O_DIRECT
+            if (this->directIo && errno == EINVAL)
+            {
+                THROW_SYS_ERROR_FMT(
+                    FeatureNotSupportedError, "unable to open '%s' with direct I/O: filesystem does not support direct I/O",
+                    strZ(this->name));
+            }
+#endif
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->name));
+        }
     }
     // Else success
     else
@@ -80,8 +112,53 @@ storageReadPosixOpen(THIS_VOID)
         // Set free callback to ensure the file descriptor is freed
         memContextCallbackSet(objMemContext(this), storageReadPosixFreeResource, this);
 
-        // Seek to offset
-        if (this->offset != 0)
+        if (this->directIo)
+        {
+            this->dioBufferSize = ((ioBufferSize() + STORAGE_POSIX_DIO_ALIGN - 1) / STORAGE_POSIX_DIO_ALIGN) *
+                                  STORAGE_POSIX_DIO_ALIGN;
+
+            if (this->dioBufferSize < STORAGE_POSIX_DIO_ALIGN)
+                this->dioBufferSize = STORAGE_POSIX_DIO_ALIGN;
+
+            if (posix_memalign((void **)&this->dioBuffer, STORAGE_POSIX_DIO_ALIGN, this->dioBufferSize) != 0)
+                THROW_SYS_ERROR_FMT(MemoryError, "unable to allocate direct I/O buffer for '%s'", strZ(this->name));
+
+            // Initialize buffer tracking metrics to empty
+            this->dioBufferUsed = 0;
+            this->dioBufferPos = 0;
+
+            // Seek to offset
+            if (this->offset != 0)
+            {
+                const uint64_t alignedOffset = (this->offset / STORAGE_POSIX_DIO_ALIGN) * STORAGE_POSIX_DIO_ALIGN;
+                const size_t discard = (size_t)(this->offset - alignedOffset);
+
+                THROW_ON_SYS_ERROR_FMT(
+                    lseek(this->fd, (off_t)alignedOffset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
+                    alignedOffset, strZ(this->name));
+
+                if (discard > 0)
+                {
+                    const ssize_t bytes = read(this->fd, this->dioBuffer, STORAGE_POSIX_DIO_ALIGN);
+
+                    if (bytes == -1)
+                        THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strZ(this->name));
+
+                    this->dioBufferUsed = (size_t)bytes;
+
+                    if ((size_t)bytes <= discard)
+                    {
+                        this->dioBufferPos = (size_t)bytes;
+                        this->eof = true;
+                    }
+                    else
+                    {
+                        this->dioBufferPos = discard;
+                    }
+                }
+            }
+        }
+        else if (this->offset != 0)
         {
             THROW_ON_SYS_ERROR_FMT(
                 lseek(this->fd, (off_t)this->offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, this->offset,
@@ -103,7 +180,7 @@ storageReadPosix(THIS_VOID, Buffer *const buffer, const bool block)
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_POSIX, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
-        (void)block;                                                // Blocking is handled by the caller
+        (void)block; // Blocking is handled by the caller
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL && this->fd != -1);
@@ -114,31 +191,91 @@ storageReadPosix(THIS_VOID, Buffer *const buffer, const bool block)
 
     if (!this->eof)
     {
-        // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident that
-        // no files will be > UINT64_MAX in size.
         const uint64_t limit = this->limit == NULL ? UINT64_MAX : varUInt64(this->limit);
 
-        // Determine expected bytes to read. If remaining size in the buffer would exceed the limit then reduce the expected read.
-        size_t expectedBytes = bufRemains(buffer);
+        if (!this->directIo)
+        {
+            size_t expectedBytes = bufRemains(buffer);
 
-        if (this->current + expectedBytes > limit)
-            expectedBytes = (size_t)(limit - this->current);
+            if (this->current + expectedBytes > limit)
+                expectedBytes = (size_t)(limit - this->current);
 
-        // Read from file
-        actualBytes = read(this->fd, bufRemainsPtr(buffer), expectedBytes);
+            actualBytes = read(this->fd, bufRemainsPtr(buffer), expectedBytes);
 
-        // Error occurred during read
-        if (actualBytes == -1)
-            THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strZ(this->name));
+            if (actualBytes == -1)
+                THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strZ(this->name));
 
-        // Update amount of buffer used
-        bufUsedInc(buffer, (size_t)actualBytes);
-        this->current += (uint64_t)actualBytes;
+            bufUsedInc(buffer, (size_t)actualBytes);
+            this->current += (uint64_t)actualBytes;
 
-        // If less data than expected was read or the limit has been reached then EOF. The file may not actually be EOF but we are
-        // not concerned with files that are growing. Just read up to the point where the file is being extended.
-        if ((size_t)actualBytes != expectedBytes || this->current == limit)
-            this->eof = true;
+            if ((size_t)actualBytes != expectedBytes || this->current == limit)
+                this->eof = true;
+        }
+        else
+        {
+            // The destination buffer could be full or size limit hit right from the start
+            while (bufRemains(buffer) > 0 && this->current < limit)
+            {
+                // 1. If there is data in the cache buffer, drain it out systematically
+                if (this->dioBufferPos < this->dioBufferUsed)
+                {
+                    const size_t bytesAvailable = this->dioBufferUsed - this->dioBufferPos;
+                    size_t bytesToCopy = bufRemains(buffer);
+
+                    if (this->current + bytesToCopy > limit)
+                        bytesToCopy = (size_t)(limit - this->current);
+
+                    if (bytesToCopy > bytesAvailable)
+                        bytesToCopy = bytesAvailable;
+
+                    memcpy(bufRemainsPtr(buffer), this->dioBuffer + this->dioBufferPos, bytesToCopy);
+                    bufUsedInc(buffer, bytesToCopy);
+                    this->dioBufferPos += bytesToCopy;
+                    this->current += (uint64_t)bytesToCopy;
+                    actualBytes += (ssize_t)bytesToCopy;
+
+                    if (this->current == limit)
+                        this->eof = true;
+
+                    continue;
+                }
+
+                // If our destination buffer is now filled up, exit the loop
+                // immediately BEFORE executing another read operation on disk.
+                if (bufRemains(buffer) == 0)
+                    break;
+
+                // If the underlying file already hit EOF and our cache buffer is completely dry, exit
+                if (this->eof)
+                    break;
+
+                // Cache buffer is completely empty. Fetch the next aligned block.
+                this->dioBufferPos = 0;
+                this->dioBufferUsed = 0;
+
+                const ssize_t bytesRead = read(this->fd, this->dioBuffer, this->dioBufferSize);
+
+                if (bytesRead == -1)
+                    THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strZ(this->name));
+
+                if (bytesRead == 0)
+                {
+                    this->eof = true;
+                    break;
+                }
+
+                this->dioBufferUsed = (size_t)bytesRead;
+
+                // If less data than the buffer configuration size was returned, the file on disk is finished.
+                // We mark eof = true, but do NOT break, allowing the next loop iteration to copy the data.
+                if ((size_t)bytesRead < this->dioBufferSize)
+                    this->eof = true;
+            }
+
+            // If the limit or physical file end is reached, ensure eof state matches
+            if (this->current == limit)
+                this->eof = true;
+        }
     }
 
     FUNCTION_LOG_RETURN(SIZE, (size_t)actualBytes);
@@ -210,27 +347,30 @@ static const StorageReadInterface storageReadPosixInterface =
 };
 
 FN_EXTERN StorageReadPosix *
-storageReadPosixNew(StoragePosix *const storage, const String *const name, const uint64_t offset, const Variant *const limit)
+storageReadPosixNew(
+    StoragePosix *const storage, const String *const name, const uint64_t offset, const Variant *const limit,
+    const bool directIo)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(BOOL, directIo);
     FUNCTION_LOG_END();
 
     ASSERT(name != NULL);
 
     OBJ_NEW_BEGIN(StorageReadPosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        *this = (StorageReadPosix)
-        {
+        *this = (StorageReadPosix){
             .interface = &storageReadPosixInterface,
             .storage = storage,
             .name = strDup(name),
             .offset = offset,
             .limit = varDup(limit),
             .fd = -1,
+            .directIo = directIo,
         };
     }
     OBJ_NEW_END();

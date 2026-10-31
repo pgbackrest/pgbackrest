@@ -5,15 +5,18 @@ Posix Storage File write
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <utime.h>
 
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/io/write.h"
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/user.h"
 #include "storage/posix/write.h"
+#include "storage/posixDio/storage.h"
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
@@ -21,24 +24,30 @@ Object type
 ***********************************************************************************************************************************/
 struct StorageWritePosix
 {
-    const StorageWriteInterface *interface;                          // Interface
-    StoragePosix *storage;                                           // Storage that created this object
+    const StorageWriteInterface *interface; // Interface
+    StoragePosix *storage;                  // Storage that created this object
 
-    const String *name;                                              // File name
-    mode_t modeFile;                                                 // File mode
-    mode_t modePath;                                                 // Path mode
-    bool createPath;                                                 // Create path if missing
-    bool atomic;                                                     // Atomic write
-    bool truncate;                                                   // Truncate existing file
-    bool syncPath;                                                   // Sync path after write
-    bool syncFile;                                                   // Sync file after write
-    const String *user;                                              // User owner
-    const String *group;                                             // Group owner
-    time_t timeModified;                                             // Modified time
+    const String *name;  // File name
+    mode_t modeFile;     // File mode
+    mode_t modePath;     // Path mode
+    bool createPath;     // Create path if missing
+    bool atomic;         // Atomic write
+    bool truncate;       // Truncate existing file
+    bool syncPath;       // Sync path after write
+    bool syncFile;       // Sync file after write
+    const String *user;  // User owner
+    const String *group; // Group owner
+    time_t timeModified; // Modified time
 
     const String *nameTmp;
     const String *path;
-    int fd;                                                          // File descriptor
+    int fd; // File descriptor
+
+    bool directIo;         // Use direct I/O
+    uint8_t *dioBuffer;    // Aligned bounce buffer for direct I/O
+    size_t dioBufferSize;  // Size of aligned buffer
+    size_t dioBufferUsed;  // Valid bytes currently in buffer
+    uint64_t totalWritten; // Total unpadded bytes written
 };
 
 /***********************************************************************************************************************************
@@ -46,7 +55,7 @@ File open constants
 
 Since open is called more than once use constants to make sure these parameters are always the same
 ***********************************************************************************************************************************/
-#define FILE_OPEN_PURPOSE                                           "write"
+#define FILE_OPEN_PURPOSE "write"
 
 /***********************************************************************************************************************************
 Close file descriptor
@@ -62,7 +71,14 @@ storageWritePosixFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
+    if (this->dioBuffer != NULL)
+    {
+        free(this->dioBuffer);
+        this->dioBuffer = NULL;
+    }
+
+    if (this->fd != -1)
+        THROW_ON_SYS_ERROR_FMT(close(this->fd) == -1, FileCloseError, STORAGE_ERROR_WRITE_CLOSE, strZ(this->nameTmp));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -95,12 +111,17 @@ storageWritePosixOpen(THIS_VOID)
     ASSERT(this->fd == -1);
 
     // Open the file
-    const int flags = O_CREAT | O_WRONLY | (this->truncate ? O_TRUNC : 0);
+    int flags = O_CREAT | O_WRONLY | (this->truncate ? O_TRUNC : 0);
+
+#ifdef O_DIRECT
+    if (this->directIo)
+        flags |= O_DIRECT;
+#endif
 
     this->fd = open(strZ(this->nameTmp), flags, this->modeFile);
 
     // Attempt to create the path if it is missing
-    if (this->fd == -1 && errno == ENOENT && this->createPath)                                                      // {vm_covered}
+    if (this->fd == -1 && errno == ENOENT && this->createPath) // {vm_covered}
     {
         // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->modePath);
@@ -112,14 +133,36 @@ storageWritePosixOpen(THIS_VOID)
     // Handle errors
     if (this->fd == -1)
     {
-        if (errno == ENOENT)                                                                                        // {vm_covered}
+        if (errno == ENOENT) // {vm_covered}
             THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->name));
         else
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->name));                         // {vm_covered}
+        {
+#ifdef O_DIRECT
+            if (this->directIo && errno == EINVAL)
+            {
+                THROW_SYS_ERROR_FMT(
+                    FeatureNotSupportedError, "unable to open '%s' with direct I/O: filesystem does not support direct I/O",
+                    strZ(this->nameTmp));
+            }
+#endif
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->name)); // {vm_covered}
+        }
     }
 
     // Set free callback to ensure the file descriptor is freed
     memContextCallbackSet(objMemContext(this), storageWritePosixFreeResource, this);
+
+    if (this->directIo)
+    {
+        this->dioBufferSize = ((ioBufferSize() + STORAGE_POSIX_DIO_ALIGN - 1) / STORAGE_POSIX_DIO_ALIGN) *
+                              STORAGE_POSIX_DIO_ALIGN;
+
+        if (this->dioBufferSize < STORAGE_POSIX_DIO_ALIGN)
+            this->dioBufferSize = STORAGE_POSIX_DIO_ALIGN;
+
+        if (posix_memalign((void **)&this->dioBuffer, STORAGE_POSIX_DIO_ALIGN, this->dioBufferSize) != 0)
+            THROW_SYS_ERROR_FMT(MemoryError, "unable to allocate direct I/O buffer for '%s'", strZ(this->nameTmp));
+    }
 
     // Update user/group owner
     if (this->user != NULL || this->group != NULL)
@@ -175,9 +218,49 @@ storageWritePosix(THIS_VOID, const Buffer *const buffer)
     ASSERT(buffer != NULL);
     ASSERT(this->fd != -1);
 
-    // Write the data
-    if (write(this->fd, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
-        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
+    if (!this->directIo)
+    {
+        // Write the data
+        if (write(this->fd, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
+            THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
+    }
+    else
+    {
+        size_t bufferPos = 0;
+        const size_t bufferRemaining = bufUsed(buffer);
+        const uint8_t *const bufferPtr = bufPtrConst(buffer);
+
+        while (bufferPos < bufferRemaining)
+        {
+            size_t copyBytes = bufferRemaining - bufferPos;
+            size_t spaceAvailable = this->dioBufferSize - this->dioBufferUsed;
+
+            if (copyBytes > spaceAvailable)
+                copyBytes = spaceAvailable;
+
+            memcpy(this->dioBuffer + this->dioBufferUsed, bufferPtr + bufferPos, copyBytes);
+            this->dioBufferUsed += copyBytes;
+            bufferPos += copyBytes;
+
+            // If dioBuffer has full blocks to write
+            if (this->dioBufferUsed >= this->dioBufferSize)
+            {
+                const size_t bytesToWrite = (this->dioBufferUsed / STORAGE_POSIX_DIO_ALIGN) * STORAGE_POSIX_DIO_ALIGN;
+
+                if (write(this->fd, this->dioBuffer, bytesToWrite) != (ssize_t)bytesToWrite)
+                    THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
+
+                this->totalWritten += bytesToWrite;
+
+                const size_t remainder = this->dioBufferUsed - bytesToWrite;
+
+                if (remainder > 0)
+                    memmove(this->dioBuffer, this->dioBuffer + bytesToWrite, remainder);
+
+                this->dioBufferUsed = remainder;
+            }
+        }
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -198,8 +281,27 @@ storageWritePosixSeek(THIS_VOID, const uint64_t position)
     ASSERT(this != NULL);
     ASSERT(this->fd != -1);
 
+    if (this->directIo)
+    {
+        if (this->dioBufferUsed > 0)
+        {
+            const size_t writeSize = ((this->dioBufferUsed + STORAGE_POSIX_DIO_ALIGN - 1) / STORAGE_POSIX_DIO_ALIGN) *
+                                     STORAGE_POSIX_DIO_ALIGN;
+            memset(this->dioBuffer + this->dioBufferUsed, 0, writeSize - this->dioBufferUsed);
+
+            if (write(this->fd, this->dioBuffer, writeSize) != (ssize_t)writeSize)
+                THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
+
+            this->totalWritten += this->dioBufferUsed;
+            this->dioBufferUsed = 0;
+        }
+
+        this->totalWritten = position;
+    }
+
     THROW_ON_SYS_ERROR_FMT(
-        lseek(this->fd, (off_t)position, SEEK_SET) == -1, FileWriteError, STORAGE_ERROR_WRITE_SEEK, position, strZ(this->nameTmp));
+        lseek(this->fd, (off_t)position, SEEK_SET) == -1, FileWriteError, STORAGE_ERROR_WRITE_SEEK, position,
+        strZ(this->nameTmp));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -221,6 +323,29 @@ storageWritePosixClose(THIS_VOID)
     // Close if the file has not already been closed
     if (this->fd != -1)
     {
+        if (this->directIo && this->dioBufferUsed > 0)
+        {
+            const size_t writeSize = ((this->dioBufferUsed + STORAGE_POSIX_DIO_ALIGN - 1) / STORAGE_POSIX_DIO_ALIGN) *
+                                     STORAGE_POSIX_DIO_ALIGN;
+            memset(this->dioBuffer + this->dioBufferUsed, 0, writeSize - this->dioBufferUsed);
+
+            if (write(this->fd, this->dioBuffer, writeSize) != (ssize_t)writeSize)
+                THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
+
+            this->totalWritten += this->dioBufferUsed;
+            this->dioBufferUsed = 0;
+
+            THROW_ON_SYS_ERROR_FMT(
+                ftruncate(this->fd, (off_t)this->totalWritten) == -1, FileWriteError, "unable to truncate '%s'",
+                strZ(this->nameTmp));
+        }
+
+        if (this->dioBuffer != NULL)
+        {
+            free(this->dioBuffer);
+            this->dioBuffer = NULL;
+        }
+
         // Sync the file
         if (this->syncFile)
             THROW_ON_SYS_ERROR_FMT(fsync(this->fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
@@ -286,7 +411,7 @@ FN_EXTERN StorageWritePosix *
 storageWritePosixNew(
     StoragePosix *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
     const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
-    const bool atomic, const bool truncate)
+    const bool atomic, const bool truncate, const bool directIo)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, storage);
@@ -301,6 +426,7 @@ storageWritePosixNew(
         FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
         FUNCTION_LOG_PARAM(BOOL, truncate);
+        FUNCTION_LOG_PARAM(BOOL, directIo);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -310,8 +436,7 @@ storageWritePosixNew(
 
     OBJ_NEW_BEGIN(StorageWritePosix, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
-        *this = (StorageWritePosix)
-        {
+        *this = (StorageWritePosix){
             .interface = &storageWritePosixInterface,
             .storage = storage,
             .name = strDup(name),
@@ -328,6 +453,7 @@ storageWritePosixNew(
             .nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : strDup(name),
             .path = strPath(name),
             .fd = -1,
+            .directIo = directIo,
         };
     }
     OBJ_NEW_END();

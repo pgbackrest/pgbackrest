@@ -1407,6 +1407,19 @@ option:
       db-path: {}
       db?-path: {}
 
+  pg-direct-io:
+    section: stanza
+    group: pg
+    type: boolean
+    default: false
+    command:
+      backup: {}
+      restore: {}
+    deprecate:
+      pg-directio: {}
+      pg?-direct-io: {}
+      pg?-directio: {}
+
   # PostgreSQL host options
   #---------------------------------------------------------------------------------------------------------------------------------
   pg-local:
@@ -1685,6 +1698,7 @@ option:
       - cifs
       - gcs
       - posix
+      - posix-dio
       - s3
       - sftp: HAVE_LIBSSH2
     command:
@@ -1793,6 +1807,7 @@ option:
       default: false
       list:
         - posix
+        - posix-dio
 
   repo-target-time:
     section: global

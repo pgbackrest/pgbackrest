@@ -551,7 +551,7 @@ unit:
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: storage/posix
-    total: 24
+    total: 25
 
     coverage:
       - storage/cifs/helper
@@ -559,6 +559,8 @@ unit:
       - storage/posix/read
       - storage/posix/storage
       - storage/posix/write
+      - storage/posixDio/helper
+      - storage/posixDio/storage
       - storage/helper
       - storage/iterator
       - storage/list

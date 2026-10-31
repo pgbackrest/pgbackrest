@@ -1,8 +1,10 @@
 /***********************************************************************************************************************************
-Test Posix/CIFS Storage
+Test Posix/CIFS/PosixDio Storage
 ***********************************************************************************************************************************/
 #include "common/io/io.h"
 #include "common/time.h"
+#include "storage/posixDio/helper.h"
+#include "storage/posixDio/storage.h"
 #include "storage/read.h"
 #include "storage/write.h"
 
@@ -1337,6 +1339,20 @@ testRun(void)
         TEST_RESULT_VOID(storageReadFree(storageNewReadP(storageTest, fileName)), "free file");
 
         TEST_RESULT_VOID(storageReadMove(NULL, memContextTop()), "move null file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("direct I/O read round-trip");
+
+        Storage *const storageDioRead = storagePosixDioNew(
+            TEST_PATH_STR, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+
+        const Buffer *dioContent = BUFSTRDEF("DIRECT_IO_DATA");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageDioRead, STRDEF("dio-read.file")), dioContent), "write dio file");
+
+        Buffer *dioRead = storageGetP(storageNewReadP(storageDioRead, STRDEF("dio-read.file")));
+        TEST_RESULT_BOOL(bufEq(dioRead, dioContent), true, "check direct I/O file contents");
+
+        storageRemoveP(storageDioRead, STRDEF("dio-read.file"), .errorOnMissing = true);
     }
 
     // *****************************************************************************************************************************
@@ -1497,6 +1513,24 @@ testRun(void)
         TEST_STORAGE_GET(storageTest, "no-truncate", "ABC");
         TEST_RESULT_UINT(storageInfoP(storageTest, STRDEF("no-truncate")).mode, 0600, "check mode");
         TEST_RESULT_INT(storageInfoP(storageTest, STRDEF("no-truncate")).timeModified, 77777, "check time");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("direct I/O write round-trip");
+
+        Storage *const storageDioWrite = storagePosixDioNew(
+            TEST_PATH_STR, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL);
+
+        const Buffer *dioWriteContent = BUFSTRDEF("DIRECT_IO_WRITE_DATA");
+
+        TEST_ASSIGN(file, storageNewWriteP(storageDioWrite, STRDEF("dio-write.file")), "new direct I/O write file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open direct I/O file");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), dioWriteContent), "write direct I/O data");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close direct I/O file");
+
+        Buffer *dioVerify = storageGetP(storageNewReadP(storageDioWrite, STRDEF("dio-write.file")));
+        TEST_RESULT_BOOL(bufEq(dioVerify, dioWriteContent), true, "check direct I/O write file contents");
+
+        storageRemoveP(storageDioWrite, STRDEF("dio-write.file"), .errorOnMissing = true);
     }
 
     // *****************************************************************************************************************************
@@ -1686,11 +1720,33 @@ testRun(void)
         TEST_RESULT_BOOL(storage->write, true, "check pg write storage write");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storagePg() - pg-direct-io enabled");
+
+        // Reset pg storage caches so they are recreated with new config
+        storageHelper.storagePg = NULL;
+        storageHelper.storagePgWrite = NULL;
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH);
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/db");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/db2");
+        hrnCfgArgRawBool(argList, cfgOptPgDirectIo, true);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_ASSIGN(storage, storagePg(), "new pg storage with direct I/O");
+        TEST_RESULT_STR_Z(storage->path, TEST_PATH "/db", "check pg storage path");
+        TEST_RESULT_UINT(storageType(storage), STORAGE_POSIX_TYPE, "check pg storage type is posix with direct I/O");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageSpool - helper fails because stanza is required");
 
         // Change the stanza to NULL, stanzaInit flag to false and make sure helper fails because stanza is required
         storageHelper.storageSpool = NULL;
         storageHelper.storageSpoolWrite = NULL;
+        storageHelper.storagePg = NULL;
+        storageHelper.storagePgWrite = NULL;
         storageHelper.stanzaInit = false;
         storageHelper.stanza = NULL;
 
@@ -1775,6 +1831,64 @@ testRun(void)
         TEST_ERROR(
             storageRemoveP(storage, STRDEF(BOGUS_STR), .errorOnMissing = true), AssertError,
             "assertion '!param.errorOnMissing || storageFeature(this, storageFeatureFileRemoveMissing)' failed");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageRepoGet() and StorageDriverPosixDio"))
+    {
+        // Load configuration
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoType, "posix-dio");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid storage type");
+
+        static const StorageHelper storageHelperListError[] = {{.type = STORAGE_POSIX_TYPE}, STORAGE_END_HELPER};
+        storageHelperInit(storageHelperListError);
+
+        TEST_ERROR(storageRepoGet(0, true), AssertError, "invalid storage type");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storage configuration");
+
+        // Set storage helper
+        static const StorageHelper storageHelperList[] = {STORAGE_POSIX_DIO_HELPER, STORAGE_END_HELPER};
+        storageHelperInit(storageHelperList);
+
+        const Storage *storage = NULL;
+        TEST_ASSIGN(storage, storageRepoGet(0, true), "get posix-dio repo storage");
+        TEST_RESULT_UINT(storageType(storage), STORAGE_POSIX_DIO_TYPE, "check storage type");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), true, "check path feature");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureHardLink), true, "check hard link feature");
+        TEST_RESULT_BOOL(storageFeature(storage, storageFeatureSymLink), true, "check sym link feature");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write object path sync enabled");
+
+        // Create a FileWrite object and ensure path sync is enabled (unlike CIFS)
+        StorageWrite *file = NULL;
+        TEST_ASSIGN(file, storageNewWriteP(storage, STRDEF("somefile"), .noSyncPath = false), "new file write");
+
+        TEST_RESULT_BOOL(((StorageWritePosix *)file->driver)->syncPath, true, "path sync is enabled");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("basic write/read round-trip without direct I/O");
+
+        // Use standard posix storage to write a reference file for comparison
+        Storage *const storagePosixRef = storagePosixNewP(TEST_PATH_STR, .write = true);
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storagePosixRef, STRDEF("dio-repo.file")), BUFSTRDEF("POSIX_DIO_TEST")),
+            "write reference file");
+
+        // Read back via posix-dio storage and verify
+        Buffer *dioRepoRead = storageGetP(storageNewReadP(storage, STRDEF("dio-repo.file")));
+        TEST_RESULT_STR_Z(strNewBuf(dioRepoRead), "POSIX_DIO_TEST", "check posix-dio read file contents");
+
+        storageRemoveP(storagePosixRef, STRDEF("dio-repo.file"), .errorOnMissing = true);
     }
 
     // *****************************************************************************************************************************

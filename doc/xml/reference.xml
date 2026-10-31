@@ -1426,6 +1426,7 @@
                                 <allow-item id="cifs">Like <id>posix</id>, but disables links and directory fsyncs</allow-item>
                                 <allow-item id="gcs">Google Cloud Storage</allow-item>
                                 <allow-item id="posix">Posix-compliant file systems</allow-item>
+                                <allow-item id="posix-dio">Posix-compliant file systems using direct I/O</allow-item>
                                 <allow-item id="s3">AWS Simple Storage Service</allow-item>
                                 <allow-item id="sftp">Secure File Transfer Protocol</allow-item>
                             </allow-list>
@@ -1966,6 +1967,16 @@
                         </text>
 
                         <example>/conf/pgbackrest</example>
+                    </config-key>
+
+                    <config-key id="pg-direct-io" name="PostgreSQL Direct I/O">
+                        <summary>Use direct I/O for PostgreSQL data directory.</summary>
+
+                        <text>
+                            <p>Enables direct I/O (<id>O_DIRECT</id>) for reading and writing files in the <postgres/> data directory during backup and restore operations.</p>
+                        </text>
+
+                        <example>y</example>
                     </config-key>
 
                     <config-key id="pg-host" name="PostgreSQL Host">

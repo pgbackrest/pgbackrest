@@ -13,6 +13,7 @@ Storage Helper
 #include "protocol/helper.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
+#include "storage/posix/storage.intern.h"
 #include "storage/remote/storage.h"
 
 /***********************************************************************************************************************************
@@ -198,7 +199,18 @@ storagePgGet(const unsigned int pgIdx, const bool write)
     }
     // Use Posix storage
     else
-        result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write);
+    {
+        const bool directIo = cfgOptionValid(cfgOptPgDirectIo) && cfgOptionIdxBool(cfgOptPgDirectIo, pgIdx);
+
+        if (directIo)
+        {
+            result = storagePosixNewInternal(
+                STORAGE_POSIX_TYPE, cfgOptionIdxStr(cfgOptPgPath, pgIdx), STORAGE_MODE_FILE_DEFAULT,
+                STORAGE_MODE_PATH_DEFAULT, write, NULL, true, true, true);
+        }
+        else
+            result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write);
+    }
 
     FUNCTION_TEST_RETURN(STORAGE, result);
 }

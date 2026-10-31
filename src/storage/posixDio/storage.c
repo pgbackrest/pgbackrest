@@ -1,0 +1,30 @@
+/***********************************************************************************************************************************
+Posix Direct I/O Storage
+***********************************************************************************************************************************/
+#include <build.h>
+
+#include "common/debug.h"
+#include "common/log.h"
+#include "common/regExp.h"
+#include "storage/posix/storage.intern.h"
+#include "storage/posixDio/storage.h"
+
+/**********************************************************************************************************************************/
+FN_EXTERN Storage *
+storagePosixDioNew(
+    const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
+    StoragePathExpressionCallback pathExpressionFunction)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, path);
+        FUNCTION_LOG_PARAM(MODE, modeFile);
+        FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
+    FUNCTION_LOG_END();
+
+    FUNCTION_LOG_RETURN(
+        STORAGE,
+        storagePosixNewInternal(
+            STORAGE_POSIX_DIO_TYPE, path, modeFile, modePath, write, pathExpressionFunction, true, true, true));
+}

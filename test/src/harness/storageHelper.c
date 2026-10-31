@@ -204,13 +204,14 @@ static const StorageReadInterface hrnStorageReadTestInterface =
 static HrnStorageReadTest *
 hrnStorageReadTestNew(
     StoragePosix *const storage, const String *name, const uint64_t offset, const Variant *const limit,
-    const String *const versionId)
+    const String *const versionId, const bool directio)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRING, name);
         FUNCTION_HARNESS_PARAM(UINT64, offset);
         FUNCTION_HARNESS_PARAM(VARIANT, limit);
         FUNCTION_HARNESS_PARAM(STRING, versionId);
+        FUNCTION_HARNESS_PARAM(BOOL, directio);
     FUNCTION_HARNESS_END();
 
     ASSERT(name != NULL);
@@ -224,7 +225,7 @@ hrnStorageReadTestNew(
         *this = (HrnStorageReadTest)
         {
             .interface = &hrnStorageReadTestInterface,
-            .driver = storageReadPosixNew(storage, name, offset, limit),
+            .driver = storageReadPosixNew(storage, name, offset, limit, directio),
         };
     }
     OBJ_NEW_END();
@@ -314,7 +315,7 @@ static HrnStorageWriteTest *
 hrnStorageWriteTestNew(
     Storage *const storagePosix, const String *const name, const mode_t modeFile, const mode_t modePath,
     const String *const user, const String *const group, time_t timeModified, const bool createPath, const bool syncFile,
-    const bool syncPath, const bool atomic, const bool truncate)
+    const bool syncPath, const bool atomic, const bool truncate, const bool directio)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STORAGE_POSIX, storagePosix);
@@ -329,6 +330,7 @@ hrnStorageWriteTestNew(
         FUNCTION_HARNESS_PARAM(BOOL, syncPath);
         FUNCTION_HARNESS_PARAM(BOOL, atomic);
         FUNCTION_HARNESS_PARAM(BOOL, truncate);
+        FUNCTION_HARNESS_PARAM(BOOL, directio);
     FUNCTION_HARNESS_END();
 
     ASSERT(storagePosix != NULL);
@@ -349,10 +351,10 @@ hrnStorageWriteTestNew(
             .interface = &hrnStorageWriteTestInterface,
             .base = storageWritePosixNew(
                 storageDriver(storagePosix), name, modeFile, modePath, user, group, timeModified, createPath, false, false,
-                false, truncate),
+                false, truncate, directio),
             .version = storageWritePosixNew(
                 storageDriver(storagePosix), hrnStorageTestVersionFind(storagePosix, name), modeFile, modePath, user, group,
-                timeModified, createPath, false, false, false, truncate),
+                timeModified, createPath, false, false, false, truncate, directio),
         };
     }
     OBJ_NEW_END();
@@ -492,7 +494,7 @@ hrnStorageTestNewRead(THIS_VOID, const String *file, const StorageInterfaceNewRe
 
     FUNCTION_HARNESS_RETURN(
         HRN_STORAGE_READ_TEST,
-        hrnStorageReadTestNew(storageDriver(this->storagePosix), file, param.offset, param.limit, param.versionId));
+        hrnStorageReadTestNew(storageDriver(this->storagePosix), file, param.offset, param.limit, param.versionId, false));
 }
 
 static void *
@@ -523,7 +525,7 @@ hrnStorageTestNewWrite(THIS_VOID, const String *const file, const StorageInterfa
         HRN_STORAGE_WRITE_TEST,
         hrnStorageWriteTestNew(
             this->storagePosix, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified,
-            param.createPath, param.syncFile, param.syncPath, param.atomic, param.truncate));
+            param.createPath, param.syncFile, param.syncPath, param.atomic, param.truncate, false));
 }
 
 static void
