@@ -589,6 +589,21 @@ testRun(void)
             {.function = HRN_PQ_GETRESULT, .resultNull = true});
 #endif
         TEST_RESULT_VOID(pgClientFree(client), "free client");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pgClientConnInfoValue()");
+
+        TEST_RESULT_STR_Z(
+            pgClientConnInfoValue(STRDEF("user=rep application_name='a b fallback_application_name=c'"), "application_name"),
+            "a b fallback_application_name=c", "quoted value");
+        TEST_RESULT_STR_Z(pgClientConnInfoValue(STRDEF("application_name=''"), "application_name"), "", "empty value");
+        TEST_RESULT_STR_Z(
+            pgClientConnInfoValue(STRDEF("postgresql://rep@host/?application_name=uri"), "application_name"), "uri", "uri");
+        TEST_RESULT_STR(
+            pgClientConnInfoValue(STRDEF("options='-c application_name=x'"), "application_name"), NULL, "missing value");
+        TEST_ERROR(
+            pgClientConnInfoValue(STRDEF("bogus=1"), "application_name"), DbQueryError,
+            "unable to parse conninfo: invalid connection option \"bogus\"");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

@@ -22,7 +22,7 @@ typedef struct DbGetResult
     Db *standby;                                                    // Standby db object (NULL if none requested)
 } DbGetResult;
 
-FN_EXTERN DbGetResult dbGet(bool primaryOnly, bool primaryRequired, StringId standbyRequired);
+FN_EXTERN DbGetResult dbGet(bool primaryOnly, bool primaryRequired, StringId standbyRequired, StringId standbyMode);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -224,7 +224,7 @@ cmdCheck(void)
                 }
 
                 // Get the primary/standby connections (standby is only required if backup from standby is enabled)
-                DbGetResult dbGroup = dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_N);
+                DbGetResult dbGroup = dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_N, CFGOPTVAL_BACKUP_STANDBY_MODE_ANY);
 
                 if (dbGroup.standby == NULL && dbGroup.primary == NULL)
                     THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");

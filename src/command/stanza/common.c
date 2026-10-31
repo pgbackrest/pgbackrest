@@ -75,7 +75,7 @@ pgValidate(void)
         if (cfgOptionBool(cfgOptOnline))
         {
             // Check the primary connections (and standby, if any) and return the primary database object.
-            const DbGetResult dbObject = dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_N);
+            const DbGetResult dbObject = dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_N, CFGOPTVAL_BACKUP_STANDBY_MODE_ANY);
 
             // Get the pgControl information from the pg*-path deemed to be the primary
             result = dbPgControl(dbObject.primary);
