@@ -688,16 +688,18 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN StringList *
-dbSyncStandbyList(Db *const this)
+FN_EXTERN DbStandbyNameResult
+dbStandbyNameList(Db *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
     FUNCTION_LOG_END();
 
+    FUNCTION_AUDIT_STRUCT();
+
     ASSERT(this != NULL);
 
-    StringList *const result = strLstNew();
+    const DbStandbyNameResult result = {.syncList = strLstNew(), .asyncList = strLstNew()};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -724,13 +726,18 @@ dbSyncStandbyList(Db *const this)
                     "HINT: does the user have the pg_read_all_stats role or superuser?");
             }
 
+            // Potential standbys, including a synchronous standby catching up after a restart, are not synchronous yet
             if (strEqZ(syncState, "sync") || strEqZ(syncState, "quorum"))
-                strLstAdd(result, appName);
+                strLstAdd(result.syncList, appName);
+            else if (strEqZ(syncState, "async") || strEqZ(syncState, "potential"))
+                strLstAdd(result.asyncList, appName);
+            else
+                THROW_FMT(DbQueryError, "unexpected sync_state '%s' in pg_stat_replication", strZ(syncState));
         }
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STRING_LIST, result);
+    FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
 /**********************************************************************************************************************************/
@@ -747,16 +754,12 @@ dbWalReceiverAppName(Db *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Before PostgreSQL 12 primary_conninfo is in recovery.conf rather than a setting so it cannot be read
-        if (dbPgVersion(this) < PG_VERSION_12)
-            THROW(DbQueryError, "unable to read primary_conninfo on " PG_NAME " < " PG_VERSION_12_Z);
-
+        // pg_stat_wal_receiver, including conninfo, exists in all supported versions (>= 9.6)
         PackRead *const read = pckReadNew(
             dbQuery(
                 this, pgClientQueryResultAny,
                 STRDEF(
-                    "select (select setting from pg_catalog.pg_settings where name = 'primary_conninfo')::text,"
-                    " pg_catalog.current_setting('cluster_name')::text"
+                    "select conninfo::text, pg_catalog.current_setting('cluster_name')::text"
                     " from pg_catalog.pg_stat_wal_receiver")));
 
         // A standby replaying from the archive or reconnecting has no WAL receiver so its replication state is unknown
@@ -768,22 +771,56 @@ dbWalReceiverAppName(Db *const this)
         const String *const clusterName = pckReadStrP(read);
         pckReadArrayEndP(read);
 
-        // Only privileged users can see primary_conninfo
+        // Only privileged users can see conninfo
         if (connInfo == NULL)
         {
             THROW(
                 DbQueryError,
-                "unable to read primary_conninfo from pg_settings\n"
-                "HINT: does the user have the pg_read_all_settings role or superuser?");
+                "unable to read conninfo from pg_stat_wal_receiver\n"
+                "HINT: does the user have the pg_read_all_stats role or superuser?");
         }
 
-        // The WAL receiver connects with primary_conninfo. When application_name is not set it falls back to cluster_name or
-        // walreceiver when cluster_name is empty, which overrides a -c application_name in options. libpq does not send an empty
-        // application_name, so when it is set to '' a -c application_name in options wins and the standby may be misclassified.
-        const String *appName = pgClientConnInfoValue(connInfo, "application_name");
+        // The WAL receiver lists the keywords of its live connection in libpq order, unquoted, without empty values and with the
+        // password masked. It always sets fallback_application_name, which directly follows application_name in libpq order, so
+        // application_name (when set) is everything up to the fallback and may contain spaces or keywords. The last
+        // application_name before the fallback is used so a preceding options value cannot match. Otherwise the fallback is
+        // cluster_name (as of PostgreSQL 12) or walreceiver. Since cluster_name may contain spaces the fallback cannot be parsed,
+        // so the expected fallback is checked against conninfo instead.
+        //
+        // An empty application_name is not listed, and in that case libpq sends no name so a -c application_name in options wins.
+        // The derived name is then likely to have no row on the primary, which leaves the standby unclassified.
+        const char *const fallback = strstr(strZ(connInfo), " fallback_application_name=");
 
-        if (appName == NULL)
-            appName = strEmpty(clusterName) ? DB_WAL_RECEIVER_NAME_STR : clusterName;
+        if (fallback == NULL)
+            THROW_FMT(DbQueryError, "unable to find application name in conninfo '%s'", strZ(connInfo));
+
+        // The search always succeeds since the fallback itself contains application_name=
+        const char *appNameBegin = NULL;
+
+        for (const char *key = strZ(connInfo); (key = strstr(key, "application_name=")) < fallback; key++)
+        {
+            if (key == strZ(connInfo) || key[-1] == ' ')
+                appNameBegin = key + sizeof("application_name=") - 1;
+        }
+
+        const String *appName;
+
+        if (appNameBegin != NULL)
+            appName = strNewZN(appNameBegin, (size_t)(fallback - appNameBegin));
+        else
+        {
+            appName = dbPgVersion(this) >= PG_VERSION_12 && !strEmpty(clusterName) ? clusterName : DB_WAL_RECEIVER_NAME_STR;
+
+            // Verify the expected fallback is the one in conninfo, in case the rule for choosing it is wrong or changes
+            const char *const fallbackValue = fallback + sizeof(" fallback_application_name=") - 1;
+
+            if (strncmp(fallbackValue, strZ(appName), strSize(appName)) != 0 ||
+                (fallbackValue[strSize(appName)] != ' ' && fallbackValue[strSize(appName)] != '\0'))
+            {
+                THROW_FMT(
+                    DbQueryError, "expected fallback_application_name '%s' in conninfo '%s'", strZ(appName), strZ(connInfo));
+            }
+        }
 
         // Normalize the name the same way the primary does before it is reported in pg_stat_replication. Characters that are not
         // printable ASCII are replaced with ? or, as of PostgreSQL 16, hex escapes. Since the result is ASCII it can be clipped to

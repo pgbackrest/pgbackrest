@@ -166,19 +166,18 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
-// Synchronous standby list on the primary, followed by an application_name and sync_state value per row
-#define HRN_PQ_SCRIPT_SYNC_STANDBY_LIST_QUERY(sessionParam, rowTotalParam)                                                         \
+// Standby names and sync states on the primary, followed by an application_name and sync_state value per row
+#define HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(sessionParam, rowTotalParam)                                                         \
     HRN_PQ_SCRIPT_QUERY(                                                                                                           \
         sessionParam, "select application_name::text, sync_state::text from pg_catalog.pg_stat_replication", rowTotalParam, 2),    \
     HRN_PQ_SCRIPT_COLUMN_TYPE(sessionParam, 0, HRN_PQ_TYPE_TEXT),                                                                  \
     HRN_PQ_SCRIPT_COLUMN_TYPE(sessionParam, 1, HRN_PQ_TYPE_TEXT)
 
-// primary_conninfo and cluster_name on a standby with a WAL receiver, followed by values when there is a row
+// WAL receiver conninfo and cluster_name on a standby, followed by values when there is a row
 #define HRN_PQ_SCRIPT_WAL_RECEIVER_LIST_QUERY(sessionParam, rowTotalParam)                                                         \
     HRN_PQ_SCRIPT_QUERY(                                                                                                           \
         sessionParam,                                                                                                              \
-        "select (select setting from pg_catalog.pg_settings where name = 'primary_conninfo')::text,"                               \
-        " pg_catalog.current_setting('cluster_name')::text from pg_catalog.pg_stat_wal_receiver",                                  \
+        "select conninfo::text, pg_catalog.current_setting('cluster_name')::text from pg_catalog.pg_stat_wal_receiver",            \
         rowTotalParam, 2),                                                                                                         \
     HRN_PQ_SCRIPT_COLUMN_TYPE(sessionParam, 0, HRN_PQ_TYPE_TEXT),                                                                  \
     HRN_PQ_SCRIPT_COLUMN_TYPE(sessionParam, 1, HRN_PQ_TYPE_TEXT)

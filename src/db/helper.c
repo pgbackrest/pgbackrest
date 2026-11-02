@@ -49,56 +49,121 @@ dbGetIdx(const unsigned int pgIdx)
 }
 
 /***********************************************************************************************************************************
-Classify a standby as synchronous or asynchronous. When that cannot be determined the standby is unknown, never asynchronous.
+Classify a standby as synchronous or asynchronous. When that cannot be determined the standby is unclassified, never asynchronous.
 ***********************************************************************************************************************************/
-typedef struct DbGetStandby
-{
-    unsigned int pgIdx;                                             // cfgOptGrpPg index of the standby
-    Db *db;                                                         // Standby db object
-} DbGetStandby;
-
 typedef enum
 {
     dbGetStandbyKindSync,
     dbGetStandbyKindAsync,
-    dbGetStandbyKindUnknown,
+    dbGetStandbyKindUnclassified,
 } DbGetStandbyKind;
 
 static const char *const dbGetStandbyKindName[] = {"synchronous", "asynchronous", "unclassified"};
 
+typedef struct DbGetStandby
+{
+    unsigned int pgIdx;                                             // cfgOptGrpPg index of the standby
+    Db *db;                                                         // Standby db object
+    const String *name;                                             // Application name, NULL when it cannot be derived
+    DbGetStandbyKind kind;                                          // Standby kind
+} DbGetStandby;
+
+// Number of times a name appears in a list
+static unsigned int
+dbGetStandbyNameTotal(const StringList *const nameList, const String *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_LIST, nameList);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    unsigned int result = 0;
+
+    for (unsigned int nameIdx = 0; nameIdx < strLstSize(nameList); nameIdx++)
+    {
+        if (strEq(strLstGet(nameList, nameIdx), name))
+            result++;
+    }
+
+    FUNCTION_TEST_RETURN(UINT, result);
+}
+
 static DbGetStandbyKind
-dbGetStandbyKind(const DbGetStandby *const standby, const StringList *const syncList)
+dbGetStandbyKind(
+    const DbGetStandby *const standby, const StringList *const standbyNameList, const DbStandbyNameResult *const nameList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM_P(VOID, standby);
-        FUNCTION_LOG_PARAM(STRING_LIST, syncList);
+        FUNCTION_LOG_PARAM(STRING_LIST, standbyNameList);
+        FUNCTION_LOG_PARAM_P(VOID, nameList);
     FUNCTION_LOG_END();
 
     ASSERT(standby != NULL);
 
-    DbGetStandbyKind result = dbGetStandbyKindUnknown;
+    DbGetStandbyKind result = dbGetStandbyKindUnclassified;
 
-    // Classifying requires the synchronous standby list from the primary (a warning has already been logged if it is missing)
-    if (syncList != NULL)
+    // Classifying requires the standby name (a warning has already been logged if it is missing)
+    if (standby->name != NULL)
     {
-        MEM_CONTEXT_TEMP_BEGIN()
+        ASSERT(standbyNameList != NULL);
+        ASSERT(nameList != NULL);
+
+        // Application names must be unique since the row on the primary is found by name. A name with more than one row on the
+        // primary or shared by configured standbys cannot be classified, nor can a name with no row. A configured standby that
+        // shares its name with a standby that is not configured, e.g. a cascaded standby named like a standby connected to the
+        // primary, cannot be detected.
+        const unsigned int syncTotal = dbGetStandbyNameTotal(nameList->syncList, standby->name);
+        const unsigned int rowTotal = syncTotal + dbGetStandbyNameTotal(nameList->asyncList, standby->name);
+        const unsigned int standbyTotal = dbGetStandbyNameTotal(standbyNameList, standby->name);
+
+        if (rowTotal == 0)
         {
-            TRY_BEGIN()
-            {
-                result = strLstExists(syncList, dbWalReceiverAppName(standby->db)) ? dbGetStandbyKindSync : dbGetStandbyKindAsync;
-            }
-            CATCH_ANY()
-            {
-                LOG_WARN_FMT(
-                    "unable to determine whether %s is a synchronous standby: [%s] %s",
-                    cfgOptionGroupName(cfgOptGrpPg, standby->pgIdx), errorTypeName(errorType()), errorMessage());
-            }
-            TRY_END();
+            LOG_WARN_FMT(
+                "unable to determine whether %s is a synchronous standby: [%s] application name '%s' has no row in"
+                " pg_stat_replication on the primary",
+                cfgOptionGroupName(cfgOptGrpPg, standby->pgIdx), errorTypeName(&DbQueryError), strZ(standby->name));
         }
-        MEM_CONTEXT_TEMP_END();
+        else if (rowTotal > 1 || standbyTotal > 1)
+        {
+            LOG_WARN_FMT(
+                "unable to determine whether %s is a synchronous standby: [%s] application name '%s' is not unique (%u row(s) on"
+                " the primary, %u configured standby(s))",
+                cfgOptionGroupName(cfgOptGrpPg, standby->pgIdx), errorTypeName(&DbQueryError), strZ(standby->name), rowTotal,
+                standbyTotal);
+        }
+        else
+            result = syncTotal > 0 ? dbGetStandbyKindSync : dbGetStandbyKindAsync;
     }
 
     FUNCTION_LOG_RETURN(ENUM, result);
+}
+
+/***********************************************************************************************************************************
+Decode the standby mode
+***********************************************************************************************************************************/
+typedef struct DbGetStandbyMode
+{
+    bool classify;                                                  // Are standbys classified, i.e. the mode is not any?
+    DbGetStandbyKind kindWant;                                      // Kind of standby wanted
+    bool require;                                                   // Is only the wanted kind allowed?
+} DbGetStandbyMode;
+
+static DbGetStandbyMode
+dbGetStandbyModeDecode(const StringId standbyMode)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_ID, standbyMode);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN_TYPE(
+        DbGetStandbyMode,
+        (DbGetStandbyMode){
+            .classify = standbyMode != CFGOPTVAL_BACKUP_STANDBY_MODE_ANY,
+            .kindWant =
+                standbyMode == CFGOPTVAL_BACKUP_STANDBY_MODE_SYNC || standbyMode == CFGOPTVAL_BACKUP_STANDBY_MODE_PREFER_SYNC ?
+                    dbGetStandbyKindSync : dbGetStandbyKindAsync,
+            .require =
+                standbyMode == CFGOPTVAL_BACKUP_STANDBY_MODE_SYNC || standbyMode == CFGOPTVAL_BACKUP_STANDBY_MODE_ASYNC});
 }
 
 /**********************************************************************************************************************************/
@@ -117,12 +182,12 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
     ASSERT(!(primaryOnly && standbyRequired == CFGOPTVAL_BACKUP_STANDBY_Y));
 
     DbGetResult result = {0};
+    const DbGetStandbyMode mode = dbGetStandbyModeDecode(standbyMode);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // When the standby mode is not any then all standbys are kept until the primary is found so they can be classified
-        List *const standbyList =
-            !primaryOnly && standbyMode != CFGOPTVAL_BACKUP_STANDBY_MODE_ANY ? lstNewP(sizeof(DbGetStandby)) : NULL;
+        // When standbys are classified then all standbys are kept until the primary is found
+        List *const standbyList = !primaryOnly && mode.classify ? lstNewP(sizeof(DbGetStandby)) : NULL;
 
         // Loop through to look for primary and standby (if required)
         for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); pgIdx++)
@@ -165,7 +230,7 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
                 {
                     // If the standby needs to be classified then keep it in the list for now
                     if (standbyList != NULL)
-                        lstAdd(standbyList, &(DbGetStandby){.pgIdx = pgIdx, .db = db});
+                        lstAdd(standbyList, &(DbGetStandby){.pgIdx = pgIdx, .db = db, .kind = dbGetStandbyKindUnclassified});
                     // Else if a standby has not already been found then assign it
                     else if (result.standby == NULL && !primaryOnly)
                     {
@@ -201,75 +266,91 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
         // Select a standby based on whether it is synchronous
         if (standbyList != NULL && !lstEmpty(standbyList))
         {
-            const DbGetStandbyKind kindWant =
-                standbyMode == CFGOPTVAL_BACKUP_STANDBY_MODE_PREFER_SYNC || standbyMode == CFGOPTVAL_BACKUP_STANDBY_MODE_SYNC ?
-                    dbGetStandbyKindSync : dbGetStandbyKindAsync;
-            const bool require =
-                standbyMode == CFGOPTVAL_BACKUP_STANDBY_MODE_SYNC || standbyMode == CFGOPTVAL_BACKUP_STANDBY_MODE_ASYNC;
-            const StringList *syncList = NULL;
+            const DbStandbyNameResult *nameList = NULL;
+            DbStandbyNameResult nameResult;
 
-            // Without the synchronous standby list on the primary no standby can be classified
+            // Without the standby names on the primary no standby can be classified
             if (result.primary != NULL)
             {
                 TRY_BEGIN()
                 {
-                    syncList = dbSyncStandbyList(result.primary);
+                    nameResult = dbStandbyNameList(result.primary);
+                    nameList = &nameResult;
                 }
                 CATCH_ANY()
                 {
                     LOG_WARN_FMT(
-                        "unable to get synchronous standbys from %s: [%s] %s",
-                        cfgOptionGroupName(cfgOptGrpPg, result.primaryIdx), errorTypeName(errorType()), errorMessage());
+                        "unable to get standby names from %s: [%s] %s", cfgOptionGroupName(cfgOptGrpPg, result.primaryIdx),
+                        errorTypeName(errorType()), errorMessage());
                 }
                 TRY_END();
             }
 
-            DbGetStandby *fallback = NULL;
-            DbGetStandbyKind fallbackKind = dbGetStandbyKindUnknown;
+            // Derive the name of every standby, since all names are needed to detect standbys that share one
+            StringList *const standbyNameList = strLstNew();
 
-            for (unsigned int standbyIdx = 0; standbyIdx < lstSize(standbyList); standbyIdx++)
+            if (nameList != NULL)
+            {
+                for (unsigned int standbyIdx = 0; standbyIdx < lstSize(standbyList); standbyIdx++)
+                {
+                    DbGetStandby *const standby = lstGet(standbyList, standbyIdx);
+
+                    TRY_BEGIN()
+                    {
+                        standby->name = dbWalReceiverAppName(standby->db);
+                        strLstAdd(standbyNameList, standby->name);
+                    }
+                    CATCH_ANY()
+                    {
+                        LOG_WARN_FMT(
+                            "unable to determine whether %s is a synchronous standby: [%s] %s",
+                            cfgOptionGroupName(cfgOptGrpPg, standby->pgIdx), errorTypeName(errorType()), errorMessage());
+                    }
+                    TRY_END();
+                }
+            }
+
+            // Rank standbys: the wanted kind first, then the other kind, then unclassified. Strict modes only allow the wanted
+            // kind. Stop at the first standby of the wanted kind.
+            const DbGetStandby *selected = NULL;
+            unsigned int selectedRank = mode.require ? 1 : 3;
+
+            for (unsigned int standbyIdx = 0; standbyIdx < lstSize(standbyList) && selectedRank > 0; standbyIdx++)
             {
                 DbGetStandby *const standby = lstGet(standbyList, standbyIdx);
+                standby->kind = dbGetStandbyKind(standby, standbyNameList, nameList);
 
-                if (result.standby == NULL)
+                const unsigned int rank =
+                    standby->kind == mode.kindWant ? 0 : standby->kind == dbGetStandbyKindUnclassified ? 2 : 1;
+
+                if (rank < selectedRank)
                 {
-                    const DbGetStandbyKind kind = dbGetStandbyKind(standby, syncList);
+                    selected = standby;
+                    selectedRank = rank;
+                }
+            }
 
-                    if (kind == kindWant)
-                    {
-                        result.standbyIdx = standby->pgIdx;
-                        result.standby = standby->db;
-                        continue;
-                    }
+            // Free the standbys that were not selected
+            for (unsigned int standbyIdx = 0; standbyIdx < lstSize(standbyList); standbyIdx++)
+            {
+                const DbGetStandby *const standby = lstGet(standbyList, standbyIdx);
 
-                    // Keep the best fallback in case no standby matches. A standby of the other kind is better than one that could
-                    // not be classified. Strict modes never fall back.
-                    if (!require &&
-                        (fallback == NULL || (fallbackKind == dbGetStandbyKindUnknown && kind != dbGetStandbyKindUnknown)))
-                    {
-                        if (fallback != NULL)
-                            dbFree(fallback->db);
+                if (standby != selected)
+                    dbFree(standby->db);
+            }
 
-                        fallback = standby;
-                        fallbackKind = kind;
-                        continue;
-                    }
+            if (selected != NULL)
+            {
+                if (selected->kind != mode.kindWant)
+                {
+                    LOG_WARN_FMT(
+                        "unable to find %s standby, using %s standby %s", dbGetStandbyKindName[mode.kindWant],
+                        dbGetStandbyKindName[selected->kind], cfgOptionGroupName(cfgOptGrpPg, selected->pgIdx));
                 }
 
-                dbFree(standby->db);
+                result.standbyIdx = selected->pgIdx;
+                result.standby = selected->db;
             }
-
-            if (result.standby == NULL && fallback != NULL)
-            {
-                LOG_WARN_FMT(
-                    "unable to find %s standby, using %s standby %s", dbGetStandbyKindName[kindWant],
-                    dbGetStandbyKindName[fallbackKind], cfgOptionGroupName(cfgOptGrpPg, fallback->pgIdx));
-
-                result.standbyIdx = fallback->pgIdx;
-                result.standby = fallback->db;
-            }
-            else if (fallback != NULL)
-                dbFree(fallback->db);
         }
 
         // Error if no standby was found
@@ -277,7 +358,7 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
         {
             THROW_FMT(
                 DbConnectError, "unable to find standby cluster - cannot proceed%s",
-                standbyList != NULL ?
+                mode.require && !lstEmpty(standbyList) ?
                     "\nHINT: is a standby available that matches the '" CFGOPT_BACKUP_STANDBY_MODE "' option?" : "");
         }
 

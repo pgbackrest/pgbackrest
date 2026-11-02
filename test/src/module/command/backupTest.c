@@ -2999,7 +2999,8 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   WARN: unable to check pg2: [DbConnectError] unable to connect to 'dbname='postgres' port=5433': error\n"
-                "P00   WARN: unable to find a standby to perform the backup, using primary instead\n"
+                "P00   WARN: unable to find a standby matching backup-standby-mode=any to perform the backup, using primary"
+                " instead\n"
                 "P00   INFO: last backup label = 20191020-193320F_20191021-232000I, version = " PROJECT_VERSION "\n"
                 "P00   INFO: execute backup start: backup begins after the requested immediate checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DAFC3000000000, lsn = 5dafc30/0\n"

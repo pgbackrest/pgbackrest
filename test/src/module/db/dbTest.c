@@ -635,6 +635,17 @@ testRun(void)
             "unable to find standby cluster - cannot proceed");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("standby cluster required but none configured so no mode hint");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_18, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        TEST_ERROR(
+            dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_Y, CFGOPTVAL_BACKUP_STANDBY_MODE_SYNC), DbConnectError,
+            "unable to find standby cluster - cannot proceed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("primary cluster found");
 
         HRN_PQ_SCRIPT_SET(
@@ -802,7 +813,7 @@ testRun(void)
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("prefer-async selects async standby");
+        TEST_TITLE("prefer-async selects first async standby");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -820,15 +831,20 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg4", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_18, TEST_PATH "/pg8", false, NULL, NULL),
-            HRN_PQ_SCRIPT_SYNC_STANDBY_LIST_QUERY(8, 3),
+            HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(8, 4),
             HRN_PQ_SCRIPT_VALUE(8, 0, 0, "s0"),
             HRN_PQ_SCRIPT_VALUE(8, 0, 1, "sync"),
             HRN_PQ_SCRIPT_VALUE(8, 1, 0, "s1"),
             HRN_PQ_SCRIPT_VALUE(8, 1, 1, "quorum"),
             HRN_PQ_SCRIPT_VALUE(8, 2, 0, "s4"),
             HRN_PQ_SCRIPT_VALUE(8, 2, 1, "async"),
+            HRN_PQ_SCRIPT_VALUE(8, 3, 0, "p1"),
+            HRN_PQ_SCRIPT_VALUE(8, 3, 1, "potential"),
             HRN_PQ_SCRIPT_QUERY_CLEAR(8),
-            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(1, "user=rep", "s4"),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(
+                1, "user=rep password=******** options=-c custom.application_name=x fallback_application_name=s4 keepalives=1",
+                "s4"),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(4, "user=rep application_name=s0 fallback_application_name=walreceiver", "c4"),
             HRN_PQ_SCRIPT_CLOSE(4),
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));
@@ -842,48 +858,63 @@ testRun(void)
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("sync selects standby with empty application_name");
+        TEST_TITLE("async selects potential standby named by options over unparseable conninfo");
 
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg4", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_18, TEST_PATH "/pg8", false, NULL, NULL),
-            HRN_PQ_SCRIPT_SYNC_STANDBY_LIST_QUERY(8, 1),
-            HRN_PQ_SCRIPT_VALUE_EMPTY(8, 0, 0),
-            HRN_PQ_SCRIPT_VALUE(8, 0, 1, "sync"),
+            HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(8, 1),
+            HRN_PQ_SCRIPT_VALUE(8, 0, 0, "foo"),
+            HRN_PQ_SCRIPT_VALUE(8, 0, 1, "potential"),
             HRN_PQ_SCRIPT_QUERY_CLEAR(8),
-            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(1, "user=rep application_name=''", "c1"),
-            HRN_PQ_SCRIPT_CLOSE(4),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(1, "garbage", "c1"),
+            // Real conninfo (PostgreSQL 16) for primary_conninfo application_name='' options='-c application_name=foo'
+            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(
+                4,
+                "user=rep password=******** channel_binding=prefer dbname=replication host=pg8 port=5432"
+                " options=-c application_name=foo fallback_application_name=walreceiver"
+                " sslmode=prefer sslcompression=0 sslcertmode=allow sslsni=1 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer"
+                " krbsrvname=postgres gssdelegation=0 target_session_attrs=any load_balance_hosts=disable",
+                "c4"),
+            HRN_PQ_SCRIPT_CLOSE(1),
             HRN_PQ_SCRIPT_CLOSE(8),
-            HRN_PQ_SCRIPT_CLOSE(1));
+            HRN_PQ_SCRIPT_CLOSE(4));
 
         TEST_ASSIGN(
-            result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y, CFGOPTVAL_BACKUP_STANDBY_MODE_SYNC), "get standby");
-        TEST_RESULT_INT(result.standbyIdx, 0, "check standby idx");
+            result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y, CFGOPTVAL_BACKUP_STANDBY_MODE_ASYNC), "get standby");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to determine whether pg1 is a synchronous standby: [DbQueryError] unable to find application name"
+            " in conninfo 'garbage'");
+        TEST_RESULT_INT(result.standbyIdx, 1, "check standby idx");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("prefer-sync prefers async standby with quoted name over unclassified standby");
+        TEST_TITLE("prefer-sync prefers async standby with spaces in name over standby named only by options");
 
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg4", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_18, TEST_PATH "/pg8", false, NULL, NULL),
-            HRN_PQ_SCRIPT_SYNC_STANDBY_LIST_QUERY(8, 2),
-            HRN_PQ_SCRIPT_VALUE(8, 0, 0, "s0"),
+            HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(8, 2),
+            HRN_PQ_SCRIPT_VALUE(8, 0, 0, "cl1"),
             HRN_PQ_SCRIPT_VALUE(8, 0, 1, "sync"),
-            HRN_PQ_SCRIPT_VALUE(8, 1, 0, "node a=1 fallback_application_name=y ~"),
+            HRN_PQ_SCRIPT_VALUE(8, 1, 0, "node a=1 ~"),
             HRN_PQ_SCRIPT_VALUE(8, 1, 1, "async"),
             HRN_PQ_SCRIPT_QUERY_CLEAR(8),
-            HRN_PQ_SCRIPT_WAL_RECEIVER_LIST_QUERY(1, 0),
-            HRN_PQ_SCRIPT_QUERY_CLEAR(1),
+            // Real conninfo (PostgreSQL 16) for primary_conninfo options='-c application_name=x' with cluster_name cl1. The primary
+            // reports cl1 so the derived name x has no row.
             HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(
-                4,
-                "user=rep options='-c application_name=x' application_name='node a=1 fallback_application_name=y ~'"
-                " keepalives=1",
-                "c4"),
+                1,
+                "user=rep password=******** channel_binding=prefer dbname=replication host=pg8 port=5432"
+                " options=-c application_name=x fallback_application_name=cl1"
+                " sslmode=prefer sslcompression=0 sslcertmode=allow sslsni=1 ssl_min_protocol_version=TLSv1.2 gssencmode=prefer"
+                " krbsrvname=postgres gssdelegation=0 target_session_attrs=any load_balance_hosts=disable",
+                "cl1"),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(
+                4, "user=rep application_name=node a=1 ~ fallback_application_name=walreceiver keepalives=1", "c4"),
             HRN_PQ_SCRIPT_CLOSE(1),
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(4));
@@ -891,7 +922,8 @@ testRun(void)
         TEST_ASSIGN(
             result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y, CFGOPTVAL_BACKUP_STANDBY_MODE_PREFER_SYNC), "get standby");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to determine whether pg1 is a synchronous standby: [DbQueryError] WAL receiver is not running\n"
+            "P00   WARN: unable to determine whether pg1 is a synchronous standby: [DbQueryError] application name 'x' has no row"
+            " in pg_stat_replication on the primary\n"
             "P00   WARN: unable to find synchronous standby, using asynchronous standby pg4");
         TEST_RESULT_INT(result.standbyIdx, 1, "check standby idx");
 
@@ -899,20 +931,22 @@ testRun(void)
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("prefer-sync selects standby by normalized name over unclassified standby");
+        TEST_TITLE("prefer-sync selects standby by normalized name over standby without WAL receiver");
 
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg4", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_18, TEST_PATH "/pg8", false, NULL, NULL),
-            HRN_PQ_SCRIPT_SYNC_STANDBY_LIST_QUERY(8, 1),
+            HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(8, 1),
             HRN_PQ_SCRIPT_VALUE(8, 0, 0, "node-\\xc3\\xa9-" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
             HRN_PQ_SCRIPT_VALUE(8, 0, 1, "sync"),
             HRN_PQ_SCRIPT_QUERY_CLEAR(8),
-            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(1, "bogus=1", "c1"),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_LIST_QUERY(1, 0),
+            HRN_PQ_SCRIPT_QUERY_CLEAR(1),
             HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(
                 4,
-                "user=rep application_name=node-\xc3\xa9-" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "user=rep application_name=node-\xc3\xa9-" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                " fallback_application_name=walreceiver",
                 "c4"),
             HRN_PQ_SCRIPT_CLOSE(1),
             HRN_PQ_SCRIPT_CLOSE(8),
@@ -922,8 +956,7 @@ testRun(void)
             result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_PREFER, CFGOPTVAL_BACKUP_STANDBY_MODE_PREFER_SYNC),
             "get standby");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to determine whether pg1 is a synchronous standby: [DbQueryError] unable to parse conninfo: invalid"
-            " connection option \"bogus\"");
+            "P00   WARN: unable to determine whether pg1 is a synchronous standby: [DbQueryError] WAL receiver is not running");
         TEST_RESULT_INT(result.standbyIdx, 1, "check standby idx");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
@@ -936,14 +969,14 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg4", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_18, TEST_PATH "/pg8", false, NULL, NULL),
-            HRN_PQ_SCRIPT_SYNC_STANDBY_LIST_QUERY(8, 2),
+            HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(8, 2),
             HRN_PQ_SCRIPT_VALUE(8, 0, 0, "s0"),
             HRN_PQ_SCRIPT_VALUE(8, 0, 1, "sync"),
             HRN_PQ_SCRIPT_VALUE(8, 1, 0, "walreceiver"),
             HRN_PQ_SCRIPT_VALUE(8, 1, 1, "async"),
             HRN_PQ_SCRIPT_QUERY_CLEAR(8),
             HRN_PQ_SCRIPT_WAL_RECEIVER_LIST_QUERY(1, 1),
-            HRN_PQ_SCRIPT_VALUE(1, 0, 0, "user=rep keepalives=1"),
+            HRN_PQ_SCRIPT_VALUE(1, 0, 0, "user=rep fallback_application_name=walreceiver keepalives=1"),
             HRN_PQ_SCRIPT_VALUE_EMPTY(1, 0, 1),
             HRN_PQ_SCRIPT_QUERY_CLEAR(1),
             HRN_PQ_SCRIPT_WAL_RECEIVER_LIST_QUERY(4, 1),
@@ -957,9 +990,9 @@ testRun(void)
         TEST_ASSIGN(
             result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y, CFGOPTVAL_BACKUP_STANDBY_MODE_PREFER_SYNC), "get standby");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to determine whether pg4 is a synchronous standby: [DbQueryError] unable to read"
-            " primary_conninfo from pg_settings\n"
-            "            HINT: does the user have the pg_read_all_settings role or superuser?\n"
+            "P00   WARN: unable to determine whether pg4 is a synchronous standby: [DbQueryError] unable to read conninfo from"
+            " pg_stat_wal_receiver\n"
+            "            HINT: does the user have the pg_read_all_stats role or superuser?\n"
             "P00   WARN: unable to find synchronous standby, using asynchronous standby pg1");
         TEST_RESULT_INT(result.standbyIdx, 0, "check standby idx");
 
@@ -973,7 +1006,7 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg4", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_18, TEST_PATH "/pg8", false, NULL, NULL),
-            HRN_PQ_SCRIPT_SYNC_STANDBY_LIST_QUERY(8, 1),
+            HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(8, 1),
             HRN_PQ_SCRIPT_VALUE(8, 0, 0, "s1"),
             HRN_PQ_SCRIPT_VALUE_NULL(8, 0, 1),
             HRN_PQ_SCRIPT_QUERY_CLEAR(8),
@@ -985,8 +1018,7 @@ testRun(void)
             result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_PREFER, CFGOPTVAL_BACKUP_STANDBY_MODE_PREFER_ASYNC),
             "get standby");
         TEST_RESULT_LOG(
-            "P00   WARN: unable to get synchronous standbys from pg8: [DbQueryError] unable to read sync_state from"
-            " pg_stat_replication\n"
+            "P00   WARN: unable to get standby names from pg8: [DbQueryError] unable to read sync_state from pg_stat_replication\n"
             "            HINT: does the user have the pg_read_all_stats role or superuser?\n"
             "P00   WARN: unable to find asynchronous standby, using unclassified standby pg1");
         TEST_RESULT_INT(result.standbyIdx, 0, "check standby idx");
@@ -1011,6 +1043,132 @@ testRun(void)
         TEST_RESULT_BOOL(result.standby == NULL, true, "check standby");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sync rejects standbys whose name has several rows on the primary");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg4", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_18, TEST_PATH "/pg8", false, NULL, NULL),
+            HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(8, 2),
+            HRN_PQ_SCRIPT_VALUE(8, 0, 0, "walreceiver"),
+            HRN_PQ_SCRIPT_VALUE(8, 0, 1, "sync"),
+            HRN_PQ_SCRIPT_VALUE(8, 1, 0, "walreceiver"),
+            HRN_PQ_SCRIPT_VALUE(8, 1, 1, "potential"),
+            HRN_PQ_SCRIPT_QUERY_CLEAR(8),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_LIST_QUERY(1, 1),
+            HRN_PQ_SCRIPT_VALUE(1, 0, 0, "user=rep fallback_application_name=walreceiver"),
+            HRN_PQ_SCRIPT_VALUE_EMPTY(1, 0, 1),
+            HRN_PQ_SCRIPT_QUERY_CLEAR(1),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_LIST_QUERY(4, 1),
+            HRN_PQ_SCRIPT_VALUE(4, 0, 0, "user=rep fallback_application_name=walreceiver"),
+            HRN_PQ_SCRIPT_VALUE_EMPTY(4, 0, 1),
+            HRN_PQ_SCRIPT_QUERY_CLEAR(4),
+            HRN_PQ_SCRIPT_CLOSE(1),
+            HRN_PQ_SCRIPT_CLOSE(4),
+            HRN_PQ_SCRIPT_CLOSE(8));
+
+        TEST_ASSIGN(
+            result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_PREFER, CFGOPTVAL_BACKUP_STANDBY_MODE_SYNC), "get standby");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to determine whether pg1 is a synchronous standby: [DbQueryError] application name 'walreceiver' is"
+            " not unique (2 row(s) on the primary, 2 configured standby(s))\n"
+            "P00   WARN: unable to determine whether pg4 is a synchronous standby: [DbQueryError] application name 'walreceiver' is"
+            " not unique (2 row(s) on the primary, 2 configured standby(s))");
+        TEST_RESULT_BOOL(result.standby == NULL, true, "check standby");
+
+        TEST_RESULT_VOID(dbFree(result.primary), "free primary");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sync rejects standbys sharing a name with fewer rows on the primary, e.g. a cascaded standby");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg4", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_18, TEST_PATH "/pg8", false, NULL, NULL),
+            HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(8, 1),
+            HRN_PQ_SCRIPT_VALUE(8, 0, 0, "walreceiver"),
+            HRN_PQ_SCRIPT_VALUE(8, 0, 1, "sync"),
+            HRN_PQ_SCRIPT_QUERY_CLEAR(8),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_LIST_QUERY(1, 1),
+            HRN_PQ_SCRIPT_VALUE(1, 0, 0, "user=rep fallback_application_name=walreceiver"),
+            HRN_PQ_SCRIPT_VALUE_EMPTY(1, 0, 1),
+            HRN_PQ_SCRIPT_QUERY_CLEAR(1),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_LIST_QUERY(4, 1),
+            HRN_PQ_SCRIPT_VALUE(4, 0, 0, "user=rep fallback_application_name=walreceiver"),
+            HRN_PQ_SCRIPT_VALUE_EMPTY(4, 0, 1),
+            HRN_PQ_SCRIPT_QUERY_CLEAR(4),
+            HRN_PQ_SCRIPT_CLOSE(1),
+            HRN_PQ_SCRIPT_CLOSE(4),
+            HRN_PQ_SCRIPT_CLOSE(8));
+
+        TEST_ASSIGN(
+            result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_PREFER, CFGOPTVAL_BACKUP_STANDBY_MODE_SYNC), "get standby");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to determine whether pg1 is a synchronous standby: [DbQueryError] application name 'walreceiver' is"
+            " not unique (1 row(s) on the primary, 2 configured standby(s))\n"
+            "P00   WARN: unable to determine whether pg4 is a synchronous standby: [DbQueryError] application name 'walreceiver' is"
+            " not unique (1 row(s) on the primary, 2 configured standby(s))");
+        TEST_RESULT_BOOL(result.standby == NULL, true, "check standby");
+
+        TEST_RESULT_VOID(dbFree(result.primary), "free primary");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unexpected sync_state so prefer-async uses unclassified standby");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg4", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_18, TEST_PATH "/pg8", false, NULL, NULL),
+            HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(8, 1),
+            HRN_PQ_SCRIPT_VALUE(8, 0, 0, "s1"),
+            HRN_PQ_SCRIPT_VALUE(8, 0, 1, "bogus"),
+            HRN_PQ_SCRIPT_QUERY_CLEAR(8),
+            HRN_PQ_SCRIPT_CLOSE(4),
+            HRN_PQ_SCRIPT_CLOSE(8),
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        TEST_ASSIGN(
+            result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_PREFER, CFGOPTVAL_BACKUP_STANDBY_MODE_PREFER_ASYNC),
+            "get standby");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to get standby names from pg8: [DbQueryError] unexpected sync_state 'bogus' in"
+            " pg_stat_replication\n"
+            "P00   WARN: unable to find asynchronous standby, using unclassified standby pg1");
+        TEST_RESULT_INT(result.standbyIdx, 0, "check standby idx");
+
+        TEST_RESULT_VOID(dbFree(result.primary), "free primary");
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sync rejects standbys whose conninfo fallback name is not the expected one");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg4", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_18, TEST_PATH "/pg8", false, NULL, NULL),
+            HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(8, 2),
+            HRN_PQ_SCRIPT_VALUE(8, 0, 0, "c1"),
+            HRN_PQ_SCRIPT_VALUE(8, 0, 1, "sync"),
+            HRN_PQ_SCRIPT_VALUE(8, 1, 0, "c4"),
+            HRN_PQ_SCRIPT_VALUE(8, 1, 1, "sync"),
+            HRN_PQ_SCRIPT_QUERY_CLEAR(8),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(1, "user=rep fallback_application_name=other", "c1"),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(4, "user=rep fallback_application_name=c4x keepalives=1", "c4"),
+            HRN_PQ_SCRIPT_CLOSE(1),
+            HRN_PQ_SCRIPT_CLOSE(4),
+            HRN_PQ_SCRIPT_CLOSE(8));
+
+        TEST_ERROR(
+            dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y, CFGOPTVAL_BACKUP_STANDBY_MODE_SYNC), DbConnectError,
+            "unable to find standby cluster - cannot proceed\n"
+            "HINT: is a standby available that matches the 'backup-standby-mode' option?");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to determine whether pg1 is a synchronous standby: [DbQueryError] expected"
+            " fallback_application_name 'c1' in conninfo 'user=rep fallback_application_name=other'\n"
+            "P00   WARN: unable to determine whether pg4 is a synchronous standby: [DbQueryError] expected"
+            " fallback_application_name 'c4' in conninfo 'user=rep fallback_application_name=c4x keepalives=1'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("async finds no async standby and standby is required");
 
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_15);
@@ -1021,11 +1179,14 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg1", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(4, "dbname='postgres' port=5433", PG_VERSION_11, TEST_PATH "/pg4", true, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_15, TEST_PATH "/pg8", false, NULL, NULL),
-            HRN_PQ_SCRIPT_SYNC_STANDBY_LIST_QUERY(8, 1),
+            HRN_PQ_SCRIPT_STANDBY_NAME_LIST_QUERY(8, 2),
             HRN_PQ_SCRIPT_VALUE(8, 0, 0, "s?"),
             HRN_PQ_SCRIPT_VALUE(8, 0, 1, "sync"),
+            HRN_PQ_SCRIPT_VALUE(8, 1, 0, "walreceiver"),
+            HRN_PQ_SCRIPT_VALUE(8, 1, 1, "sync"),
             HRN_PQ_SCRIPT_QUERY_CLEAR(8),
-            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(1, "application_name=s\x01", "c1"),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(1, "application_name=s\x01 fallback_application_name=walreceiver", "c1"),
+            HRN_PQ_SCRIPT_WAL_RECEIVER_QUERY(4, "user=rep fallback_application_name=walreceiver", "c4"),
             HRN_PQ_SCRIPT_CLOSE(1),
             HRN_PQ_SCRIPT_CLOSE(4),
             HRN_PQ_SCRIPT_CLOSE(8));
@@ -1034,9 +1195,6 @@ testRun(void)
             dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y, CFGOPTVAL_BACKUP_STANDBY_MODE_ASYNC), DbConnectError,
             "unable to find standby cluster - cannot proceed\n"
             "HINT: is a standby available that matches the 'backup-standby-mode' option?");
-        TEST_RESULT_LOG(
-            "P00   WARN: unable to determine whether pg4 is a synchronous standby: [DbQueryError] unable to read primary_conninfo"
-            " on PostgreSQL < 12");
     }
 
     protocolFree();
