@@ -156,7 +156,9 @@ restoreBackupSet(void)
                         {
                             found = true;
 
-                            result = restoreBackupData(backupData.backupLabel, repoIdx, infoBackupCipherSpec(infoBackup));
+                            result = restoreBackupData(
+                                backupData.backupLabel, repoIdx,
+                                infoBackupCipherSpecManifest(infoBackup, backupData.backupLabel));
                             break;
                         }
                     }
@@ -183,7 +185,8 @@ restoreBackupSet(void)
                             strZ(latestBackup.backupLabel));
                     }
 
-                    result = restoreBackupData(latestBackup.backupLabel, repoIdx, infoBackupCipherSpec(infoBackup));
+                    result = restoreBackupData(
+                        latestBackup.backupLabel, repoIdx, infoBackupCipherSpecManifest(infoBackup, latestBackup.backupLabel));
                     break;
                 }
             }
@@ -194,7 +197,8 @@ restoreBackupSet(void)
                 {
                     if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, backupSetRequested))
                     {
-                        result = restoreBackupData(backupSetRequested, repoIdx, infoBackupCipherSpec(infoBackup));
+                        result = restoreBackupData(
+                            backupSetRequested, repoIdx, infoBackupCipherSpecManifest(infoBackup, backupSetRequested));
                         break;
                     }
                 }

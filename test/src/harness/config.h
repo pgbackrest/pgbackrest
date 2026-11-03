@@ -14,7 +14,7 @@ Prefix for environment variables
 /***********************************************************************************************************************************
 Config option constants
 ***********************************************************************************************************************************/
-#define TEST_CIPHER_PASS                                            "xmainx"
+#define TEST_CIPHER_PASS                                            "FORTESTINGONLY+cN4MjV7ZH7mtqP44dL9PgGxJKUMk="
 #define TEST_CIPHER_PASS_ARCHIVE                                    "xarchivex"
 
 // Archive pass encoded as base64 for format 6

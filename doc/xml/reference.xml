@@ -453,7 +453,7 @@
                         <text>
                             <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
 
-                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
+                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2 unless <br-option>repo-storage-verify-tls=n</br-option>.</admonition>
 
                             <p>The accepted cipher suites can be adjusted if need arises. The example is reasonable choice unless you have specific security requirements. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
                         </text>
@@ -467,7 +467,7 @@
                         <text>
                             <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
 
-                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
+                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2 unless <br-option>repo-storage-verify-tls=n</br-option>.</admonition>
 
                             <p>The accepted cipher suites can be adjusted if need arises. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
                         </text>
@@ -1377,11 +1377,13 @@
                         <example>16MiB</example>
                     </config-key>
 
-                    <config-key id="repo-storage-verify-tls" name="Repository Storage Certificate Verify">
-                        <summary>Repository storage certificate verify.</summary>
+                    <config-key id="repo-storage-verify-tls" name="Repository Storage TLS Verify">
+                        <summary>Repository storage TLS verify.</summary>
 
                         <text>
                             <p>This option provides the ability to enable/disable verification of the storage (e.g. S3, Azure) server TLS certificate. Disabling should only be used for testing or other scenarios where a certificate has been self-signed.</p>
+
+                            <p>Disabling also removes the TLSv1.2 minimum and ignores the <br-option>tls-cipher-12</br-option> and <br-option>tls-cipher-13</br-option> options for repository storage connections.</p>
                         </text>
 
                         <example>n</example>
@@ -1456,10 +1458,12 @@
                         <text>
                             <p>Passphrase used to encrypt/decrypt files of the repository.</p>
 
+                            <p>A stanza created at <br-option>repo-format</br-option> 6 or higher requires a passphrase generated from at least 256 random bits, e.g. with <code>openssl rand -base64 32</code>. The passphrase must be hex, base64, or unpadded base64url that decodes to at least 256 bits, the decoded bytes must not all be text, and they must contain at least 16 distinct values and at least 16 distinct differences between adjacent bytes. The last two rule out repeated values, sequences, and short repeating patterns.</p>
+
                             <admonition type="note">When run without the <br-option>stanza</br-option> option the <cmd>info</cmd> command reads encryption settings only from the <setting>global</setting> section. If encryption settings are configured per stanza, run the <cmd>info</cmd> command with the <br-option>stanza</br-option> option to read an encrypted stanza.</admonition>
                         </text>
 
-                        <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
+                        <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=</example>
                     </config-key>
 
                     <config-key id="repo-cipher-rotate" name="Repository Cipher Rotation">

@@ -81,6 +81,16 @@ testRun(void)
         TEST_RESULT_UINT(infoBackupFormat(infoBackup), REPOSITORY_FORMAT_6, "format updated");
         TEST_RESULT_BOOL(infoBackup->pub.updated, true, "updated after format set");
 
+        // Backup set key with no shared key
+        TEST_RESULT_VOID(
+            infoBackupCipherSpecAdd(
+                infoBackup, STRDEF("20261017-120000F"),
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("setkey"), .digest = hashTypeSha256)),
+            "add backup set key");
+        TEST_ERROR(
+            infoBackupCipherSpecManifest(infoBackup, STRDEF("20261016-120000F")), CryptoError,
+            "unable to find key for backup set '20261016-120000F'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check cipher pass");
 
@@ -115,6 +125,18 @@ testRun(void)
             strNewBuf(cipherSpecPass(infoBackupCipherSpec(infoBackup))),
             "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 1, "history set");
+
+        TEST_RESULT_VOID(
+            infoBackupCipherSpecAdd(
+                infoBackup, STRDEF("20261017-120000F"),
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("setkey"), .digest = hashTypeSha256)),
+            "add backup set key");
+        TEST_RESULT_STR_Z(
+            strNewBuf(cipherSpecPass(infoBackupCipherSpecManifest(infoBackup, STRDEF("20261017-120000F_20261018-120000I")))),
+            "setkey", "backup set key");
+        TEST_RESULT_STR_Z(
+            strNewBuf(cipherSpecPass(infoBackupCipherSpecManifest(infoBackup, STRDEF("20261016-120000F")))),
+            "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "shared key");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("add pg info");

@@ -124,7 +124,7 @@ typedef struct VerifyJobData
     String *currentBackup;                                          // In progress backup, if any
     const InfoPg *pgHistory;                                        // Database history list
     bool backupProcessing;                                          // Are we processing WAL or are we processing backups
-    const CipherSpec *cipherSpecManifest;                           // Cipher spec for reading backup manifests
+    const InfoBackup *infoBackup;                                   // Backup info with the keys for reading backup manifests
     const CipherSpecMap *cipherSpecArchive;                         // Cipher keys for reading WAL files
     unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
     List *archiveIdResultList;                                      // Archive results
@@ -349,12 +349,12 @@ Get the manifest file
 ***********************************************************************************************************************************/
 static Manifest *
 verifyManifestFile(
-    VerifyBackupResult *const backupResult, const CipherSpec *const cipherSpecManifest, bool currentBackup,
+    VerifyBackupResult *const backupResult, const InfoBackup *const infoBackup, bool currentBackup,
     const InfoPg *const pgHistory, unsigned int *const jobErrorTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM_P(VERIFY_BACKUP_RESULT, backupResult);   // The result set for the backup being processed
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecManifest);        // Cipher spec to access the manifest file
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);                // Backup info with the keys for reading backup manifests
         FUNCTION_LOG_PARAM(BOOL, currentBackup);                    // Is this possibly a backup currently in progress?
         FUNCTION_LOG_PARAM(INFO_PG, pgHistory);                     // Database history
         FUNCTION_LOG_PARAM_P(UINT, jobErrorTotal);                  // Pointer to the overall job error total
@@ -366,64 +366,90 @@ verifyManifestFile(
     {
         const String *const fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupResult->backupLabel));
 
-        // Get the main manifest file
-        const VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, cipherSpecManifest);
+        // Key for the manifest, NULL when backup.info has no key for the backup
+        const CipherSpec *cipherSpecManifest = NULL;
 
-        // If the main file did not error, then report on the copy's status and check checksums
-        if (verifyManifestInfo.errorCode == 0)
+        TRY_BEGIN()
         {
-            result = verifyManifestInfo.manifest;
-
-            // The current in-progress backup is only notional until the main file is checked because the backup may have
-            // completed by the time the main manifest is checked here. So having a main manifest file means this backup is not
-            // (or is no longer) the currentBackup.
-            currentBackup = false;
-
-            // Attempt to load the copy and report on it's status but don't keep it in memory
-            const VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
-                strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), false, cipherSpecManifest);
-
-            // If the copy loaded successfully, then check the checksums
-            if (verifyManifestInfoCopy.errorCode == 0)
-            {
-                // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
-                // corrupt so log a warning but trust main
-                if (!strEq(verifyManifestInfo.checksum, verifyManifestInfoCopy.checksum))
-                    LOG_DETAIL_FMT("backup '%s' manifest.copy does not match manifest", strZ(backupResult->backupLabel));
-            }
+            cipherSpecManifest = infoBackupCipherSpecManifest(infoBackup, backupResult->backupLabel);
         }
-        else
+        CATCH(CryptoError)
         {
-            // If this might be an in-progress backup and the main manifest is simply missing, it is assumed the backup is an
-            // actual in-progress backup and verification is skipped, otherwise, if the main is not simply missing, or this is not
-            // an in-progress backup then attempt to load the copy.
-            if (!(currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
-            {
-                currentBackup = false;
+            LOG_DETAIL(errorMessage());
+        }
+        TRY_END();
 
-                const VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
-                    strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherSpecManifest);
-
-                // If loaded successfully, then return the copy as usable
-                if (verifyManifestInfoCopy.errorCode == 0)
-                {
-                    LOG_DETAIL_FMT("%s/backup.manifest is missing or unusable, using copy", strZ(backupResult->backupLabel));
-
-                    result = verifyManifestInfoCopy.manifest;
-                }
-                else if (verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError) &&
-                         verifyManifestInfoCopy.errorCode == errorTypeCode(&FileMissingError))
-                {
-                    backupResult->status = backupMissingManifest;
-
-                    LOG_DETAIL_FMT("manifest missing for '%s' - backup may have expired", strZ(backupResult->backupLabel));
-                }
-            }
-            else
+        // If there is no key then skip a backup that may be in progress
+        if (cipherSpecManifest == NULL)
+        {
+            if (currentBackup)
             {
                 backupResult->status = backupInProgress;
 
                 LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult->backupLabel));
+            }
+        }
+        else
+        {
+            // Get the main manifest file
+            const VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, cipherSpecManifest);
+
+            // If the main file did not error, then report on the copy's status and check checksums
+            if (verifyManifestInfo.errorCode == 0)
+            {
+                result = verifyManifestInfo.manifest;
+
+                // The current in-progress backup is only notional until the main file is checked because the backup may have
+                // completed by the time the main manifest is checked here. So having a main manifest file means this backup is not
+                // (or is no longer) the currentBackup.
+                currentBackup = false;
+
+                // Attempt to load the copy and report on it's status but don't keep it in memory
+                const VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
+                    strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), false, cipherSpecManifest);
+
+                // If the copy loaded successfully, then check the checksums
+                if (verifyManifestInfoCopy.errorCode == 0)
+                {
+                    // If the manifest and manifest.copy checksums don't match each other than one (or both) of the files could be
+                    // corrupt so log a warning but trust main
+                    if (!strEq(verifyManifestInfo.checksum, verifyManifestInfoCopy.checksum))
+                        LOG_DETAIL_FMT("backup '%s' manifest.copy does not match manifest", strZ(backupResult->backupLabel));
+                }
+            }
+            else
+            {
+                // If this might be an in-progress backup and the main manifest is simply missing, it is assumed the backup is an
+                // actual in-progress backup and verification is skipped, otherwise, if the main is not simply missing, or this is
+                // not an in-progress backup then attempt to load the copy.
+                if (!(currentBackup && verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError)))
+                {
+                    currentBackup = false;
+
+                    const VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
+                        strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherSpecManifest);
+
+                    // If loaded successfully, then return the copy as usable
+                    if (verifyManifestInfoCopy.errorCode == 0)
+                    {
+                        LOG_DETAIL_FMT("%s/backup.manifest is missing or unusable, using copy", strZ(backupResult->backupLabel));
+
+                        result = verifyManifestInfoCopy.manifest;
+                    }
+                    else if (verifyManifestInfo.errorCode == errorTypeCode(&FileMissingError) &&
+                             verifyManifestInfoCopy.errorCode == errorTypeCode(&FileMissingError))
+                    {
+                        backupResult->status = backupMissingManifest;
+
+                        LOG_DETAIL_FMT("manifest missing for '%s' - backup may have expired", strZ(backupResult->backupLabel));
+                    }
+                }
+                else
+                {
+                    backupResult->status = backupInProgress;
+
+                    LOG_INFO_FMT("backup '%s' appears to be in progress, skipping", strZ(backupResult->backupLabel));
+                }
             }
         }
 
@@ -639,7 +665,7 @@ verifyBackupSet(VerifyJobData *const jobData, const String *const backupLabel)
         {
             const Manifest *const manifest = manifestLoadFile(
                 storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
-                jobData->cipherSpecManifest);
+                infoBackupCipherSpecManifest(jobData->infoBackup, backupLabel));
 
             // Check files for block incremental
             bool hasBlockIncr = false;
@@ -958,7 +984,7 @@ verifyBackup(VerifyJobData *const jobData)
 
                 // Get a usable backup manifest file
                 Manifest *const manifest = verifyManifestFile(
-                    backupResult, jobData->cipherSpecManifest, inProgressBackup, jobData->pgHistory, &jobData->jobErrorTotal);
+                    backupResult, jobData->infoBackup, inProgressBackup, jobData->pgHistory, &jobData->jobErrorTotal);
 
                 // If a usable backup.manifest file is not found
                 if (manifest == NULL)
@@ -1623,7 +1649,7 @@ verifyProcess(const bool verboseText)
                 .walPathList = NULL,
                 .walFileList = strLstNew(),
                 .pgHistory = infoArchivePg(archiveInfo),
-                .cipherSpecManifest = infoBackupCipherSpec(backupInfo),
+                .infoBackup = backupInfo,
                 .cipherSpecArchive = infoArchiveCipherSpecMap(archiveInfo),
                 .archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator = archiveIdComparator),
                 .backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr),

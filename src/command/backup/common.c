@@ -10,11 +10,6 @@ Common Functions and Definitions for Backup and Expire Commands
 #include "common/log.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Constants
-***********************************************************************************************************************************/
-#define BACKUP_LINK_LATEST                                          "latest"
-
 /**********************************************************************************************************************************/
 FN_EXTERN String *
 backupFileRepoPath(const String *const backupLabel, const BackupFileRepoPathParam param)
