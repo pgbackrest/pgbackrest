@@ -27,4 +27,25 @@
             </release-item>
         </release-feature-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <commit subject="Add SECURITY.md."/>
+                <commit subject="Add OpenSSF Security Insights file and security CI checks.">
+                    <github-pull-request id="2886"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add a security policy.</p>
+
+                <p><file>SECURITY.md</file> describes how to report vulnerabilities privately using <proper>GitHub</proper> private vulnerability reporting or <id>security@pgbackrest.org</id>. The <proper>OpenSSF Security Insights</proper> file describes the project administrators, the release process, and the security tools run in CI and before release.</p>
+            </release-item>
+        </release-feature-list>
+    </release-doc-list>
 </release>
