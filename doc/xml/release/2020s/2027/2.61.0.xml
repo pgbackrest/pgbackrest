@@ -32,7 +32,7 @@
         <release-feature-list>
             <release-item>
                 <commit subject="Add SECURITY.md."/>
-                <commit subject="Add security policy, OpenSSF Security Insights file, and CI checks.">
+                <commit subject="Add OpenSSF Security Insights file and security CI checks.">
                     <github-pull-request id="2886"/>
                 </commit>
 
