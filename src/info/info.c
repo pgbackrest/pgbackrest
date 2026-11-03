@@ -757,3 +757,104 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
 
     FUNCTION_LOG_RETURN_VOID();
 }
+
+/**********************************************************************************************************************************/
+typedef struct InfoLoadFileData
+{
+    MemContext *memContext;                                         // Mem context
+    const Storage *storage;                                         // Storage to load from
+    const String *fileName;                                         // Base filename
+    const CipherSpec *cipherSpec;                                   // Cipher spec
+    InfoLoadFileNewCallback *newLoad;                               // Create the object from a read of the file
+    void *result;                                                   // Loaded object
+} InfoLoadFileData;
+
+static bool
+infoLoadFileCallback(void *const data, const unsigned int try)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(UINT, try);
+    FUNCTION_LOG_END();
+
+    ASSERT(data != NULL);
+
+    InfoLoadFileData *const loadData = data;
+    bool result = false;
+
+    // Tries 0 and 1 load the file and the copy with the cipher spec. Tries 2 and 3 load them with the prior cipher spec.
+    if (try < (cipherSpecPrior(loadData->cipherSpec) == NULL ? 2 : 4))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Construct filename and cipher spec based on try
+            const String *const fileName =
+                try % 2 == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
+            const CipherSpec *const cipherSpec = try < 2 ? loadData->cipherSpec : cipherSpecPrior(loadData->cipherSpec);
+
+            // Attempt to load the file
+            IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
+            cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), cipherSpec);
+
+            MEM_CONTEXT_BEGIN(loadData->memContext)
+            {
+                loadData->result = loadData->newLoad(read, cipherSpec);
+                result = true;
+            }
+            MEM_CONTEXT_END();
+
+            // Warn when the file was decrypted with the prior cipher spec
+            if (try >= 2)
+            {
+                LOG_WARN_FMT(
+                    "'%s' was decrypted with the old passphrase\n"
+                    "HINT: run stanza-rekey to encrypt it with the new passphrase.",
+                    strZ(storagePathP(loadData->storage, fileName)));
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+FN_EXTERN void *
+infoLoadFile(
+    const Storage *const storage, const String *const fileName, const CipherSpec *const cipherSpec,
+    InfoLoadFileNewCallback *const newLoad)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_LOG_PARAM(FUNCTIONP, newLoad);
+    FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_CALLBACK();
+
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT(cipherSpec != NULL);
+    ASSERT(newLoad != NULL);
+
+    InfoLoadFileData data =
+    {
+        .memContext = memContextCurrent(),
+        .storage = storage,
+        .fileName = fileName,
+        .cipherSpec = cipherSpec,
+        .newLoad = newLoad,
+    };
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const char *const fileNamePath = strZ(storagePathP(storage, fileName));
+
+        infoLoad(
+            strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath), infoLoadFileCallback,
+            &data);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_P(VOID, data.result);
+}

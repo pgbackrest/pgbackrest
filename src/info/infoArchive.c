@@ -254,62 +254,16 @@ infoArchiveFormatSet(InfoArchive *const this, const unsigned int format)
 }
 
 /**********************************************************************************************************************************/
-typedef struct InfoArchiveLoadFileData
+// Create from a read of the file
+static void *
+infoArchiveLoadFileNew(IoRead *const read, const CipherSpec *const cipherSpec)
 {
-    MemContext *memContext;                                         // Mem context
-    const Storage *storage;                                         // Storage to load from
-    const String *fileName;                                         // Base filename
-    const CipherSpec *cipherSpec;                                   // Cipher spec
-    InfoArchive *infoArchive;                                       // Loaded infoArchive object
-} InfoArchiveLoadFileData;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, read);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
+    FUNCTION_TEST_END();
 
-static bool
-infoArchiveLoadFileCallback(void *const data, const unsigned int try)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(UINT, try);
-    FUNCTION_LOG_END();
-
-    ASSERT(data != NULL);
-
-    InfoArchiveLoadFileData *const loadData = data;
-    bool result = false;
-
-    // Tries 0 and 1 load the file and the copy with the cipher spec. Tries 2 and 3 load them with the prior cipher spec.
-    if (try < (cipherSpecPrior(loadData->cipherSpec) == NULL ? 2 : 4))
-    {
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Construct filename and cipher spec based on try
-            const String *const fileName =
-                try % 2 == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
-            const CipherSpec *const cipherSpec = try < 2 ? loadData->cipherSpec : cipherSpecPrior(loadData->cipherSpec);
-
-            // Attempt to load the file
-            IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-            cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), cipherSpec);
-
-            MEM_CONTEXT_BEGIN(loadData->memContext)
-            {
-                loadData->infoArchive = infoArchiveNewLoad(read, cipherSpec);
-                result = true;
-            }
-            MEM_CONTEXT_END();
-
-            // Warn when the file was decrypted with the prior cipher spec
-            if (try >= 2)
-            {
-                LOG_WARN_FMT(
-                    "'%s' was decrypted with the old passphrase\n"
-                    "HINT: run stanza-rekey to encrypt it with the new passphrase.",
-                    strZ(storagePathP(loadData->storage, fileName)));
-            }
-        }
-        MEM_CONTEXT_TEMP_END();
-    }
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(INFO_ARCHIVE, infoArchiveNewLoad(read, cipherSpec));
 }
 
 FN_EXTERN InfoArchive *
@@ -326,40 +280,26 @@ infoArchiveLoadFile(
     ASSERT(fileName != NULL);
     ASSERT(cipherSpec != NULL);
 
-    InfoArchiveLoadFileData data =
-    {
-        .memContext = memContextCurrent(),
-        .storage = storage,
-        .fileName = fileName,
-        .cipherSpec = cipherSpec,
-    };
+    InfoArchive *result = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    TRY_BEGIN()
     {
-        const char *const fileNamePath = strZ(storagePathP(storage, fileName));
-
-        TRY_BEGIN()
-        {
-            infoLoad(
-                strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),
-                infoArchiveLoadFileCallback, &data);
-        }
-        CATCH_ANY()
-        {
-            THROWP_FMT(
-                errorType(),
-                "%s\n"
-                "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-                "HINT: is archive_command configured correctly in postgresql.conf?\n"
-                "HINT: has a stanza-create been performed?\n"
-                "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-                errorMessage());
-        }
-        TRY_END();
+        result = infoLoadFile(storage, fileName, cipherSpec, infoArchiveLoadFileNew);
     }
-    MEM_CONTEXT_TEMP_END();
+    CATCH_ANY()
+    {
+        THROWP_FMT(
+            errorType(),
+            "%s\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
+            errorMessage());
+    }
+    TRY_END();
 
-    FUNCTION_LOG_RETURN(INFO_ARCHIVE, data.infoArchive);
+    FUNCTION_LOG_RETURN(INFO_ARCHIVE, result);
 }
 
 /**********************************************************************************************************************************/
