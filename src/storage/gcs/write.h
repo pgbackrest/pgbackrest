@@ -15,7 +15,8 @@ typedef struct StorageWriteGcs StorageWriteGcs;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageWriteGcs *storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize, bool tag);
+FN_EXTERN StorageWriteGcs *storageWriteGcsNew(
+    StorageGcs *storage, const String *name, size_t chunkSize, bool tag, const String *kmsKeyName);
 
 /***********************************************************************************************************************************
 Macros for function logging

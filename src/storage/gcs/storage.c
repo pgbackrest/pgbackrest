@@ -107,6 +107,7 @@ struct StorageGcs
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     const Buffer *tag;                                              // Tags to be applied to objects
     const String *userProject;                                      // Project ID
+    const String *kmsKeyName;                                       // KMS key resource name
 
     StorageGcsKeyType keyType;                                      // Auth key type
     const String *key;                                              // Key (value depends on key type)
@@ -1068,7 +1069,7 @@ storageGcsNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNe
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE_GCS, storageWriteGcsNew(this, file, this->chunkSize, this->tag != NULL));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_GCS, storageWriteGcsNew(this, file, this->chunkSize, this->tag != NULL, this->kmsKeyName));
 }
 
 /**********************************************************************************************************************************/
@@ -1291,8 +1292,8 @@ storageGcsNew(
     const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *const bucket, const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize,
     const KeyValue *const tag, const String *const endpoint, const TimeMSec timeout, const bool verifyPeer,
-    const String *const caFile, const String *const caPath, const String *const userProject, const unsigned int prefetch,
-    const uint64_t readOver)
+    const String *const caFile, const String *const caPath, const String *const userProject, const String *const kmsKeyName,
+    const unsigned int prefetch, const uint64_t readOver)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1310,6 +1311,7 @@ storageGcsNew(
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
         FUNCTION_LOG_PARAM(STRING, userProject);
+        FUNCTION_LOG_PARAM(STRING, kmsKeyName);
         FUNCTION_LOG_PARAM(UINT, prefetch);
         FUNCTION_LOG_PARAM(UINT64, readOver);
     FUNCTION_LOG_END();
@@ -1330,6 +1332,7 @@ storageGcsNew(
             .chunkSize = chunkSize,
             .deleteMax = STORAGE_GCS_DELETE_MAX,
             .userProject = strDup(userProject),
+            .kmsKeyName = strDup(kmsKeyName),
         };
 
         // Set prefetch and read over
