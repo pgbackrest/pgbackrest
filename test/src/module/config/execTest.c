@@ -78,6 +78,32 @@ testRun(void)
             "--db-include=1\n--db-include=2\n--exec-id=1-test\n--log-path=/log\n--pg1-path=" TEST_PATH "/db path\n"
             "--recovery-option=a=b\n--recovery-option=c=d\n--repo1-path=/replace/path\nrestore\n",
             "exec restore -> restore");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restore synchronization method and beta opt-in reach local workers");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/db");
+        hrnCfgArgRawBool(argList, cfgOptConfig, false);
+        HRN_CFG_LOAD(cfgCmdRestore, argList, .noStd = true);
+
+        TEST_RESULT_STRLST_Z(
+            cfgExecParam(cfgCmdRestore, cfgCmdRoleLocal, NULL, true, false),
+            "--no-config\n--exec-id=1-test\n--pg1-path=" TEST_PATH "/db\n--repo1-path=" TEST_PATH "/repo\n"
+            "--stanza=test1\nrestore:local\n",
+            "default worker does not require beta or an explicit method");
+
+        hrnCfgArgRawBool(argList, cfgOptBeta, true);
+        hrnCfgArgRawZ(argList, cfgOptRestoreSyncMethod, "syncfs");
+        HRN_CFG_LOAD(cfgCmdRestore, argList, .noStd = true);
+
+        TEST_RESULT_STRLST_Z(
+            cfgExecParam(cfgCmdRestore, cfgCmdRoleLocal, NULL, true, false),
+            "--beta\n--no-config\n--exec-id=1-test\n--pg1-path=" TEST_PATH "/db\n--repo1-path=" TEST_PATH "/repo\n"
+            "--restore-sync-method=syncfs\n--stanza=test1\nrestore:local\n",
+            "worker receives method and beta");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
