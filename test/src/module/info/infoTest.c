@@ -111,7 +111,7 @@ testRun(void)
         TEST_RESULT_UINT(cipherSpecType(testInfoCipherSpec(info)), cipherTypeNone, "    cipher spec is none");
 
         TEST_ASSIGN(info, infoNew(REPOSITORY_FORMAT_DEFAULT, cipherSpecNewNone()), "infoNew(none)");
-        TEST_RESULT_UINT(cipherSpecMapSize(infoCipherSpecMap(info)), 0, "    no cipher keys");
+        TEST_RESULT_BOOL(cipherSpecMapEmpty(infoCipherSpecMap(info)), true, "    no cipher keys");
     }
 
     // *****************************************************************************************************************************

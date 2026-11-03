@@ -15,6 +15,7 @@
                 <commit subject="Generate a manifest key for each backup set in repository format 6.">
                     <github-pull-request id="2882"/>
                 </commit>
+                <commit subject="Add cipherSpecMapEmpty()."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>

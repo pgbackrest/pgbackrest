@@ -435,7 +435,7 @@ infoBackupCipherSpecManifest(const InfoBackup *const this, const String *const b
         if (result == NULL)
         {
             // Error when there are keys but no shared key
-            if (cipherSpecMapSize(cipherSpecMap) > 0 && cipherSpecMapFind(cipherSpecMap, CIPHER_SPEC_MAP_ID_DEFAULT_STR) == NULL)
+            if (!cipherSpecMapEmpty(cipherSpecMap) && cipherSpecMapFind(cipherSpecMap, CIPHER_SPEC_MAP_ID_DEFAULT_STR) == NULL)
                 THROW_FMT(CryptoError, "unable to find key for backup set '%s'", strZ(backupLabel));
 
             result = infoBackupCipherSpec(this);

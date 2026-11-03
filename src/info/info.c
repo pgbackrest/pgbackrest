@@ -457,7 +457,7 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
         // Add cipher keys if defined
         const CipherSpecMap *const cipherSpecMap = infoCipherSpecMap(this);
 
-        if (cipherSpecMapSize(cipherSpecMap) != 0)
+        if (!cipherSpecMapEmpty(cipherSpecMap))
         {
             callbackFunction(callbackData, STRDEF(INFO_SECTION_CIPHER), &data);
 
@@ -596,7 +596,7 @@ infoCipherSpecMapSet(Info *const this, const CipherSpecMap *const cipherSpecMap)
         this->pub.cipherSpecMap = cipherSpecMap == NULL ? cipherSpecMapNew() : cipherSpecMapDup(cipherSpecMap);
 
         // The default key is looked up on demand, so only a caller that asks for one key errors when there is no default
-        this->cipherSpecNone = cipherSpecMapSize(this->pub.cipherSpecMap) == 0 ? cipherSpecNewNone() : NULL;
+        this->cipherSpecNone = cipherSpecMapEmpty(this->pub.cipherSpecMap) ? cipherSpecNewNone() : NULL;
     }
     MEM_CONTEXT_OBJ_END();
 

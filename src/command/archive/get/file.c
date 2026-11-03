@@ -54,7 +54,7 @@ archiveGetFile(
                     storage, walDestination, .noCreatePath = true, .noSyncFile = true, .noSyncPath = true, .noAtomic = true);
 
                 // Add decrypt filter to read the format header
-                if (cipherSpecMapSize(actual->cipherSpecArchive) != 0)
+                if (!cipherSpecMapEmpty(actual->cipherSpecArchive))
                 {
                     cipherBlockFormatFilterGroupReadAddMap(
                         ioWriteFilterGroup(storageWriteIo(destination)), actual->cipherSpecArchive);
