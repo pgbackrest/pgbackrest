@@ -506,17 +506,16 @@ testRun(void)
             "unable to load info file:\n"
             "ChecksumError: checksum error");
 
-        // Two errors (same error)
+        // Two errors (same error reported once)
         // -------------------------------------------------------------------------------------------------------------------------
         testInfoLoad = (TestInfoLoad){.test = 2};
 
         TEST_ERROR(
             infoLoad(STRDEF("unable to load info file(s)"), testInfoLoadCallback, &testInfoLoad), FormatError,
             "unable to load info file(s):\n"
-            "FormatError: format error\n"
             "FormatError: format error");
 
-        // Four errors (mixed)
+        // Four errors (mixed, repeated error reported once)
         // -------------------------------------------------------------------------------------------------------------------------
         testInfoLoad = (TestInfoLoad){.test = 3};
 
@@ -526,8 +525,7 @@ testRun(void)
             "FileMissingError: file missing error\n"
             "ChecksumError: checksum error\n"
             "HINT: have you checked the thing?\n"
-            "FormatError: format error\n"
-            "FileMissingError: file missing error");
+            "FormatError: format error");
 
         // Success
         // -------------------------------------------------------------------------------------------------------------------------

@@ -706,7 +706,7 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
         volatile bool done = false;                                 // Are all files tried? Must be preserved even on error.
         volatile bool loaded = false;                               // Was a file loaded? Must be preserved even on error.
         const ErrorType *loadErrorType = NULL;
-        String *loadErrorMessage = NULL;
+        StringList *const loadErrorList = strLstNew();
 
         do
         {
@@ -722,10 +722,7 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
             {
                 // Set error type if none has been set
                 if (loadErrorType == NULL)
-                {
                     loadErrorType = errorType();
-                    loadErrorMessage = strCatFmt(strNew(), "%s:", strZ(error));
-                }
                 // Else if the error type is different
                 else if (loadErrorType != errorType())
                 {
@@ -739,8 +736,11 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
                         loadErrorType = &FileOpenError;
                 }
 
-                // Append new error
-                strCatFmt(loadErrorMessage, "\n%s: %s", errorTypeName(errorType()), errorMessage());
+                // Add the error unless the same error has already been added
+                const String *const loadError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
+
+                if (!strLstExists(loadErrorList, loadError))
+                    strLstAdd(loadErrorList, loadError);
 
                 // Try again
                 try++;
@@ -751,7 +751,7 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
 
         // Error when no file was loaded
         if (!loaded)
-            THROWP(loadErrorType, strZ(loadErrorMessage));
+            THROWP_FMT(loadErrorType, "%s:\n%s", strZ(error), strZ(strLstJoin(loadErrorList, "\n")));
     }
     MEM_CONTEXT_TEMP_END();
 
