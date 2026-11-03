@@ -48,6 +48,11 @@ restoreFile(
 
     ASSERT(repoFile != NULL);
 
+    // The coordinator synchronizes all destination filesystems before publishing pg_control when syncfs is selected
+    const bool syncFileSystem =
+        cfgOptionValid(cfgOptRestoreSyncMethod) &&
+        cfgOptionStrId(cfgOptRestoreSyncMethod) == CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS;
+
     // Restore file results
     List *const result = lstNewP(sizeof(RestoreFileResult));
 
@@ -105,7 +110,7 @@ restoreFile(
                                     IoWrite *const pgWriteTruncate = storageWriteIo(
                                         storageNewWriteP(
                                             storagePgWrite(), file->name, .noAtomic = true, .noCreatePath = true,
-                                            .noSyncPath = true, .noTruncate = true));
+                                            .noSyncPath = true, .noTruncate = true, .noSyncFile = syncFileSystem));
                                     ioWriteOpen(pgWriteTruncate);
 
                                     // Truncate to original size
@@ -198,7 +203,8 @@ restoreFile(
                     // Create destination file
                     StorageWrite *const pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
-                        .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true);
+                        .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
+                        .noSyncFile = syncFileSystem);
 
                     ioWriteOpen(storageWriteIo(pgFileWrite));
 
@@ -248,7 +254,7 @@ restoreFile(
                     StorageWrite *const pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                         .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
-                        .noTruncate = file->blockChecksum != NULL);
+                        .noTruncate = file->blockChecksum != NULL, .noSyncFile = syncFileSystem);
 
                     // If block incremental file
                     const Buffer *checksum = NULL;

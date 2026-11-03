@@ -143,6 +143,45 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
     FUNCTION_HARNESS_RETURN(MANIFEST, result);
 }
 
+#ifdef HAVE_SYNCFS
+
+/***********************************************************************************************************************************
+Observe real coordinator state at descriptor acquisition and the barrier, without replacing restore orchestration
+***********************************************************************************************************************************/
+static void
+testRestoreSyncBeforeWrite(void)
+{
+    CHECK(
+        TestError, !storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+        "old control file must be removed before deferred writes");
+    CHECK(
+        TestError, !storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)),
+        "filesystem guard must be opened before control file restoration");
+    CHECK(
+        TestError, !storageExistsP(storagePg(), BACKUP_MANIFEST_FILE_STR),
+        "filesystem guard must be opened before restart manifest write");
+}
+
+static void
+testRestoreSyncBeforePublish(void)
+{
+    CHECK(TestError, storageExistsP(storagePg(), PG_FILE_PGVERSION_STR), "PG_VERSION must be restored before the barrier");
+    CHECK(
+        TestError, storageExistsP(storagePg(), PG_FILE_POSTGRESQLAUTOCONF_STR),
+        "recovery configuration must be written before the barrier");
+    CHECK(
+        TestError, storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)),
+        "temporary control file must be restored before the barrier");
+    CHECK(
+        TestError, !storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)),
+        "control file must not be published before the barrier");
+    CHECK(
+        TestError, !storageExistsP(storagePg(), BACKUP_MANIFEST_FILE_STR),
+        "restart manifest must be removed before the barrier");
+}
+
+#endif
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -270,52 +309,201 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("restoreFile()"))
     {
-        const String *repoFileReferenceFull = STRDEF("20190509F");
-        const String *repoFile1 = STRDEF("pg_data/testfile");
-        unsigned int repoIdx = 0;
+        const StringId syncMethodList[] =
+        {
+            CFGOPTVAL_RESTORE_SYNC_METHOD_FSYNC,
+#ifdef HAVE_SYNCFS
+            CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS,
+#endif
+        };
 
-        // Load Parameters
+        for (unsigned int syncMethodIdx = 0; syncMethodIdx < LENGTH_OF(syncMethodList); syncMethodIdx++)
+        {
+            const String *repoFileReferenceFull = STRDEF("20190509F");
+            const String *repoFile1 = STRDEF("pg_data/testfile");
+            unsigned int repoIdx = 0;
+
+            // Load Parameters
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+            hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+            hrnCfgArgRawStrId(argList, cfgOptRestoreSyncMethod, syncMethodList[syncMethodIdx]);
+            HRN_CFG_LOAD(cfgCmdRestore, argList);
+            const bool syncFile = syncMethodList[syncMethodIdx] == CFGOPTVAL_RESTORE_SYNC_METHOD_FSYNC;
+            HRN_STORAGE_PATH_REMOVE(storagePgWrite(), NULL, .recurse = true);
+            HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), NULL, .recurse = true);
+
+            // Create the pg path
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("compressed encrypted repo file - fail");
+
+            HRN_STORAGE_PUT_Z(
+                storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)),
+                "acefile", .compressType = compressTypeGz, .cipherSpec = TEST_CIPHER_SPEC_PASS("badpass"),
+                .comment = "create a compressed encrypted repo file");
+
+            List *fileList = lstNewP(sizeof(RestoreFile));
+
+            RestoreFile file =
+            {
+                .name = STRDEF("normal"),
+                .checksum = bufNewDecode(encodingHex, STRDEF("ffffffffffffffffffffffffffffffffffffffff")),
+                .size = 7,
+                .timeModified = 1557432154,
+                .mode = 0600,
+                .zero = false,
+                .user = NULL,
+                .group = NULL,
+            };
+
+            lstAdd(fileList, &file);
+
+            TEST_ERROR(
+                restoreFile(
+                    strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx,
+                    compressTypeGz, 0, false, false, false,
+                    cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("badpass"), .digest = hashTypeSha1), NULL, fileList),
+                ChecksumError,
+                "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected"
+                " checksum 'ffffffffffffffffffffffffffffffffffffffff'");
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("ordinary file contents and metadata");
+
+            const String *const plainRepoFile = STRDEF(STORAGE_REPO_BACKUP "/20190509F/pg_data/plain");
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), strZ(plainRepoFile), "abc");
+            fileList = lstNewP(sizeof(RestoreFile));
+            RestoreFile *const fileTest = lstAdd(
+                fileList,
+                &(RestoreFile)
+            {
+                .name = STRDEF("plain"),
+                .checksum = bufNewDecode(encodingHex, STRDEF("a9993e364706816aba3e25717850c26c9cd0d89d")),
+                .size = 3,
+                .timeModified = 1557432154,
+                .mode = 0640,
+                .user = userName(),
+                .group = groupName(),
+            });
+            const List *resultList = NULL;
+
+            hrnRestoreWriteSyncSet(TEST_PATH "/pg/plain", syncFile);
+            TEST_ASSIGN(
+                resultList,
+                restoreFile(
+                    plainRepoFile, 0, compressTypeNone, 1557433000, false, false, false, cipherSpecNewNone(), NULL, fileList),
+                "restore ordinary file");
+            TEST_RESULT_UINT(((RestoreFileResult *)lstGet(resultList, 0))->result, restoreResultCopy, "file copied");
+            TEST_RESULT_UINT(hrnRestoreWriteSyncTotal(), 1, "ordinary writer uses selected synchronization");
+            TEST_STORAGE_GET(storagePg(), "plain", "abc");
+            StorageInfo info = storageInfoP(storagePg(), fileTest->name);
+            TEST_RESULT_UINT(info.mode, 0640, "mode preserved");
+            TEST_RESULT_INT(info.timeModified, 1557432154, "timestamp preserved");
+            TEST_RESULT_STR(info.user, userName(), "owner preserved");
+            TEST_RESULT_STR(info.group, groupName(), "group preserved");
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("delta truncates matching prefix and repairs its timestamp");
+
+            HRN_STORAGE_PUT_Z(storagePgWrite(), "plain", "abc-tail", .timeModified = 1557432000, .modeFile = 0640);
+            hrnRestoreWriteSyncSet(TEST_PATH "/pg/plain", syncFile);
+            TEST_ASSIGN(
+                resultList,
+                restoreFile(
+                    plainRepoFile, 0, compressTypeNone, 1557433000, true, false, false, cipherSpecNewNone(), NULL, fileList),
+                "truncate extended file and preserve matching prefix");
+            TEST_RESULT_UINT(hrnRestoreWriteSyncTotal(), 1, "truncate writer uses selected synchronization");
+            TEST_RESULT_UINT(((RestoreFileResult *)lstGet(resultList, 0))->result, restoreResultPreserve, "matching prefix reused");
+            TEST_STORAGE_GET(storagePg(), "plain", "abc");
+            TEST_RESULT_INT(storageInfoP(storagePg(), fileTest->name).timeModified, 1557432154, "timestamp repaired");
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("force uses size and timestamp while normal delta verifies contents");
+
+            HRN_STORAGE_PUT_Z(storagePgWrite(), "plain", "xyz", .timeModified = 1557432154, .modeFile = 0640);
+            TEST_ASSIGN(
+                resultList,
+                restoreFile(plainRepoFile, 0, compressTypeNone, 1557433000, true, true, false, cipherSpecNewNone(), NULL, fileList),
+                "force preserves equal size and timestamp");
+            TEST_RESULT_UINT(
+                ((RestoreFileResult *)lstGet(resultList, 0))->result, restoreResultPreserve, "force decision unchanged");
+            TEST_STORAGE_GET(storagePg(), "plain", "xyz");
+            TEST_ASSIGN(
+                resultList,
+                restoreFile(
+                    plainRepoFile, 0, compressTypeNone, 1557433000, true, false, false, cipherSpecNewNone(), NULL, fileList),
+                "normal delta replaces mismatched contents");
+            TEST_RESULT_UINT(((RestoreFileResult *)lstGet(resultList, 0))->result, restoreResultCopy, "mismatching file replaced");
+            TEST_STORAGE_GET(storagePg(), "plain", "abc");
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE("empty and selectively zeroed files require no repository data");
+
+            *fileTest = (RestoreFile){.name = STRDEF("empty"), .mode = 0600, .timeModified = 1557432154};
+            hrnRestoreWriteSyncSet(TEST_PATH "/pg/empty", syncFile);
+            TEST_ASSIGN(
+                resultList,
+                restoreFile(STRDEF("missing"), 0, compressTypeNone, 0, false, false, false, cipherSpecNewNone(), NULL, fileList),
+                "create empty file");
+            TEST_RESULT_UINT(((RestoreFileResult *)lstGet(resultList, 0))->result, restoreResultZero, "empty file result");
+            TEST_RESULT_UINT(hrnRestoreWriteSyncTotal(), 1, "empty writer uses selected synchronization");
+            TEST_STORAGE_GET_EMPTY(storagePg(), "empty");
+
+            fileTest->name = STRDEF("zeroed");
+            fileTest->zero = true;
+            fileTest->size = 8192;
+            hrnRestoreWriteSyncSet(TEST_PATH "/pg/zeroed", syncFile);
+            TEST_ASSIGN(
+                resultList,
+                restoreFile(STRDEF("missing"), 0, compressTypeNone, 0, false, false, false, cipherSpecNewNone(), NULL, fileList),
+                "create zeroed file");
+            TEST_RESULT_UINT(((RestoreFileResult *)lstGet(resultList, 0))->result, restoreResultZero, "zeroed file result");
+            TEST_RESULT_UINT(hrnRestoreWriteSyncTotal(), 1, "zeroed writer uses selected synchronization");
+            hrnRestoreWriteSyncSet(NULL, false);
+            Buffer *const zeroExpected = bufNew(8192);
+            memset(bufPtr(zeroExpected), 0, bufSize(zeroExpected));
+            bufUsedSet(zeroExpected, bufSize(zeroExpected));
+            TEST_RESULT_BOOL(
+                bufEq(storageGetP(storageNewReadP(storagePg(), fileTest->name)), zeroExpected), true, "entire file is zeroed");
+            TEST_RESULT_UINT(storageInfoP(storagePg(), fileTest->name).size, 8192, "zeroed file length");
+            TEST_RESULT_INT(storageInfoP(storagePg(), fileTest->name).timeModified, 1557432154, "zeroed file timestamp");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restore worker retains default behavior when restore options are not loaded");
+
+        // Protocol handlers can be exercised outside the restore command, where restore-sync-method is not a valid option
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
-        HRN_CFG_LOAD(cfgCmdRestore, argList);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+        TEST_RESULT_BOOL(cfgOptionValid(cfgOptRestoreSyncMethod), false, "restore option is unavailable");
 
-        // Create the pg path
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressed encrypted repo file - fail");
-
-        HRN_STORAGE_PUT_Z(
-            storageRepoWrite(), zNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(repoFileReferenceFull), strZ(repoFile1)),
-            "acefile", .compressType = compressTypeGz, .cipherSpec = TEST_CIPHER_SPEC_PASS("badpass"),
-            .comment = "create a compressed encrypted repo file");
-
-        List *fileList = lstNewP(sizeof(RestoreFile));
-
-        RestoreFile file =
+        List *const fileList = lstNewP(sizeof(RestoreFile));
+        lstAdd(
+            fileList,
+            &(RestoreFile)
         {
-            .name = STRDEF("normal"),
-            .checksum = bufNewDecode(encodingHex, STRDEF("ffffffffffffffffffffffffffffffffffffffff")),
-            .size = 7,
+            .name = STRDEF("fallback"),
+            .checksum = bufNewDecode(encodingHex, STRDEF("a9993e364706816aba3e25717850c26c9cd0d89d")),
+            .size = 3,
             .timeModified = 1557432154,
             .mode = 0600,
-            .zero = false,
-            .user = NULL,
-            .group = NULL,
-        };
-
-        lstAdd(fileList, &file);
-
-        TEST_ERROR(
+        });
+        const List *resultList = NULL;
+        TEST_ASSIGN(
+            resultList,
             restoreFile(
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s.gz", strZ(repoFileReferenceFull), strZ(repoFile1)), repoIdx, compressTypeGz,
-                0, false, false, false, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("badpass"), .digest = hashTypeSha1), NULL,
-                fileList),
-            ChecksumError,
-            "error restoring 'normal': actual checksum 'd1cd8a7d11daa26814b93eb604e1d49ab4b43770' does not match expected checksum"
-            " 'ffffffffffffffffffffffffffffffffffffffff'");
+                STRDEF(STORAGE_REPO_BACKUP "/20190509F/pg_data/plain"), 0, compressTypeNone, 0, false, false, false,
+                cipherSpecNewNone(), NULL, fileList),
+            "copy without accessing an invalid restore option");
+        TEST_RESULT_UINT(((RestoreFileResult *)lstGet(resultList, 0))->result, restoreResultCopy, "file copied");
+        TEST_STORAGE_GET(storagePg(), "fallback", "abc");
     }
 
     // *****************************************************************************************************************************
@@ -2209,6 +2397,762 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("restoreSyncNew() and restoreFileSystemSync()"))
+    {
+#ifdef HAVE_SYNCFS
+        harnessLogLevelSet(logLevelWarn);
+
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("retain one descriptor per filesystem across mapped WAL, file links and tablespaces");
+
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_17, STRDEF("/pg"));
+        manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_17);
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_data/pg_hba.conf", .path = "../config", .file = "pg_hba.conf", .type = manifestTargetTypeLink);
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_data/pg_ident.conf", .path = "/config", .file = "pg_ident.conf", .type = manifestTargetTypeLink);
+        HRN_MANIFEST_TARGET_ADD(manifest, .name = "pg_data/pg_wal", .path = "../wal", .type = manifestTargetTypeLink);
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_tblspc/16384", .path = "/tablespace", .tablespaceId = 16384, .type = manifestTargetTypeLink);
+        HRN_MANIFEST_PATH_ADD(manifest, .name = MANIFEST_TARGET_PGTBLSPC);
+        lstSort(manifest->pub.targetList, sortOrderAsc);
+
+        const String *const tablespacePath = strNewFmt(
+            "/tablespace/%s", strZ(pgTablespaceId(PG_VERSION_17, hrnPgCatalogVersion(PG_VERSION_17))));
+
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = "/config", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+            {.op = hrnRestoreSyncOpOpen, .path = "/config", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 2},
+            {.op = hrnRestoreSyncOpClose, .fd = 92},
+            {.op = hrnRestoreSyncOpOpen, .path = "/wal", .fd = 93},
+            {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 3},
+            {.op = hrnRestoreSyncOpOpen, .path = "/tablespace", .fd = 94},
+            {.op = hrnRestoreSyncOpStat, .fd = 94, .device = 4},
+            {.op = hrnRestoreSyncOpOpen, .path = strZ(tablespacePath), .fd = 95},
+            {.op = hrnRestoreSyncOpStat, .fd = 95, .device = 5},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 96},
+            {.op = hrnRestoreSyncOpStat, .fd = 96, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 96},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpSync, .fd = 91},
+            {.op = hrnRestoreSyncOpSync, .fd = 93},
+            {.op = hrnRestoreSyncOpSync, .fd = 94},
+            {.op = hrnRestoreSyncOpSync, .fd = 95},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpClose, .fd = 93},
+            {.op = hrnRestoreSyncOpClose, .fd = 94},
+            {.op = hrnRestoreSyncOpClose, .fd = 95});
+
+        RestoreSync *sync = NULL;
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "open mapped destinations before writing");
+        TEST_RESULT_UINT(lstSize(sync->fileSystemList), 5, "five distinct filesystems retained");
+        TEST_RESULT_STR_Z(
+            ((RestoreSyncFileSystem *)lstGet(sync->fileSystemList, 1))->path, "/config", "file links retain their parent path");
+        TEST_RESULT_STR(
+            ((RestoreSyncFileSystem *)lstGet(sync->fileSystemList, 4))->path, tablespacePath,
+            "separately mounted tablespace contents retained");
+        TEST_RESULT_VOID(restoreFileSystemSync(sync), "sync each retained descriptor before closing any");
+        TEST_RESULT_VOID(objFree(sync), "free without closing successfully closed descriptors again");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "all destination operations observed in order");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a directly mounted WAL directory is covered without a link target");
+
+        manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_17, STRDEF("/pg"));
+        HRN_MANIFEST_PATH_ADD(manifest, .name = "pg_data/pg_wal");
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg/pg_wal", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 2},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpSync, .fd = 92},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 92});
+        TEST_RESULT_UINT(manifestTargetTotal(manifest), 1, "WAL has no separate manifest target");
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "discover mount point through manifest paths");
+        TEST_RESULT_UINT(lstSize(sync->fileSystemList), 2, "both destination filesystems retained");
+        TEST_RESULT_STR_Z(
+            ((RestoreSyncFileSystem *)lstGet(sync->fileSystemList, 1))->path, "/pg/pg_wal", "direct mount retained");
+        TEST_RESULT_VOID(restoreFileSystemSync(sync), "sync data and directly mounted WAL");
+        TEST_RESULT_VOID(objFree(sync), "free closed guard");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "directory mount barrier observed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("all targets sharing one filesystem retain only the first descriptor");
+
+        manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_17, STRDEF("/pg"));
+        HRN_MANIFEST_TARGET_ADD(manifest, .name = "pg_data/pg_wal", .path = "/wal", .type = manifestTargetTypeLink);
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = "/wal", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 92},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 90});
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "open targets sharing a filesystem");
+        TEST_RESULT_UINT(lstSize(sync->fileSystemList), 1, "one descriptor retained");
+        TEST_RESULT_VOID(restoreFileSystemSync(sync), "one filesystem barrier");
+        TEST_RESULT_VOID(objFree(sync), "free closed guard");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "duplicate descriptor closed before the barrier");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("an existing file-link chain covers the original and resolved parents before the file is written");
+
+        HRN_STORAGE_PATH_CREATE(storageTest, "sync-link/parent");
+        HRN_STORAGE_PATH_CREATE(storageTest, "sync-link/middle");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "sync-link/final/file");
+        THROW_ON_SYS_ERROR(
+            symlink("../middle/link", TEST_PATH "/sync-link/parent/mapped") == -1, FileOpenError, "unable to create symlink");
+        THROW_ON_SYS_ERROR(
+            symlink(TEST_PATH "/sync-link/final/file", TEST_PATH "/sync-link/middle/link") == -1, FileOpenError,
+            "unable to create symlink");
+
+        manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_17, STRDEF("/pg"));
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_data/mapped", .path = TEST_PATH "/sync-link/parent", .file = "mapped",
+            .type = manifestTargetTypeLink);
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/final", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 3},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/final/file", .fd = 93, .file = true},
+            {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 3, .file = true},
+            {.op = hrnRestoreSyncOpClose, .fd = 93},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 94},
+            {.op = hrnRestoreSyncOpStat, .fd = 94, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 94},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpSync, .fd = 91},
+            {.op = hrnRestoreSyncOpSync, .fd = 92},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpClose, .fd = 92});
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "follow relative then absolute links before writing");
+        TEST_RESULT_UINT(lstSize(sync->fileSystemList), 3, "original and final metadata filesystems retained");
+        TEST_RESULT_STR_Z(
+            ((RestoreSyncFileSystem *)lstGet(sync->fileSystemList, 2))->path, TEST_PATH "/sync-link/final",
+            "effective destination parent retained");
+        TEST_RESULT_VOID(restoreFileSystemSync(sync), "sync all original and effective filesystems");
+        TEST_RESULT_VOID(objFree(sync), "free closed guard");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "file descriptor deduplicated against its parent");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a dangling absolute then relative chain retains the final parent without opening a nonexistent file");
+
+        HRN_STORAGE_REMOVE(storageTest, "sync-link/parent/mapped");
+        HRN_STORAGE_REMOVE(storageTest, "sync-link/middle/link");
+        HRN_STORAGE_REMOVE(storageTest, "sync-link/final/file");
+        THROW_ON_SYS_ERROR(
+            symlink(TEST_PATH "/sync-link/middle/link", TEST_PATH "/sync-link/parent/mapped") == -1, FileOpenError,
+            "unable to create symlink");
+        THROW_ON_SYS_ERROR(
+            symlink("../final/file", TEST_PATH "/sync-link/middle/link") == -1, FileOpenError, "unable to create symlink");
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/middle/../final", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 3},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 94},
+            {.op = hrnRestoreSyncOpStat, .fd = 94, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 94},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpSync, .fd = 91},
+            {.op = hrnRestoreSyncOpSync, .fd = 92},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpClose, .fd = 92});
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "cover the filesystem where the missing file will be created");
+        TEST_RESULT_UINT(lstSize(sync->fileSystemList), 3, "all metadata filesystems retained for dangling link");
+        TEST_RESULT_VOID(restoreFileSystemSync(sync), "sync all destination filesystems");
+        TEST_RESULT_VOID(objFree(sync), "free closed guard");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "no file open before a dangling target is created");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a missing file is not accepted when its effective parent cannot be opened");
+
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/middle/../final", .errNo = EACCES},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 91});
+        TEST_ERROR_FMT(
+            restoreSyncNew(manifest), PathOpenError,
+            "unable to open path '" TEST_PATH "/sync-link/middle/../final' for synchronization: [%d] %s", EACCES,
+            strerror(EACCES));
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "dangling file cannot bypass final-parent coverage");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a directory link followed by dot-dot preserves the worker's path resolution");
+
+        HRN_STORAGE_REMOVE(storageTest, "sync-link/parent/mapped");
+        HRN_STORAGE_PATH_CREATE(storageTest, "sync-link/final/nested");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "sync-link/final/file");
+        THROW_ON_SYS_ERROR(
+            symlink(TEST_PATH "/sync-link/final/nested", TEST_PATH "/sync-link/directory") == -1, FileOpenError,
+            "unable to create symlink");
+        THROW_ON_SYS_ERROR(
+            symlink("../directory/../file", TEST_PATH "/sync-link/parent/mapped") == -1, FileOpenError,
+            "unable to create symlink");
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent/../directory/..", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 3},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent/../directory/../file", .fd = 93, .file = true},
+            {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 3, .file = true},
+            {.op = hrnRestoreSyncOpClose, .fd = 93},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 94},
+            {.op = hrnRestoreSyncOpStat, .fd = 94, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 94},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpSync, .fd = 91},
+            {.op = hrnRestoreSyncOpSync, .fd = 92},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpClose, .fd = 92});
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "preserve directory links when resolving the file's parent");
+        TEST_RESULT_VOID(restoreFileSystemSync(sync), "sync effective parent and file filesystem");
+        TEST_RESULT_VOID(objFree(sync), "free closed guard");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "dot-dot was not lexically normalized across a directory link");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a file mount on another device is retained even when its original parent is already covered");
+
+        HRN_STORAGE_REMOVE(storageTest, "sync-link/parent/mapped");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "sync-link/parent/mapped");
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent/mapped", .fd = 92, .file = true},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 2, .file = true},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 93},
+            {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 93},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpSync, .fd = 92},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 92});
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "inspect the existing file's own filesystem");
+        TEST_RESULT_UINT(lstSize(sync->fileSystemList), 2, "file mount adds a filesystem beyond its parent");
+        TEST_RESULT_STR_Z(
+            ((RestoreSyncFileSystem *)lstGet(sync->fileSystemList, 1))->path, TEST_PATH "/sync-link/parent/mapped",
+            "file descriptor retained for the distinct device");
+        TEST_RESULT_VOID(restoreFileSystemSync(sync), "sync parent and mounted file filesystems");
+        TEST_RESULT_VOID(objFree(sync), "free closed guard");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "existing file was opened without O_DIRECTORY");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a write-only file destination retains a descriptor without changing its contents");
+
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent/mapped", .file = true, .errNo = EACCES},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent/mapped", .fd = 92, .file = true, .writeOnly = true},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 2, .file = true},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 93},
+            {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 93},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpSync, .fd = 92},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 92});
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "retry a file with write access when read access is denied");
+        TEST_RESULT_UINT(lstSize(sync->fileSystemList), 2, "write-only file filesystem retained");
+        TEST_RESULT_VOID(restoreFileSystemSync(sync), "sync the write-only destination filesystem");
+        TEST_RESULT_VOID(objFree(sync), "free closed guard");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "write fallback did not create or truncate the file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a file open error releases all earlier destination descriptors without a barrier");
+
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent/mapped", .file = true, .errNo = EACCES},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent/mapped", .file = true, .writeOnly = true,
+             .errNo = EACCES},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 91});
+        TEST_ERROR_FMT(
+            restoreSyncNew(manifest), PathOpenError,
+            "unable to open path '" TEST_PATH "/sync-link/parent/mapped' for synchronization: [%d] %s", EACCES,
+            strerror(EACCES));
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "file open failure leaves no retained descriptors");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a file open error unrelated to access does not retry with write access");
+
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent/mapped", .file = true, .errNo = EMFILE},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 91});
+        TEST_ERROR_FMT(
+            restoreSyncNew(manifest), PathOpenError,
+            "unable to open path '" TEST_PATH "/sync-link/parent/mapped' for synchronization: [%d] %s", EMFILE,
+            strerror(EMFILE));
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "descriptor exhaustion is not retried");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a cycle in the file destination is bounded and releases all previously retained descriptors");
+
+        HRN_STORAGE_REMOVE(storageTest, "sync-link/parent/mapped");
+        THROW_ON_SYS_ERROR(
+            symlink("mapped", TEST_PATH "/sync-link/parent/mapped") == -1, FileOpenError, "unable to create symlink");
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 91});
+        TEST_ERROR(
+            restoreSyncNew(manifest), LinkDestinationError,
+            "too many links in file link destination '" TEST_PATH "/sync-link/parent/mapped'");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "cycle fails before any barrier");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a nonregular file destination is rejected before workers start");
+
+        HRN_STORAGE_REMOVE(storageTest, "sync-link/parent/mapped");
+        HRN_STORAGE_PATH_CREATE(storageTest, "sync-link/parent/mapped");
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-link/parent", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 91});
+        TEST_ERROR(
+            restoreSyncNew(manifest), LinkDestinationError,
+            "file link destination '" TEST_PATH "/sync-link/parent/mapped' is not a regular file");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "nonregular destination does not acquire a file descriptor");
+        HRN_STORAGE_PATH_REMOVE(storageTest, "sync-link", .recurse = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("mount inventory uses the mountpoint field, decodes escaped paths and filters destination roots");
+
+        HRN_STORAGE_PUT_EMPTY(storageTest, "mount-root/space file");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "mount-root/tab\tfile");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "mount-root/line\nfile");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "mount-root/slash\\file");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "mount-root-extra/file");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "mount-other/file");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "mount-second/file");
+        HRN_STORAGE_PATH_CREATE(storageTest, "mount-root/directory");
+        StringList *const mountRoots = strLstNew();
+        strLstAddZ(mountRoots, TEST_PATH "/mount-root");
+        strLstAddZ(mountRoots, TEST_PATH "/mount-second");
+        manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_17, STRDEF("/pg"));
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/mount-root/space file", .fd = 92, .file = true},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 2, .file = true},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/mount-root/tab\tfile", .fd = 93, .file = true},
+            {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 2, .file = true},
+            {.op = hrnRestoreSyncOpClose, .fd = 93},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/mount-root/line\nfile", .fd = 94, .file = true},
+            {.op = hrnRestoreSyncOpStat, .fd = 94, .device = 3, .file = true},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/mount-root/slash\\file", .fd = 95, .file = true},
+            {.op = hrnRestoreSyncOpStat, .fd = 95, .device = 1, .file = true},
+            {.op = hrnRestoreSyncOpClose, .fd = 95},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/mount-root/space file", .fd = 96, .file = true},
+            {.op = hrnRestoreSyncOpStat, .fd = 96, .device = 2, .file = true},
+            {.op = hrnRestoreSyncOpClose, .fd = 96},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/mount-second/file", .fd = 97, .file = true},
+            {.op = hrnRestoreSyncOpStat, .fd = 97, .device = 4, .file = true},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/mount-other/file", .fd = 98, .file = true},
+            {.op = hrnRestoreSyncOpStat, .fd = 98, .device = 5, .file = true},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpSync, .fd = 92},
+            {.op = hrnRestoreSyncOpSync, .fd = 94},
+            {.op = hrnRestoreSyncOpSync, .fd = 97},
+            {.op = hrnRestoreSyncOpSync, .fd = 98},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 92},
+            {.op = hrnRestoreSyncOpClose, .fd = 94},
+            {.op = hrnRestoreSyncOpClose, .fd = 97},
+            {.op = hrnRestoreSyncOpClose, .fd = 98});
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "retain PGDATA before inspecting file mounts");
+        TEST_RESULT_VOID(
+            restoreSyncFileMountAdd(
+                sync, mountRoots,
+                STRDEF(
+                    "\n"
+                    "10 1 0:1 /different-root " TEST_PATH "/mount-root/space\\040file rw shared:1 - xfs device rw\n"
+                    "11 1 0:1 /different-root " TEST_PATH "/mount-root/tab\\011file rw - xfs device rw\n"
+                    "12 1 0:1 /different-root " TEST_PATH "/mount-root/line\\012file rw - xfs device rw\n"
+                    "13 1 0:1 /different-root " TEST_PATH "/mount-root/slash\\134file rw - xfs device rw\n"
+                    "14 1 0:1 /different-root " TEST_PATH "/mount-root/space\\040file rw - xfs device rw\n"
+                    "15 1 0:1 /different-root " TEST_PATH "/mount-root-extra/file rw - xfs device rw\n"
+                    "16 1 0:1 " TEST_PATH "/mount-root/space\\040file " TEST_PATH "/mount-other/file rw - xfs device rw\n"
+                    "17 1 0:1 /different-root " TEST_PATH "/mount-root rw - xfs device rw\n"
+                    "18 1 0:1 /different-root " TEST_PATH "/mount-root/directory rw - xfs device rw\n"
+                    "19 1 0:1 /different-root " TEST_PATH "/mount-root/missing rw - xfs device rw\n"
+                    "20 1 0:1 /different-root " TEST_PATH "/mount-second/file rw - xfs device rw\n")),
+            "discover regular file mounts under either root and ignore invisible or unrelated entries");
+        TEST_RESULT_UINT(lstSize(sync->fileSystemList), 4, "four filesystems before the root-slash case");
+        TEST_RESULT_VOID(
+            restoreSyncFileMountAdd(
+                sync, strLstNewSplitZ(STRDEF("/"), "\n"),
+                STRDEF("21 1 0:1 /different-root " TEST_PATH "/mount-other/file rw - xfs device rw\n")),
+            "a root filesystem target includes descendant file mounts");
+        TEST_RESULT_UINT(lstSize(sync->fileSystemList), 5, "root-slash adds the otherwise unrelated file filesystem");
+        TEST_RESULT_VOID(restoreFileSystemSync(sync), "sync each distinct destination filesystem");
+        TEST_RESULT_VOID(objFree(sync), "free closed guard");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "all escaped names and device deduplication matched");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("malformed mount inventories fail without synchronizing incomplete work");
+
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpClose, .fd = 90});
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "retain an existing destination before parsing bad inventory");
+        TEST_ERROR(restoreSyncFileMountAdd(sync, mountRoots, STRDEF("\n\n")), FormatError, "restore mount info is empty");
+        TEST_ERROR(restoreSyncFileMountAdd(sync, mountRoots, STRDEF("1 0 0:1 / /pg")), FormatError, "invalid restore mount info");
+        TEST_ERROR(
+            restoreSyncFileMountAdd(sync, mountRoots, STRDEF("1 0 0:1 / /pg rw not-a-separator xfs device rw")),
+            FormatError, "invalid restore mount info");
+        TEST_ERROR(
+            restoreSyncFileMountAdd(sync, mountRoots, STRDEF("1 0 0:1 / relative rw - xfs device rw")),
+            FormatError, "restore mount path is not absolute");
+        const char *const badEscapes[] = {"/bad\\", "/bad\\08x", "/bad\\000", "/bad\\777"};
+
+        for (unsigned int escapeIdx = 0; escapeIdx < LENGTH_OF(badEscapes); escapeIdx++)
+        {
+            TEST_ERROR(
+                restoreSyncFileMountAdd(sync, mountRoots, strNewFmt("1 0 0:1 / %s rw - xfs device rw", badEscapes[escapeIdx])),
+                FormatError, "invalid restore mount path escape");
+        }
+
+        TEST_RESULT_VOID(objFree(sync), "release descriptors after inventory errors without a barrier");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "malformed inventory never reaches syncfs");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("force without delta discovers file mounts using canonical destination roots");
+
+        HRN_STORAGE_PATH_CREATE(storageTest, "force-root");
+        THROW_ON_SYS_ERROR(
+            symlink(TEST_PATH "/force-root", TEST_PATH "/force-alias") == -1, FileOpenError, "unable to create symlink");
+        StringList *const forceArgList = strLstNew();
+        hrnCfgArgRawZ(forceArgList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(forceArgList, cfgOptPgPath, TEST_PATH "/force-alias");
+        hrnCfgArgRawBool(forceArgList, cfgOptForce, true);
+        HRN_CFG_LOAD(cfgCmdRestore, forceArgList);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_17, STRDEF(TEST_PATH "/force-alias"));
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_data/mapped", .path = TEST_PATH "/force-root", .file = "missing",
+            .type = manifestTargetTypeLink);
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/force-alias", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/force-root", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/force-alias", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 92},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 90});
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), false, "delta remains disabled");
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "resolve alias and inspect actual Linux mount inventory");
+        TEST_RESULT_VOID(restoreFileSystemSync(sync), "sync force restore destination");
+        TEST_RESULT_VOID(objFree(sync), "free closed guard");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "force-only path retains the canonical destination filesystem");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("canonical destination failure releases acquired guards before workers start");
+
+        HRN_STORAGE_REMOVE(storageTest, "force-alias");
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/force-alias", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/force-root", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/force-alias", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 92},
+            {.op = hrnRestoreSyncOpClose, .fd = 90});
+        TEST_ERROR_FMT(
+            restoreSyncNew(manifest), PathOpenError,
+            "unable to resolve restore path '" TEST_PATH "/force-alias' for mount discovery: [%d] %s", ENOENT, strerror(ENOENT));
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "canonical lookup failure cannot reach a barrier");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("tablespace mount roots follow only the manifest version and catalog through directory links");
+
+        HRN_STORAGE_PATH_CREATE(storageTest, "sync-tablespace/pgdata");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "sync-tablespace/config/current/5/16397");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "sync-tablespace/config/other/5/16397");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "sync-tablespace/tablespace/PG_16_202307071/5/16397");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "sync-tablespace/tablespace/PG_17_202406282/5/16397");
+        THROW_ON_SYS_ERROR(
+            symlink("../config/current", TEST_PATH "/sync-tablespace/tablespace/PG_17_202406281") == -1,
+            FileOpenError, "unable to create symlink");
+        manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_17, STRDEF(TEST_PATH "/sync-tablespace/pgdata"));
+        manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_17);
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_data/postgresql.conf", .path = TEST_PATH "/sync-tablespace/config", .file = "postgresql.conf",
+            .type = manifestTargetTypeLink);
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_tblspc/16384", .path = TEST_PATH "/sync-tablespace/tablespace", .tablespaceId = 16384,
+            .type = manifestTargetTypeLink);
+        lstSort(manifest->pub.targetList, sortOrderAsc);
+        TEST_RESULT_STRLST_Z(
+            restoreSyncMountRootList(manifest),
+            TEST_PATH "/sync-tablespace/pgdata\n" TEST_PATH "/sync-tablespace/config/current\n",
+            "resolve the version link without including the tablespace root or a file target's parent");
+        manifest->pub.data.pgVersion = PG_VERSION_16;
+        manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_16);
+        TEST_RESULT_STRLST_Z(
+            restoreSyncMountRootList(manifest),
+            TEST_PATH "/sync-tablespace/pgdata\n" TEST_PATH "/sync-tablespace/tablespace/PG_16_202307071\n",
+            "derive the version directory from the manifest PostgreSQL version");
+        manifest->pub.data.pgVersion = PG_VERSION_17;
+        manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_17) + 1;
+        TEST_RESULT_STRLST_Z(
+            restoreSyncMountRootList(manifest),
+            TEST_PATH "/sync-tablespace/pgdata\n" TEST_PATH "/sync-tablespace/tablespace/PG_17_202406282\n",
+            "derive the version directory from the manifest catalog version");
+        manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_17);
+
+        for (unsigned int modeIdx = 0; modeIdx < 2; modeIdx++)
+        {
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE_FMT("%s discovers file mounts below the effective tablespace directory", modeIdx == 0 ? "delta" : "force");
+
+            StringList *const tablespaceArgList = strLstNew();
+            hrnCfgArgRawZ(tablespaceArgList, cfgOptStanza, "test1");
+            hrnCfgArgRawZ(tablespaceArgList, cfgOptPgPath, TEST_PATH "/sync-tablespace/pgdata");
+            hrnCfgArgRawBool(tablespaceArgList, modeIdx == 0 ? cfgOptDelta : cfgOptForce, true);
+            HRN_CFG_LOAD(cfgCmdRestore, tablespaceArgList);
+            TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), modeIdx == 0, "delta is enabled only for the delta case");
+            TEST_RESULT_BOOL(cfgOptionBool(cfgOptForce), modeIdx != 0, "force is enabled only for the force case");
+            HRN_RESTORE_SYNC_SCRIPT_SET(
+                {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-tablespace/pgdata", .fd = 90},
+                {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+                {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-tablespace/config", .fd = 91},
+                {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+                {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-tablespace/tablespace", .fd = 92},
+                {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 3},
+                {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-tablespace/tablespace/PG_17_202406281", .fd = 93},
+                {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 2},
+                {.op = hrnRestoreSyncOpClose, .fd = 93},
+                {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-tablespace/pgdata", .fd = 94},
+                {.op = hrnRestoreSyncOpStat, .fd = 94, .device = 1},
+                {.op = hrnRestoreSyncOpClose, .fd = 94},
+                {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-tablespace/config/current/5/16397", .fd = 95, .file = true},
+                {.op = hrnRestoreSyncOpStat, .fd = 95, .device = 4, .file = true},
+                {.op = hrnRestoreSyncOpSync, .fd = 90},
+                {.op = hrnRestoreSyncOpSync, .fd = 91},
+                {.op = hrnRestoreSyncOpSync, .fd = 92},
+                {.op = hrnRestoreSyncOpSync, .fd = 95},
+                {.op = hrnRestoreSyncOpClose, .fd = 90},
+                {.op = hrnRestoreSyncOpClose, .fd = 91},
+                {.op = hrnRestoreSyncOpClose, .fd = 92},
+                {.op = hrnRestoreSyncOpClose, .fd = 95});
+            TEST_ASSIGN(sync, restoreSyncNew(manifest), "retain destinations before inspecting tablespace file mounts");
+            TEST_RESULT_STR_Z(
+                ((RestoreSyncFileSystem *)lstGet(sync->fileSystemList, 2))->path, TEST_PATH "/sync-tablespace/tablespace",
+                "retain the original tablespace root for its metadata");
+            TEST_RESULT_VOID(
+                restoreSyncFileMountAdd(
+                    sync, restoreSyncMountRootList(manifest),
+                    STRDEF(
+                        "10 1 0:1 /relation " TEST_PATH "/sync-tablespace/config/current/5/16397 rw - xfs device rw\n"
+                        "11 1 0:1 /relation " TEST_PATH "/sync-tablespace/tablespace/PG_16_202307071/5/16397 rw - xfs device rw\n"
+                        "12 1 0:1 /relation " TEST_PATH "/sync-tablespace/tablespace/PG_17_202406282/5/16397 rw - xfs device rw\n"
+                        "13 1 0:1 /relation " TEST_PATH "/sync-tablespace/config/other/5/16397 rw - xfs device rw\n")),
+                "retain the current tablespace file mount and exclude sibling versions, catalogs and file-target descendants");
+            TEST_RESULT_UINT(lstSize(sync->fileSystemList), 4, "the mounted relation adds exactly one filesystem");
+            TEST_RESULT_STR_Z(
+                ((RestoreSyncFileSystem *)lstGet(sync->fileSystemList, 3))->path,
+                TEST_PATH "/sync-tablespace/config/current/5/16397", "retain the file descriptor at the canonical mountpoint");
+            TEST_RESULT_VOID(
+                restoreFileSystemSync(sync), "sync every retained destination, including the externally mounted relation");
+            TEST_RESULT_VOID(objFree(sync), "free closed guards");
+            TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "only the selected tablespace version contributes a file barrier");
+
+            // ---------------------------------------------------------------------------------------------------------------------
+            TEST_TITLE_FMT("%s fails when the effective tablespace directory cannot be resolved", modeIdx == 0 ? "delta" : "force");
+
+            // Simulate the version link disappearing after the scripted descriptor acquisition, before real canonicalization.
+            HRN_STORAGE_REMOVE(storageTest, "sync-tablespace/tablespace/PG_17_202406281");
+            HRN_RESTORE_SYNC_SCRIPT_SET(
+                {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-tablespace/pgdata", .fd = 90},
+                {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+                {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-tablespace/config", .fd = 91},
+                {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+                {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-tablespace/tablespace", .fd = 92},
+                {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 3},
+                {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-tablespace/tablespace/PG_17_202406281", .fd = 93},
+                {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 2},
+                {.op = hrnRestoreSyncOpClose, .fd = 93},
+                {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/sync-tablespace/pgdata", .fd = 94},
+                {.op = hrnRestoreSyncOpStat, .fd = 94, .device = 1},
+                {.op = hrnRestoreSyncOpClose, .fd = 94},
+                {.op = hrnRestoreSyncOpClose, .fd = 90},
+                {.op = hrnRestoreSyncOpClose, .fd = 91},
+                {.op = hrnRestoreSyncOpClose, .fd = 92});
+            TEST_ERROR_FMT(
+                restoreSyncNew(manifest), PathOpenError,
+                "unable to resolve restore path '" TEST_PATH "/sync-tablespace/tablespace/PG_17_202406281'"
+                " for mount discovery: [%d] %s",
+                ENOENT, strerror(ENOENT));
+            TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "unresolvable version releases every guard without a barrier");
+            THROW_ON_SYS_ERROR(
+                symlink("../config/current", TEST_PATH "/sync-tablespace/tablespace/PG_17_202406281") == -1,
+                FileOpenError, "unable to create symlink");
+        }
+
+        HRN_STORAGE_PATH_REMOVE(storageTest, "sync-tablespace", .recurse = true);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("open failure releases descriptors acquired for prior targets");
+
+        manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_17, STRDEF("/pg"));
+        HRN_MANIFEST_TARGET_ADD(manifest, .name = "pg_data/pg_wal", .path = "/wal", .type = manifestTargetTypeLink);
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = "/wal", .errNo = EMFILE},
+            {.op = hrnRestoreSyncOpClose, .fd = 90});
+        TEST_ERROR_FMT(
+            restoreSyncNew(manifest), PathOpenError, "unable to open path '/wal' for synchronization: [%d] %s", EMFILE,
+            strerror(EMFILE));
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "partial initialization released without a barrier");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("fstat failure closes the pending descriptor and preserves the error when cleanup also fails");
+
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .errNo = EIO},
+            {.op = hrnRestoreSyncOpClose, .fd = 90, .errNo = EBADF});
+        TEST_ERROR_FMT(
+            restoreSyncNew(manifest), FileInfoError, "unable to get info for path '/pg': [%d] %s", EIO, strerror(EIO));
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "pending descriptor released despite cleanup error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("duplicate close failure is terminal and never retries the failed close");
+
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = "/wal", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91, .errNo = EIO},
+            {.op = hrnRestoreSyncOpClose, .fd = 90});
+        TEST_ERROR_FMT(restoreSyncNew(manifest), FileCloseError, "unable to close path '/wal': [%d] %s", EIO, strerror(EIO));
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "only previously retained descriptor released");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("later filesystem barrier failure does not close earlier descriptors until error cleanup");
+
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = "/wal", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 92},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpSync, .fd = 91, .errNo = ENOSPC},
+            {.op = hrnRestoreSyncOpClose, .fd = 90},
+            {.op = hrnRestoreSyncOpClose, .fd = 91});
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "open two filesystems");
+        TEST_ERROR_FMT(
+            restoreFileSystemSync(sync), FileSyncError, "unable to sync filesystem containing '/wal': [%d] %s", ENOSPC,
+            strerror(ENOSPC));
+        TEST_RESULT_VOID(objFree(sync), "release descriptors after barrier failure");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "no barrier retry and both descriptors released");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("normal close failure leaves remaining descriptors owned for error cleanup");
+
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = "/wal", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 2},
+            {.op = hrnRestoreSyncOpOpen, .path = "/pg", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 92},
+            {.op = hrnRestoreSyncOpSync, .fd = 90},
+            {.op = hrnRestoreSyncOpSync, .fd = 91},
+            {.op = hrnRestoreSyncOpClose, .fd = 90, .errNo = EIO},
+            {.op = hrnRestoreSyncOpClose, .fd = 91});
+        TEST_ASSIGN(sync, restoreSyncNew(manifest), "open two filesystems");
+        TEST_ERROR_FMT(restoreFileSystemSync(sync), FileCloseError, "unable to close path '/pg': [%d] %s", EIO, strerror(EIO));
+        TEST_RESULT_VOID(objFree(sync), "close remaining descriptor");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "failed descriptor close not retried");
+        hrnRestoreSyncScriptClear();
+#else
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawStrId(argList, cfgOptRestoreSyncMethod, CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+        TEST_ERROR(cmdRestore(), OptionInvalidError, "syncfs is not supported on this platform");
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageTest, STRDEF("pg")), false, "unsupported platform rejected before creating paths");
+#endif
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdRestore()"))
     {
         const String *pgPath = STRDEF(TEST_PATH "/pg");
@@ -3443,10 +4387,6 @@ testRun(void)
         const String *pgPath = STRDEF(TEST_PATH "/pg");
         const String *repoPath = STRDEF(TEST_PATH "/repo");
 
-        // Created pg_control and PG_VERSION
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15);
-        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_15_Z);
-
         // Create encrypted stanza
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -3456,6 +4396,10 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        // Create pg_control and PG_VERSION after loading this test's storage configuration
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15);
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_15_Z);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
 
@@ -3583,6 +4527,36 @@ testRun(void)
         // Make sure restore fails with the invalid file
         TEST_ERROR(hrnCmdRestore(), CryptoError, "raised from local-1 shim protocol: cipher header missing");
 
+#ifdef HAVE_SYNCFS
+        // The same worker failure must unwind retained descriptors without synchronizing incomplete work or publishing control
+        StringList *const syncArgList = strLstDup(argList);
+        hrnCfgArgRawStrId(syncArgList, cfgOptRestoreSyncMethod, CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS);
+        HRN_CFG_LOAD(cfgCmdRestore, syncArgList);
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg", .fd = 90},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/base", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 92},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/base/1", .fd = 93},
+            {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 93},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/global", .fd = 94},
+            {.op = hrnRestoreSyncOpStat, .fd = 94, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 94},
+            {.op = hrnRestoreSyncOpClose, .fd = 90});
+        TEST_ERROR(hrnCmdRestore(), CryptoError, "raised from local-1 shim protocol: cipher header missing");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "worker failure closes the guard without a filesystem barrier");
+        TEST_RESULT_BOOL(
+            storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), false,
+            "worker failure prevents control publication");
+        hrnRestoreSyncScriptClear();
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+#endif
+
         TEST_RESULT_UINT(
             cipherSpecType(
                 manifestCipherSpec(
@@ -3610,7 +4584,10 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptRepoTargetTime, targetTime);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
+        hrnRestoreWriteSyncSet(TEST_PATH "/pg/" PG_PATH_BASE "/1/2", true);
         TEST_RESULT_VOID(hrnCmdRestore(), "restore");
+        TEST_RESULT_UINT(hrnRestoreWriteSyncTotal(), 1, "partial block writer retains per-file synchronization");
+        hrnRestoreWriteSyncSet(NULL, false);
 
         TEST_STORAGE_LIST(
             storagePg(), NULL,
@@ -3627,6 +4604,127 @@ testRun(void)
 
         // Check that file was restored to full size with a partial write
         TEST_RESULT_LOG_EMPTY_OR_CONTAINS(", bi 128KB/256KB, ");
+
+#ifdef HAVE_SYNCFS
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("syncfs delta restoration completes file work before a terminal barrier failure");
+
+        const Buffer *const relationExpected = storageGetP(storageNewReadP(storagePg(), STRDEF(PG_PATH_BASE "/1/2")));
+        Buffer *const relationExtended = bufDup(relationExpected);
+        bufCat(relationExtended, BUFSTRDEF("tail"));
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relationExtended);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/44");
+
+        hrnCfgArgRawStrId(argList, cfgOptRestoreSyncMethod, CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg", .fd = 90, .callback = testRestoreSyncBeforeWrite},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/base", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 92},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/base/1", .fd = 93},
+            {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 93},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/global", .fd = 94},
+            {.op = hrnRestoreSyncOpStat, .fd = 94, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 94},
+            {.op = hrnRestoreSyncOpSync, .fd = 90, .errNo = EIO, .callback = testRestoreSyncBeforePublish},
+            {.op = hrnRestoreSyncOpClose, .fd = 90});
+        TEST_ERROR_FMT(
+            hrnCmdRestore(), FileSyncError, "unable to sync filesystem containing '" TEST_PATH "/pg': [%d] %s", EIO, strerror(EIO));
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "barrier error unwinds the retained descriptor");
+        TEST_RESULT_BOOL(
+            storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), false,
+            "barrier error prevents control publication");
+        TEST_RESULT_BOOL(
+            bufEq(storageGetP(storageNewReadP(storagePg(), STRDEF(PG_PATH_BASE "/1/2"))), relationExpected), true,
+            "delta truncation preserved the original data");
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS("sync filesystem containing '" TEST_PATH "/pg'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a later filesystem failure prevents publication after the first barrier succeeds");
+
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg", .fd = 90, .callback = testRestoreSyncBeforeWrite},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/base", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 92},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/base/1", .fd = 93},
+            {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 93},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/global", .fd = 94},
+            {.op = hrnRestoreSyncOpStat, .fd = 94, .device = 2},
+            {.op = hrnRestoreSyncOpSync, .fd = 90, .callback = testRestoreSyncBeforePublish},
+            {.op = hrnRestoreSyncOpSync, .fd = 94, .errNo = ENOSPC, .callback = testRestoreSyncBeforePublish},
+            {.op = hrnRestoreSyncOpClose, .fd = 90, .callback = testRestoreSyncBeforePublish},
+            {.op = hrnRestoreSyncOpClose, .fd = 94, .callback = testRestoreSyncBeforePublish});
+        TEST_ERROR_FMT(
+            hrnCmdRestore(), FileSyncError, "unable to sync filesystem containing '" TEST_PATH "/pg/global': [%d] %s",
+            ENOSPC, strerror(ENOSPC));
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "later barrier error releases both descriptors without retry");
+        TEST_RESULT_BOOL(
+            storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)), false,
+            "barrier error prevents control publication");
+        TEST_RESULT_BOOL(
+            bufEq(storageGetP(storageNewReadP(storagePg(), STRDEF(PG_PATH_BASE "/1/2"))), relationExpected), true,
+            "delta truncation preserved the original data");
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS("sync filesystem containing '" TEST_PATH "/pg'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("successful delta rerun publishes control only after the retained descriptor barrier and close");
+
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+        HRN_RESTORE_SYNC_SCRIPT_SET(
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg", .fd = 90, .callback = testRestoreSyncBeforeWrite},
+            {.op = hrnRestoreSyncOpStat, .fd = 90, .device = 1},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg", .fd = 91},
+            {.op = hrnRestoreSyncOpStat, .fd = 91, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 91},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/base", .fd = 92},
+            {.op = hrnRestoreSyncOpStat, .fd = 92, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 92},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/base/1", .fd = 93},
+            {.op = hrnRestoreSyncOpStat, .fd = 93, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 93},
+            {.op = hrnRestoreSyncOpOpen, .path = TEST_PATH "/pg/global", .fd = 94},
+            {.op = hrnRestoreSyncOpStat, .fd = 94, .device = 1},
+            {.op = hrnRestoreSyncOpClose, .fd = 94},
+            {.op = hrnRestoreSyncOpSync, .fd = 90, .callback = testRestoreSyncBeforePublish},
+            {.op = hrnRestoreSyncOpClose, .fd = 90, .callback = testRestoreSyncBeforePublish});
+        TEST_RESULT_VOID(hrnCmdRestore(), "delta restore with one filesystem barrier");
+        TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "barrier and close both precede publication");
+        TEST_STORAGE_EXISTS(storagePg(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
+        TEST_RESULT_BOOL(
+            bufEq(storageGetP(storageNewReadP(storagePg(), STRDEF(PG_PATH_BASE "/1/2"))), relationExpected), true,
+            "rerun retains expected relation contents");
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS("sync path '" TEST_PATH "/pg/global'");
+        hrnRestoreSyncScriptClear();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("syncfs repairs only missing blocks while deferring file synchronization");
+
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+        hrnRestoreWriteSyncSet(TEST_PATH "/pg/" PG_PATH_BASE "/1/2", false);
+        TEST_RESULT_VOID(hrnCmdRestore(), "partially restore the block-incremental relation with syncfs");
+        TEST_RESULT_UINT(hrnRestoreWriteSyncTotal(), 1, "partial block writer defers per-file synchronization");
+        hrnRestoreWriteSyncSet(NULL, false);
+        TEST_RESULT_BOOL(
+            bufEq(storageGetP(storageNewReadP(storagePg(), STRDEF(PG_PATH_BASE "/1/2"))), relationExpected), true,
+            "partial block repair restores all expected relation bytes");
+        TEST_RESULT_LOG_EMPTY_OR_CONTAINS(", bi 128KB/256KB, ");
+        TEST_STORAGE_EXISTS(storagePg(), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL);
+#endif
 
         hrnStorageHelperRepoShimSet(true);
     }
