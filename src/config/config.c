@@ -1116,10 +1116,18 @@ cfgCipherSpecMainIdx(const unsigned int repoIdx)
         MEM_CONTEXT_BEGIN(configLocal->memContext)
         {
             const CipherType cipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
+            CipherSpec *prior = NULL;
+
+            // The old passphrase decrypts info files that have not been rekeyed
+            if (cipherType != cipherTypeNone && cfgOptionIdxTest(cfgOptRepoCipherPassOld, repoIdx))
+                prior = cipherSpecNewP(cipherType, BUFSTR(cfgOptionIdxStr(cfgOptRepoCipherPassOld, repoIdx)));
 
             // The digest is unset because the format of the file this pass opens determines it
             configLocal->cipherSpecMain[repoIdx] = cipherSpecNewP(
-                cipherType, cipherType == cipherTypeNone ? NULL : BUFSTR(cfgOptionIdxStr(cfgOptRepoCipherPass, repoIdx)));
+                cipherType, cipherType == cipherTypeNone ? NULL : BUFSTR(cfgOptionIdxStr(cfgOptRepoCipherPass, repoIdx)),
+                .prior = prior);
+
+            cipherSpecFree(prior);
         }
         MEM_CONTEXT_END();
     }

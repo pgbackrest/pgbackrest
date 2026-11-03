@@ -12,6 +12,8 @@ copied into the object, so the caller can release whatever it read the pass from
 
 An unset digest means the repository format of the file being read or written specifies it.
 
+The prior spec decrypts what was encrypted before a passphrase change. It is copied with the spec but not packed.
+
 There is no digest or pass when the type is none, and the pass is never logged.
 ***********************************************************************************************************************************/
 #ifndef COMMON_CRYPTO_SPEC_H
@@ -35,6 +37,7 @@ typedef struct CipherSpecNewParam
 {
     VAR_PARAM_HEADER;
     HashType digest;                                                // Digest to derive the key with, unset when specified by format
+    const CipherSpec *prior;                                        // Spec to decrypt with when this one fails
 } CipherSpecNewParam;
 
 #define cipherSpecNewP(type, pass, ...)                                                                                            \
@@ -60,6 +63,7 @@ typedef struct CipherSpecPub
     CipherType type;                                                // Cipher type, none when not encrypted
     HashType digest;                                                // Digest the pass derives with, unset when specified by format
     const Buffer *pass;                                             // Passphrase text or key bytes
+    const CipherSpec *prior;                                        // Spec to decrypt with when this one fails, NULL when none
 } CipherSpecPub;
 
 // Cipher type
@@ -83,6 +87,13 @@ cipherSpecPass(const CipherSpec *const this)
     return THIS_PUB(CipherSpec)->pass;
 }
 
+// Spec to decrypt with when this one fails, NULL when none
+FN_INLINE_ALWAYS const CipherSpec *
+cipherSpecPrior(const CipherSpec *const this)
+{
+    return THIS_PUB(CipherSpec)->prior;
+}
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
@@ -98,7 +109,7 @@ typedef struct CipherSpecDupParam
 
 FN_EXTERN CipherSpec *cipherSpecDup(const CipherSpec *this, CipherSpecDupParam param);
 
-// Write to a pack so it can be passed over a protocol
+// Write to a pack so it can be passed over a protocol. The prior spec is not written.
 FN_EXTERN void cipherSpecPack(PackWrite *packWrite, const CipherSpec *this);
 
 // Move to a new parent mem context

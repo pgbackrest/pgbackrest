@@ -796,6 +796,23 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
         ),                                                                                                      // cmd/stanza-delete
     ),                                                                                                          // cmd/stanza-delete
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_COMMAND                                                                                           // cmd/stanza-rekey
+    (                                                                                                            // cmd/stanza-rekey
+        PARSE_RULE_COMMAND_NAME("stanza-rekey"),                                                                 // cmd/stanza-rekey
+        PARSE_RULE_COMMAND_INTERNAL(true)                                                                        // cmd/stanza-rekey
+        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),                                                                  // cmd/stanza-rekey
+        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),                                                           // cmd/stanza-rekey
+        PARSE_RULE_COMMAND_LOCK_TYPE(All),                                                                       // cmd/stanza-rekey
+        PARSE_RULE_COMMAND_LOG_FILE(true),                                                                       // cmd/stanza-rekey
+        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(Info),                                                              // cmd/stanza-rekey
+                                                                                                                 // cmd/stanza-rekey
+        PARSE_RULE_COMMAND_ROLE_VALID_LIST                                                                       // cmd/stanza-rekey
+        (                                                                                                        // cmd/stanza-rekey
+            PARSE_RULE_COMMAND_ROLE(Main)                                                                        // cmd/stanza-rekey
+            PARSE_RULE_COMMAND_ROLE(Remote)                                                                      // cmd/stanza-rekey
+        ),                                                                                                       // cmd/stanza-rekey
+    ),                                                                                                           // cmd/stanza-rekey
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_COMMAND                                                                                         // cmd/stanza-upgrade
     (                                                                                                          // cmd/stanza-upgrade
         PARSE_RULE_COMMAND_NAME("stanza-upgrade"),                                                             // cmd/stanza-upgrade
@@ -916,6 +933,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                  // opt/allow-root
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/allow-root
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                 // opt/allow-root
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/allow-root
             PARSE_RULE_OPTION_COMMAND(Start)                                                                       // opt/allow-root
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                        // opt/allow-root
@@ -953,6 +971,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/allow-root
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/allow-root
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                 // opt/allow-root
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/allow-root
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/allow-root
         ),                                                                                                         // opt/allow-root
@@ -1499,6 +1518,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                        // opt/beta
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                      // opt/beta
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                      // opt/beta
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                       // opt/beta
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                     // opt/beta
             PARSE_RULE_OPTION_COMMAND(Start)                                                                             // opt/beta
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                              // opt/beta
@@ -1536,6 +1556,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                           // opt/beta
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                      // opt/beta
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                      // opt/beta
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                       // opt/beta
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                     // opt/beta
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                            // opt/beta
         ),                                                                                                               // opt/beta
@@ -1578,6 +1599,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                 // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/buffer-size
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/buffer-size
         ),                                                                                                        // opt/buffer-size
@@ -1613,6 +1635,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/buffer-size
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/buffer-size
         ),                                                                                                        // opt/buffer-size
@@ -1775,6 +1798,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                        // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                   // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                   // opt/cmd-ssh
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                    // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                  // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                         // opt/cmd-ssh
         ),                                                                                                            // opt/cmd-ssh
@@ -1927,6 +1951,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                    // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                    // opt/compress-level-network
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                     // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                   // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/compress-level-network
         ),                                                                                             // opt/compress-level-network
@@ -2033,6 +2058,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                      // opt/config
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                    // opt/config
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                    // opt/config
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                     // opt/config
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                   // opt/config
             PARSE_RULE_OPTION_COMMAND(Start)                                                                           // opt/config
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                            // opt/config
@@ -2070,6 +2096,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                         // opt/config
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                    // opt/config
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                    // opt/config
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                     // opt/config
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                   // opt/config
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                          // opt/config
         ),                                                                                                             // opt/config
@@ -2111,6 +2138,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                         // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/config-include-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(Start)                                                              // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(Stop)                                                               // opt/config-include-path
@@ -2148,6 +2176,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/config-include-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/config-include-path
         ),                                                                                                // opt/config-include-path
@@ -2189,6 +2218,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                 // opt/config-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/config-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/config-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                // opt/config-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/config-path
             PARSE_RULE_OPTION_COMMAND(Start)                                                                      // opt/config-path
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                       // opt/config-path
@@ -2226,6 +2256,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/config-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/config-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/config-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                // opt/config-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/config-path
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/config-path
         ),                                                                                                        // opt/config-path
@@ -2444,6 +2475,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                     // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                   // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                   // opt/exec-id
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                    // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                  // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(Start)                                                                          // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                           // opt/exec-id
@@ -2481,6 +2513,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                        // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                   // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                   // opt/exec-id
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                    // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                  // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                         // opt/exec-id
         ),                                                                                                            // opt/exec-id
@@ -2652,6 +2685,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                  // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/io-timeout
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                 // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/io-timeout
         ),                                                                                                         // opt/io-timeout
@@ -2687,6 +2721,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/io-timeout
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                 // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/io-timeout
         ),                                                                                                         // opt/io-timeout
@@ -2831,6 +2866,30 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                 // opt/job-retry-interval
     ),                                                                                                     // opt/job-retry-interval
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                              // opt/key-rotate
+    (                                                                                                              // opt/key-rotate
+        PARSE_RULE_OPTION_NAME("key-rotate"),                                                                      // opt/key-rotate
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                           // opt/key-rotate
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                          // opt/key-rotate
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                    // opt/key-rotate
+                                                                                                                   // opt/key-rotate
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/key-rotate
+        (                                                                                                          // opt/key-rotate
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                 // opt/key-rotate
+        ),                                                                                                         // opt/key-rotate
+                                                                                                                   // opt/key-rotate
+        PARSE_RULE_OPTIONAL                                                                                        // opt/key-rotate
+        (                                                                                                          // opt/key-rotate
+            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/key-rotate
+            (                                                                                                      // opt/key-rotate
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/key-rotate
+                (                                                                                                  // opt/key-rotate
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                     // opt/key-rotate
+                ),                                                                                                 // opt/key-rotate
+            ),                                                                                                     // opt/key-rotate
+        ),                                                                                                         // opt/key-rotate
+    ),                                                                                                             // opt/key-rotate
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                // opt/link-all
     (                                                                                                                // opt/link-all
         PARSE_RULE_OPTION_NAME("link-all"),                                                                          // opt/link-all
@@ -2889,6 +2948,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Expire)                                                                            // opt/lock
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                      // opt/lock
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                      // opt/lock
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                       // opt/lock
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                     // opt/lock
         ),                                                                                                               // opt/lock
     ),                                                                                                                   // opt/lock
@@ -2912,6 +2972,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/lock-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                  // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(Start)                                                                        // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                         // opt/lock-path
@@ -2942,6 +3003,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/lock-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                  // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                // opt/lock-path
         ),                                                                                                          // opt/lock-path
                                                                                                                     // opt/lock-path
@@ -2984,6 +3046,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                           // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/log-level-console
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(Start)                                                                // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                 // opt/log-level-console
@@ -3021,6 +3084,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/log-level-console
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/log-level-console
         ),                                                                                                  // opt/log-level-console
@@ -3076,6 +3140,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                              // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/log-level-file
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(Start)                                                                   // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                    // opt/log-level-file
@@ -3113,6 +3178,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/log-level-file
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/log-level-file
         ),                                                                                                     // opt/log-level-file
@@ -3168,6 +3234,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                            // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/log-level-stderr
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(Start)                                                                 // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                  // opt/log-level-stderr
@@ -3205,6 +3272,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/log-level-stderr
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/log-level-stderr
         ),                                                                                                   // opt/log-level-stderr
@@ -3258,6 +3326,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                    // opt/log-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                  // opt/log-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                  // opt/log-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                   // opt/log-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                 // opt/log-path
             PARSE_RULE_OPTION_COMMAND(Start)                                                                         // opt/log-path
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                          // opt/log-path
@@ -3295,6 +3364,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                       // opt/log-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                  // opt/log-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                  // opt/log-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                   // opt/log-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                 // opt/log-path
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                        // opt/log-path
         ),                                                                                                           // opt/log-path
@@ -3336,6 +3406,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/log-subprocess
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/log-subprocess
         ),                                                                                                     // opt/log-subprocess
@@ -3371,6 +3442,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/log-subprocess
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/log-subprocess
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/log-subprocess
         ),                                                                                                     // opt/log-subprocess
@@ -3414,6 +3486,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                               // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/log-timestamp
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(Start)                                                                    // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                     // opt/log-timestamp
@@ -3451,6 +3524,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                  // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/log-timestamp
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/log-timestamp
         ),                                                                                                      // opt/log-timestamp
@@ -3521,6 +3595,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                  // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(Start)                                                                    // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                     // opt/neutral-umask
@@ -3556,6 +3631,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                  // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/neutral-umask
         ),                                                                                                      // opt/neutral-umask
@@ -4680,6 +4756,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                    // opt/priority
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                  // opt/priority
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                  // opt/priority
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                   // opt/priority
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                 // opt/priority
             PARSE_RULE_OPTION_COMMAND(Start)                                                                         // opt/priority
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                          // opt/priority
@@ -4717,6 +4794,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                       // opt/priority
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                  // opt/priority
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                  // opt/priority
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                   // opt/priority
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                 // opt/priority
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                        // opt/priority
         ),                                                                                                           // opt/priority
@@ -4767,6 +4845,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                        // opt/process
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                   // opt/process
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                   // opt/process
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                    // opt/process
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                  // opt/process
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                         // opt/process
         ),                                                                                                            // opt/process
@@ -4850,6 +4929,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Server)                                                                // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/protocol-timeout
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/protocol-timeout
         ),                                                                                                   // opt/protocol-timeout
@@ -4885,6 +4965,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/protocol-timeout
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/protocol-timeout
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/protocol-timeout
         ),                                                                                                   // opt/protocol-timeout
@@ -5035,6 +5116,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/remote-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/remote-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/remote-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                // opt/remote-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/remote-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/remote-type
         ),                                                                                                        // opt/remote-type
@@ -5072,6 +5154,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                            // opt/repo
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                           // opt/repo
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                      // opt/repo
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                       // opt/repo
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                            // opt/repo
         ),                                                                                                               // opt/repo
                                                                                                                          // opt/repo
@@ -5104,6 +5187,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                           // opt/repo
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                      // opt/repo
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                      // opt/repo
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                       // opt/repo
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                     // opt/repo
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                            // opt/repo
         ),                                                                                                               // opt/repo
@@ -5147,6 +5231,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                        // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                        // opt/repo-azure-account
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                         // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                       // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/repo-azure-account
         ),                                                                                                 // opt/repo-azure-account
@@ -5182,6 +5267,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                        // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                        // opt/repo-azure-account
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                         // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                       // opt/repo-azure-account
             PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/repo-azure-account
         ),                                                                                                 // opt/repo-azure-account
@@ -5224,6 +5310,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-azure-container
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-azure-container
         ),                                                                                               // opt/repo-azure-container
@@ -5259,6 +5346,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-azure-container
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-azure-container
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-azure-container
         ),                                                                                               // opt/repo-azure-container
@@ -5302,6 +5390,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-azure-endpoint
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-azure-endpoint
         ),                                                                                                // opt/repo-azure-endpoint
@@ -5337,6 +5426,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-azure-endpoint
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-azure-endpoint
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-azure-endpoint
         ),                                                                                                // opt/repo-azure-endpoint
@@ -5385,6 +5475,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/repo-azure-key
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/repo-azure-key
         ),                                                                                                     // opt/repo-azure-key
@@ -5420,6 +5511,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/repo-azure-key
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/repo-azure-key
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/repo-azure-key
         ),                                                                                                     // opt/repo-azure-key
@@ -5464,6 +5556,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-azure-key-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-azure-key-type
         ),                                                                                                // opt/repo-azure-key-type
@@ -5499,6 +5592,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-azure-key-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-azure-key-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-azure-key-type
         ),                                                                                                // opt/repo-azure-key-type
@@ -5554,6 +5648,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-azure-uri-style
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-azure-uri-style
         ),                                                                                               // opt/repo-azure-uri-style
@@ -5589,6 +5684,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-azure-uri-style
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-azure-uri-style
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-azure-uri-style
         ),                                                                                               // opt/repo-azure-uri-style
@@ -5946,6 +6042,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-cipher-pass
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-cipher-pass
         ),                                                                                                   // opt/repo-cipher-pass
@@ -5981,6 +6078,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-cipher-pass
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-cipher-pass
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-cipher-pass
         ),                                                                                                   // opt/repo-cipher-pass
@@ -5997,6 +6095,87 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                               // opt/repo-cipher-pass
         ),                                                                                                   // opt/repo-cipher-pass
     ),                                                                                                       // opt/repo-cipher-pass
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                    // opt/repo-cipher-pass-old
+    (                                                                                                    // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_NAME("repo-cipher-pass-old"),                                                  // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_TYPE(String),                                                                  // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_INTERNAL(true)                                                                 // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_RESET(true),                                                                   // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_REQUIRED(false),                                                               // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_SECTION(Global),                                                               // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_SECURE(true),                                                                  // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                // opt/repo-cipher-pass-old
+                                                                                                         // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                   // opt/repo-cipher-pass-old
+        (                                                                                                // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                          // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                        // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                       // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                            // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Check)                                                             // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                            // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Info)                                                              // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                          // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                           // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                            // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                            // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-cipher-pass-old
+        ),                                                                                               // opt/repo-cipher-pass-old
+                                                                                                         // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                  // opt/repo-cipher-pass-old
+        (                                                                                                // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                        // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                       // opt/repo-cipher-pass-old
+        ),                                                                                               // opt/repo-cipher-pass-old
+                                                                                                         // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                  // opt/repo-cipher-pass-old
+        (                                                                                                // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                        // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                       // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                            // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-cipher-pass-old
+        ),                                                                                               // opt/repo-cipher-pass-old
+                                                                                                         // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                 // opt/repo-cipher-pass-old
+        (                                                                                                // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                          // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                        // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                       // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                            // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Check)                                                             // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                            // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Info)                                                              // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                          // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                           // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                            // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                            // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-cipher-pass-old
+        ),                                                                                               // opt/repo-cipher-pass-old
+                                                                                                         // opt/repo-cipher-pass-old
+        PARSE_RULE_OPTIONAL                                                                              // opt/repo-cipher-pass-old
+        (                                                                                                // opt/repo-cipher-pass-old
+            PARSE_RULE_OPTIONAL_GROUP                                                                    // opt/repo-cipher-pass-old
+            (                                                                                            // opt/repo-cipher-pass-old
+                PARSE_RULE_OPTIONAL_DEPEND                                                               // opt/repo-cipher-pass-old
+                (                                                                                        // opt/repo-cipher-pass-old
+                    PARSE_RULE_VAL_OPT(RepoCipherType),                                                  // opt/repo-cipher-pass-old
+                    PARSE_RULE_VAL_STRID(aes_DS_256_DS_cbc),                                             // opt/repo-cipher-pass-old
+                ),                                                                                       // opt/repo-cipher-pass-old
+            ),                                                                                           // opt/repo-cipher-pass-old
+        ),                                                                                               // opt/repo-cipher-pass-old
+    ),                                                                                                   // opt/repo-cipher-pass-old
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                      // opt/repo-cipher-rotate
     (                                                                                                      // opt/repo-cipher-rotate
@@ -6064,6 +6243,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-cipher-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-cipher-type
         ),                                                                                                   // opt/repo-cipher-type
@@ -6099,6 +6279,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-cipher-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-cipher-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-cipher-type
         ),                                                                                                   // opt/repo-cipher-type
@@ -6179,6 +6360,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                           // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                           // opt/repo-gcs-bucket
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                            // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                          // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/repo-gcs-bucket
         ),                                                                                                    // opt/repo-gcs-bucket
@@ -6214,6 +6396,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                           // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                           // opt/repo-gcs-bucket
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                            // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                          // opt/repo-gcs-bucket
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/repo-gcs-bucket
         ),                                                                                                    // opt/repo-gcs-bucket
@@ -6255,6 +6438,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-gcs-endpoint
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-gcs-endpoint
         ),                                                                                                  // opt/repo-gcs-endpoint
@@ -6290,6 +6474,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-gcs-endpoint
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-gcs-endpoint
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-gcs-endpoint
         ),                                                                                                  // opt/repo-gcs-endpoint
@@ -6337,6 +6522,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                   // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                              // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                              // opt/repo-gcs-key
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                               // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                             // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                    // opt/repo-gcs-key
         ),                                                                                                       // opt/repo-gcs-key
@@ -6372,6 +6558,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                   // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                              // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                              // opt/repo-gcs-key
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                               // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                             // opt/repo-gcs-key
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                    // opt/repo-gcs-key
         ),                                                                                                       // opt/repo-gcs-key
@@ -6417,6 +6604,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-gcs-key-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-gcs-key-type
         ),                                                                                                  // opt/repo-gcs-key-type
@@ -6452,6 +6640,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-gcs-key-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-gcs-key-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-gcs-key-type
         ),                                                                                                  // opt/repo-gcs-key-type
@@ -6507,6 +6696,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-gcs-user-project
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                     // opt/repo-gcs-user-project
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                     // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                      // opt/repo-gcs-user-project
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                    // opt/repo-gcs-user-project
             PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-gcs-user-project
         ),                                                                                              // opt/repo-gcs-user-project
@@ -6542,6 +6732,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-gcs-user-project
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                     // opt/repo-gcs-user-project
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                     // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                      // opt/repo-gcs-user-project
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                    // opt/repo-gcs-user-project
             PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-gcs-user-project
         ),                                                                                              // opt/repo-gcs-user-project
@@ -6606,6 +6797,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/repo-host
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/repo-host
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/repo-host
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                  // opt/repo-host
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                // opt/repo-host
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                       // opt/repo-host
         ),                                                                                                          // opt/repo-host
@@ -6663,6 +6855,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-host-ca-file
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-host-ca-file
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-host-ca-file
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-host-ca-file
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-host-ca-file
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-host-ca-file
         ),                                                                                                  // opt/repo-host-ca-file
@@ -6720,6 +6913,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-host-ca-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-host-ca-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-host-ca-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-host-ca-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-host-ca-path
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-host-ca-path
         ),                                                                                                  // opt/repo-host-ca-path
@@ -6777,6 +6971,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-host-cert-file
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-host-cert-file
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-host-cert-file
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/repo-host-cert-file
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-host-cert-file
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-host-cert-file
         ),                                                                                                // opt/repo-host-cert-file
@@ -6835,6 +7030,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                  // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/repo-host-cmd
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/repo-host-cmd
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/repo-host-cmd
         ),                                                                                                      // opt/repo-host-cmd
@@ -6897,6 +7093,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-host-config
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-host-config
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-host-config
         ),                                                                                                   // opt/repo-host-config
@@ -6958,6 +7155,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                  // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                             // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                             // opt/repo-host-config-include-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                              // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                            // opt/repo-host-config-include-path
             PARSE_RULE_OPTION_COMMAND(Verify)                                                   // opt/repo-host-config-include-path
         ),                                                                                      // opt/repo-host-config-include-path
@@ -7019,6 +7217,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                     // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                     // opt/repo-host-config-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                      // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                    // opt/repo-host-config-path
             PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-host-config-path
         ),                                                                                              // opt/repo-host-config-path
@@ -7080,6 +7279,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/repo-host-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                        // opt/repo-host-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                        // opt/repo-host-key-file
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                         // opt/repo-host-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                       // opt/repo-host-key-file
             PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/repo-host-key-file
         ),                                                                                                 // opt/repo-host-key-file
@@ -7137,6 +7337,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/repo-host-port
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/repo-host-port
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/repo-host-port
         ),                                                                                                     // opt/repo-host-port
@@ -7210,6 +7411,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/repo-host-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/repo-host-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/repo-host-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/repo-host-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/repo-host-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/repo-host-type
         ),                                                                                                     // opt/repo-host-type
@@ -7277,6 +7479,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/repo-host-user
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/repo-host-user
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/repo-host-user
         ),                                                                                                     // opt/repo-host-user
@@ -7341,6 +7544,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/repo-local
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/repo-local
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/repo-local
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                 // opt/repo-local
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/repo-local
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/repo-local
         ),                                                                                                         // opt/repo-local
@@ -7398,6 +7602,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/repo-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                  // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                       // opt/repo-path
         ),                                                                                                          // opt/repo-path
@@ -7433,6 +7638,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/repo-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                  // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                // opt/repo-path
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                       // opt/repo-path
         ),                                                                                                          // opt/repo-path
@@ -7655,6 +7861,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/repo-s3-bucket
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/repo-s3-bucket
         ),                                                                                                     // opt/repo-s3-bucket
@@ -7690,6 +7897,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/repo-s3-bucket
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/repo-s3-bucket
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/repo-s3-bucket
         ),                                                                                                     // opt/repo-s3-bucket
@@ -7733,6 +7941,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-s3-endpoint
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-s3-endpoint
         ),                                                                                                   // opt/repo-s3-endpoint
@@ -7768,6 +7977,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-s3-endpoint
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-s3-endpoint
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-s3-endpoint
         ),                                                                                                   // opt/repo-s3-endpoint
@@ -7812,6 +8022,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/repo-s3-key
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/repo-s3-key
         ),                                                                                                        // opt/repo-s3-key
@@ -7847,6 +8058,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/repo-s3-key
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/repo-s3-key
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/repo-s3-key
         ),                                                                                                        // opt/repo-s3-key
@@ -7891,6 +8103,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                        // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                        // opt/repo-s3-key-secret
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                         // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                       // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/repo-s3-key-secret
         ),                                                                                                 // opt/repo-s3-key-secret
@@ -7926,6 +8139,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                        // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                        // opt/repo-s3-key-secret
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                         // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                       // opt/repo-s3-key-secret
             PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/repo-s3-key-secret
         ),                                                                                                 // opt/repo-s3-key-secret
@@ -7969,6 +8183,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-s3-key-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-s3-key-type
         ),                                                                                                   // opt/repo-s3-key-type
@@ -8004,6 +8219,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-s3-key-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-s3-key-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-s3-key-type
         ),                                                                                                   // opt/repo-s3-key-type
@@ -8060,6 +8276,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                        // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                        // opt/repo-s3-kms-key-id
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                         // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                       // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/repo-s3-kms-key-id
         ),                                                                                                 // opt/repo-s3-kms-key-id
@@ -8095,6 +8312,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                        // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                        // opt/repo-s3-kms-key-id
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                         // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                       // opt/repo-s3-kms-key-id
             PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/repo-s3-kms-key-id
         ),                                                                                                 // opt/repo-s3-kms-key-id
@@ -8138,6 +8356,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-s3-process-cmd
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-s3-process-cmd
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/repo-s3-process-cmd
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-s3-process-cmd
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-s3-process-cmd
         ),                                                                                                // opt/repo-s3-process-cmd
@@ -8173,6 +8392,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-s3-process-cmd
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-s3-process-cmd
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/repo-s3-process-cmd
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-s3-process-cmd
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-s3-process-cmd
         ),                                                                                                // opt/repo-s3-process-cmd
@@ -8216,6 +8436,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/repo-s3-region
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/repo-s3-region
         ),                                                                                                     // opt/repo-s3-region
@@ -8251,6 +8472,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/repo-s3-region
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/repo-s3-region
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/repo-s3-region
         ),                                                                                                     // opt/repo-s3-region
@@ -8294,6 +8516,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/repo-s3-requester-pays
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                    // opt/repo-s3-requester-pays
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                    // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                     // opt/repo-s3-requester-pays
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                   // opt/repo-s3-requester-pays
             PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/repo-s3-requester-pays
         ),                                                                                             // opt/repo-s3-requester-pays
@@ -8329,6 +8552,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/repo-s3-requester-pays
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                    // opt/repo-s3-requester-pays
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                    // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                     // opt/repo-s3-requester-pays
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                   // opt/repo-s3-requester-pays
             PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/repo-s3-requester-pays
         ),                                                                                             // opt/repo-s3-requester-pays
@@ -8376,6 +8600,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                   // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                              // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                              // opt/repo-s3-role
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                               // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                             // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                    // opt/repo-s3-role
         ),                                                                                                       // opt/repo-s3-role
@@ -8411,6 +8636,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                   // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                              // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                              // opt/repo-s3-role
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                               // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                             // opt/repo-s3-role
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                    // opt/repo-s3-role
         ),                                                                                                       // opt/repo-s3-role
@@ -8453,6 +8679,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                // opt/repo-s3-service
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                           // opt/repo-s3-service
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                           // opt/repo-s3-service
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                            // opt/repo-s3-service
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                          // opt/repo-s3-service
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/repo-s3-service
         ),                                                                                                    // opt/repo-s3-service
@@ -8488,6 +8715,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                // opt/repo-s3-service
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                           // opt/repo-s3-service
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                           // opt/repo-s3-service
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                            // opt/repo-s3-service
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                          // opt/repo-s3-service
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/repo-s3-service
         ),                                                                                                    // opt/repo-s3-service
@@ -8536,6 +8764,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                       // opt/repo-s3-sse-customer-key
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                  // opt/repo-s3-sse-customer-key
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                  // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                   // opt/repo-s3-sse-customer-key
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                 // opt/repo-s3-sse-customer-key
             PARSE_RULE_OPTION_COMMAND(Verify)                                                        // opt/repo-s3-sse-customer-key
         ),                                                                                           // opt/repo-s3-sse-customer-key
@@ -8571,6 +8800,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                       // opt/repo-s3-sse-customer-key
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                  // opt/repo-s3-sse-customer-key
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                  // opt/repo-s3-sse-customer-key
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                   // opt/repo-s3-sse-customer-key
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                 // opt/repo-s3-sse-customer-key
             PARSE_RULE_OPTION_COMMAND(Verify)                                                        // opt/repo-s3-sse-customer-key
         ),                                                                                           // opt/repo-s3-sse-customer-key
@@ -8613,6 +8843,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-s3-sts-host
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-s3-sts-host
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-s3-sts-host
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-s3-sts-host
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-s3-sts-host
         ),                                                                                                   // opt/repo-s3-sts-host
@@ -8648,6 +8879,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-s3-sts-host
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-s3-sts-host
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-s3-sts-host
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-s3-sts-host
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-s3-sts-host
         ),                                                                                                   // opt/repo-s3-sts-host
@@ -8696,6 +8928,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                  // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/repo-s3-token
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/repo-s3-token
         ),                                                                                                      // opt/repo-s3-token
@@ -8731,6 +8964,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                  // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/repo-s3-token
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/repo-s3-token
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/repo-s3-token
         ),                                                                                                      // opt/repo-s3-token
@@ -8774,6 +9008,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-s3-uri-style
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-s3-uri-style
         ),                                                                                                  // opt/repo-s3-uri-style
@@ -8809,6 +9044,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-s3-uri-style
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-s3-uri-style
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-s3-uri-style
         ),                                                                                                  // opt/repo-s3-uri-style
@@ -8862,6 +9098,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/repo-sftp-host
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/repo-sftp-host
         ),                                                                                                     // opt/repo-sftp-host
@@ -8897,6 +9134,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/repo-sftp-host
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/repo-sftp-host
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/repo-sftp-host
         ),                                                                                                     // opt/repo-sftp-host
@@ -8939,6 +9177,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                     // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                 // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                               // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(Verify)                                                      // opt/repo-sftp-host-fingerprint
         ),                                                                                         // opt/repo-sftp-host-fingerprint
@@ -8974,6 +9213,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                     // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                // opt/repo-sftp-host-fingerprint
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                 // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                               // opt/repo-sftp-host-fingerprint
             PARSE_RULE_OPTION_COMMAND(Verify)                                                      // opt/repo-sftp-host-fingerprint
         ),                                                                                         // opt/repo-sftp-host-fingerprint
@@ -9017,6 +9257,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                  // opt/repo-sftp-host-key-check-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                             // opt/repo-sftp-host-key-check-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                             // opt/repo-sftp-host-key-check-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                              // opt/repo-sftp-host-key-check-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                            // opt/repo-sftp-host-key-check-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                   // opt/repo-sftp-host-key-check-type
         ),                                                                                      // opt/repo-sftp-host-key-check-type
@@ -9052,6 +9293,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                  // opt/repo-sftp-host-key-check-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                             // opt/repo-sftp-host-key-check-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                             // opt/repo-sftp-host-key-check-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                              // opt/repo-sftp-host-key-check-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                            // opt/repo-sftp-host-key-check-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                   // opt/repo-sftp-host-key-check-type
         ),                                                                                      // opt/repo-sftp-host-key-check-type
@@ -9107,6 +9349,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                   // opt/repo-sftp-host-key-hash-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                              // opt/repo-sftp-host-key-hash-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                              // opt/repo-sftp-host-key-hash-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                               // opt/repo-sftp-host-key-hash-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                             // opt/repo-sftp-host-key-hash-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                    // opt/repo-sftp-host-key-hash-type
         ),                                                                                       // opt/repo-sftp-host-key-hash-type
@@ -9142,6 +9385,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                   // opt/repo-sftp-host-key-hash-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                              // opt/repo-sftp-host-key-hash-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                              // opt/repo-sftp-host-key-hash-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                               // opt/repo-sftp-host-key-hash-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                             // opt/repo-sftp-host-key-hash-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                    // opt/repo-sftp-host-key-hash-type
         ),                                                                                       // opt/repo-sftp-host-key-hash-type
@@ -9191,6 +9435,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-sftp-host-port
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-sftp-host-port
         ),                                                                                                // opt/repo-sftp-host-port
@@ -9226,6 +9471,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-sftp-host-port
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-sftp-host-port
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-sftp-host-port
         ),                                                                                                // opt/repo-sftp-host-port
@@ -9279,6 +9525,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-sftp-host-user
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-sftp-host-user
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-sftp-host-user
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/repo-sftp-host-user
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-sftp-host-user
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-sftp-host-user
         ),                                                                                                // opt/repo-sftp-host-user
@@ -9314,6 +9561,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-sftp-host-user
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-sftp-host-user
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-sftp-host-user
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/repo-sftp-host-user
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-sftp-host-user
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-sftp-host-user
         ),                                                                                                // opt/repo-sftp-host-user
@@ -9357,6 +9605,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-sftp-known-host
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-sftp-known-host
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-sftp-known-host
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-sftp-known-host
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-sftp-known-host
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-sftp-known-host
         ),                                                                                               // opt/repo-sftp-known-host
@@ -9392,6 +9641,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-sftp-known-host
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-sftp-known-host
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-sftp-known-host
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-sftp-known-host
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-sftp-known-host
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-sftp-known-host
         ),                                                                                               // opt/repo-sftp-known-host
@@ -9435,6 +9685,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                     // opt/repo-sftp-private-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                // opt/repo-sftp-private-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                // opt/repo-sftp-private-key-file
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                 // opt/repo-sftp-private-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                               // opt/repo-sftp-private-key-file
             PARSE_RULE_OPTION_COMMAND(Verify)                                                      // opt/repo-sftp-private-key-file
         ),                                                                                         // opt/repo-sftp-private-key-file
@@ -9470,6 +9721,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                     // opt/repo-sftp-private-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                // opt/repo-sftp-private-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                // opt/repo-sftp-private-key-file
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                 // opt/repo-sftp-private-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                               // opt/repo-sftp-private-key-file
             PARSE_RULE_OPTION_COMMAND(Verify)                                                      // opt/repo-sftp-private-key-file
         ),                                                                                         // opt/repo-sftp-private-key-file
@@ -9513,6 +9765,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                               // opt/repo-sftp-private-key-passphrase
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                          // opt/repo-sftp-private-key-passphrase
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                          // opt/repo-sftp-private-key-passphrase
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                           // opt/repo-sftp-private-key-passphrase
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                         // opt/repo-sftp-private-key-passphrase
             PARSE_RULE_OPTION_COMMAND(Verify)                                                // opt/repo-sftp-private-key-passphrase
         ),                                                                                   // opt/repo-sftp-private-key-passphrase
@@ -9548,6 +9801,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                               // opt/repo-sftp-private-key-passphrase
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                          // opt/repo-sftp-private-key-passphrase
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                          // opt/repo-sftp-private-key-passphrase
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                           // opt/repo-sftp-private-key-passphrase
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                         // opt/repo-sftp-private-key-passphrase
             PARSE_RULE_OPTION_COMMAND(Verify)                                                // opt/repo-sftp-private-key-passphrase
         ),                                                                                   // opt/repo-sftp-private-key-passphrase
@@ -9590,6 +9844,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                      // opt/repo-sftp-public-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                 // opt/repo-sftp-public-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                 // opt/repo-sftp-public-key-file
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                  // opt/repo-sftp-public-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                // opt/repo-sftp-public-key-file
             PARSE_RULE_OPTION_COMMAND(Verify)                                                       // opt/repo-sftp-public-key-file
         ),                                                                                          // opt/repo-sftp-public-key-file
@@ -9625,6 +9880,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                      // opt/repo-sftp-public-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                 // opt/repo-sftp-public-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                 // opt/repo-sftp-public-key-file
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                  // opt/repo-sftp-public-key-file
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                // opt/repo-sftp-public-key-file
             PARSE_RULE_OPTION_COMMAND(Verify)                                                       // opt/repo-sftp-public-key-file
         ),                                                                                          // opt/repo-sftp-public-key-file
@@ -9667,6 +9923,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-storage-ca-file
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-storage-ca-file
         ),                                                                                               // opt/repo-storage-ca-file
@@ -9702,6 +9959,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-storage-ca-file
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-storage-ca-file
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-storage-ca-file
         ),                                                                                               // opt/repo-storage-ca-file
@@ -9746,6 +10004,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-storage-ca-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-storage-ca-path
         ),                                                                                               // opt/repo-storage-ca-path
@@ -9781,6 +10040,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/repo-storage-ca-path
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/repo-storage-ca-path
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/repo-storage-ca-path
         ),                                                                                               // opt/repo-storage-ca-path
@@ -9825,6 +10085,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-storage-host
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-storage-host
         ),                                                                                                  // opt/repo-storage-host
@@ -9860,6 +10121,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-storage-host
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-storage-host
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-storage-host
         ),                                                                                                  // opt/repo-storage-host
@@ -9903,6 +10165,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-storage-port
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-storage-port
         ),                                                                                                  // opt/repo-storage-port
@@ -9938,6 +10201,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                              // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                         // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                         // opt/repo-storage-port
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                          // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                        // opt/repo-storage-port
             PARSE_RULE_OPTION_COMMAND(Verify)                                                               // opt/repo-storage-port
         ),                                                                                                  // opt/repo-storage-port
@@ -9992,6 +10256,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-storage-prefetch
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                     // opt/repo-storage-prefetch
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                     // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                      // opt/repo-storage-prefetch
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                    // opt/repo-storage-prefetch
             PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-storage-prefetch
         ),                                                                                              // opt/repo-storage-prefetch
@@ -10027,6 +10292,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-storage-prefetch
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                     // opt/repo-storage-prefetch
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                     // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                      // opt/repo-storage-prefetch
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                    // opt/repo-storage-prefetch
             PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-storage-prefetch
         ),                                                                                              // opt/repo-storage-prefetch
@@ -10082,6 +10348,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/repo-storage-read-over
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                    // opt/repo-storage-read-over
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                    // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                     // opt/repo-storage-read-over
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                   // opt/repo-storage-read-over
             PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/repo-storage-read-over
         ),                                                                                             // opt/repo-storage-read-over
@@ -10117,6 +10384,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/repo-storage-read-over
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                    // opt/repo-storage-read-over
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                    // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                     // opt/repo-storage-read-over
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                   // opt/repo-storage-read-over
             PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/repo-storage-read-over
         ),                                                                                             // opt/repo-storage-read-over
@@ -10173,6 +10441,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-storage-tag
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-storage-tag
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-storage-tag
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-storage-tag
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-storage-tag
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-storage-tag
         ),                                                                                                   // opt/repo-storage-tag
@@ -10208,6 +10477,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-storage-tag
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-storage-tag
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-storage-tag
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/repo-storage-tag
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-storage-tag
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-storage-tag
         ),                                                                                                   // opt/repo-storage-tag
@@ -10252,6 +10522,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                 // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                            // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                            // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                             // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                           // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(Verify)                                                  // opt/repo-storage-upload-chunk-size
         ),                                                                                     // opt/repo-storage-upload-chunk-size
@@ -10287,6 +10558,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                 // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                            // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                            // opt/repo-storage-upload-chunk-size
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                             // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                           // opt/repo-storage-upload-chunk-size
             PARSE_RULE_OPTION_COMMAND(Verify)                                                  // opt/repo-storage-upload-chunk-size
         ),                                                                                     // opt/repo-storage-upload-chunk-size
@@ -10361,6 +10633,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                        // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                   // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                   // opt/repo-storage-verify-tls
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                    // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                  // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(Verify)                                                         // opt/repo-storage-verify-tls
         ),                                                                                            // opt/repo-storage-verify-tls
@@ -10396,6 +10669,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                        // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                   // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                   // opt/repo-storage-verify-tls
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                    // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                  // opt/repo-storage-verify-tls
             PARSE_RULE_OPTION_COMMAND(Verify)                                                         // opt/repo-storage-verify-tls
         ),                                                                                            // opt/repo-storage-verify-tls
@@ -10513,6 +10787,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/repo-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                  // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                       // opt/repo-type
         ),                                                                                                          // opt/repo-type
@@ -10548,6 +10823,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/repo-type
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                  // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                // opt/repo-type
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                       // opt/repo-type
         ),                                                                                                          // opt/repo-type
@@ -10656,6 +10932,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                   // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/sck-block
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                  // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                       // opt/sck-block
         ),                                                                                                          // opt/sck-block
@@ -10691,6 +10968,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/sck-block
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                  // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                       // opt/sck-block
         ),                                                                                                          // opt/sck-block
@@ -10734,6 +11012,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                              // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/sck-keep-alive
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/sck-keep-alive
         ),                                                                                                     // opt/sck-keep-alive
@@ -10769,6 +11048,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/sck-keep-alive
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/sck-keep-alive
         ),                                                                                                     // opt/sck-keep-alive
@@ -10973,6 +11253,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                         // opt/stanza
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                    // opt/stanza
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                    // opt/stanza
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                     // opt/stanza
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                   // opt/stanza
             PARSE_RULE_OPTION_COMMAND(Start)                                                                           // opt/stanza
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                            // opt/stanza
@@ -11010,6 +11291,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                         // opt/stanza
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                    // opt/stanza
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                    // opt/stanza
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                     // opt/stanza
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                   // opt/stanza
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                          // opt/stanza
         ),                                                                                                             // opt/stanza
@@ -11273,6 +11555,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                        // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/tcp-keep-alive-count
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/tcp-keep-alive-count
         ),                                                                                               // opt/tcp-keep-alive-count
@@ -11308,6 +11591,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                           // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                      // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                      // opt/tcp-keep-alive-count
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                       // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                     // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(Verify)                                                            // opt/tcp-keep-alive-count
         ),                                                                                               // opt/tcp-keep-alive-count
@@ -11357,6 +11641,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                         // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/tcp-keep-alive-idle
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/tcp-keep-alive-idle
         ),                                                                                                // opt/tcp-keep-alive-idle
@@ -11392,6 +11677,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/tcp-keep-alive-idle
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                        // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/tcp-keep-alive-idle
         ),                                                                                                // opt/tcp-keep-alive-idle
@@ -11441,6 +11727,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                     // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                   // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                   // opt/tcp-keep-alive-interval
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                    // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                  // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(Verify)                                                         // opt/tcp-keep-alive-interval
         ),                                                                                            // opt/tcp-keep-alive-interval
@@ -11476,6 +11763,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                        // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                   // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                   // opt/tcp-keep-alive-interval
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                    // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                  // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(Verify)                                                         // opt/tcp-keep-alive-interval
         ),                                                                                            // opt/tcp-keep-alive-interval
@@ -11525,6 +11813,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                               // opt/tls-cipher-12
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/tls-cipher-12
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/tls-cipher-12
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/tls-cipher-12
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/tls-cipher-12
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/tls-cipher-12
         ),                                                                                                      // opt/tls-cipher-12
@@ -11560,6 +11849,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                  // opt/tls-cipher-12
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/tls-cipher-12
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/tls-cipher-12
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/tls-cipher-12
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/tls-cipher-12
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/tls-cipher-12
         ),                                                                                                      // opt/tls-cipher-12
@@ -11591,6 +11881,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                               // opt/tls-cipher-13
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/tls-cipher-13
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/tls-cipher-13
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/tls-cipher-13
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/tls-cipher-13
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/tls-cipher-13
         ),                                                                                                      // opt/tls-cipher-13
@@ -11626,6 +11917,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                  // opt/tls-cipher-13
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/tls-cipher-13
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/tls-cipher-13
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/tls-cipher-13
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/tls-cipher-13
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/tls-cipher-13
         ),                                                                                                      // opt/tls-cipher-13
@@ -12177,6 +12469,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptIoTimeout,                                                                                            // opt-resolve-order
     cfgOptJobRetry,                                                                                             // opt-resolve-order
     cfgOptJobRetryInterval,                                                                                     // opt-resolve-order
+    cfgOptKeyRotate,                                                                                            // opt-resolve-order
     cfgOptLinkAll,                                                                                              // opt-resolve-order
     cfgOptLinkMap,                                                                                              // opt-resolve-order
     cfgOptLock,                                                                                                 // opt-resolve-order
@@ -12276,6 +12569,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoBlockSizeSuper,                                                                                   // opt-resolve-order
     cfgOptRepoBlockSizeSuperFull,                                                                               // opt-resolve-order
     cfgOptRepoCipherPass,                                                                                       // opt-resolve-order
+    cfgOptRepoCipherPassOld,                                                                                    // opt-resolve-order
     cfgOptRepoCipherRotate,                                                                                     // opt-resolve-order
     cfgOptRepoGcsKeyType,                                                                                       // opt-resolve-order
     cfgOptRepoHost,                                                                                             // opt-resolve-order

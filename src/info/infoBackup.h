@@ -125,6 +125,9 @@ infoBackupFormat(const InfoBackup *const this)
 
 FN_EXTERN void infoBackupFormatSet(InfoBackup *this, unsigned int format);
 
+// Mark as updated. infoBackupSaveFile() writes only an updated info.
+FN_EXTERN void infoBackupUpdatedSet(InfoBackup *this);
+
 // Return a structure of the backup data from a specific index
 FN_EXTERN InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
 

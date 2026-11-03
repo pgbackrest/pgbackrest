@@ -213,5 +213,37 @@ testRun(void)
             infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecNewNone()),
             "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("load archive info file with the old passphrase");
+
+        const CipherSpec *const cipherSpecOld = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"));
+
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecOld), "save with old passphrase");
+        TEST_ASSIGN(
+            infoArchive,
+            infoArchiveLoadFile(
+                storageTest, STRDEF(INFO_ARCHIVE_FILE),
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("new"), .prior = cipherSpecOld)),
+            "load with old passphrase");
+        TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
+        TEST_RESULT_LOG(
+            "P00   WARN: '" TEST_PATH "/archive.info' was decrypted with the old passphrase\n"
+            "            HINT: run stanza-rekey to encrypt it with the new passphrase.");
+
+        TEST_ERROR(
+            infoArchiveLoadFile(
+                storageTest, STRDEF("missing.info"), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("new"), .prior = cipherSpecOld)),
+            FileMissingError,
+            "unable to load info file '" TEST_PATH "/missing.info' or '" TEST_PATH "/missing.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info.copy' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info.copy' for read\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.");
     }
 }

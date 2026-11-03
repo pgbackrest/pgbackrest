@@ -31,6 +31,7 @@ Main
 #include "command/server/server.h"
 #include "command/stanza/create.h"
 #include "command/stanza/delete.h"
+#include "command/stanza/rekey.h"
 #include "command/stanza/upgrade.h"
 #include "command/verify/verify.h"
 #include "common/debug.h"
@@ -233,6 +234,12 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdStanzaDelete:
                     cmdStanzaDelete();
+                    break;
+
+                // Stanza rekey command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdStanzaRekey:
+                    cmdStanzaRekey();
                     break;
 
                 // Stanza upgrade command

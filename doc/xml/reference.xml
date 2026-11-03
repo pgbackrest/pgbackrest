@@ -1466,6 +1466,18 @@
                         <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=</example>
                     </config-key>
 
+                    <config-key id="repo-cipher-pass-old" name="Repository Cipher Old Passphrase">
+                        <summary>Repository cipher passphrase before a rekey.</summary>
+
+                        <text>
+                            <p>Previous value of <br-option>repo-cipher-pass</br-option> while the repository is rekeyed with the <cmd>stanza-rekey</cmd> command. An info file that cannot be decrypted with <br-option>repo-cipher-pass</br-option> is decrypted with this passphrase and a warning is logged.</p>
+
+                            <p>Set <br-option>repo-cipher-pass</br-option> to the new passphrase and this option to the old passphrase on every host, run <cmd>stanza-rekey</cmd>, then remove this option.</p>
+                        </text>
+
+                        <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=</example>
+                    </config-key>
+
                     <config-key id="repo-cipher-rotate" name="Repository Cipher Rotation">
                         <summary>Archive key rotation period.</summary>
 
@@ -3037,6 +3049,42 @@
                         </text>
 
                         <example>6</example>
+                    </option>
+                </option-list>
+            </command>
+
+            <command id="stanza-rekey" name="Stanza Rekey">
+                <summary>Rekey a stanza.</summary>
+
+                <text>
+                    <p>Encrypt the info files of the stanza with the passphrase in <br-option>repo-cipher-pass</br-option>. The info files are decrypted with either <br-option>repo-cipher-pass</br-option> or <br-option>repo-cipher-pass-old</br-option>. Only the info files are encrypted with the passphrase, so backups and archived WAL are not rewritten.</p>
+
+                    <p>To change the passphrase:</p>
+
+                    <list>
+                        <list-item>On every host set <br-option>repo-cipher-pass</br-option> to the new passphrase and <br-option>repo-cipher-pass-old</br-option> to the old passphrase.</list-item>
+                        <list-item>Run the <cmd>stanza-rekey</cmd> command.</list-item>
+                        <list-item>On every host remove <br-option>repo-cipher-pass-old</br-option>.</list-item>
+                    </list>
+
+                    <p>Every host must have both options set before <cmd>stanza-rekey</cmd> runs. Once the stanza is rekeyed, a host that still has the old passphrase in <br-option>repo-cipher-pass</br-option> can no longer read the stanza.</p>
+
+                    <p>Each repository with <br-option>repo-cipher-pass-old</br-option> set is rekeyed. The command does not connect to <postgres/>.</p>
+
+                    <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
+                </text>
+
+                <option-list>
+                    <option id="key-rotate" name="Key Rotate">
+                        <summary>Rotate the archive key.</summary>
+
+                        <text>
+                            <p>Generate a new key to encrypt archived WAL. WAL encrypted with an earlier key remains readable. A backup set gets a new key with the next full backup.</p>
+
+                            <p>Archive key rotation requires <br-option>repo-format</br-option> 6 or higher.</p>
+                        </text>
+
+                        <example>y</example>
                     </option>
                 </option-list>
             </command>

@@ -956,6 +956,38 @@ testRun(void)
             infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()),
             "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("load backup info file with the old passphrase");
+
+        const CipherSpec *const cipherSpecOld = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"));
+
+        TEST_RESULT_BOOL(infoBackup->pub.updated, false, "not updated after load");
+        TEST_RESULT_VOID(infoBackupUpdatedSet(infoBackup), "set updated");
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecOld), "save with old passphrase");
+        TEST_ASSIGN(
+            infoBackup,
+            infoBackupLoadFile(
+                storageTest, STRDEF(INFO_BACKUP_FILE),
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("new"), .prior = cipherSpecOld)),
+            "load with old passphrase");
+        TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
+        TEST_RESULT_LOG(
+            "P00   WARN: '" TEST_PATH "/backup.info' was decrypted with the old passphrase\n"
+            "            HINT: run stanza-rekey to encrypt it with the new passphrase.");
+
+        TEST_ERROR(
+            infoBackupLoadFile(
+                storageTest, STRDEF("missing.info"), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("new"), .prior = cipherSpecOld)),
+            FileMissingError,
+            "unable to load info file '" TEST_PATH "/missing.info' or '" TEST_PATH "/missing.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info.copy' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info.copy' for read\n"
+            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "HINT: has a stanza-create been performed?");
     }
 
     // *****************************************************************************************************************************
