@@ -34,6 +34,69 @@ Restore Command
 #include "sync.c.inc"
 #include "validate.c.inc"
 
+/***********************************************************************************************************************************
+Synchronize restored directories and file link parents. The global directory is synchronized after pg_control is published.
+***********************************************************************************************************************************/
+static void
+restorePathSync(const Manifest *const manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    ASSERT(manifest != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Sync file link paths. These need to be synced separately because they are not linked from the data directory.
+        StringList *const pathSynced = strLstNew();
+
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+        {
+            const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
+
+            if (target->type == manifestTargetTypeLink && target->file != NULL)
+            {
+                const String *const pgPath = manifestTargetPath(manifest, target);
+
+                // Don't sync the same path twice. Multiple file links can share a path, but syncing it more than once makes the
+                // logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect performance.
+                if (strLstExists(pathSynced, pgPath))
+                    continue;
+                else
+                    strLstAdd(pathSynced, pgPath);
+
+                // Sync the path
+                LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
+                storagePathSyncP(storageLocalWrite(), pgPath);
+            }
+        }
+
+        // Sync paths in the data directory
+        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+        {
+            const String *const manifestName = manifestPath(manifest, pathIdx)->name;
+
+            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not
+            // much can be done about it for now.
+            if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
+                continue;
+
+            // We'll sync global after pg_control is written
+            if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
+                continue;
+
+            const String *const pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
+
+            LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
+            storagePathSyncP(storagePgWrite(), pgPath);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN void
 cmdRestore(void)
@@ -203,51 +266,7 @@ cmdRestore(void)
             restoreFileSystemSync(sync);
         else
 #endif
-        {
-            // Sync file link paths. These need to be synced separately because they are not linked from the data directory.
-            StringList *const pathSynced = strLstNew();
-
-            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(jobData.manifest); targetIdx++)
-            {
-                const ManifestTarget *const target = manifestTarget(jobData.manifest, targetIdx);
-
-                if (target->type == manifestTargetTypeLink && target->file != NULL)
-                {
-                    const String *const pgPath = manifestTargetPath(jobData.manifest, target);
-
-                    // Don't sync the same path twice. Multiple file links can share a path, but syncing it more than once makes the
-                    // logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect performance.
-                    if (strLstExists(pathSynced, pgPath))
-                        continue;
-                    else
-                        strLstAdd(pathSynced, pgPath);
-
-                    // Sync the path
-                    LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
-                    storagePathSyncP(storageLocalWrite(), pgPath);
-                }
-            }
-
-            // Sync paths in the data directory
-            for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(jobData.manifest); pathIdx++)
-            {
-                const String *const manifestName = manifestPath(jobData.manifest, pathIdx)->name;
-
-                // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not
-                // much can be done about it for now.
-                if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
-                    continue;
-
-                // We'll sync global after pg_control is written
-                if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
-                    continue;
-
-                const String *const pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
-
-                LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
-                storagePathSyncP(storagePgWrite(), pgPath);
-            }
-        }
+        restorePathSync(jobData.manifest);
 
         // Rename pg_control to remove the temp extension. This is done last to prevent a partially restored (or unsynced) cluster
         // from being started.
