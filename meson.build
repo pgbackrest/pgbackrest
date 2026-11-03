@@ -46,13 +46,18 @@ endif
 ####################################################################################################################################
 # OS-specific settings
 ####################################################################################################################################
+os_args = []
+
 if host_machine.system() == 'linux'
-    add_global_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
+    os_args = ['-D_POSIX_C_SOURCE=200809L']
+    add_project_arguments('-D_GNU_SOURCE', language: 'c')
 elif host_machine.system() == 'darwin'
-    add_global_arguments('-D_DARWIN_C_SOURCE', language: 'c')
+    os_args = ['-D_DARWIN_C_SOURCE']
 elif host_machine.system() == 'sunos'
-    add_global_arguments('-D_POSIX_C_SOURCE=200809L', '-D__EXTENSIONS__', language: 'c')
+    os_args = ['-D_POSIX_C_SOURCE=200809L', '-D__EXTENSIONS__']
 endif
+
+add_global_arguments(os_args, language: 'c')
 
 ####################################################################################################################################
 # Enable/disable warnings
@@ -182,6 +187,17 @@ dist = run_command(
 # Build configuration
 ####################################################################################################################################
 configuration = configuration_data()
+
+# Check for filesystem synchronization support. _GNU_SOURCE exposes the declaration on Linux.
+if host_machine.system() == 'linux' and cc.has_function('syncfs', prefix: '#include <unistd.h>', args: '-D_GNU_SOURCE')
+    configuration.set('HAVE_SYNCFS', true, description: 'Is syncfs present?')
+endif
+
+# GNU headers declare environ, while some other platforms require an explicit declaration.
+if cc.has_header_symbol(
+        'unistd.h', 'environ', args: os_args + (host_machine.system() == 'linux' ? ['-D_GNU_SOURCE'] : []))
+    configuration.set('HAVE_DECL_ENVIRON', true, description: 'Is environ declared in unistd.h?')
+endif
 
 # Ensure the C compiler supports __builtin_clzl()
 if not cc.links('''int main(void) {__builtin_clzl(1);}''')

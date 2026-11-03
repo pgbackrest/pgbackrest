@@ -3,6 +3,10 @@ Restore Command
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <fcntl.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "command/lock.h"
@@ -27,6 +31,7 @@ Restore Command
 #include "process.c.inc"
 #include "remap.c.inc"
 #include "select.c.inc"
+#include "sync.c.inc"
 #include "validate.c.inc"
 
 /**********************************************************************************************************************************/
@@ -37,6 +42,12 @@ cmdRestore(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const bool syncFileSystem = cfgOptionStrId(cfgOptRestoreSyncMethod) == CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS;
+
+#ifndef HAVE_SYNCFS
+        CHECK(OptionInvalidError, !syncFileSystem, "syncfs is not supported on this platform");
+#endif
+
         // Get information for the current user
         userInit();
 
@@ -124,6 +135,11 @@ cmdRestore(void)
         // Clean the data directory and build path/link structure
         restoreCleanBuild(jobData.manifest, jobData.rootReplaceUser, jobData.rootReplaceGroup);
 
+#ifdef HAVE_SYNCFS
+        // Retain descriptors before workers can write so the final sync reports writeback errors from the restore
+        RestoreSync *const sync = syncFileSystem ? restoreSyncNew(jobData.manifest) : NULL;
+#endif
+
         // Generate processing queues
         const uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
 
@@ -181,49 +197,56 @@ cmdRestore(void)
         // Remove backup.manifest
         storageRemoveP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);
 
-        // Sync file link paths. These need to be synced separately because they are not linked from the data directory.
-        StringList *const pathSynced = strLstNew();
-
-        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(jobData.manifest); targetIdx++)
+        // A filesystem barrier covers restored files and their paths, including file link parent directories
+#ifdef HAVE_SYNCFS
+        if (syncFileSystem)
+            restoreFileSystemSync(sync);
+        else
+#endif
         {
-            const ManifestTarget *const target = manifestTarget(jobData.manifest, targetIdx);
+            // Sync file link paths. These need to be synced separately because they are not linked from the data directory.
+            StringList *const pathSynced = strLstNew();
 
-            if (target->type == manifestTargetTypeLink && target->file != NULL)
+            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(jobData.manifest); targetIdx++)
             {
-                const String *const pgPath = manifestTargetPath(jobData.manifest, target);
+                const ManifestTarget *const target = manifestTarget(jobData.manifest, targetIdx);
 
-                // Don't sync the same path twice. There can be multiple links to files in the same path, but syncing it more than
-                // once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect
-                // performance.
-                if (strLstExists(pathSynced, pgPath))
-                    continue;
-                else
-                    strLstAdd(pathSynced, pgPath);
+                if (target->type == manifestTargetTypeLink && target->file != NULL)
+                {
+                    const String *const pgPath = manifestTargetPath(jobData.manifest, target);
 
-                // Sync the path
-                LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
-                storagePathSyncP(storageLocalWrite(), pgPath);
+                    // Don't sync the same path twice. Multiple file links can share a path, but syncing it more than once makes the
+                    // logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect performance.
+                    if (strLstExists(pathSynced, pgPath))
+                        continue;
+                    else
+                        strLstAdd(pathSynced, pgPath);
+
+                    // Sync the path
+                    LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
+                    storagePathSyncP(storageLocalWrite(), pgPath);
+                }
             }
-        }
 
-        // Sync paths in the data directory
-        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(jobData.manifest); pathIdx++)
-        {
-            const String *const manifestName = manifestPath(jobData.manifest, pathIdx)->name;
+            // Sync paths in the data directory
+            for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(jobData.manifest); pathIdx++)
+            {
+                const String *const manifestName = manifestPath(jobData.manifest, pathIdx)->name;
 
-            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not much
-            // can be done about it for now.
-            if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
-                continue;
+                // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not
+                // much can be done about it for now.
+                if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
+                    continue;
 
-            // We'll sync global after pg_control is written
-            if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
-                continue;
+                // We'll sync global after pg_control is written
+                if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
+                    continue;
 
-            const String *const pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
+                const String *const pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
 
-            LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
-            storagePathSyncP(storagePgWrite(), pgPath);
+                LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
+                storagePathSyncP(storagePgWrite(), pgPath);
+            }
         }
 
         // Rename pg_control to remove the temp extension. This is done last to prevent a partially restored (or unsynced) cluster
