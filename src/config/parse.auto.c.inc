@@ -8035,6 +8035,83 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                   // opt/repo-s3-key-type
     ),                                                                                                       // opt/repo-s3-key-type
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                          // opt/repo-s3-kms-encryption-context
+    (                                                                                          // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTION_NAME("repo-s3-kms-encryption-context"),                              // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTION_TYPE(Hash),                                                          // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTION_RESET(true),                                                         // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTION_REQUIRED(false),                                                     // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTION_SECTION(Global),                                                     // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTION_MULTI(true),                                                         // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                      // opt/repo-s3-kms-encryption-context
+                                                                                               // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                         // opt/repo-s3-kms-encryption-context
+        (                                                                                      // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                              // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                             // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                  // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Check)                                                   // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                  // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Info)                                                    // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                 // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                  // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                  // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                 // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                            // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                            // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                           // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                  // opt/repo-s3-kms-encryption-context
+        ),                                                                                     // opt/repo-s3-kms-encryption-context
+                                                                                               // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                        // opt/repo-s3-kms-encryption-context
+        (                                                                                      // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                              // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                             // opt/repo-s3-kms-encryption-context
+        ),                                                                                     // opt/repo-s3-kms-encryption-context
+                                                                                               // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                        // opt/repo-s3-kms-encryption-context
+        (                                                                                      // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                              // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                             // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                  // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                 // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                  // opt/repo-s3-kms-encryption-context
+        ),                                                                                     // opt/repo-s3-kms-encryption-context
+                                                                                               // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                       // opt/repo-s3-kms-encryption-context
+        (                                                                                      // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                              // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                             // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                  // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Check)                                                   // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                  // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Info)                                                    // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                 // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                  // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                  // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                 // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                            // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                            // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                           // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                  // opt/repo-s3-kms-encryption-context
+        ),                                                                                     // opt/repo-s3-kms-encryption-context
+                                                                                               // opt/repo-s3-kms-encryption-context
+        PARSE_RULE_OPTIONAL                                                                    // opt/repo-s3-kms-encryption-context
+        (                                                                                      // opt/repo-s3-kms-encryption-context
+            PARSE_RULE_OPTIONAL_GROUP                                                          // opt/repo-s3-kms-encryption-context
+            (                                                                                  // opt/repo-s3-kms-encryption-context
+                PARSE_RULE_OPTIONAL_DEPEND                                                     // opt/repo-s3-kms-encryption-context
+                (                                                                              // opt/repo-s3-kms-encryption-context
+                    PARSE_RULE_VAL_OPT(RepoS3KmsKeyId),                                        // opt/repo-s3-kms-encryption-context
+                ),                                                                             // opt/repo-s3-kms-encryption-context
+            ),                                                                                 // opt/repo-s3-kms-encryption-context
+        ),                                                                                     // opt/repo-s3-kms-encryption-context
+    ),                                                                                         // opt/repo-s3-kms-encryption-context
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                      // opt/repo-s3-kms-key-id
     (                                                                                                      // opt/repo-s3-kms-key-id
         PARSE_RULE_OPTION_NAME("repo-s3-kms-key-id"),                                                      // opt/repo-s3-kms-key-id
@@ -12338,5 +12415,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoHostPort,                                                                                         // opt-resolve-order
     cfgOptRepoS3Key,                                                                                            // opt-resolve-order
     cfgOptRepoS3KeySecret,                                                                                      // opt-resolve-order
+    cfgOptRepoS3KmsEncryptionContext,                                                                           // opt-resolve-order
     cfgOptRepoSftpHostFingerprint,                                                                              // opt-resolve-order
 };

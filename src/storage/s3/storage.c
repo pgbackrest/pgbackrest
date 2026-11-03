@@ -35,6 +35,7 @@ STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-secur
 STRING_STATIC(S3_HEADER_SRVSDENC_STR,                               "x-amz-server-side-encryption");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMS_STR,                           "aws:kms");
 STRING_STATIC(S3_HEADER_SRVSDENC_KMSKEYID_STR,                      "x-amz-server-side-encryption-aws-kms-key-id");
+STRING_STATIC(S3_HEADER_SRVSDENC_CONTEXT_STR,                       "x-amz-server-side-encryption-context");
 STRING_STATIC(S3_HEADER_SSECUSTKEY_ALGO_STR,                        "x-amz-server-side-encryption-customer-algorithm");
 STRING_STATIC(S3_HEADER_SSECUSTKEY_AES256_STR,                      "AES256");
 STRING_STATIC(S3_HEADER_SSECUSTKEY_KEY_STR,                         "x-amz-server-side-encryption-customer-key");
@@ -110,6 +111,7 @@ struct StorageS3
     String *secretAccessKey;                                        // Secret access key
     String *securityToken;                                          // Security token, if any
     const String *kmsKeyId;                                         // Server-side encryption key
+    const String *kmsEncryptionContext;                             // Base64 JSON of the KMS encryption context
     const String *sseCustomerKey;                                   // Base64 of SSE-C encryption key
     const String *sseCustomerKeyMd5;                                // Base64 of MD5 of SSE-C key
     size_t partSize;                                                // Part size for multi-part upload
@@ -598,6 +600,9 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
         {
             httpHeaderPut(requestHeader, S3_HEADER_SRVSDENC_STR, S3_HEADER_SRVSDENC_KMS_STR);
             httpHeaderPut(requestHeader, S3_HEADER_SRVSDENC_KMSKEYID_STR, this->kmsKeyId);
+
+            if (this->kmsEncryptionContext != NULL)
+                httpHeaderPut(requestHeader, S3_HEADER_SRVSDENC_CONTEXT_STR, this->kmsEncryptionContext);
         }
 
         // Set SSE-C headers when requested
@@ -1327,7 +1332,8 @@ storageS3New(
     const String *const bucket, const String *const endPoint, const String *const region, const String *const service,
     const StorageS3KeyType keyType, const StorageS3UriStyle uriStyle, const String *const accessKey,
     const String *const secretAccessKey, const String *const securityToken, const String *const kmsKeyId,
-    const String *sseCustomerKey, const String *const credRole, const String *const tokenFile, const String *const credUrl,
+    const KeyValue *const kmsEncryptionContext, const String *sseCustomerKey, const String *const credRole,
+    const String *const tokenFile, const String *const credUrl,
     const StringList *const credCmd, const String *const stsHost, const size_t partSize, const KeyValue *const tag,
     const String *host, const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType,
     const bool verifyPeer, const String *const caFile, const String *const caPath, const bool requesterPays,
@@ -1349,6 +1355,7 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
         FUNCTION_TEST_PARAM(STRING, kmsKeyId);
+        FUNCTION_LOG_PARAM(KEY_VALUE, kmsEncryptionContext);
         FUNCTION_TEST_PARAM(STRING, sseCustomerKey);
         FUNCTION_TEST_PARAM(STRING, credRole);
         FUNCTION_TEST_PARAM(STRING, tokenFile);
@@ -1396,6 +1403,21 @@ storageS3New(
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
         };
+
+        if (kmsEncryptionContext != NULL)
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                const String *const context = jsonFromVar(varNewKv(kvDup(kmsEncryptionContext)));
+
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    this->kmsEncryptionContext = strNewEncode(encodingBase64, BUFSTR(context));
+                }
+                MEM_CONTEXT_PRIOR_END();
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
 
         // Set prefetch and read over
         this->interface.prefetch = prefetch;

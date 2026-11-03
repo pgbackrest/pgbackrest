@@ -146,7 +146,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            202
+#define CFG_OPTION_TOTAL                                            203
 
 /***********************************************************************************************************************************
 Option value constants
@@ -624,6 +624,7 @@ typedef enum
     cfgOptRepoS3Key,
     cfgOptRepoS3KeySecret,
     cfgOptRepoS3KeyType,
+    cfgOptRepoS3KmsEncryptionContext,
     cfgOptRepoS3KmsKeyId,
     cfgOptRepoS3ProcessCmd,
     cfgOptRepoS3Region,
