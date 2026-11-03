@@ -93,6 +93,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("diff"),                                                                                            // val/str
     PARSE_RULE_STRPUB("error"),                                                                                           // val/str
     PARSE_RULE_STRPUB("fingerprint"),                                                                                     // val/str
+    PARSE_RULE_STRPUB("fsync"),                                                                                           // val/str
     PARSE_RULE_STRPUB("full"),                                                                                            // val/str
     PARSE_RULE_STRPUB("gcs"),                                                                                             // val/str
     PARSE_RULE_STRPUB("gz"),                                                                                              // val/str
@@ -137,6 +138,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("storage.googleapis.com"),                                                                          // val/str
     PARSE_RULE_STRPUB("strict"),                                                                                          // val/str
     PARSE_RULE_STRPUB("sts.amazonaws.com"),                                                                               // val/str
+    PARSE_RULE_STRPUB("syncfs"),                                                                                          // val/str
     PARSE_RULE_STRPUB("text"),                                                                                            // val/str
     PARSE_RULE_STRPUB("time"),                                                                                            // val/str
     PARSE_RULE_STRPUB("tls"),                                                                                             // val/str
@@ -235,6 +237,7 @@ typedef enum
     parseRuleValStrQT_diff_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_error_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_fingerprint_QT,                                                                                // val/str/enum
+    parseRuleValStrQT_fsync_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_full_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_gcs_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_gz_QT,                                                                                         // val/str/enum
@@ -279,6 +282,7 @@ typedef enum
     parseRuleValStrQT_storage_DT_googleapis_DT_com_QT,                                                               // val/str/enum
     parseRuleValStrQT_strict_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_sts_DT_amazonaws_DT_com_QT,                                                                    // val/str/enum
+    parseRuleValStrQT_syncfs_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_text_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_time_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_tls_QT,                                                                                        // val/str/enum
@@ -10602,6 +10606,43 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                             // opt/report
     ),                                                                                                                 // opt/report
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                     // opt/restore-sync-method
+    (                                                                                                     // opt/restore-sync-method
+        PARSE_RULE_OPTION_NAME("restore-sync-method"),                                                    // opt/restore-sync-method
+        PARSE_RULE_OPTION_TYPE(StringId),                                                                 // opt/restore-sync-method
+        PARSE_RULE_OPTION_BETA(true),                                                                     // opt/restore-sync-method
+        PARSE_RULE_OPTION_RESET(true),                                                                    // opt/restore-sync-method
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                 // opt/restore-sync-method
+        PARSE_RULE_OPTION_SECTION(Global),                                                                // opt/restore-sync-method
+                                                                                                          // opt/restore-sync-method
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/restore-sync-method
+        (                                                                                                 // opt/restore-sync-method
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/restore-sync-method
+        ),                                                                                                // opt/restore-sync-method
+                                                                                                          // opt/restore-sync-method
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                   // opt/restore-sync-method
+        (                                                                                                 // opt/restore-sync-method
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/restore-sync-method
+        ),                                                                                                // opt/restore-sync-method
+                                                                                                          // opt/restore-sync-method
+        PARSE_RULE_OPTIONAL                                                                               // opt/restore-sync-method
+        (                                                                                                 // opt/restore-sync-method
+            PARSE_RULE_OPTIONAL_GROUP                                                                     // opt/restore-sync-method
+            (                                                                                             // opt/restore-sync-method
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                            // opt/restore-sync-method
+                (                                                                                         // opt/restore-sync-method
+                    PARSE_RULE_VAL_STRID(fsync),                                                          // opt/restore-sync-method
+                    PARSE_RULE_VAL_STRID(syncfs),                                                         // opt/restore-sync-method
+                ),                                                                                        // opt/restore-sync-method
+                                                                                                          // opt/restore-sync-method
+                PARSE_RULE_OPTIONAL_DEFAULT                                                               // opt/restore-sync-method
+                (                                                                                         // opt/restore-sync-method
+                    PARSE_RULE_VAL_STRID(fsync),                                                          // opt/restore-sync-method
+                ),                                                                                        // opt/restore-sync-method
+            ),                                                                                            // opt/restore-sync-method
+        ),                                                                                                // opt/restore-sync-method
+    ),                                                                                                    // opt/restore-sync-method
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                  // opt/resume
     (                                                                                                                  // opt/resume
         PARSE_RULE_OPTION_NAME("resume"),                                                                              // opt/resume
@@ -12227,6 +12268,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoTargetTime,                                                                                       // opt-resolve-order
     cfgOptRepoType,                                                                                             // opt-resolve-order
     cfgOptReport,                                                                                               // opt-resolve-order
+    cfgOptRestoreSyncMethod,                                                                                    // opt-resolve-order
     cfgOptResume,                                                                                               // opt-resolve-order
     cfgOptSckBlock,                                                                                             // opt-resolve-order
     cfgOptSckKeepAlive,                                                                                         // opt-resolve-order

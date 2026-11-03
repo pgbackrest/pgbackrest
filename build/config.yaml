@@ -1290,6 +1290,20 @@ option:
     command-role:
       main: {}
 
+  restore-sync-method:
+    section: global
+    type: string-id
+    default: fsync
+    allow-list:
+      - fsync
+      - syncfs
+    beta: true
+    command:
+      restore: {}
+    command-role:
+      main: {}
+      local: {}
+
   tablespace-map:
     section: global
     type: hash

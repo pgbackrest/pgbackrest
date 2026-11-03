@@ -232,6 +232,8 @@ testRun(void)
             "                                      [current=/link1=/dest1, /link2=/dest2]\n"
             "  --recovery-option                   set an option in postgresql.auto.conf or\n"
             "                                      recovery.conf\n"
+            "  --restore-sync-method               method used to synchronize restored files\n"
+            "                                      [default=fsync]\n"
             "  --set                               backup set to restore [default=latest]\n"
             "  --tablespace-map                    restore a tablespace into the specified\n"
             "                                      directory\n"
@@ -697,6 +699,22 @@ testRun(void)
         cfgOptionIdxSet(cfgOptRepoStorageUploadChunkSize, 2, cfgSourceDefault, NULL);
 
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restore synchronization method help exposes its default and beta status");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "restore");
+        strLstAddZ(argList, "restore-sync-method");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help is available without beta opt-in");
+
+        const String *const syncHelp = helpRender();
+        TEST_RESULT_BOOL(strstr(strZ(syncHelp), "default: fsync") != NULL, true, "help retains fsync as default");
+        TEST_RESULT_BOOL(
+            strstr(strZ(syncHelp), "FOR BETA TESTING ONLY. DO NOT USE IN PRODUCTION.") != NULL, true,
+            "help warns about beta status");
     }
 
     // *****************************************************************************************************************************
