@@ -77,6 +77,17 @@ testInfoLoadCallback(void *data, unsigned int try)
 }
 
 /***********************************************************************************************************************************
+Test load file callback
+***********************************************************************************************************************************/
+static String *testInfoLoadFileContent = NULL;
+
+static void *
+testInfoLoadFileNew(IoRead *const read, const CipherSpec *const cipherSpec)
+{
+    return infoNewLoad(read, cipherSpec, harnessInfoLoadNewCallback, testInfoLoadFileContent);
+}
+
+/***********************************************************************************************************************************
 Test save callbacks
 ***********************************************************************************************************************************/
 static void
@@ -523,5 +534,23 @@ testRun(void)
         testInfoLoad = (TestInfoLoad){0};
 
         infoLoad(STRDEF("SHOULD BE NO ERROR"), testInfoLoadCallback, &testInfoLoad);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("infoLoadFile()");
+
+        const Storage *const storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
+        testInfoLoadFileContent = strNew();
+
+        TEST_ERROR(
+            infoLoadFile(storageTest, STRDEF("test.info"), cipherSpecNewNone(), testInfoLoadFileNew), FileMissingError,
+            "unable to load info file '" TEST_PATH "/test.info' or '" TEST_PATH "/test.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/test.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/test.info.copy' for read");
+
+        HRN_INFO_PUT(storageTest, "test.info.copy", "[c]\nkey=\"copy\"\n");
+
+        TEST_RESULT_PTR_NE(
+            infoLoadFile(storageTest, STRDEF("test.info"), cipherSpecNewNone(), testInfoLoadFileNew), NULL, "load copy");
+        TEST_RESULT_STR_Z(testInfoLoadFileContent, "[c] key=\"copy\"\n", "copy content");
     }
 }

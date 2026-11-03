@@ -745,50 +745,16 @@ infoBackupDataDependentList(const InfoBackup *const this, const String *const ba
 }
 
 /**********************************************************************************************************************************/
-typedef struct InfoBackupLoadFileData
+// Create from a read of the file
+static void *
+infoBackupLoadFileNew(IoRead *const read, const CipherSpec *const cipherSpec)
 {
-    MemContext *memContext;                                         // Mem context
-    const Storage *storage;                                         // Storage to load from
-    const String *fileName;                                         // Base filename
-    const CipherSpec *cipherSpec;                                   // Cipher spec
-    InfoBackup *infoBackup;                                         // Loaded infoBackup object
-} InfoBackupLoadFileData;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, read);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
+    FUNCTION_TEST_END();
 
-static bool
-infoBackupLoadFileCallback(void *const data, const unsigned int try)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(UINT, try);
-    FUNCTION_LOG_END();
-
-    ASSERT(data != NULL);
-
-    InfoBackupLoadFileData *const loadData = data;
-    bool result = false;
-
-    if (try < 2)
-    {
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Construct filename based on try
-            const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
-
-            // Attempt to load the file
-            IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-            cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), loadData->cipherSpec);
-
-            MEM_CONTEXT_BEGIN(loadData->memContext)
-            {
-                loadData->infoBackup = infoBackupNewLoad(read, loadData->cipherSpec);
-                result = true;
-            }
-            MEM_CONTEXT_END();
-        }
-        MEM_CONTEXT_TEMP_END();
-    }
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(INFO_BACKUP, infoBackupNewLoad(read, cipherSpec));
 }
 
 FN_EXTERN InfoBackup *
@@ -805,38 +771,24 @@ infoBackupLoadFile(
     ASSERT(fileName != NULL);
     ASSERT(cipherSpec != NULL);
 
-    InfoBackupLoadFileData data =
-    {
-        .memContext = memContextCurrent(),
-        .storage = storage,
-        .fileName = fileName,
-        .cipherSpec = cipherSpec,
-    };
+    InfoBackup *result = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    TRY_BEGIN()
     {
-        const char *const fileNamePath = strZ(storagePathP(storage, fileName));
-
-        TRY_BEGIN()
-        {
-            infoLoad(
-                strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),
-                infoBackupLoadFileCallback, &data);
-        }
-        CATCH_ANY()
-        {
-            THROWP_FMT(
-                errorType(),
-                "%s\n"
-                "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-                "HINT: has a stanza-create been performed?",
-                errorMessage());
-        }
-        TRY_END();
+        result = infoLoadFile(storage, fileName, cipherSpec, infoBackupLoadFileNew);
     }
-    MEM_CONTEXT_TEMP_END();
+    CATCH_ANY()
+    {
+        THROWP_FMT(
+            errorType(),
+            "%s\n"
+            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "HINT: has a stanza-create been performed?",
+            errorMessage());
+    }
+    TRY_END();
 
-    FUNCTION_LOG_RETURN(INFO_BACKUP, data.infoBackup);
+    FUNCTION_LOG_RETURN(INFO_BACKUP, result);
 }
 
 /**********************************************************************************************************************************/

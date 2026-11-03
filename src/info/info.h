@@ -34,6 +34,9 @@ Function types for loading and saving
 typedef bool InfoLoadCallback(void *data, unsigned int try);
 // {uncrustify_on}
 
+// Create an object from a read of an info file
+typedef void *InfoLoadFileNewCallback(IoRead *read, const CipherSpec *cipherSpec);
+
 typedef void InfoLoadNewCallback(void *data, const String *section, const String *key, JsonRead *value);
 typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
 
@@ -120,6 +123,10 @@ Helper functions
 ***********************************************************************************************************************************/
 // Load info file(s) and throw error for each attempt if none are successful
 FN_EXTERN void infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callbackData);
+
+// Load an info file, else its copy, and throw an error for each attempt if neither is loaded
+FN_EXTERN void *infoLoadFile(
+    const Storage *storage, const String *fileName, const CipherSpec *cipherSpec, InfoLoadFileNewCallback *newLoad);
 
 /***********************************************************************************************************************************
 Macros for function logging

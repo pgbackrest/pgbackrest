@@ -757,3 +757,92 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
 
     FUNCTION_LOG_RETURN_VOID();
 }
+
+/**********************************************************************************************************************************/
+typedef struct InfoLoadFileData
+{
+    MemContext *memContext;                                         // Mem context
+    const Storage *storage;                                         // Storage to load from
+    const String *fileName;                                         // Base filename
+    const CipherSpec *cipherSpec;                                   // Cipher spec
+    InfoLoadFileNewCallback *newLoad;                               // Create the object from a read of the file
+    void *result;                                                   // Loaded object
+} InfoLoadFileData;
+
+static bool
+infoLoadFileCallback(void *const data, const unsigned int try)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(UINT, try);
+    FUNCTION_LOG_END();
+
+    ASSERT(data != NULL);
+
+    InfoLoadFileData *const loadData = data;
+    bool result = false;
+
+    if (try < 2)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Construct filename based on try
+            const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
+
+            // Attempt to load the file
+            IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
+            cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), loadData->cipherSpec);
+
+            MEM_CONTEXT_BEGIN(loadData->memContext)
+            {
+                loadData->result = loadData->newLoad(read, loadData->cipherSpec);
+                result = true;
+            }
+            MEM_CONTEXT_END();
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+FN_EXTERN void *
+infoLoadFile(
+    const Storage *const storage, const String *const fileName, const CipherSpec *const cipherSpec,
+    InfoLoadFileNewCallback *const newLoad)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_LOG_PARAM(FUNCTIONP, newLoad);
+    FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_CALLBACK();
+
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT(cipherSpec != NULL);
+    ASSERT(newLoad != NULL);
+
+    InfoLoadFileData data =
+    {
+        .memContext = memContextCurrent(),
+        .storage = storage,
+        .fileName = fileName,
+        .cipherSpec = cipherSpec,
+        .newLoad = newLoad,
+    };
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const char *const fileNamePath = strZ(storagePathP(storage, fileName));
+
+        infoLoad(
+            strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath), infoLoadFileCallback,
+            &data);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_P(VOID, data.result);
+}
