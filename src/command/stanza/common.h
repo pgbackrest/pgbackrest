@@ -13,6 +13,9 @@ Functions
 // Generate a sub pass for a file at this format, which sets the digest since that is what will derive it when it is read back
 FN_EXTERN CipherSpec *cipherSpecGen(CipherType cipherType, unsigned int format);
 
+// Error when the passphrase of an encrypted repository is a documentation example or, at Format >= 6, does not look generated
+FN_EXTERN void stanzaCipherPassCheck(unsigned int repoIdx, unsigned int format);
+
 // Validate and return database information
 FN_EXTERN PgControl pgValidate(void);
 
