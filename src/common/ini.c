@@ -83,6 +83,29 @@ iniNew(IoRead *const read, const IniNewParam param)
     FUNCTION_LOG_RETURN(INI, this);
 }
 
+/***********************************************************************************************************************************
+Line to show in an error. A line with a control character other than tab is shown as <binary data>.
+***********************************************************************************************************************************/
+static const char *
+iniLineError(const String *const line)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, line);
+    FUNCTION_TEST_END();
+
+    ASSERT(line != NULL);
+
+    for (size_t lineIdx = 0; lineIdx < strSize(line); lineIdx++)
+    {
+        const unsigned char chr = (unsigned char)strZ(line)[lineIdx];
+
+        if ((chr < ' ' && chr != '\t') || chr == 0x7F)
+            FUNCTION_TEST_RETURN_CONST(STRINGZ, "<binary data>");
+    }
+
+    FUNCTION_TEST_RETURN_CONST(STRINGZ, strZ(line));
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN const IniValue *
 iniValueNext(Ini *const this)
@@ -117,25 +140,28 @@ iniValueNext(Ini *const this)
                 {
                     // Make sure the section ends with ]
                     if (!this->strict && linePtr[strSize(line) - 1] != ']')
-                        THROW_FMT(FormatError, "ini section should end with ] at line %u: %s", this->lineIdx, linePtr);
+                        THROW_FMT(FormatError, "ini section should end with ] at line %u: %s", this->lineIdx, iniLineError(line));
 
                     // Store the section
                     strCatZN(strTrunc(this->value.section), linePtr + 1, strSize(line) - 2);
 
                     if (strEmpty(this->value.section))
-                        THROW_FMT(FormatError, "invalid empty section at line %u: %s", this->lineIdx, linePtr);
+                        THROW_FMT(FormatError, "invalid empty section at line %u: %s", this->lineIdx, iniLineError(line));
                 }
                 // Else it is a key/value
                 else
                 {
                     if (strEmpty(this->value.section))
-                        THROW_FMT(FormatError, "key/value found outside of section at line %u: %s", this->lineIdx, linePtr);
+                    {
+                        THROW_FMT(
+                            FormatError, "key/value found outside of section at line %u: %s", this->lineIdx, iniLineError(line));
+                    }
 
                     // Find the =
                     const char *lineEqual = strstr(linePtr, "=");
 
                     if (lineEqual == NULL)
-                        THROW_FMT(FormatError, "missing '=' in key/value at line %u: %s", this->lineIdx, linePtr);
+                        THROW_FMT(FormatError, "missing '=' in key/value at line %u: %s", this->lineIdx, iniLineError(line));
 
                     // Extract the key/value. For strict this may require some retries if the key includes an = character since this
                     // is also the separator. We know the value must be valid JSON so if it isn't then add the characters up to the
@@ -166,7 +192,7 @@ iniValueNext(Ini *const this)
                                 if (lineEqual == NULL)
                                 {
                                     THROW_FMT(
-                                        FormatError, "invalid JSON value at line %u '%s': %s", this->lineIdx, linePtr,
+                                        FormatError, "invalid JSON value at line %u '%s': %s", this->lineIdx, iniLineError(line),
                                         errorMessage());
                                 }
 
@@ -186,7 +212,7 @@ iniValueNext(Ini *const this)
 
                     // Key may not be zero-length
                     if (strSize(this->value.key) == 0)
-                        THROW_FMT(FormatError, "key is zero-length at line %u: %s", this->lineIdx, linePtr);
+                        THROW_FMT(FormatError, "key is zero-length at line %u: %s", this->lineIdx, iniLineError(line));
 
                     // A value was found so return it
                     result = &this->value;
