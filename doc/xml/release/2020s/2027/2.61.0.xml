@@ -1,5 +1,22 @@
 <release date="XXXX-XX-XX" version="2.61.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2889"/>
+                <github-pull-request id="2900"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix reporting of <proper>OpenSSL</proper> errors.</p>
+
+                <p>An error queued by the <proper>OpenSSL</proper> config or left over from an earlier failure could be reported instead of the actual failure, e.g. <quote>ssl command section not found</quote> for an invalid <br-option>tls-cipher-12</br-option> value. System errors such as a missing CA file reported <quote>no details available</quote> with <proper>OpenSSL</proper> &gt;= 3.0 and now report the system error message.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-feature-list>
             <release-item>
                 <commit subject="Use 256-bit subkeys for repository format 6.">
