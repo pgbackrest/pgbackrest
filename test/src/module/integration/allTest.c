@@ -3,6 +3,7 @@ Real Integration Test
 ***********************************************************************************************************************************/
 #include "common/crypto/common.h"
 #include "config/config.h"
+#include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -45,6 +46,11 @@ Test statuses
 #define TEST_STATUS_XID                                             "xid"
 
 #define TEST_RESTORE_POINT                                          "pgbackrest"
+
+/***********************************************************************************************************************************
+Passphrase generated with openssl rand -base64 32 for rekey
+***********************************************************************************************************************************/
+#define TEST_CIPHER_PASS_REKEY                                      "U3wR+u+uplH37Lo863u+aJ74uVMPqCAevLGzu2sajYE="
 
 /***********************************************************************************************************************************
 Test Run
@@ -224,6 +230,40 @@ testRun(void)
 
             // Stop the standby since restores to primary will break it
             HRN_HOST_PG_STOP(pg2);
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("rekey from a host without encryption settings");
+
+        if (cipherSpecType(hrnHostCipherSpec()) != cipherTypeNone)
+        {
+            const CipherSpec *const cipherSpecRekey = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_REKEY));
+
+            // Set the new and old passphrases on the host acting as repository
+            hrnHostConfigUpdateP(
+                .cipherSpec = cipherSpecNewP(
+                    cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_REKEY), .prior = hrnHostCipherSpec()));
+
+            // Info files are decrypted with the old passphrase from the repository host
+            TEST_RESULT_BOOL(
+                strstr(strZ(hrnHostExecBrP(pg1, CFGCMD_CHECK)), "was decrypted with the old passphrase") != NULL, true,
+                "check with old passphrase");
+
+            // Rekey and remove the old passphrase
+            TEST_HOST_BR(pg1, CFGCMD_STANZA_REKEY);
+
+            hrnHostConfigUpdateP(.cipherSpec = cipherSpecRekey);
+
+            // Info files are decrypted with the new passphrase
+            TEST_RESULT_BOOL(
+                strstr(strZ(hrnHostExecBrP(pg1, CFGCMD_CHECK)), "was decrypted with the old passphrase") == NULL, true,
+                "check with new passphrase");
+            TEST_RESULT_VOID(
+                infoArchiveLoadFile(hrnHostRepo1Storage(repo), STRDEF("archive/" HRN_STANZA "/archive.info"), cipherSpecRekey),
+                "archive info rekeyed");
+            TEST_RESULT_VOID(
+                infoBackupLoadFile(hrnHostRepo1Storage(repo), STRDEF("backup/" HRN_STANZA "/backup.info"), cipherSpecRekey),
+                "backup info rekeyed");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------

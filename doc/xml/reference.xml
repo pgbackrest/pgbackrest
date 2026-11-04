@@ -1472,7 +1472,7 @@
                         <text>
                             <p>Previous value of <br-option>repo-cipher-pass</br-option> while the repository is rekeyed with the <cmd>stanza-rekey</cmd> command. An info file that cannot be decrypted with <br-option>repo-cipher-pass</br-option> is decrypted with this passphrase and a warning is logged.</p>
 
-                            <p>Set <br-option>repo-cipher-pass</br-option> to the new passphrase and this option to the old passphrase on every host, run <cmd>stanza-rekey</cmd>, then remove this option.</p>
+                            <p>Set <br-option>repo-cipher-pass</br-option> to the new passphrase and this option to the old passphrase on every host where <br-option>repo-cipher-pass</br-option> is configured, run <cmd>stanza-rekey</cmd>, then remove this option.</p>
                         </text>
 
                         <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=</example>
@@ -3062,12 +3062,14 @@
                     <p>To change the passphrase:</p>
 
                     <list>
-                        <list-item>On every host set <br-option>repo-cipher-pass</br-option> to the new passphrase and <br-option>repo-cipher-pass-old</br-option> to the old passphrase.</list-item>
+                        <list-item>On every host where <br-option>repo-cipher-pass</br-option> is configured set it to the new passphrase and set <br-option>repo-cipher-pass-old</br-option> to the old passphrase.</list-item>
                         <list-item>Run the <cmd>stanza-rekey</cmd> command.</list-item>
-                        <list-item>On every host remove <br-option>repo-cipher-pass-old</br-option>.</list-item>
+                        <list-item>On the same hosts remove <br-option>repo-cipher-pass-old</br-option>.</list-item>
                     </list>
 
-                    <p>Every host must have both options set before <cmd>stanza-rekey</cmd> runs. Once the stanza is rekeyed, a host that still has the old passphrase in <br-option>repo-cipher-pass</br-option> can no longer read the stanza.</p>
+                    <p>A host with no encryption settings gets both options from the repository host. Every host where <br-option>repo-cipher-pass</br-option> is configured must have both options set before <cmd>stanza-rekey</cmd> runs. Once the stanza is rekeyed, a host that still has the old passphrase in <br-option>repo-cipher-pass</br-option> can no longer read the stanza.</p>
+
+                    <p>Until the stanza is rekeyed, <cmd>repo-get</cmd> can read an info file only when <br-option>repo-cipher-pass</br-option> is the passphrase it was encrypted with.</p>
 
                     <p>Each encrypted repository with <br-option>repo-cipher-pass-old</br-option> set is rekeyed. The command does not connect to <postgres/>.</p>
 

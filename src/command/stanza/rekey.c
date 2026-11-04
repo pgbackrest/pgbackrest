@@ -104,6 +104,8 @@ cmdStanzaRekey(void)
 
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
+            // Get the repo storage in case it is remote and encryption settings need to be pulled down
+            const Storage *const storageRepoReadStanza = storageRepoIdx(repoIdx);
             const CipherType cipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
 
             // Skip a repo that is not encrypted
@@ -127,7 +129,6 @@ cmdStanzaRekey(void)
             // Load the info files (errors if missing). The passphrase is loaded without the old passphrase attached.
             const CipherSpec *const cipherSpecMain = cfgCipherSpecMainIdx(repoIdx);
             const CipherSpec *const cipherSpec = cipherSpecNewP(cipherType, cipherSpecPass(cipherSpecMain));
-            const Storage *const storageRepoReadStanza = storageRepoIdx(repoIdx);
 
             InfoArchive *const infoArchive = stanzaRekeyInfoArchiveLoad(
                 storageRepoReadStanza, cipherSpec, cipherSpecPrior(cipherSpecMain));
