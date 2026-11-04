@@ -191,9 +191,13 @@ iniValueNext(Ini *const this)
 
                                 if (lineEqual == NULL)
                                 {
+                                    // Omit the JSON error for a binary line since the error contains part of the line
+                                    const char *const lineError = iniLineError(line);
+                                    const bool lineShow = lineError == strZ(line);
+
                                     THROW_FMT(
-                                        FormatError, "invalid JSON value at line %u '%s': %s", this->lineIdx, iniLineError(line),
-                                        errorMessage());
+                                        FormatError, "invalid JSON value at line %u '%s'%s%s", this->lineIdx, lineError,
+                                        lineShow ? ": " : "", lineShow ? errorMessage() : "");
                                 }
 
                                 // Try again with = in new position

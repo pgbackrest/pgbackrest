@@ -50,6 +50,9 @@ testRun(void)
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey=value\n")), .strict = true)), FormatError,
             "invalid JSON value at line 2 'key=value': invalid type at: value");
         TEST_ERROR(
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey=\x01x\n")), .strict = true)), FormatError,
+            "invalid JSON value at line 2 '<binary data>'");
+        TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey")), .strict = true)), FormatError,
             "missing '=' in key/value at line 2: key");
         TEST_ERROR(
