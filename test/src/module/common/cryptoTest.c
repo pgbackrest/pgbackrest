@@ -72,6 +72,8 @@ testRun(void)
             " no digest set");
         EVP_MD_CTX_free(context);
 
+        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error queue cleared on init");
 
