@@ -3069,24 +3069,12 @@
 
                     <p>Every host must have both options set before <cmd>stanza-rekey</cmd> runs. Once the stanza is rekeyed, a host that still has the old passphrase in <br-option>repo-cipher-pass</br-option> can no longer read the stanza.</p>
 
-                    <p>Each repository with <br-option>repo-cipher-pass-old</br-option> set is rekeyed. The command does not connect to <postgres/>.</p>
+                    <p>Each encrypted repository with <br-option>repo-cipher-pass-old</br-option> set is rekeyed. The command does not connect to <postgres/>.</p>
+
+                    <p>The archive key of each encrypted repository is also rotated, even when <br-option>repo-cipher-pass-old</br-option> is not set. A new key is generated to encrypt archived WAL and WAL encrypted with an earlier key remains readable. A backup set gets a new key with the next full backup. Archive key rotation requires <br-option>repo-format</br-option> 6 or higher.</p>
 
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>
-
-                <option-list>
-                    <option id="key-rotate" name="Key Rotate">
-                        <summary>Rotate the archive key.</summary>
-
-                        <text>
-                            <p>Generate a new key to encrypt archived WAL. WAL encrypted with an earlier key remains readable. A backup set gets a new key with the next full backup.</p>
-
-                            <p>Archive key rotation requires <br-option>repo-format</br-option> 6 or higher.</p>
-                        </text>
-
-                        <example>y</example>
-                    </option>
-                </option-list>
             </command>
 
             <command id="stanza-delete" name="Stanza Delete">

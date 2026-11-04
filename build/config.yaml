@@ -344,14 +344,6 @@ option:
     command-role:
       main: {}
 
-  key-rotate:
-    type: boolean
-    default: false
-    command:
-      stanza-rekey: {}
-    command-role:
-      main: {}
-
   oldest:
     type: boolean
     default: false

@@ -87,7 +87,6 @@ Option constants
 #define CFGOPT_IO_TIMEOUT                                           "io-timeout"
 #define CFGOPT_JOB_RETRY                                            "job-retry"
 #define CFGOPT_JOB_RETRY_INTERVAL                                   "job-retry-interval"
-#define CFGOPT_KEY_ROTATE                                           "key-rotate"
 #define CFGOPT_LINK_ALL                                             "link-all"
 #define CFGOPT_LINK_MAP                                             "link-map"
 #define CFGOPT_LOCK                                                 "lock"
@@ -148,7 +147,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            204
+#define CFG_OPTION_TOTAL                                            203
 
 /***********************************************************************************************************************************
 Option value constants
@@ -531,7 +530,6 @@ typedef enum
     cfgOptIoTimeout,
     cfgOptJobRetry,
     cfgOptJobRetryInterval,
-    cfgOptKeyRotate,
     cfgOptLinkAll,
     cfgOptLinkMap,
     cfgOptLock,

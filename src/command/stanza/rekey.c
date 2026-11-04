@@ -91,7 +91,6 @@ cmdStanzaRekey(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const bool keyRotate = cfgOptionBool(cfgOptKeyRotate);
         unsigned int repoIdxMin = 0;
         unsigned int repoIdxMax = cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1;
         unsigned int repoTotal = 0;
@@ -106,11 +105,12 @@ cmdStanzaRekey(void)
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             const CipherType cipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
-            const bool rekey = cipherType != cipherTypeNone && cfgOptionIdxTest(cfgOptRepoCipherPassOld, repoIdx);
 
-            // Skip a repo that is not encrypted or has nothing to rekey or rotate
-            if (cipherType == cipherTypeNone || (!rekey && !keyRotate))
+            // Skip a repo that is not encrypted
+            if (cipherType == cipherTypeNone)
                 continue;
+
+            const bool rekey = cfgOptionIdxTest(cfgOptRepoCipherPassOld, repoIdx);
 
             LOG_INFO_FMT(
                 CFGCMD_STANZA_REKEY " for stanza '%s' on %s", strZ(cfgOptionDisplay(cfgOptStanza)),
@@ -142,27 +142,18 @@ cmdStanzaRekey(void)
                 stanzaCipherPassCheck(repoIdx, format, "rekey a stanza");
 
             // Rotate the archive key. Format < 6 has a single archive key that cannot be rotated.
-            bool archiveRotate = false;
-
-            if (keyRotate)
+            if (format >= REPOSITORY_FORMAT_6)
             {
-                if (format < REPOSITORY_FORMAT_6)
-                {
-                    LOG_WARN(
-                        "option '" CFGOPT_KEY_ROTATE "' requires repository format " STRINGIFY(REPOSITORY_FORMAT_6) " or higher");
-                }
-                else
-                {
-                    infoArchiveCipherRotate(infoArchive, cipherSpecGen(cipherType, format), time(NULL));
-                    archiveRotate = true;
+                infoArchiveCipherRotate(infoArchive, cipherSpecGen(cipherType, format), time(NULL));
 
-                    LOG_INFO_FMT(
-                        "rotate archive key to id %s", strZ(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive))));
-                }
+                LOG_INFO_FMT("rotate archive key to id %s", strZ(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive))));
             }
+            // Else warn when there is nothing to do
+            else if (!rekey)
+                LOG_WARN("archive key rotation requires repository format " STRINGIFY(REPOSITORY_FORMAT_6) " or higher");
 
             // Save the info files with the passphrase
-            if (rekey || archiveRotate)
+            if (rekey || format >= REPOSITORY_FORMAT_6)
             {
                 infoArchiveSaveFile(
                     infoArchive, storageRepoIdxWrite(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
@@ -180,14 +171,9 @@ cmdStanzaRekey(void)
             repoTotal++;
         }
 
-        // Error when no repo was rekeyed or rotated
+        // Error when no repo is encrypted
         if (repoTotal == 0)
-        {
-            THROW_FMT(
-                OptionRequiredError, CFGCMD_STANZA_REKEY " requires an encrypted repository with option '%s' or option '"
-                CFGOPT_KEY_ROTATE "'",
-                cfgOptionIdxName(cfgOptRepoCipherPassOld, repoIdxMin));
-        }
+            THROW(RepoInvalidError, CFGCMD_STANZA_REKEY " requires an encrypted repository");
     }
     MEM_CONTEXT_TEMP_END();
 

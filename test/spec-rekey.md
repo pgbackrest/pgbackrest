@@ -119,14 +119,13 @@ cipher-pass={"1":{"key":"afg...","digest":"sha256"}, ...}
 - Loads each info file with either passphrase and saves it and its copy with `repo-cipher-pass`, so running it again after a crash converges. It loads with `repo-cipher-pass` and then `repo-cipher-pass-old` itself rather than through the fallback, so it does not log the fallback warning.
 - Checks the new passphrase like `stanza-create`: the documentation example prefix is rejected at every format and `cipherPassGenerated()` applies at format >= 6. The new passphrase must differ from the old one.
 - Rekeys at every format. Enabling encryption is a different operation, so unencrypted repositories are skipped.
-- Rekeys each encrypted repository with `repo-cipher-pass-old` set and rotates the archive key of each encrypted repository when `--key-rotate` is on. `--repo` limits it to one. It errors when no repository was rekeyed or rotated.
+- Rekeys each encrypted repository with `repo-cipher-pass-old` set and rotates the archive key of each encrypted repository. `--repo` limits it to one. It errors when no repository is encrypted.
 - The format of `archive.info` decides the passphrase checks and whether the archive key can rotate. `stanza-upgrade` saves `archive.info` first, so it is never at a lower format than `backup.info`.
 
 ### Key rotation on rekey
 
-- `--key-rotate` rotates the archive key: a new key is appended and made current, the same as the scheduled rotation at expire. Without `repo-cipher-pass-old`, `stanza-rekey --key-rotate` only rotates the archive key.
-- The option defaults to off, since a new boolean option is named so its default is false rather than relying on negation.
-- At format 5 there is only one archive key, so rotation is skipped with a warning.
+- `stanza-rekey` always rotates the archive key: a new key is appended and made current, the same as the scheduled rotation at expire. Without `repo-cipher-pass-old` it only rotates the archive key. Each run adds one key, including a run that repeats after a crash.
+- At format 5 there is only one archive key, so rotation is skipped. A run without `repo-cipher-pass-old` has nothing to do and warns.
 - A backup set key rotates with the next full backup, since keys are found by the label of the full. The id 0 key of a migrated stanza cannot change without rewriting the manifests that use it and remains until they expire.
 - Retired keys stay in the maps so existing data stays readable. When the old passphrase and the repository were both exposed, rotation protects only data written afterwards.
 

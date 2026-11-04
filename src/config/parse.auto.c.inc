@@ -2866,30 +2866,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                 // opt/job-retry-interval
     ),                                                                                                     // opt/job-retry-interval
     // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION                                                                                              // opt/key-rotate
-    (                                                                                                              // opt/key-rotate
-        PARSE_RULE_OPTION_NAME("key-rotate"),                                                                      // opt/key-rotate
-        PARSE_RULE_OPTION_TYPE(Boolean),                                                                           // opt/key-rotate
-        PARSE_RULE_OPTION_REQUIRED(true),                                                                          // opt/key-rotate
-        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                    // opt/key-rotate
-                                                                                                                   // opt/key-rotate
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/key-rotate
-        (                                                                                                          // opt/key-rotate
-            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                 // opt/key-rotate
-        ),                                                                                                         // opt/key-rotate
-                                                                                                                   // opt/key-rotate
-        PARSE_RULE_OPTIONAL                                                                                        // opt/key-rotate
-        (                                                                                                          // opt/key-rotate
-            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/key-rotate
-            (                                                                                                      // opt/key-rotate
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/key-rotate
-                (                                                                                                  // opt/key-rotate
-                    PARSE_RULE_VAL_BOOL_FALSE,                                                                     // opt/key-rotate
-                ),                                                                                                 // opt/key-rotate
-            ),                                                                                                     // opt/key-rotate
-        ),                                                                                                         // opt/key-rotate
-    ),                                                                                                             // opt/key-rotate
-    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                // opt/link-all
     (                                                                                                                // opt/link-all
         PARSE_RULE_OPTION_NAME("link-all"),                                                                          // opt/link-all
@@ -12469,7 +12445,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptIoTimeout,                                                                                            // opt-resolve-order
     cfgOptJobRetry,                                                                                             // opt-resolve-order
     cfgOptJobRetryInterval,                                                                                     // opt-resolve-order
-    cfgOptKeyRotate,                                                                                            // opt-resolve-order
     cfgOptLinkAll,                                                                                              // opt-resolve-order
     cfgOptLinkMap,                                                                                              // opt-resolve-order
     cfgOptLock,                                                                                                 // opt-resolve-order

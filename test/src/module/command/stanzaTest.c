@@ -1576,9 +1576,7 @@ testRun(void)
         StringList *argList = strLstDup(argListRekey);
         HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
 
-        TEST_ERROR(
-            cmdStanzaRekey(), OptionRequiredError,
-            "stanza-rekey requires an encrypted repository with option 'repo1-cipher-pass-old' or option 'key-rotate'");
+        TEST_ERROR(cmdStanzaRekey(), RepoInvalidError, "stanza-rekey requires an encrypted repository");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create encrypted stanzas at format 6 on repo2 and format 5 on repo3");
@@ -1607,22 +1605,10 @@ testRun(void)
         hrnCfgArgKeyRawStrId(argListRekey, cfgOptRepoCipherType, 3, cipherTypeAes256Cbc);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("nothing to rekey or rotate");
-
-        argList = strLstDup(argListRekey);
-        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
-
-        TEST_ERROR(
-            cmdStanzaRekey(), OptionRequiredError,
-            "stanza-rekey requires an encrypted repository with option 'repo2-cipher-pass-old' or option 'key-rotate'");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rotate the archive key without a rekey");
 
         argList = strLstDup(argListRekey);
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        hrnCfgArgRawBool(argList, cfgOptKeyRotate, true);
         HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
 
         TEST_RESULT_VOID(cmdStanzaRekey(), "stanza rekey");
@@ -1639,8 +1625,6 @@ testRun(void)
         TEST_TITLE("new passphrase is the old passphrase");
 
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 2, TEST_CIPHER_PASS_FMT6);
-        argList = strLstDup(argListRekey);
-        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
         HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
 
         TEST_ERROR(
@@ -1662,7 +1646,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: stanza-rekey for stanza 'db' on repo2");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("rekey without rotation");
+        TEST_TITLE("rekey");
 
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS_NEW);
         HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
@@ -1670,12 +1654,13 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaRekey(), "stanza rekey");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-rekey for stanza 'db' on repo2\n"
+            "P00   INFO: rotate archive key to id 3\n"
             "P00   INFO: rekey info files with the new passphrase");
 
         TEST_RESULT_STR_Z(
             cipherSpecMapIdCurrent(
                 infoArchiveCipherSpecMap(infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecRekey))),
-            "2", "archive info rekeyed and not rotated");
+            "3", "archive info rekeyed and rotated");
         TEST_RESULT_UINT(
             infoBackupFormat(infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherSpecRekey)),
             REPOSITORY_FORMAT_6, "backup info rekeyed");
@@ -1689,19 +1674,18 @@ testRun(void)
             infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherSpecRekey), "backup info copy rekeyed");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("rekey again with rotation on every repo");
+        TEST_TITLE("rekey again on every repo");
 
         argList = strLstDup(argListRekey);
-        hrnCfgArgRawBool(argList, cfgOptKeyRotate, true);
         HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
 
         TEST_RESULT_VOID(cmdStanzaRekey(), "stanza rekey");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-rekey for stanza 'db' on repo2\n"
-            "P00   INFO: rotate archive key to id 3\n"
+            "P00   INFO: rotate archive key to id 4\n"
             "P00   INFO: rekey info files with the new passphrase\n"
             "P00   INFO: stanza-rekey for stanza 'db' on repo3\n"
-            "P00   WARN: option 'key-rotate' requires repository format 6 or higher");
+            "P00   WARN: archive key rotation requires repository format 6 or higher");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rekey at format 5");
@@ -1722,15 +1706,6 @@ testRun(void)
                     storageRepoIdx(2), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321")))),
             REPOSITORY_FORMAT_DEFAULT, "backup info rekeyed");
 
-        hrnCfgArgRawBool(argList, cfgOptKeyRotate, true);
-        HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
-
-        TEST_RESULT_VOID(cmdStanzaRekey(), "stanza rekey with rotation requested");
-        TEST_RESULT_LOG(
-            "P00   INFO: stanza-rekey for stanza 'db' on repo3\n"
-            "P00   WARN: option 'key-rotate' requires repository format 6 or higher\n"
-            "P00   INFO: rekey info files with the new passphrase");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing stanza");
 
@@ -1741,7 +1716,6 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 3, cipherTypeAes256Cbc);
-        hrnCfgArgRawBool(argList, cfgOptKeyRotate, true);
         HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
 
         TEST_ERROR(
@@ -1761,7 +1735,6 @@ testRun(void)
 
         argList = strLstDup(argListRekey);
         hrnCfgArgRawZ(argList, cfgOptRepo, "3");
-        hrnCfgArgRawBool(argList, cfgOptKeyRotate, true);
         HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
 
         HRN_STORAGE_REMOVE(storageRepoIdxWrite(2), INFO_BACKUP_PATH_FILE, .comment = "remove backup.info");
