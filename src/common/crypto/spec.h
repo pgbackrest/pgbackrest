@@ -37,7 +37,7 @@ typedef struct CipherSpecNewParam
 {
     VAR_PARAM_HEADER;
     HashType digest;                                                // Digest to derive the key with, unset when specified by format
-    const CipherSpec *prior;                                        // Spec to decrypt with when this one fails
+    const CipherSpec *prior;                                        // Spec to decrypt with if this one fails
 } CipherSpecNewParam;
 
 #define cipherSpecNewP(type, pass, ...)                                                                                            \
@@ -63,7 +63,7 @@ typedef struct CipherSpecPub
     CipherType type;                                                // Cipher type, none when not encrypted
     HashType digest;                                                // Digest the pass derives with, unset when specified by format
     const Buffer *pass;                                             // Passphrase text or key bytes
-    const CipherSpec *prior;                                        // Spec to decrypt with when this one fails, NULL when none
+    const CipherSpec *prior;                                        // Spec to decrypt with if this one fails, NULL when none
 } CipherSpecPub;
 
 // Cipher type
@@ -87,7 +87,7 @@ cipherSpecPass(const CipherSpec *const this)
     return THIS_PUB(CipherSpec)->pass;
 }
 
-// Spec to decrypt with when this one fails, NULL when none
+// Spec to decrypt with if this one fails, NULL when none
 FN_INLINE_ALWAYS const CipherSpec *
 cipherSpecPrior(const CipherSpec *const this)
 {
