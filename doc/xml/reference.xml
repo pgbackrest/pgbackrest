@@ -919,6 +919,21 @@
                         <example>y</example>
                     </config-key>
 
+                    <config-key id="repo-io-mode" name="Repository I/O Mode">
+                        <summary>I/O mode for a local repository.</summary>
+
+                        <text>
+                            <p>Determines how files in the repository are read and written. This option is only used when <setting>repo-type</setting> is <id>posix</id> or <id>cifs</id>.</p>
+
+                            <allow-list caption="I/O modes">
+                                <allow-item id="default">use the buffered I/O provided by the operating system</allow-item>
+                                <allow-item id="direct">bypass the operating system page cache using direct I/O (<id>O_DIRECT</id>). This mode is only available on platforms that support direct I/O. When the file system does not support direct I/O, buffered I/O is used instead.</allow-item>
+                            </allow-list>
+                        </text>
+
+                        <example>direct</example>
+                    </config-key>
+
                     <config-key id="repo-path" name="Repository Path">
                         <summary>Path where backups and archive are stored.</summary>
 
@@ -1966,6 +1981,21 @@
                         </text>
 
                         <example>/conf/pgbackrest</example>
+                    </config-key>
+
+                    <config-key id="pg-io-mode" name="PostgreSQL I/O Mode">
+                        <summary>I/O mode for the <postgres/> data directory.</summary>
+
+                        <text>
+                            <p>Determines how files in the <postgres/> data directory are read (backup) and written (restore).</p>
+
+                            <allow-list caption="I/O modes">
+                                <allow-item id="default">use the buffered I/O provided by the operating system</allow-item>
+                                <allow-item id="direct">bypass the operating system page cache using direct I/O (<id>O_DIRECT</id>). This mode is only available on platforms that support direct I/O. When the file system does not support direct I/O, buffered I/O is used instead.</allow-item>
+                            </allow-list>
+                        </text>
+
+                        <example>direct</example>
                     </config-key>
 
                     <config-key id="pg-host" name="PostgreSQL Host">

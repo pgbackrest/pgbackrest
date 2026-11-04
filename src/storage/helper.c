@@ -198,7 +198,9 @@ storagePgGet(const unsigned int pgIdx, const bool write)
     }
     // Use Posix storage
     else
-        result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write);
+        result = storagePosixNewP(
+            cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write,
+            .directIo = cfgOptionValid(cfgOptPgIoMode) && cfgOptionIdxStrId(cfgOptPgIoMode, pgIdx) == CFGOPTVAL_PG_IO_MODE_DIRECT);
 
     FUNCTION_TEST_RETURN(STORAGE, result);
 }
@@ -392,7 +394,8 @@ storageRepoGet(const unsigned int repoIdx, const bool write)
 
             result = storagePosixNewP(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression,
-                .noSymLink = cfgOptionValid(cfgOptRepoSymlink) ? !cfgOptionIdxBool(cfgOptRepoSymlink, repoIdx) : true);
+                .noSymLink = cfgOptionValid(cfgOptRepoSymlink) ? !cfgOptionIdxBool(cfgOptRepoSymlink, repoIdx) : true,
+                .directIo = cfgOptionIdxStrId(cfgOptRepoIoMode, repoIdx) == CFGOPTVAL_REPO_IO_MODE_DIRECT);
         }
     }
 
