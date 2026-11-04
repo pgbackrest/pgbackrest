@@ -3,6 +3,8 @@ Crypto Common
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <string.h>
+
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -49,7 +51,15 @@ cryptoErrorCode(const unsigned long code, const char *const description)
         FUNCTION_TEST_PARAM(STRINGZ, description);
     FUNCTION_TEST_END();
 
-    const char *const errorMessage = ERR_reason_error_string(code);
+    const char *errorMessage = ERR_reason_error_string(code);
+
+#ifdef ERR_SYSTEM_ERROR
+    // ERR_reason_error_string() returns NULL for system errors in OpenSSL >= 3.0. The code for a system error contains the errno to
+    // get the message from strerror().
+    if (ERR_SYSTEM_ERROR(code))
+        errorMessage = strerror(ERR_GET_REASON(code));
+#endif
+
     THROW_FMT(CryptoError, "%s: [%lu] %s", description, code, errorMessage == NULL ? "no details available" : errorMessage);
 
     FUNCTION_TEST_NO_RETURN();

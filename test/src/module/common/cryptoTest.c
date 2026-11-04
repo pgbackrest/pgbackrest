@@ -86,6 +86,20 @@ testRun(void)
         TEST_RESULT_VOID(cryptoInit(), "initialize crypto");
         TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("system error");
+
+        TEST_RESULT_PTR(BIO_new_file("/bogus", "r"), NULL, "queue system error");
+        TEST_ERROR(
+            cryptoError(true, "unable to open file"), CryptoError,
+            "unable to open file: "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+            "[2147483650]"
+#else
+            "[33558530]"
+#endif
+            " No such file or directory");
+
         // Test if the buffer was overrun
         // -------------------------------------------------------------------------------------------------------------------------
         uint8_t buffer[256] = {0};

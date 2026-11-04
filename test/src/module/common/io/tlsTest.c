@@ -661,7 +661,7 @@ testRun(void)
                     .caFile = STRDEF("bogus.crt"), .caPath = STRDEF("/bogus"))),
             CryptoError, "unable to set user-defined CA certificate location: "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-            "[2147483650] no details available");
+            "[2147483650] No such file or directory");
 #else
             "[33558530] No such file or directory");
 #endif
@@ -676,7 +676,7 @@ testRun(void)
                     .certFile = STRDEF("/bogus"), .keyFile = STRDEF("/bogus"))),
             CryptoError, "unable to load cert file '/bogus': "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-            "[2147483650] no details available");
+            "[2147483650] No such file or directory");
 #else
             "[33558530] No such file or directory");
 #endif
@@ -691,7 +691,7 @@ testRun(void)
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF("/bogus"))),
             CryptoError, "unable to load key file '/bogus': "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-            "[2147483650] no details available");
+            "[2147483650] No such file or directory");
 #else
             "[33558530] No such file or directory");
 #endif
