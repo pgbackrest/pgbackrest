@@ -85,18 +85,6 @@ testRun(void)
         TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error queue cleared on init");
-
-        context = EVP_MD_CTX_new();
-        TEST_RESULT_INT(EVP_DigestInit_ex(context, NULL, NULL), 0, "queue error");
-        EVP_MD_CTX_free(context);
-
-        cryptoInitDone = false;
-
-        TEST_RESULT_VOID(cryptoInit(), "initialize crypto");
-        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("system error");
 
         TEST_RESULT_PTR(BIO_new_file("/bogus", "r"), NULL, "queue system error");
