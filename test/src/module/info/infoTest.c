@@ -561,8 +561,6 @@ testRun(void)
             infoLoadFile(storageTest, STRDEF("missing.info"), cipherSpecRekey, testInfoLoadFileNew), FileMissingError,
             "unable to load info file '" TEST_PATH "/missing.info' or '" TEST_PATH "/missing.info.copy':\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info' for read\n"
-            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info.copy' for read\n"
-            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info' for read\n"
             "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info.copy' for read");
 
         HRN_INFO_PUT(storageTest, "test.info", "[c]\nkey=\"old\"\n", .header = true, .cipherSpec = cipherSpecOld);
