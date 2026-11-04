@@ -60,6 +60,7 @@ testRun(void)
         TEST_RESULT_VOID(cryptoError(false, "no error here"), "no error");
 
         EVP_MD_CTX *context = EVP_MD_CTX_new();
+        TEST_RESULT_INT(EVP_DigestInit_ex(context, NULL, NULL), 0, "queue error");
         TEST_ERROR(
             cryptoError(EVP_DigestInit_ex(context, NULL, NULL) != 1, "unable to initialize hash context"), CryptoError,
             "unable to initialize hash context: "
@@ -82,6 +83,32 @@ testRun(void)
 
         TEST_RESULT_VOID(cryptoInit(), "initialize crypto");
         TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error queue cleared on init");
+
+        context = EVP_MD_CTX_new();
+        TEST_RESULT_INT(EVP_DigestInit_ex(context, NULL, NULL), 0, "queue error");
+        EVP_MD_CTX_free(context);
+
+        cryptoInitDone = false;
+
+        TEST_RESULT_VOID(cryptoInit(), "initialize crypto");
+        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("system error");
+
+        TEST_RESULT_PTR(BIO_new_file("/bogus", "r"), NULL, "queue system error");
+        TEST_ERROR(
+            cryptoError(true, "unable to open file"), CryptoError,
+            "unable to open file: "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+            "[2147483650]"
+#else
+            "[33558530]"
+#endif
+            " No such file or directory");
 
         // Test if the buffer was overrun
         // -------------------------------------------------------------------------------------------------------------------------
