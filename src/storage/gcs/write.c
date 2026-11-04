@@ -22,7 +22,6 @@ Chunk defaults based on limits at https://cloud.google.com/storage/quotas#reques
 /***********************************************************************************************************************************
 GCS query tokens
 ***********************************************************************************************************************************/
-STRING_STATIC(GCS_QUERY_KMS_KEY_NAME_STR,                           "kmsKeyName");
 STRING_STATIC(GCS_QUERY_UPLOAD_TYPE_STR,                            "uploadType");
 STRING_STATIC(GCS_QUERY_RESUMABLE_STR,                              "resumable");
 STRING_STATIC(GCS_QUERY_FIELDS_VALUE_STR,                           GCS_JSON_MD5_HASH "," GCS_JSON_SIZE);
@@ -35,7 +34,6 @@ struct StorageWriteGcs
     const StorageWriteInterface *interface;                         // Interface
     StorageGcs *storage;                                            // Storage that created this object
     const String *name;                                             // File name
-    const String *kmsKeyName;                                       // KMS key resource name
 
     HttpRequest *request;                                           // Async chunk upload request
     size_t chunkSize;                                               // Size of chunks for resumable upload
@@ -150,13 +148,8 @@ storageWriteGcsBlockAsync(StorageWriteGcs *const this, const bool done)
         // Get the upload id
         if (this->uploadId == NULL)
         {
-            HttpQuery *const queryInit = httpQueryDupP(query);
-
-            if (this->kmsKeyName != NULL)
-                httpQueryAdd(queryInit, GCS_QUERY_KMS_KEY_NAME_STR, this->kmsKeyName);
-
             HttpResponse *response = storageGcsRequestP(
-                this->storage, HTTP_VERB_POST_STR, .upload = true, .tag = this->tag, .query = queryInit);
+                this->storage, HTTP_VERB_POST_STR, .upload = true, .tag = this->tag, .kms = true, .query = query);
 
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
@@ -289,15 +282,13 @@ storageWriteGcsClose(THIS_VOID)
                 httpQueryAdd(query, GCS_QUERY_UPLOAD_TYPE_STR, GCS_QUERY_MEDIA_STR);
                 httpQueryAdd(query, GCS_QUERY_FIELDS_STR, GCS_QUERY_FIELDS_VALUE_STR);
 
-                if (this->kmsKeyName != NULL)
-                    httpQueryAdd(query, GCS_QUERY_KMS_KEY_NAME_STR, this->kmsKeyName);
-
                 this->uploadTotal = bufUsed(this->chunkBuffer);
 
                 storageWriteGcsVerify(
                     this,
                     storageGcsRequestP(
-                        this->storage, HTTP_VERB_POST_STR, .upload = true, .query = query, .content = this->chunkBuffer));
+                        this->storage, HTTP_VERB_POST_STR, .upload = true, .kms = true, .query = query,
+                        .content = this->chunkBuffer));
             }
 
             bufFree(this->chunkBuffer);
@@ -317,15 +308,13 @@ static const StorageWriteInterface storageWriteGcsInterface =
 };
 
 FN_EXTERN StorageWriteGcs *
-storageWriteGcsNew(
-    StorageGcs *const storage, const String *const name, const size_t chunkSize, const bool tag, const String *const kmsKeyName)
+storageWriteGcsNew(StorageGcs *const storage, const String *const name, const size_t chunkSize, const bool tag)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_GCS, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(UINT64, chunkSize);
         FUNCTION_LOG_PARAM(BOOL, tag);
-        FUNCTION_LOG_PARAM(STRING, kmsKeyName);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -338,7 +327,6 @@ storageWriteGcsNew(
             .interface = &storageWriteGcsInterface,
             .storage = storage,
             .name = strDup(name),
-            .kmsKeyName = strDup(kmsKeyName),
             .chunkSize = chunkSize,
             .chunkBuffer = bufNew(0),
             .md5hash = cryptoHashNew(hashTypeMd5),

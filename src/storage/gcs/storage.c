@@ -49,6 +49,7 @@ STRING_STATIC(GCS_QUERY_PAGE_TOKEN_STR,                             "pageToken")
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
 STRING_STATIC(GCS_QUERY_VERSIONS_STR,                               "versions");
+STRING_STATIC(GCS_QUERY_KMS_KEY_NAME_STR,                           "kmsKeyName");
 STRING_STATIC(GCS_QUERY_USER_PROJECT_STR,                           "userProject");
 
 /***********************************************************************************************************************************
@@ -538,6 +539,7 @@ storageGcsRequestAsync(StorageGcs *const this, const String *const verb, Storage
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(BOOL, param.kms);
         FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
@@ -605,14 +607,20 @@ storageGcsRequestAsync(StorageGcs *const this, const String *const verb, Storage
             content == NULL || bufEmpty(content) ? ZERO_STR : strNewFmt("%zu", bufUsed(content)));
 
         // Make a copy of the query so it can be modified
+        const bool kms = param.kms && this->kmsKeyName != NULL;
+
         HttpQuery *const query =
-            this->userProject != NULL && param.query == NULL ?
+            (this->userProject != NULL || kms) && param.query == NULL ?
                 httpQueryNewP(.redactList = this->queryRedactList) :
                 httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Add user project
         if (this->userProject != NULL)
             httpQueryAdd(query, GCS_QUERY_USER_PROJECT_STR, this->userProject);
+
+        // Add KMS key
+        if (kms)
+            httpQueryAdd(query, GCS_QUERY_KMS_KEY_NAME_STR, this->kmsKeyName);
 
         // Generate authorization header
         if (!param.noAuth)
@@ -674,6 +682,7 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(BOOL, param.kms);
         FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
@@ -685,7 +694,7 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageGcsRequestAsyncP(
-        this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .tag = param.tag,
+        this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .tag = param.tag, .kms = param.kms,
         .path = param.path, .object = param.object, .header = param.header, .query = param.query, .content = param.content,
         .contentList = param.contentList);
     HttpResponse *const result = storageGcsResponseP(
@@ -1069,7 +1078,7 @@ storageGcsNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNe
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE_GCS, storageWriteGcsNew(this, file, this->chunkSize, this->tag != NULL, this->kmsKeyName));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_GCS, storageWriteGcsNew(this, file, this->chunkSize, this->tag != NULL));
 }
 
 /**********************************************************************************************************************************/
