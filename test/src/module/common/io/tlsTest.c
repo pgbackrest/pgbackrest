@@ -4,6 +4,8 @@ Test Tls Client
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <openssl/conf.h>
+
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
@@ -135,6 +137,18 @@ testSignalHandler(const int signalType)
 {
     (void)signalType;
 }
+
+/***********************************************************************************************************************************
+OpenSSL config with a minimum TLS version
+***********************************************************************************************************************************/
+#define TEST_OPENSSL_CONF(minProtocol)                                                                                             \
+    "openssl_conf = openssl_init\n"                                                                                                \
+    "[openssl_init]\n"                                                                                                             \
+    "ssl_conf = ssl_sect\n"                                                                                                        \
+    "[ssl_sect]\n"                                                                                                                 \
+    "system_default = system_default_sect\n"                                                                                       \
+    "[system_default_sect]\n"                                                                                                      \
+    "MinProtocol = " minProtocol "\n"
 
 /***********************************************************************************************************************************
 Test Run
@@ -627,6 +641,33 @@ testRun(void)
     if (testBegin("TlsClient verification"))
     {
         IoClient *client = NULL;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("minimum TLS version from OpenSSL config");
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                SSL_CTX *context = NULL;
+
+                cryptoInit();
+
+                HRN_STORAGE_PUT_Z(storageTest, "openssl.cnf", TEST_OPENSSL_CONF("TLSv1"));
+                TEST_RESULT_INT(CONF_modules_load_file(TEST_PATH "/openssl.cnf", NULL, 0), 1, "load config");
+                TEST_ASSIGN(context, tlsContext(true), "new context");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_2_VERSION, "lower minimum raised");
+                SSL_CTX_free(context);
+
+                HRN_STORAGE_PUT_Z(storageTest, "openssl.cnf", TEST_OPENSSL_CONF("TLSv1.3"));
+                TEST_RESULT_INT(CONF_modules_load_file(TEST_PATH "/openssl.cnf", NULL, 0), 1, "load config");
+                TEST_ASSIGN(context, tlsContext(true), "new context");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_3_VERSION, "higher minimum kept");
+                SSL_CTX_free(context);
+            }
+            HRN_FORK_CHILD_END();
+        }
+        HRN_FORK_END();
 
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
