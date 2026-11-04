@@ -652,6 +652,13 @@ testRun(void)
             "[RETRY DETAIL OMITTED]");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error queue cleared on new context");
+
+        TEST_RESULT_PTR(BIO_new_file("/bogus", "r"), NULL, "queue error");
+        TEST_RESULT_VOID(SSL_CTX_free(tlsContext(true)), "new context");
+        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing ca cert/path");
 
         TEST_ERROR(
