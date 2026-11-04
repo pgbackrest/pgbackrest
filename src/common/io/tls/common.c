@@ -245,7 +245,7 @@ tlsContext(const bool verifyPeer)
     {
         // Set minimum TLS version to 1.2 when the minimum from the OpenSSL config is lower
         if (SSL_CTX_get_min_proto_version(result) < TLS1_2_VERSION)
-            cryptoError(SSL_CTX_set_min_proto_version(result, TLS1_2_VERSION) != 1, "unable to set minumum TLS version to 1.2");
+            cryptoError(SSL_CTX_set_min_proto_version(result, TLS1_2_VERSION) != 1, "unable to set minimum TLS version to 1.2");
 
         // Set allowed ciphers for TLSv1.2 when configured
         if (tlsCommonLocal.tlsCipher12 != NULL)                                                                     // {vm_covered}
