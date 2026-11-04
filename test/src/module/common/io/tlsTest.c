@@ -4,6 +4,8 @@ Test Tls Client
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <openssl/conf.h>
+
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
@@ -135,6 +137,18 @@ testSignalHandler(const int signalType)
 {
     (void)signalType;
 }
+
+/***********************************************************************************************************************************
+OpenSSL config with a minimum TLS version
+***********************************************************************************************************************************/
+#define TEST_OPENSSL_CONF(minProtocol)                                                                                             \
+    "openssl_conf = openssl_init\n"                                                                                                \
+    "[openssl_init]\n"                                                                                                             \
+    "ssl_conf = ssl_sect\n"                                                                                                        \
+    "[ssl_sect]\n"                                                                                                                 \
+    "system_default = system_default_sect\n"                                                                                       \
+    "[system_default_sect]\n"                                                                                                      \
+    "MinProtocol = " minProtocol "\n"
 
 /***********************************************************************************************************************************
 Test Run
@@ -628,6 +642,46 @@ testRun(void)
     {
         IoClient *client = NULL;
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("minimum TLS version");
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                SSL_CTX *context = NULL;
+
+                cryptoInit();
+
+                HRN_STORAGE_PUT_Z(storageTest, "openssl.cnf", TEST_OPENSSL_CONF("TLSv1"));
+                TEST_RESULT_INT(CONF_modules_load_file(TEST_PATH "/openssl.cnf", NULL, 0), 1, "load config");
+
+                TEST_RESULT_VOID(tlsInit(NULL, NULL, STRDEF("1.2")), "minimum 1.2");
+                TEST_ASSIGN(context, tlsContext(true), "new context");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_2_VERSION, "lower config minimum raised to 1.2");
+                SSL_CTX_free(context);
+
+                TEST_RESULT_VOID(tlsInit(NULL, NULL, STRDEF("1.3")), "minimum 1.3");
+                TEST_ASSIGN(context, tlsContext(true), "new context");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_3_VERSION, "lower config minimum raised to 1.3");
+                SSL_CTX_free(context);
+
+                TEST_ASSIGN(context, tlsContext(false), "new context without verify");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_VERSION, "option ignored without verify");
+                SSL_CTX_free(context);
+
+                HRN_STORAGE_PUT_Z(storageTest, "openssl.cnf", TEST_OPENSSL_CONF("TLSv1.3"));
+                TEST_RESULT_INT(CONF_modules_load_file(TEST_PATH "/openssl.cnf", NULL, 0), 1, "load config");
+
+                TEST_RESULT_VOID(tlsInit(NULL, NULL, STRDEF("1.2")), "minimum 1.2");
+                TEST_ASSIGN(context, tlsContext(true), "new context");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_3_VERSION, "higher config minimum kept");
+                SSL_CTX_free(context);
+            }
+            HRN_FORK_CHILD_END();
+        }
+        HRN_FORK_END();
+
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
@@ -929,7 +983,7 @@ testRun(void)
 
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(tlsInit(STRDEF("eNULL"), STRDEF("TLS_AES_256_GCM_SHA384")), "disallow TLS 1.2");
+                TEST_RESULT_VOID(tlsInit(STRDEF("eNULL"), STRDEF("TLS_AES_256_GCM_SHA384"), STRDEF("1.2")), "disallow TLS 1.2");
 
                 // Start server to test various certificate errors
                 TEST_ERROR_MULTI(
@@ -954,7 +1008,8 @@ testRun(void)
                 hrnServerScriptAccept(tls);
                 hrnServerScriptClose(tls);
 
-                TEST_RESULT_VOID(tlsInit(STRDEF("COMPLEMENTOFALL"), STRDEF("TLS_AES_128_GCM_SHA256")), "disallow TLS 1.3");
+                TEST_RESULT_VOID(
+                    tlsInit(STRDEF("COMPLEMENTOFALL"), STRDEF("TLS_AES_128_GCM_SHA256"), STRDEF("1.2")), "disallow TLS 1.3");
 
                 TEST_ERROR_MULTI(
                     ioClientOpen(
@@ -975,7 +1030,7 @@ testRun(void)
         }
         HRN_FORK_END();
 
-        TEST_RESULT_VOID(tlsInit(NULL, NULL), "init null tls ciphers");
+        TEST_RESULT_VOID(tlsInit(NULL, NULL, STRDEF("1.2")), "init null tls ciphers");
 
         // Server on IPv6
         // -------------------------------------------------------------------------------------------------------------------------

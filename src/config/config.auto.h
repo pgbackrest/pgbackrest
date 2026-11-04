@@ -136,6 +136,7 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
 #define CFGOPT_TLS_CIPHER_12                                        "tls-cipher-12"
 #define CFGOPT_TLS_CIPHER_13                                        "tls-cipher-13"
+#define CFGOPT_TLS_MIN_VERSION                                      "tls-min-version"
 #define CFGOPT_TLS_SERVER_ADDRESS                                   "tls-server-address"
 #define CFGOPT_TLS_SERVER_AUTH                                      "tls-server-auth"
 #define CFGOPT_TLS_SERVER_CA_FILE                                   "tls-server-ca-file"
@@ -146,7 +147,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            202
+#define CFG_OPTION_TOTAL                                            203
 
 /***********************************************************************************************************************************
 Option value constants
@@ -677,6 +678,7 @@ typedef enum
     cfgOptTcpKeepAliveInterval,
     cfgOptTlsCipher12,
     cfgOptTlsCipher13,
+    cfgOptTlsMinVersion,
     cfgOptTlsServerAddress,
     cfgOptTlsServerAuth,
     cfgOptTlsServerCaFile,

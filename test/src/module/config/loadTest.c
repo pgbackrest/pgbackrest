@@ -739,12 +739,14 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
         hrnCfgArgRawZ(argList, cfgOptTlsCipher12, "HIGH:MEDIUM:+3DES:!aNULL");
         hrnCfgArgRawZ(argList, cfgOptTlsCipher13, "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256");
+        hrnCfgArgRawZ(argList, cfgOptTlsMinVersion, "1.3");
         strLstAddZ(argList, CFGCMD_EXPIRE);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
         TEST_RESULT_STR_Z(tlsCommonLocal.tlsCipher12, "HIGH:MEDIUM:+3DES:!aNULL", "check tls1.2 cipher suites");
         TEST_RESULT_STR_Z(
             tlsCommonLocal.tlsCipher13, "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256", "check tls1.3 cipher suites");
+        TEST_RESULT_INT(tlsCommonLocal.tlsMinVersion, TLS1_3_VERSION, "check tls minimum version");
         cmdLockReleaseP();
 
         // -------------------------------------------------------------------------------------------------------------------------
