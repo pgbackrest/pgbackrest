@@ -63,6 +63,9 @@ cryptoInit(void)
         // Initialization
         OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
 
+        // Clear errors queued while loading the OpenSSL config
+        ERR_clear_error();
+
         // Mark crypto as initialized
         cryptoInitDone = true;
     }
