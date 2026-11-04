@@ -29,7 +29,14 @@ cryptoError(const bool error, const char *const description)
     FUNCTION_TEST_END();
 
     if (error)
-        cryptoErrorCode(ERR_get_error(), description);
+    {
+        const unsigned long code = ERR_get_error();
+
+        // Clear errors remaining on the queue
+        ERR_clear_error();
+
+        cryptoErrorCode(code, description);
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }

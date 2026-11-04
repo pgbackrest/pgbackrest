@@ -60,6 +60,7 @@ testRun(void)
         TEST_RESULT_VOID(cryptoError(false, "no error here"), "no error");
 
         EVP_MD_CTX *context = EVP_MD_CTX_new();
+        TEST_RESULT_INT(EVP_DigestInit_ex(context, NULL, NULL), 0, "queue error");
         TEST_ERROR(
             cryptoError(EVP_DigestInit_ex(context, NULL, NULL) != 1, "unable to initialize hash context"), CryptoError,
             "unable to initialize hash context: "
@@ -70,6 +71,8 @@ testRun(void)
 #endif
             " no digest set");
         EVP_MD_CTX_free(context);
+
+        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error queue cleared on init");
