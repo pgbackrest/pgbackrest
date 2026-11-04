@@ -41,11 +41,17 @@ testRun(void)
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("key=value\n")), .strict = true)), FormatError,
             "key/value found outside of section at line 1: key=value");
         TEST_ERROR(
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("k\x01y=value\n")), .strict = true)), FormatError,
+            "key/value found outside of section at line 1: <binary data>");
+        TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("\n[]\n")), .strict = true)), FormatError,
             "invalid empty section at line 2: []");
         TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey=value\n")), .strict = true)), FormatError,
             "invalid JSON value at line 2 'key=value': invalid type at: value");
+        TEST_ERROR(
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey=\x01x\n")), .strict = true)), FormatError,
+            "invalid JSON value at line 2 '<binary data>'");
         TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey")), .strict = true)), FormatError,
             "missing '=' in key/value at line 2: key");
@@ -117,8 +123,14 @@ testRun(void)
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section\n")))), FormatError,
             "ini section should end with ] at line 1: [section");
         TEST_ERROR(
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[sec\x7F\n")))), FormatError,
+            "ini section should end with ] at line 1: <binary data>");
+        TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nkey")))), FormatError,
             "missing '=' in key/value at line 2: key");
+        TEST_ERROR(
+            testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\nk\xC3\xA9y\twith tab")))), FormatError,
+            "missing '=' in key/value at line 2: k\xC3\xA9y\twith tab");
         TEST_ERROR(
             testIniNextValue(iniNewP(ioBufferReadNew(BUFSTRDEF("[section]\n =value")))), FormatError,
             "key is zero-length at line 2: =value");
