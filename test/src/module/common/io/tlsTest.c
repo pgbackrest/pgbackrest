@@ -653,6 +653,17 @@ testRun(void)
 
                 cryptoInit();
 
+                HRN_STORAGE_PUT_Z(storageTest, "openssl.cnf", TEST_OPENSSL_CONF("None"));
+                TEST_RESULT_INT(CONF_modules_load_file(TEST_PATH "/openssl.cnf", NULL, 0), 1, "load config");
+
+                TEST_ASSIGN(context, tlsContext(false), "new context without verify");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), 0, "no config minimum");
+                SSL_CTX_free(context);
+
+                TEST_ASSIGN(context, tlsContext(true), "new context");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_2_VERSION, "no config minimum raised to default");
+                SSL_CTX_free(context);
+
                 HRN_STORAGE_PUT_Z(storageTest, "openssl.cnf", TEST_OPENSSL_CONF("TLSv1"));
                 TEST_RESULT_INT(CONF_modules_load_file(TEST_PATH "/openssl.cnf", NULL, 0), 1, "load config");
 
