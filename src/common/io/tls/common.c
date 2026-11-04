@@ -6,6 +6,7 @@ TLS Common
 #include <string.h>
 #include <sys/stat.h>
 
+#include <openssl/err.h>
 #include <openssl/ssl.h>
 
 #include "common/crypto/common.h"
@@ -238,6 +239,9 @@ tlsContext(const bool verifyPeer)
     // Create TLS context
     SSL_CTX *const result = SSL_CTX_new(method);
     cryptoError(result == NULL, "unable to create TLS context");
+
+    // Clear errors queued while applying the OpenSSL config to the context
+    ERR_clear_error();
 
     // Disable compression
     SSL_CTX_set_options(result, SSL_OP_NO_COMPRESSION);

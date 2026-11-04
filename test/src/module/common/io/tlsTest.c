@@ -717,6 +717,13 @@ testRun(void)
             "[RETRY DETAIL OMITTED]");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error queue cleared on new context");
+
+        TEST_RESULT_PTR(BIO_new_file("/bogus", "r"), NULL, "queue error");
+        TEST_RESULT_VOID(SSL_CTX_free(tlsContext(true)), "new context");
+        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing ca cert/path");
 
         TEST_ERROR(
@@ -726,7 +733,7 @@ testRun(void)
                     .caFile = STRDEF("bogus.crt"), .caPath = STRDEF("/bogus"))),
             CryptoError, "unable to set user-defined CA certificate location: "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-            "[2147483650] no details available");
+            "[2147483650] No such file or directory");
 #else
             "[33558530] No such file or directory");
 #endif
@@ -741,7 +748,7 @@ testRun(void)
                     .certFile = STRDEF("/bogus"), .keyFile = STRDEF("/bogus"))),
             CryptoError, "unable to load cert file '/bogus': "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-            "[2147483650] no details available");
+            "[2147483650] No such file or directory");
 #else
             "[33558530] No such file or directory");
 #endif
@@ -756,7 +763,7 @@ testRun(void)
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF("/bogus"))),
             CryptoError, "unable to load key file '/bogus': "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-            "[2147483650] no details available");
+            "[2147483650] No such file or directory");
 #else
             "[33558530] No such file or directory");
 #endif
