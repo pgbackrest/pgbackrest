@@ -112,6 +112,8 @@ cmdStanzaRekey(void)
             if (cipherType == cipherTypeNone)
                 continue;
 
+            repoTotal++;
+
             const bool rekey = cfgOptionIdxTest(cfgOptRepoCipherPassOld, repoIdx);
 
             LOG_INFO_FMT(
@@ -138,38 +140,35 @@ cmdStanzaRekey(void)
             // Format of the repository. stanza-upgrade saves archive.info before backup.info.
             const unsigned int format = infoArchiveFormat(infoArchive);
 
+            // Warn when there is nothing to do. Format < 6 has a single archive key that cannot be rotated.
+            if (!rekey && format < REPOSITORY_FORMAT_6)
+            {
+                LOG_WARN("archive key rotation requires repository format " STRINGIFY(REPOSITORY_FORMAT_6) " or higher");
+                continue;
+            }
+
             // Check the new passphrase
             if (rekey)
                 stanzaCipherPassCheck(repoIdx, format, "rekey a stanza");
 
-            // Rotate the archive key. Format < 6 has a single archive key that cannot be rotated.
+            // Rotate the archive key
             if (format >= REPOSITORY_FORMAT_6)
             {
                 infoArchiveCipherRotate(infoArchive, cipherSpecGen(cipherType, format), time(NULL));
 
                 LOG_INFO_FMT("rotate archive key to id %s", strZ(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive))));
             }
-            // Else warn when there is nothing to do
-            else if (!rekey)
-                LOG_WARN("archive key rotation requires repository format " STRINGIFY(REPOSITORY_FORMAT_6) " or higher");
 
             // Save the info files with the passphrase
-            if (rekey || format >= REPOSITORY_FORMAT_6)
-            {
-                infoArchiveSaveFile(
-                    infoArchive, storageRepoIdxWrite(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
-            }
+            infoArchiveSaveFile(infoArchive, storageRepoIdxWrite(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain);
 
             if (rekey)
             {
                 infoBackupUpdatedSet(infoBackup);
-                infoBackupSaveFile(
-                    infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoBackupSaveFile(infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cipherSpecMain);
 
                 LOG_INFO("rekey info files with the new passphrase");
             }
-
-            repoTotal++;
         }
 
         // Error when no repo is encrypted
