@@ -4,6 +4,7 @@ Database Helper
 #include <build.h>
 
 #include "common/debug.h"
+#include "common/type/list.h"
 #include "config/config.h"
 #include "db/helper.h"
 #include "postgres/interface.h"
@@ -62,8 +63,18 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
 
     DbGetResult result = {0};
 
+    const bool standbyVerify = !primaryOnly && standbyRequired != CFGOPTVAL_BACKUP_STANDBY_N;
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        typedef struct DbGetStandby
+        {
+            unsigned int pgIdx;
+            Db *db;
+        } DbGetStandby;
+
+        List *const standbyList = standbyVerify ? lstNewP(sizeof(DbGetStandby)) : NULL;
+
         // Loop through to look for primary and standby (if required)
         for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); pgIdx++)
         {
@@ -103,8 +114,11 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
                 // Is this cluster a standby
                 if (standby)
                 {
-                    // If a standby has not already been found then assign it
-                    if (result.standby == NULL && !primaryOnly)
+                    // If a standby needs to be verified then keep it in the list for now
+                    if (standbyVerify)
+                        lstAdd(standbyList, &(DbGetStandby){.pgIdx = pgIdx, .db = db});
+                    // Else if the standby has not already been found then assign it
+                    else if (result.standby == NULL && !primaryOnly)
                     {
                         result.standbyIdx = pgIdx;
                         result.standby = db;
@@ -133,6 +147,88 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
                 DbConnectError,
                 "unable to find primary cluster - cannot proceed\n"
                 "HINT: are all available clusters in recovery?");
+        }
+
+        // Pick the first standby that passes a check. No primary means nothing to verify against, so just pick the first standby.
+        if (standbyList != NULL && lstSize(standbyList) > 0)
+        {
+            // A standby fallback if there is no live one. Later it will be checked with dbReplayWait().
+            DbGetStandby *standbyFallback = NULL;
+            DbStandbyStatus standbyFallbackStatus = dbStandbyStatusStalled;
+
+            for (unsigned int standbyIdx = 0; standbyIdx < lstSize(standbyList); standbyIdx++)
+            {
+                DbGetStandby *const standby = lstGet(standbyList, standbyIdx);
+
+                // A standby has already been selected, have to clean up the rest
+                if (result.standby != NULL)
+                    dbFree(standby->db);
+                // No primary to verify against so just take the first standby
+                else if (result.primary == NULL)
+                {
+                    result.standbyIdx = standby->pgIdx;
+                    result.standby = standby->db;
+                }
+                else
+                {
+                    TRY_BEGIN()
+                    {
+                        const DbStandbyStatus status = dbStandbyCheck(standby->db, result.primary);
+
+                        if (status == dbStandbyStatusLive)
+                        {
+                            result.standbyIdx = standby->pgIdx;
+                            result.standby = standby->db;
+
+                            if (standbyFallback != NULL)
+                            {
+                                dbFree(standbyFallback->db);
+                                standbyFallback = NULL;
+                            }
+                        }
+                        else
+                        {
+                            LOG_WARN_FMT(
+                                "standby %s is lagging behind the primary%s", cfgOptionGroupName(cfgOptGrpPg, standby->pgIdx),
+                                status == dbStandbyStatusStalled ? " and replay is not progressing" : "");
+
+                            // Keep the standby as a fallback if it is better than the current one. Stalled status might be due to
+                            // replaying from the archive or no writes on primary. Select a stalled standby as the last resort. It
+                            // will be cross-checked with dbReplayWait() later.
+                            if (standbyFallback == NULL || status < standbyFallbackStatus)
+                            {
+                                if (standbyFallback != NULL)
+                                    dbFree(standbyFallback->db);
+
+                                standbyFallback = standby;
+                                standbyFallbackStatus = status;
+                            }
+                            else
+                                dbFree(standby->db);
+                        }
+                    }
+                    CATCH_ANY()
+                    {
+                        LOG_WARN_FMT(
+                            "standby %s is not usable: [%s] %s", cfgOptionGroupName(cfgOptGrpPg, standby->pgIdx),
+                            errorTypeName(errorType()), errorMessage());
+
+                        dbFree(standby->db);
+                    }
+                    TRY_END();
+                }
+            }
+
+            if (result.standby == NULL && standbyFallback != NULL)
+            {
+                LOG_WARN_FMT(
+                    "using standby %s though it is %s",
+                    cfgOptionGroupName(cfgOptGrpPg, standbyFallback->pgIdx),
+                    standbyFallbackStatus == dbStandbyStatusLagging ? "lagging behind the primary" : "not progressing");
+
+                result.standbyIdx = standbyFallback->pgIdx;
+                result.standby = standbyFallback->db;
+            }
         }
 
         // Error if no standby was found

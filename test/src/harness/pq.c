@@ -34,6 +34,10 @@ static struct HrnPqLocal
     unsigned int scriptSize;
     unsigned int scriptIdx;
 
+    // Connections returned by PQconnectdb(), indexed by session. These are copies of the connect script items so they remain valid
+    // after the script is reset.
+    HrnPqScript connection[32];
+
     // Is PQfinish scripting required?
     bool strict;
 
@@ -209,7 +213,14 @@ Shim for PQconnectdb()
 PGconn *
 PQconnectdb(const char *conninfo)
 {
-    return (PGconn *)hrnPqScriptRun(HRN_PQ_CONNECTDB, varLstAdd(varLstNew(), varNewStrZ(conninfo)), NULL);
+    const HrnPqScript *const result = hrnPqScriptRun(HRN_PQ_CONNECTDB, varLstAdd(varLstNew(), varNewStrZ(conninfo)), NULL);
+
+    if (result->session >= LENGTH_OF(hrnPqLocal.connection))
+        THROW_FMT(AssertError, "pq script session %u exceeds max of %zu", result->session, LENGTH_OF(hrnPqLocal.connection) - 1);
+
+    hrnPqLocal.connection[result->session] = *result;
+
+    return (PGconn *)&hrnPqLocal.connection[result->session];
 }
 
 /***********************************************************************************************************************************
