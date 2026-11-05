@@ -247,7 +247,7 @@ ioWriteSeek(IoWrite *const this, const uint64_t position)
 
     // If the requested position is not the current position then flush writes and seek. Writes must be flushed first so they will
     // not later end up in the wrong location.
-    if (position != this->position)
+    if (position != this->position || !bufEmpty(this->output))
     {
         ioWriteFlush(this);
         ioWriteInterface(this)->seek(ioWriteDriver(this), position);

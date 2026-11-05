@@ -258,6 +258,26 @@ if lib_zstd.found()
     configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
 endif
 
+# Check for direct I/O support. glibc only exposes O_DIRECT with _GNU_SOURCE, so capture its value without changing feature macros
+# for all source files.
+direct_io_flag = cc.get_define('O_DIRECT', prefix: '#include <fcntl.h>', args: '-D_GNU_SOURCE')
+
+if direct_io_flag != ''
+    configuration.set('HAVE_O_DIRECT', true, description: 'Is O_DIRECT present?')
+    configuration.set('STORAGE_POSIX_DIRECT_FLAG', direct_io_flag, description: 'O_DIRECT flag value')
+else
+    configuration.set('STORAGE_POSIX_DIRECT_FLAG', '0', description: 'O_DIRECT flag value')
+endif
+
+# Check for direct I/O alignment support. statx() is Linux-specific and requires GNU feature declarations with glibc.
+if host_machine.system() == 'linux' and cc.compiles(
+    '#include <fcntl.h>\n#include <sys/stat.h>\n' +
+    'int main(void) {struct statx s; return statx(AT_FDCWD, ".", 0, STATX_DIOALIGN, &s) + (int)s.stx_dio_mem_align;}',
+    args: '-D_GNU_SOURCE', name: 'statx() STATX_DIOALIGN')
+    configuration.set('HAVE_STATX_DIOALIGN', true, description: 'Does statx() report direct I/O alignment?')
+    add_global_arguments('-D_GNU_SOURCE', language: 'c')
+endif
+
 # Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros
 if not cc.compiles(
         '''#include <sys/select.h>

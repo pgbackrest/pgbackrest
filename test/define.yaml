@@ -348,6 +348,7 @@ unit:
       - common/compress/helper
 
     depend:
+      - storage/posix/direct
       - storage/posix/read
       - storage/posix/storage
       - storage/posix/write
@@ -551,11 +552,12 @@ unit:
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: storage/posix
-    total: 24
+    total: 25
 
     coverage:
       - storage/cifs/helper
       - storage/cifs/storage
+      - storage/posix/direct
       - storage/posix/read
       - storage/posix/storage
       - storage/posix/write

@@ -10,6 +10,7 @@ Posix Storage Read
 #include "common/io/read.h"
 #include "common/log.h"
 #include "common/type/object.h"
+#include "storage/posix/direct.h"
 #include "storage/posix/read.h"
 #include "storage/read.h"
 
@@ -28,6 +29,13 @@ struct StorageReadPosix
     int fd;                                                         // File descriptor
     uint64_t current;                                               // Current bytes read from file
     bool eof;
+
+    bool directIo;                                                  // Use direct I/O
+    StoragePosixDirect dio;                                         // Aligned bounce buffer
+    size_t dioSkip;                                                 // Bytes to skip in first block to reach offset
+    size_t dioUsed;                                                 // Bytes in bounce buffer
+    size_t dioPos;                                                  // Bytes consumed from bounce buffer
+    bool dioEnd;                                                    // Has the end of the file been read?
 };
 
 /***********************************************************************************************************************************
@@ -66,7 +74,17 @@ storageReadPosixOpen(THIS_VOID)
     ASSERT(this->fd == -1);
 
     // Open the file
-    this->fd = open(strZ(this->name), O_RDONLY, 0);
+    if (this->directIo)
+    {
+        this->fd = open(strZ(this->name), O_RDONLY | storagePosixDirectFlag(), 0);
+
+        // Fall back to buffered I/O when direct I/O is not supported, e.g. by the file system
+        if (this->fd == -1 && errno == EINVAL)
+            this->directIo = false;
+    }
+
+    if (!this->directIo)
+        this->fd = open(strZ(this->name), O_RDONLY, 0);
 
     // Handle errors except missing, which is reported to the caller via the result
     if (this->fd == -1)
@@ -80,16 +98,95 @@ storageReadPosixOpen(THIS_VOID)
         // Set free callback to ensure the file descriptor is freed
         memContextCallbackSet(objMemContext(this), storageReadPosixFreeResource, this);
 
-        // Seek to offset
-        if (this->offset != 0)
+        // Seek to offset. Direct I/O can only seek to an aligned offset so seek below the offset
+        // and skip the remainder when reading.
+        uint64_t seekOffset = this->offset;
+
+        if (this->directIo)
+        {
+            MEM_CONTEXT_OBJ_BEGIN(this)
+            {
+                storagePosixDirectNew(this->fd, &this->dio);
+            }
+            MEM_CONTEXT_OBJ_END();
+
+            seekOffset = this->offset / this->dio.align * this->dio.align;
+            this->dioSkip = (size_t)(this->offset - seekOffset);
+        }
+
+        if (seekOffset != 0)
         {
             THROW_ON_SYS_ERROR_FMT(
-                lseek(this->fd, (off_t)this->offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, this->offset,
+                lseek(this->fd, (off_t)seekOffset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, seekOffset,
                 strZ(this->name));
         }
     }
 
     FUNCTION_LOG_RETURN(BOOL, this->fd != -1);
+}
+
+/***********************************************************************************************************************************
+Read from a file using direct I/O. Data is read in aligned blocks into the bounce buffer and then copied to the caller's buffer.
+***********************************************************************************************************************************/
+static size_t
+storageReadPosixDirect(StorageReadPosix *const this, Buffer *const buffer)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_POSIX, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+
+    const size_t usedBegin = bufUsed(buffer);
+
+    if (!this->eof)
+    {
+        const uint64_t limit = this->limit == NULL ? UINT64_MAX : varUInt64(this->limit);
+
+        while (bufRemains(buffer) > 0 && this->current < limit)
+        {
+            // Fill the bounce buffer when it has been consumed
+            if (this->dioPos == this->dioUsed)
+            {
+                if (this->dioEnd)
+                    break;
+
+                const ssize_t actualBytes = read(this->fd, this->dio.ptr, this->dio.size);
+
+                if (actualBytes == -1)
+                    THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strZ(this->name));
+
+                this->dioUsed = (size_t)actualBytes;
+                this->dioPos = this->dioSkip < this->dioUsed ? this->dioSkip : this->dioUsed;
+                this->dioSkip = 0;
+
+                // A short read means the end of the file has been reached
+                if (this->dioUsed < this->dio.size)
+                    this->dioEnd = true;
+            }
+
+            // Copy from the bounce buffer without exceeding the limit
+            size_t copyBytes = this->dioUsed - this->dioPos;
+
+            if (copyBytes > bufRemains(buffer))
+                copyBytes = bufRemains(buffer);
+
+            if (this->current + copyBytes > limit)
+                copyBytes = (size_t)(limit - this->current);
+
+            memcpy(bufRemainsPtr(buffer), this->dio.ptr + this->dioPos, copyBytes);
+            bufUsedInc(buffer, copyBytes);
+            this->dioPos += copyBytes;
+            this->current += copyBytes;
+        }
+
+        if (this->current == limit || (this->dioEnd && this->dioPos == this->dioUsed))
+            this->eof = true;
+    }
+
+    FUNCTION_LOG_RETURN(SIZE, bufUsed(buffer) - usedBegin);
 }
 
 /***********************************************************************************************************************************
@@ -108,6 +205,11 @@ storageReadPosix(THIS_VOID, Buffer *const buffer, const bool block)
 
     ASSERT(this != NULL && this->fd != -1);
     ASSERT(buffer != NULL && !bufFull(buffer));
+
+    if (this->directIo)
+    {
+        FUNCTION_LOG_RETURN(SIZE, storageReadPosixDirect(this, buffer));
+    }
 
     // Read if EOF has not been reached
     ssize_t actualBytes = 0;
@@ -210,13 +312,15 @@ static const StorageReadInterface storageReadPosixInterface =
 };
 
 FN_EXTERN StorageReadPosix *
-storageReadPosixNew(StoragePosix *const storage, const String *const name, const uint64_t offset, const Variant *const limit)
+storageReadPosixNew(
+    StoragePosix *const storage, const String *const name, const uint64_t offset, const Variant *const limit, const bool directIo)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(BOOL, directIo);
     FUNCTION_LOG_END();
 
     ASSERT(name != NULL);
@@ -231,6 +335,7 @@ storageReadPosixNew(StoragePosix *const storage, const String *const name, const
             .offset = offset,
             .limit = varDup(limit),
             .fd = -1,
+            .directIo = directIo,
         };
     }
     OBJ_NEW_END();

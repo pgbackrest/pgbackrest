@@ -1778,6 +1778,221 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("StoragePosixDirect"))
+    {
+#ifdef HAVE_O_DIRECT
+#ifdef HAVE_STATX_DIOALIGN
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("statx alignment selection");
+
+        TEST_RESULT_UINT(
+            storagePosixDirectAlign(true, STATX_DIOALIGN, 512, 4096), 4096, "use larger offset alignment");
+        TEST_RESULT_UINT(
+            storagePosixDirectAlign(true, STATX_DIOALIGN, 4096, 512), 4096, "use larger memory alignment");
+        TEST_RESULT_UINT(
+            storagePosixDirectAlign(false, STATX_DIOALIGN, 4096, 4096), STORAGE_POSIX_DIRECT_ALIGN_DEFAULT,
+            "use default when statx fails");
+        TEST_RESULT_UINT(
+            storagePosixDirectAlign(true, 0, 4096, 4096), STORAGE_POSIX_DIRECT_ALIGN_DEFAULT,
+            "use default when alignment is not reported");
+        TEST_RESULT_UINT(
+            storagePosixDirectAlign(true, STATX_DIOALIGN, 0, 4096), STORAGE_POSIX_DIRECT_ALIGN_DEFAULT,
+            "use default when memory alignment is zero");
+        TEST_RESULT_UINT(
+            storagePosixDirectAlign(true, STATX_DIOALIGN, 4096, 0), STORAGE_POSIX_DIRECT_ALIGN_DEFAULT,
+            "use default when offset alignment is zero");
+#endif
+
+        const Storage *const storageDirect = storagePosixNewP(TEST_PATH_STR, .write = true, .directIo = true);
+
+        // Content that is not a multiple of the alignment and spans multiple bounce buffers
+        const size_t contentSize = ioBufferSize() * 2 + 10000;
+        Buffer *const content = bufNew(contentSize);
+
+        for (size_t contentIdx = 0; contentIdx < contentSize; contentIdx++)
+            bufPtr(content)[contentIdx] = (uint8_t)(contentIdx % 251);
+
+        bufUsedSet(content, contentSize);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write and read");
+
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageDirect, STRDEF("direct.file")), content), "write");
+        TEST_RESULT_UINT(storageInfoP(storageDirect, STRDEF("direct.file")).size, contentSize, "check size");
+        TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storageDirect, STRDEF("direct.file"))), content), true, "read");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read empty file and zero limit");
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageDirect, STRDEF("direct-empty.file")), BUFSTRDEF("")), "write empty file");
+        TEST_RESULT_BOOL(
+            bufEmpty(storageGetP(storageNewReadP(storageDirect, STRDEF("direct-empty.file")))), true, "read empty file");
+        TEST_RESULT_BOOL(
+            bufEmpty(storageGetP(storageNewReadP(storageDirect, STRDEF("direct.file"), .limit = VARUINT64(0)))), true,
+            "read with zero limit");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read into small buffer");
+
+        StorageRead *const directReadSmall = storageNewReadP(storageDirect, STRDEF("direct.file"));
+        Buffer *const directReadSmallBuffer = bufNew(17);
+
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(directReadSmall)), true, "open");
+        TEST_RESULT_UINT(ioRead(storageReadIo(directReadSmall), directReadSmallBuffer), 17, "read");
+        TEST_RESULT_INT(memcmp(bufPtr(directReadSmallBuffer), bufPtr(content), 17), 0, "check content");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(directReadSmall)), "close");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read missing file");
+
+        TEST_RESULT_BOOL(
+            ioReadOpen(storageReadIo(storageNewReadP(storageDirect, STRDEF("direct-missing.file"), .ignoreMissing = true))), false,
+            "open missing file");
+
+        StorageRead *directReadError = storageNewReadP(storageDirect, STRDEF("direct.file"));
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(directReadError)), true, "open");
+        StorageReadPosix *const directReadDriver = directReadError->driver;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read seek error");
+
+        const uint64_t invalidOffset = UINT64_MAX;
+        const uint64_t alignedOffset = invalidOffset / directReadDriver->dio.align * directReadDriver->dio.align;
+        const String *const directFileName = STRDEF(TEST_PATH "/direct.file");
+        StorageRead *const directReadSeekError =
+            storageNewReadP(storageDirect, STRDEF("direct.file"), .offset = invalidOffset);
+        StorageReadPosix *const directReadSeekDriver = directReadSeekError->driver;
+
+        TEST_ERROR_FMT(
+            ioReadOpen(storageReadIo(directReadSeekError)), FileOpenError,
+            STORAGE_ERROR_READ_SEEK ": [22] Invalid argument", alignedOffset, strZ(directFileName));
+        TEST_RESULT_INT(close(directReadSeekDriver->fd), 0, "close file descriptor");
+        directReadSeekDriver->fd = -1;
+        memContextCallbackClear(objMemContext(directReadSeekDriver));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read error");
+
+        TEST_RESULT_INT(close(directReadDriver->fd), 0, "close file descriptor");
+        TEST_ERROR_FMT(
+            ioRead(storageReadIo(directReadError), bufNew(1)), FileReadError, "unable to read '%s': [9] Bad file descriptor",
+            strZ(directReadDriver->name));
+        directReadDriver->fd = -1;
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(directReadError)), "close read");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read with unaligned offset and limit");
+
+        Buffer *part = NULL;
+
+        TEST_ASSIGN(
+            part,
+            storageGetP(
+                storageNewReadP(storageDirect, STRDEF("direct.file"), .offset = 5000, .limit = VARUINT64(contentSize - 7000))),
+            "read");
+        TEST_RESULT_UINT(bufUsed(part), contentSize - 7000, "check size");
+        TEST_RESULT_INT(memcmp(bufPtr(part), bufPtr(content) + 5000, bufUsed(part)), 0, "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read with offset past end of file");
+
+        TEST_ASSIGN(
+            part, storageGetP(storageNewReadP(storageDirect, STRDEF("direct.file"), .offset = contentSize + 10000)), "read");
+        TEST_RESULT_UINT(bufUsed(part), 0, "check size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write with aligned seek");
+
+        Buffer *const blockA = bufNew(8192);
+        memset(bufPtr(blockA), 'A', 8192);
+        bufUsedSet(blockA, 8192);
+
+        Buffer *const blockB = bufNew(8192);
+        memset(bufPtr(blockB), 'B', 8192);
+        bufUsedSet(blockB, 8192);
+
+        StorageWrite *file = NULL;
+
+        TEST_ASSIGN(file, storageNewWriteP(storageDirect, STRDEF("direct-seek.file"), .noAtomic = true), "new write");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), blockA), "write A");
+        TEST_RESULT_VOID(ioWriteSeek(storageWriteIo(file), 0), "seek");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), blockB), "write B");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close");
+
+        TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storageDirect, STRDEF("direct-seek.file"))), blockB), true, "check");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write partial block after seek");
+
+        const Buffer *const partialWrite = BUFSTRDEF("PARTIAL");
+        TEST_ASSIGN(file, storageNewWriteP(storageDirect, STRDEF("direct-partial.file")), "new write");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open");
+        TEST_RESULT_VOID(ioWriteSeek(storageWriteIo(file), 4096), "seek");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), partialWrite), "write");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close");
+
+        TEST_RESULT_UINT(storageInfoP(storageDirect, STRDEF("direct-partial.file")).size, 4103, "check truncated size");
+        TEST_RESULT_BOOL(
+            bufEq(
+                storageGetP(storageNewReadP(storageDirect, STRDEF("direct-partial.file"), .offset = 4096)), partialWrite),
+            true, "check partial data");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write error");
+
+        TEST_ASSIGN(
+            file, storageNewWriteP(storageDirect, STRDEF("direct-error.file"), .noAtomic = true, .noSyncFile = true),
+            "new write");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open");
+
+        StorageWritePosix *const directWriteDriver = file->driver;
+        TEST_RESULT_INT(close(directWriteDriver->fd), 0, "close file descriptor");
+
+        Buffer *const directWriteBuffer = bufNew(directWriteDriver->dio.size);
+        memset(bufPtr(directWriteBuffer), 'C', directWriteDriver->dio.size);
+        bufUsedSet(directWriteBuffer, directWriteDriver->dio.size);
+
+        TEST_ERROR_FMT(
+            storageWritePosix(directWriteDriver, directWriteBuffer), FileWriteError,
+            "unable to write '%s': [9] Bad file descriptor", strZ(directWriteDriver->nameTmp));
+
+        directWriteDriver->fd = -1;
+        directWriteDriver->dioUsed = 0;
+        memContextCallbackClear(objMemContext(directWriteDriver));
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close failed writer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write with unaligned seek");
+
+        TEST_ASSIGN(file, storageNewWriteP(storageDirect, STRDEF("direct-seek.file"), .noAtomic = true), "new write");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open");
+        TEST_ERROR_FMT(
+            ioWriteSeek(storageWriteIo(file), 1), FileWriteError,
+            "unable to seek to 1 in '%s/direct-seek.file': position is not aligned for direct I/O", TEST_PATH);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo and pg storage use direct I/O when configured");
+
+        StringList *const argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoIoMode, "direct");
+        hrnCfgArgRawZ(argList, cfgOptPgIoMode, "direct");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("repo-direct.file")), content), "write repo");
+        TEST_RESULT_BOOL(
+            bufEq(storageGetP(storageNewReadP(storageRepo(), STRDEF("repo-direct.file"))), content), true, "read repo");
+
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storagePgWrite(), STRDEF("pg-direct.file")), content), "write pg");
+        TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storagePg(), STRDEF("pg-direct.file"))), content), true, "read pg");
+#endif
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("HrnStorageTest"))
     {
         hrnStorageHelperRepoShimSet(true);
