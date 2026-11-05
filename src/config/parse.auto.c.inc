@@ -24,6 +24,8 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("0B"),                                                                                              // val/str
     PARSE_RULE_STRPUB("0s"),                                                                                              // val/str
     PARSE_RULE_STRPUB("1"),                                                                                               // val/str
+    PARSE_RULE_STRPUB("1.2"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("1.3"),                                                                                             // val/str
     PARSE_RULE_STRPUB("100ms"),                                                                                           // val/str
     PARSE_RULE_STRPUB("1024"),                                                                                            // val/str
     PARSE_RULE_STRPUB("12"),                                                                                              // val/str
@@ -166,6 +168,8 @@ typedef enum
     parseRuleValStrQT_0B_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_0s_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_1_QT,                                                                                          // val/str/enum
+    parseRuleValStrQT_1_DT_2_QT,                                                                                     // val/str/enum
+    parseRuleValStrQT_1_DT_3_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_100ms_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_1024_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_12_QT,                                                                                         // val/str/enum
@@ -11631,6 +11635,89 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                      // opt/tls-cipher-13
     ),                                                                                                          // opt/tls-cipher-13
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                         // opt/tls-min-version
+    (                                                                                                         // opt/tls-min-version
+        PARSE_RULE_OPTION_NAME("tls-min-version"),                                                            // opt/tls-min-version
+        PARSE_RULE_OPTION_TYPE(String),                                                                       // opt/tls-min-version
+        PARSE_RULE_OPTION_RESET(true),                                                                        // opt/tls-min-version
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                     // opt/tls-min-version
+        PARSE_RULE_OPTION_SECTION(Global),                                                                    // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                        // opt/tls-min-version
+        (                                                                                                     // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                               // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                             // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                            // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                  // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                   // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                               // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Server)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                             // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                           // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                           // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                          // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/tls-min-version
+        ),                                                                                                    // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                       // opt/tls-min-version
+        (                                                                                                     // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                             // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                            // opt/tls-min-version
+        ),                                                                                                    // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                       // opt/tls-min-version
+        (                                                                                                     // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                             // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                            // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/tls-min-version
+        ),                                                                                                    // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                      // opt/tls-min-version
+        (                                                                                                     // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                               // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                             // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                            // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                  // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                   // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                               // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                           // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                           // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                          // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/tls-min-version
+        ),                                                                                                    // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+        PARSE_RULE_OPTIONAL                                                                                   // opt/tls-min-version
+        (                                                                                                     // opt/tls-min-version
+            PARSE_RULE_OPTIONAL_GROUP                                                                         // opt/tls-min-version
+            (                                                                                                 // opt/tls-min-version
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                // opt/tls-min-version
+                (                                                                                             // opt/tls-min-version
+                    PARSE_RULE_VAL_STR(QT_1_DT_2_QT),                                                         // opt/tls-min-version
+                    PARSE_RULE_VAL_STR(QT_1_DT_3_QT),                                                         // opt/tls-min-version
+                ),                                                                                            // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                   // opt/tls-min-version
+                (                                                                                             // opt/tls-min-version
+                    PARSE_RULE_VAL_STR(QT_1_DT_2_QT),                                                         // opt/tls-min-version
+                ),                                                                                            // opt/tls-min-version
+            ),                                                                                                // opt/tls-min-version
+        ),                                                                                                    // opt/tls-min-version
+    ),                                                                                                        // opt/tls-min-version
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                      // opt/tls-server-address
     (                                                                                                      // opt/tls-server-address
         PARSE_RULE_OPTION_NAME("tls-server-address"),                                                      // opt/tls-server-address
@@ -12242,6 +12329,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptTcpKeepAliveInterval,                                                                                 // opt-resolve-order
     cfgOptTlsCipher12,                                                                                          // opt-resolve-order
     cfgOptTlsCipher13,                                                                                          // opt-resolve-order
+    cfgOptTlsMinVersion,                                                                                        // opt-resolve-order
     cfgOptTlsServerAddress,                                                                                     // opt-resolve-order
     cfgOptTlsServerAuth,                                                                                        // opt-resolve-order
     cfgOptTlsServerCaFile,                                                                                      // opt-resolve-order

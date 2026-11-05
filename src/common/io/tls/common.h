@@ -12,7 +12,7 @@ TLS Common
 Functions
 ***********************************************************************************************************************************/
 // Initialize TLS with allowed ciphers
-FN_EXTERN void tlsInit(const String *tlsCipher12, const String *tlsCipher13);
+FN_EXTERN void tlsInit(const String *tlsCipher12, const String *tlsCipher13, const String *tlsMinVersion);
 
 // Convert an ASN1 string used in certificates to a Buffer
 FN_EXTERN Buffer *tlsAsn1ToBuf(const ASN1_STRING *nameAsn1);
