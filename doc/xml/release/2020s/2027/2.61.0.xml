@@ -30,6 +30,20 @@
 
                 <p>The minimum TLS version was set to 1.2 after the <proper>OpenSSL</proper> config was applied. This lowered a higher minimum such as <code>MinProtocol = TLSv1.3</code> so TLS 1.2 connections were still allowed. The minimum is now set only when the minimum from the config is lower than TLS 1.2.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2884"/>
+                <github-pull-request id="2902"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix possible block incremental restore failure on <proper>SFTP</proper> storage.</p>
+
+                <p>Each super block read left a file open on the server until the session ended. A restore could reach the open file limit of the server and fail with an error such as <quote>sftp errno [4]</quote> or <quote>client state is 'response' but expected 'idle'</quote>. Super block reads are now closed before they are freed.</p>
+            </release-item>
         </release-bug-list>
 
         <release-feature-list>
