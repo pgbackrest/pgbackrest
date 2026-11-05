@@ -60,6 +60,23 @@
 
                 <p>Repository encryption key rotation.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2889"/>
+                <github-pull-request id="2901"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="gunnar.bluth"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="gunnar.bluth"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>tls-min-version</br-option> option.</p>
+
+                <p>Set <br-option>tls-min-version=1.3</br-option> to allow only TLS 1.3, e.g. for compliance. The default is <id>1.2</id>. A higher minimum set in the <proper>OpenSSL</proper> config is not lowered. The option is ignored for repository storage connections when <br-option>repo-storage-verify-tls=n</br-option>.</p>
+            </release-item>
         </release-feature-list>
 
         <release-improvement-list>

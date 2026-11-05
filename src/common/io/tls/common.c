@@ -24,7 +24,8 @@ static struct TlsCommonLocal
 
     String *tlsCipher12;                                            // Allowed ciphers for TLSv1.2
     String *tlsCipher13;                                            // Allowed ciphers for TLSv1.3
-} tlsCommonLocal;
+    int tlsMinVersion;                                              // Minimum TLS version
+} tlsCommonLocal = {.tlsMinVersion = TLS1_2_VERSION};
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
@@ -191,12 +192,15 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-tlsInit(const String *const tlsCipher12, const String *const tlsCipher13)                                           // {vm_covered}
+tlsInit(const String *const tlsCipher12, const String *const tlsCipher13, const String *const tlsMinVersion)        // {vm_covered}
 {
     FUNCTION_TEST_BEGIN();                                                                                          // {vm_covered}
         FUNCTION_TEST_PARAM(STRING, tlsCipher12);                                                                   // {vm_covered}
         FUNCTION_TEST_PARAM(STRING, tlsCipher13);                                                                   // {vm_covered}
+        FUNCTION_TEST_PARAM(STRING, tlsMinVersion);                                                                 // {vm_covered}
     FUNCTION_TEST_END();                                                                                            // {vm_covered}
+
+    ASSERT(tlsMinVersion != NULL);                                                                                  // {vm_covered}
 
     // Free old mem context (if any)
     if (tlsCommonLocal.memContext != NULL)                                                                          // {vm_covered}
@@ -210,6 +214,7 @@ tlsInit(const String *const tlsCipher12, const String *const tlsCipher13)       
             tlsCommonLocal.memContext = MEM_CONTEXT_NEW();                                                          // {vm_covered}
             tlsCommonLocal.tlsCipher12 = strDup(tlsCipher12);                                                       // {vm_covered}
             tlsCommonLocal.tlsCipher13 = strDup(tlsCipher13);                                                       // {vm_covered}
+            tlsCommonLocal.tlsMinVersion = strEqZ(tlsMinVersion, "1.3") ? TLS1_3_VERSION : TLS1_2_VERSION;          // {vm_covered}
         }
         MEM_CONTEXT_NEW_END();                                                                                      // {vm_covered}
     }
@@ -247,9 +252,12 @@ tlsContext(const bool verifyPeer)
     // Enhance security when verifyPeer is enabled
     if (verifyPeer)
     {
-        // Set minimum TLS version to 1.2 when the minimum from the OpenSSL config is lower
-        if (SSL_CTX_get_min_proto_version(result) < TLS1_2_VERSION)
-            cryptoError(SSL_CTX_set_min_proto_version(result, TLS1_2_VERSION) != 1, "unable to set minimum TLS version to 1.2");
+        // Set minimum TLS version when the minimum from the OpenSSL config is lower
+        if (SSL_CTX_get_min_proto_version(result) < tlsCommonLocal.tlsMinVersion)
+        {
+            cryptoError(
+                SSL_CTX_set_min_proto_version(result, tlsCommonLocal.tlsMinVersion) != 1, "unable to set minimum TLS version");
+        }
 
         // Set allowed ciphers for TLSv1.2 when configured
         if (tlsCommonLocal.tlsCipher12 != NULL)                                                                     // {vm_covered}
