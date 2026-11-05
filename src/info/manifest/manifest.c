@@ -526,6 +526,20 @@ manifestBuildIncr(
                 ASSERT(file.copy || fileSizeEqual);
                 ASSERT(!file.delta || fileSizeEqual);
 
+                // Preserve prior block incremental values when they can be used to compare against the prior map.
+                // Otherwise keep the values calculated at build time (which may be zero).
+                if (fileBlockIncrPreserve)
+                {
+                    file.blockIncrSize = filePrior.blockIncrSize;
+                    file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
+                    file.blockIncrMapSize = filePrior.blockIncrMapSize;
+                }
+                // Zero block incremental values for files that will be referenced rather than copied, since no map will be written.
+                else if (!file.copy)
+                {
+                    file.blockIncrSize = file.blockIncrChecksumSize = 0;
+                }
+
                 // Preserve values if the file will not be copied, is possibly equal to the prior file, or will be stored with block
                 // incremental and the prior file is also stored with block incremental. If the file will not be copied then the
                 // file size must be equal to the prior file so there is no need to check that condition separately.
@@ -541,9 +555,6 @@ manifestBuildIncr(
                     file.checksumPageErrorList = filePrior.checksumPageErrorList;
                     file.bundleId = filePrior.bundleId;
                     file.bundleOffset = filePrior.bundleOffset;
-                    file.blockIncrSize = filePrior.blockIncrSize;
-                    file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
-                    file.blockIncrMapSize = filePrior.blockIncrMapSize;
 
                     ASSERT(file.checksumSha1 != NULL);
                     ASSERT(
@@ -555,7 +566,7 @@ manifestBuildIncr(
                     ASSERT(file.bundleId != 0 || file.bundleOffset == 0);
                     ASSERT(
                         (file.blockIncrSize == 0 && file.blockIncrChecksumSize == 0 && file.blockIncrMapSize == 0) ||
-                        (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && file.blockIncrMapSize > 0));
+                        (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && (file.blockIncrMapSize > 0 || file.copy)));
                 }
 
                 // Update by index since we already have it from the enclosing loop. Avoids by-name search of manifestFileUpdate().
