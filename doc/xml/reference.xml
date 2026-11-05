@@ -1556,6 +1556,34 @@
                         <example>y</example>
                     </config-key>
 
+                    <config-key id="backup-standby-mode" name="Backup Standby Mode">
+                        <summary>Select a synchronous or asynchronous standby for backup.</summary>
+
+                        <text>
+                            <p>Choose which standby to backup from when <br-option>backup-standby</br-option> is enabled. A standby is considered synchronous when its <id>application_name</id> appears in <id>pg_stat_replication</id> on the primary with a <id>sync_state</id> of <id>sync</id> or <id>quorum</id>, and asynchronous when it appears with <id>async</id> or <id>potential</id>. A <id>potential</id> standby, including a synchronous standby that is catching up after a restart, is therefore considered asynchronous even though it may become synchronous shortly. Each standby must have an <id>application_name</id> that is unique among all connections in <id>pg_stat_replication</id> on the primary, including logical replication subscriptions and tools such as <id>pg_receivewal</id> or <id>pg_basebackup</id>.</p>
+
+                            <p>The <id>application_name</id> of a standby is derived from <id>conninfo</id> in its <id>pg_stat_wal_receiver</id>. When <id>application_name</id> is not set in <id>primary_conninfo</id> the name defaults to <id>cluster_name</id> (as of <postgres/> 12, when set) or otherwise <id>walreceiver</id>, so standbys that rely on the default often share a name and cannot be classified. When <id>application_name</id> is set to an empty string, or is not set and <id>options</id> sets <id>-c application_name</id>, the derived name may not match the name reported on the primary and the standby may be misclassified. Setting a unique, non-empty <id>application_name</id> in <id>primary_conninfo</id> on each standby avoids these problems.</p>
+
+                            <p>A standby cannot be classified when its <id>application_name</id> has no row in <id>pg_stat_replication</id> on the primary (e.g. a cascaded standby), has more than one row there, or is shared by another standby configured in <backrest/>. A standby also cannot be classified when its WAL receiver is not running or when the replication state cannot be read: <id>sync_state</id> on the primary and <id>conninfo</id> on the standby are only visible to a superuser or, as of <postgres/> 10, a member of <id>pg_read_all_stats</id>. A standby that cannot be classified is never treated as asynchronous. It is only selected by the <id>prefer-*</id> modes when no classified standby is available.</p>
+
+                            <p>Standbys are matched to rows on the primary by <id>application_name</id> only. A shared name cannot be detected when the other standby is not visible to <backrest/>, e.g. a cascaded standby named like a standby connected to the primary, or a configured standby that cannot be reached or whose name cannot be read. In that case the standby may be misclassified.</p>
+
+                            <p>The classification reflects the replication state observed when the backup starts. The state may change afterward, and a synchronous standby is not necessarily the standby with the least replay lag.</p>
+
+                            <allow-list caption="modes">
+                                <allow-item id="any">Backup from the first standby found.</allow-item>
+                                <allow-item id="async">Backup from an asynchronous standby only.</allow-item>
+                                <allow-item id="prefer-async">Backup from an asynchronous standby if available otherwise from a synchronous standby.</allow-item>
+                                <allow-item id="prefer-sync">Backup from a synchronous standby if available otherwise from an asynchronous standby.</allow-item>
+                                <allow-item id="sync">Backup from a synchronous standby only.</allow-item>
+                            </allow-list>
+
+                            <p>If no standby matches then <br-option>backup-standby</br-option> determines whether the backup is made from the primary or fails.</p>
+                        </text>
+
+                        <example>prefer-async</example>
+                    </config-key>
+
                     <config-key id="checksum-page" name="Page Checksums">
                         <summary>Validate data page checksums.</summary>
 

@@ -3884,7 +3884,7 @@
     <section id="standby-backup" depend="/replication/streaming">
         <title>Backup from a Standby</title>
 
-        <p><backrest/> can perform backups on a standby instead of the primary. Standby backups require the <host>{[host-pg2]}</host> host to be configured and the <br-option>backup-standby</br-option> option enabled. If more than one standby is configured then the first running standby found will be used for the backup.</p>
+        <p><backrest/> can perform backups on a standby instead of the primary. Standby backups require the <host>{[host-pg2]}</host> host to be configured and the <br-option>backup-standby</br-option> option enabled. If more than one standby is configured then by default the first running standby found will be used for the backup. The <br-option>backup-standby-mode</br-option> option can be used to select a synchronous or asynchronous standby instead.</p>
 
         <backrest-config host="{[host-repo1]}" owner="{[br-user]}:{[br-group]}" file="{[backrest-config-demo]}">
             <title>Configure <br-option>pg2-host</br-option>/<br-option>pg2-host-user</br-option> and <br-option>pg2-path</br-option></title>

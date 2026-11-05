@@ -1152,6 +1152,26 @@ option:
     command-role:
       main: {}
 
+  backup-standby-mode:
+    section: global
+    type: string-id
+    default: any
+    allow-list:
+      - any
+      - async
+      - prefer-async
+      - prefer-sync
+      - sync
+    command:
+      backup: {}
+    depend:
+      option: backup-standby
+      list:
+        - prefer
+        - y
+    command-role:
+      main: {}
+
   checksum-page:
     section: global
     type: boolean
