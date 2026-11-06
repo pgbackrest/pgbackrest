@@ -1434,6 +1434,10 @@ testRun(void)
                 "backup-timestamp-stop=1565282142\n"
                 "backup-type=\"full\"\n"
                 "\n"
+                "[backup:bundle]\n"
+                "1={\"checksum\":\"" HASH_TYPE_SHA256_ZERO "\",\"size\":0}\n"
+                "3={\"checksum\":\"" HASH_TYPE_SHA256_ZERO "\",\"size\":3}\n"
+                "\n"
                 "[backup:db]\n"
                 "db-catalog-version=201608131\n"
                 "db-control-version=960\n"
@@ -1506,6 +1510,12 @@ testRun(void)
 
         TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
         TEST_RESULT_STR(strNewBuf(contentSave), strNewBuf(contentLoad), "check save");
+
+        TEST_RESULT_VOID(manifestBundleAdd(manifest, &(ManifestBundle){.id = 2, .size = 2}), "add bundle between bundles");
+        TEST_RESULT_UINT(manifestBundleTotal(manifest), 3, "bundle total");
+        TEST_RESULT_UINT(manifestBundle(manifest, 1)->id, 2, "bundle id");
+        TEST_RESULT_UINT(manifestBundle(manifest, 1)->size, 2, "bundle size");
+        TEST_RESULT_UINT(manifestBundle(manifest, 2)->id, 3, "bundle id");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("manifest - all features");
@@ -1978,6 +1988,24 @@ testRun(void)
         TEST_ERROR(
             manifestNewLoad(ioBufferReadNew(BUFSTRDEF("[target:file]\npg_data/bogus={\"timestamp\":0}")), cipherSpecNewNone()),
             FormatError, "missing size for file 'pg_data/bogus'");
+        TEST_ERROR(
+            manifestNewLoad(
+                ioBufferReadNew(BUFSTRDEF("[backup:bundle]\n1={\"checksum\":\"aa\",\"size\":1}")), cipherSpecNewNone()),
+            FormatError, "invalid bundle checksum size");
+        TEST_ERROR(
+            manifestNewLoad(
+                ioBufferReadNew(BUFSTRDEF("[backup:bundle]\n0={\"checksum\":\"" HASH_TYPE_SHA256_ZERO "\",\"size\":1}")),
+                cipherSpecNewNone()),
+            FormatError, "bundle id must not be 0");
+        TEST_ERROR(
+            manifestNewLoad(
+                ioBufferReadNew(
+                    BUFSTRDEF(
+                        "[backup:bundle]\n"
+                        "1={\"checksum\":\"" HASH_TYPE_SHA256_ZERO "\",\"size\":1}\n"
+                        "1={\"checksum\":\"" HASH_TYPE_SHA256_ZERO "\",\"size\":1}")),
+                cipherSpecNewNone()),
+            FormatError, "duplicate bundle id 1");
     }
 
     // *****************************************************************************************************************************

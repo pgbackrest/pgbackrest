@@ -53,6 +53,12 @@ typedef struct BackupFileResult
     Pack *pageChecksumResult;
 } BackupFileResult;
 
+typedef struct BackupFileBundleResult
+{
+    const Buffer *checksum;                                         // Checksum of bundle (NULL if none)
+    uint64_t size;                                                  // Size of bundle
+} BackupFileBundleResult;
+
 // Create the block incremental filter, reading the prior block map when there is one. Errors are rethrown with the location of the
 // map because neither the read nor the map parse know where the map came from, which makes a mismatch between the manifest and the
 // repository very hard to diagnose.
@@ -149,12 +155,14 @@ backupFileBlockIncr(
 
 static List *
 backupFile(
-    const String *const repoFile, const uint64_t bundleId, const bool bundleRaw, const unsigned int blockIncrReference,
-    const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherSpec *const cipherSpecBackup,
-    const String *const pgVersionForce, const PgPageSize pageSize, const List *const fileList)
+    const String *const repoFile, const unsigned int repoFormat, const uint64_t bundleId, const bool bundleRaw,
+    const unsigned int blockIncrReference, const CompressType repoFileCompressType, const int repoFileCompressLevel,
+    const CipherSpec *const cipherSpecBackup, const String *const pgVersionForce, const PgPageSize pageSize,
+    const List *const fileList, BackupFileBundleResult *const bundleResult)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
+        FUNCTION_LOG_PARAM(UINT, repoFormat);                       // Repository format
         FUNCTION_LOG_PARAM(UINT64, bundleId);                       // Bundle id (0 if none)
         FUNCTION_LOG_PARAM(BOOL, bundleRaw);                        // Raw compress/encrypt format in bundles?
         FUNCTION_LOG_PARAM(UINT, blockIncrReference);               // Block incremental reference to use in map
@@ -164,12 +172,17 @@ backupFile(
         FUNCTION_LOG_PARAM(ENUM, pageSize);                         // Page size
         FUNCTION_LOG_PARAM(STRING, pgVersionForce);                 // Force pg version
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to backup
+        FUNCTION_LOG_PARAM_P(VOID, bundleResult);                   // Bundle checksum and size
     FUNCTION_LOG_END();
 
     ASSERT(repoFile != NULL);
     ASSERT(cipherSpecBackup != NULL);
     ASSERT(fileList != NULL && !lstEmpty(fileList));
     ASSERT(pgPageSizeValid(pageSize));
+    ASSERT(bundleResult != NULL);
+
+    // Checksum the bundle rather than each file (Format >= 6)
+    const bool bundleChecksum = bundleId != 0 && repoFormat >= REPOSITORY_FORMAT_6;
 
     // Backup file results
     List *const result = lstNewP(sizeof(BackupFileResult));
@@ -384,7 +397,7 @@ backupFile(
                             backupFileBlockIncr(
                                 file, blockIncrReference, bundleId, bundleOffset, biMapRead, cipherSpecBackup, compress, encrypt));
 
-                        repoChecksum = true;
+                        repoChecksum = !bundleChecksum;
                     }
                     // Else apply compress/encrypt filters to the entire file
                     else
@@ -393,18 +406,19 @@ backupFile(
                         if (compress != NULL)
                         {
                             ioFilterGroupAdd(ioReadFilterGroup(readIo), compress);
-                            repoChecksum = true;
+                            repoChecksum = !bundleChecksum;
                         }
 
                         // Add encrypt filter
                         if (encrypt != NULL)
                         {
                             ioFilterGroupAdd(ioReadFilterGroup(readIo), encrypt);
-                            repoChecksum = true;
+                            repoChecksum = !bundleChecksum;
                         }
                     }
 
-                    // Capture checksum of file stored in the repo if filters that modify the output have been applied
+                    // Capture checksum of file stored in the repo if filters that modify the output have been applied. Files in a
+                    // bundle with a checksum do not have a repo checksum.
                     if (repoChecksum)
                         ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
 
@@ -482,6 +496,10 @@ backupFile(
                                     write = storageNewWriteP(
                                         storageRepoWrite(), repoFile, .compressible = compressible, .noAtomic = true,
                                         .noSyncPath = true);
+
+                                    if (bundleChecksum)
+                                        ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), cryptoHashNew(hashTypeSha256));
+
                                     ioWriteOpen(storageWriteIo(write));
                                 }
                                 MEM_CONTEXT_PRIOR_END();
@@ -556,7 +574,22 @@ backupFile(
 
         // Close the repository file if it was opened
         if (write != NULL)
+        {
             ioWriteClose(storageWriteIo(write));
+
+            // Get bundle checksum and size
+            if (bundleChecksum)
+            {
+                MEM_CONTEXT_BEGIN(lstMemContext(result))
+                {
+                    bundleResult->checksum = pckReadBinP(
+                        ioFilterGroupResultP(ioWriteFilterGroup(storageWriteIo(write)), CRYPTO_HASH_FILTER_TYPE));
+                }
+                MEM_CONTEXT_END();
+
+                bundleResult->size = bundleOffset;
+            }
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -19,13 +19,15 @@ Verify File
 FN_EXTERN VerifyResult
 verifyFile(
     const String *const filePathName, const uint64_t offset, const Variant *const limit, const CompressType compressType,
-    const Buffer *const fileChecksum, const uint64_t fileSize, const CipherSpecMap *const cipherSpecMap, const bool formatHeader)
+    const HashType hashType, const Buffer *const fileChecksum, const uint64_t fileSize, const CipherSpecMap *const cipherSpecMap,
+    const bool formatHeader)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, filePathName);                   // Fully qualified file name
         FUNCTION_LOG_PARAM(UINT64, offset);                         // Offset to read in file
         FUNCTION_LOG_PARAM(VARIANT, limit);                         // Limit to read from file
         FUNCTION_LOG_PARAM(ENUM, compressType);                     // Compression type
+        FUNCTION_LOG_PARAM(STRING_ID, hashType);                    // Hash type of the checksum
         FUNCTION_LOG_PARAM(BUFFER, fileChecksum);                   // Checksum for the file
         FUNCTION_LOG_PARAM(UINT64, fileSize);                       // Size of file
         FUNCTION_LOG_PARAM(CIPHER_SPEC_MAP, cipherSpecMap);         // Cipher keys to access the repo file if encrypted
@@ -63,8 +65,8 @@ verifyFile(
         if (compressType != compressTypeNone)
             ioFilterGroupAdd(filterGroup, decompressFilterP(compressType));
 
-        // Add sha1 filter
-        ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
+        // Add hash filter
+        ioFilterGroupAdd(filterGroup, cryptoHashNew(hashType));
 
         // Add size filter
         ioFilterGroupAdd(filterGroup, ioSizeNew());

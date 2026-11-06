@@ -122,6 +122,16 @@ typedef struct ManifestBlockIncrMap
 } ManifestBlockIncrMap;
 
 /***********************************************************************************************************************************
+Bundle type
+***********************************************************************************************************************************/
+typedef struct ManifestBundle
+{
+    uint64_t id;                                                    // Bundle id
+    uint64_t size;                                                  // Size in repo
+    uint8_t checksumSha256[HASH_TYPE_SHA256_SIZE];                  // SHA-256 checksum as stored in repo
+} ManifestBundle;
+
+/***********************************************************************************************************************************
 Db type
 ***********************************************************************************************************************************/
 typedef struct ManifestDb
@@ -228,6 +238,7 @@ typedef struct ManifestPub
     MemContext *memContext;                                         // Mem context
     Info *info;                                                     // Base info object
     ManifestData data;                                              // Manifest data and options
+    List *bundleList;                                               // List of bundles (Format >= 6)
     List *dbList;                                                   // List of databases
     List *fileList;                                                 // List of files
     List *linkList;                                                 // List of links
@@ -307,6 +318,24 @@ FN_EXTERN void manifestSave(Manifest *this, IoWrite *write);
 
 // Validate a completed manifest. Use strict mode only when saving the manifest after a backup.
 FN_EXTERN void manifestValidate(Manifest *this, bool strict);
+
+/***********************************************************************************************************************************
+Bundle functions and getters/setters
+***********************************************************************************************************************************/
+FN_INLINE_ALWAYS const ManifestBundle *
+manifestBundle(const Manifest *const this, const unsigned int bundleIdx)
+{
+    return lstGet(THIS_PUB(Manifest)->bundleList, bundleIdx);
+}
+
+// Add a bundle in id order
+FN_EXTERN void manifestBundleAdd(Manifest *this, const ManifestBundle *bundle);
+
+FN_INLINE_ALWAYS unsigned int
+manifestBundleTotal(const Manifest *const this)
+{
+    return lstSize(THIS_PUB(Manifest)->bundleList);
+}
 
 /***********************************************************************************************************************************
 Db functions and getters/setters
@@ -523,6 +552,11 @@ Macros for function logging
     Manifest *
 #define FUNCTION_LOG_MANIFEST_FORMAT(value, buffer, bufferSize)                                                                    \
     objNameToLog(value, "Manifest", buffer, bufferSize)
+
+#define FUNCTION_LOG_MANIFEST_BUNDLE_TYPE                                                                                          \
+    ManifestBundle *
+#define FUNCTION_LOG_MANIFEST_BUNDLE_FORMAT(value, buffer, bufferSize)                                                             \
+    objNameToLog(value, "ManifestBundle", buffer, bufferSize)
 
 #define FUNCTION_LOG_MANIFEST_DB_TYPE                                                                                              \
     ManifestDb *

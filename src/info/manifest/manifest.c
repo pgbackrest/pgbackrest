@@ -56,6 +56,7 @@ manifestNewInternal(void)
         .pub =
         {
             .memContext = memContextCurrent(),
+            .bundleList = lstNewP(sizeof(ManifestBundle)),
             .dbList = lstNewP(sizeof(ManifestDb), .comparator = lstComparatorStr),
             .fileList = lstNewP(sizeof(ManifestFilePack *), .comparator = lstComparatorStr),
             .linkList = lstNewP(sizeof(ManifestLink), .comparator = lstComparatorStr),
