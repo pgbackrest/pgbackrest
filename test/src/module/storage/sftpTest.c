@@ -3212,6 +3212,11 @@ testRun(void)
             HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub1/testfile.pgbackrest.tmp", .resultNull = true),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_SEND),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_SEND),
+            // The session is reopened but the retried open fails and is not retried again
+            HRNLIBSSH2_MACRO_RECONNECT(),
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub1/testfile.pgbackrest.tmp", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_SEND),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_SEND),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_SEND),
             HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_ERROR_NONE));
 
