@@ -112,19 +112,16 @@ struct StorageAzure
 
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
 
-    // For Azure managed identities authentication
+    // Used by methods that require fetching an access token for auth (managed & federated identities)
+    HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     const String *credHost;                                         // Credentials host
+    String *accessToken;                                            // Access token
+    time_t accessTokenExpirationTime;                               // Time the access token expires
 
     // For federated identity authentication
     const String *tenantId;                                         // Tenant Id
     const String *clientId;                                         // Client Id
-    const String *authorityHost;                                    // Host for authentication requests
     const String *federatedTokenFile;                               // Location of the jwt used for exchange
-
-    // Used by methods that require fetching an access token for auth (managed & federated identities)
-    HttpClient *credHttpClient;                                     // HTTP client to service credential requests
-    String *accessToken;                                            // Access token
-    time_t accessTokenExpirationTime;                               // Time the access token expires
 };
 
 /***********************************************************************************************************************************
@@ -322,7 +319,7 @@ storageAzureAuth(
                 httpHeaderAdd(authHeader, HTTP_HEADER_CONTENT_TYPE_STR, HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR);
                 httpHeaderAdd(authHeader, HTTP_HEADER_CONTENT_LENGTH_STR, strNewFmt("%zu", strSize(content)));
 
-                const String *const path = strNewFmt("%s/oauth2/v2.0/token", strZ(this->authorityHost));
+                const String *const path = strNewFmt("/%s/oauth2/v2.0/token", strZ(this->tenantId));
                 HttpRequest *const request = httpRequestNewP(
                     this->credHttpClient, HTTP_VERB_POST_STR, path, .header = authHeader, .content = BUFSTR(content));
                 HttpResponse *const response = httpRequestResponse(request, true);
@@ -1111,7 +1108,7 @@ storageAzureNew(
     ASSERT(container != NULL);
     ASSERT(account != NULL);
     ASSERT(endpoint != NULL);
-    ASSERT(keyType == storageAzureKeyTypeAuto || key != NULL);
+    ASSERT(keyType == storageAzureKeyTypeAuto || keyType == storageAzureKeyTypeWebId || key != NULL);
     ASSERT(blockSize != 0);
 
     OBJ_NEW_BEGIN(StorageAzure, .childQty = MEM_CONTEXT_QTY_MAX)
@@ -1159,10 +1156,12 @@ storageAzureNew(
                 ASSERT(authorityHost != NULL);
                 ASSERT(federatedTokenFile != NULL);
 
-                this->tenantId = tenantId;
-                this->clientId = clientId;
-                this->authorityHost = authorityHost;
-                this->federatedTokenFile = federatedTokenFile;
+                const HttpUrl *const hostUrl = httpUrlNewParseP(authorityHost);
+
+                this->tenantId = strDup(tenantId);
+                this->clientId = strDup(clientId);
+                this->federatedTokenFile = strDup(federatedTokenFile);
+                this->credHost = httpUrlHost(hostUrl);
 
                 this->accessToken = strNew();
                 this->credHttpClient = httpClientNew(
