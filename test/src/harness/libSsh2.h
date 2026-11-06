@@ -21,7 +21,7 @@ Scripted testing for libssh2 so exact results can be returned for unit testing. 
 #include "version.h"
 
 /***********************************************************************************************************************************
-User home directory for tests so they do not modify files in the home directory of the user running them
+User home directory for tests to avoid modifying files in the home directory of the user running them
 ***********************************************************************************************************************************/
 #define HRN_LIBSSH2_USER_HOME                                       TEST_PATH "/home"
 
