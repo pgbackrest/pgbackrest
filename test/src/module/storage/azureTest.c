@@ -420,8 +420,8 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
-                    TEST_KEY_SHARED_STR, 16, NULL, STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000,
-                    httpProtocolTypeHttps, true, NULL, NULL, 1, 0)),
+                    TEST_KEY_SHARED_STR, NULL, NULL, NULL, NULL, 16, NULL, STRDEF("blob.core.windows.net"),
+                    storageAzureUriStyleHost, 443, 1000, httpProtocolTypeHttps, true, NULL, NULL, 1, 0)),
             "new azure storage - shared key");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -463,6 +463,7 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeSas, TEST_KEY_SAS_STR,
+                    NULL, NULL, NULL, NULL,
                     16, NULL, STRDEF("blob.core.usgovcloudapi.net"), storageAzureUriStyleHost, 443, 1000, httpProtocolTypeHttps,
                     true, NULL, NULL, 1, 0)),
             "new azure storage - sas key");
@@ -934,9 +935,6 @@ testRun(void)
                 TEST_RESULT_UINT(info.type, storageTypeFile, "check type");
                 TEST_RESULT_UINT(info.size, 9999, "check exists");
                 TEST_RESULT_INT(info.timeModified, 1445412480, "check time");
-
-                // Auth service no longer needed
-                hrnServerScriptEnd(auth);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info check existence only");
@@ -1445,6 +1443,139 @@ testRun(void)
 
                 TEST_RESULT_PTR(
                     storageGetP(storageNewReadP(storage, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to web-id auth");
+
+                hrnServerScriptClose(service);
+
+                #define TEST_SERVICE_TENANT_ID                      "tenant1234"
+                #define TEST_SERVICE_CLIENT_ID                      "client1234"
+                #define TEST_SERVICE_AUTHORITY_HOST                 "https://login.microsoftonline.com/"
+                #define TEST_SERVICE_TOKEN                          "token1234"
+                #define TEST_SERVICE_TOKEN_FILE                     TEST_PATH "/web-id-token"
+
+                HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), TEST_SERVICE_TOKEN_FILE, TEST_SERVICE_TOKEN);
+
+                argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+                hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
+                hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(hrnServerHost()), testPort);
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
+                hrnCfgEnvRawZ(cfgOptRepoAzureKeyType, "web-id");
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+                hrnCfgEnvRemoveRaw(cfgOptRepoAzureKeyType);
+
+                TEST_ERROR(
+                    storageRepoGet(0, true), OptionInvalidError,
+                    "option 'repo1-azure-key-type' is 'web-id' but some of 'AZURE_TENANT_ID', 'AZURE_CLIENT_ID', " \
+                    "'AZURE_AUTHORITY_HOST' and 'AZURE_FEDERATED_TOKEN_FILE' are not set");
+
+                setenv("AZURE_TENANT_ID", TEST_SERVICE_TENANT_ID, true);
+                setenv("AZURE_CLIENT_ID", TEST_SERVICE_CLIENT_ID, true);
+                setenv("AZURE_AUTHORITY_HOST", TEST_SERVICE_AUTHORITY_HOST, true);
+
+                TEST_ERROR(
+                    storageRepoGet(0, true), OptionInvalidError,
+                    "option 'repo1-azure-key-type' is 'web-id' but some of 'AZURE_TENANT_ID', 'AZURE_CLIENT_ID', " \
+                    "'AZURE_AUTHORITY_HOST' and 'AZURE_FEDERATED_TOKEN_FILE' are not set");
+
+                setenv("AZURE_FEDERATED_TOKEN_FILE", TEST_SERVICE_TOKEN_FILE, true);
+
+                storage = storageRepoGet(0, true);
+                driver = (StorageAzure *)storageDriver(storage);
+
+                TEST_RESULT_STR_Z(driver->tenantId, TEST_SERVICE_TENANT_ID, "check tenant_id");
+                TEST_RESULT_STR_Z(driver->clientId, TEST_SERVICE_CLIENT_ID, "check client_id");
+                TEST_RESULT_STR_Z(driver->federatedTokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
+                TEST_RESULT_STR_Z(driver->credHost, "login.microsoftonline.com", "check cred_host");
+
+                // Override cred http client to point to our test server
+                driver->credHttpClient = httpClientNew(sckClientNew(hrnServerHost(), testPortAuth, 1000, 1000), 1000);
+
+                // Clear any lingering tokens
+                driver->accessToken = NULL;
+                driver->accessTokenExpirationTime = 0;
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("web-id token fetch error");
+
+                hrnServerScriptAccept(auth);
+
+                #define CRED_REQUEST_URI                                                                            \
+                    "/tenant1234/oauth2/v2.0/token?scope=https%3A%2F%2Fgraph.microsoft.com%2F.default"              \
+                    "&client_id=" TEST_SERVICE_CLIENT_ID                                                            \
+                    "&client_assertion=<redacted>"                                                                  \
+                    "&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer"       \
+                    "&grant_type=client_credentials"
+
+                credRequest = strCatFmt(
+                    strNew(),
+                    "POST %s HTTP/1.1\r\n"
+                    "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
+                    "Content-Type: application/x-www-form-urlencoded",
+                    CRED_REQUEST_URI);
+
+                // Mock error response from metadata endpoint
+                hrnServerScriptExpect(auth, credRequest);
+
+                testResponseP(auth, .code = 403, .content = "");
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR_FMT(
+                    storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true), ProtocolError,
+                    "HTTP request failed with 403 (Forbidden):\n"
+                    "*** Path/Query ***:\n"
+                    "POST %s"
+                    "*** Request Headers ***:\n"
+                    "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
+                    "Content-Type: application/x-www-form-urlencoded"
+                    "*** Response Headers ***:\n"
+                    "content-length: 0",
+                    CRED_REQUEST_URI);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for missing file");
+
+                // Check initial credential settings
+                TEST_RESULT_STR_Z(driver->accessToken, "", "check access token value not set");
+                TEST_RESULT_INT(driver->accessTokenExpirationTime, 0, "check expiration time not set");
+
+                // Get managed identity credentials
+                hrnServerScriptAccept(auth);
+                hrnServerScriptExpect(auth, credRequest);
+                testResponseP(auth, .content = "{\"access_token\":\"" TEST_ACCESS_TOKEN "\",\"expires_in\":\"3600\"}");
+
+                // Info for missing file
+                testRequestP(service, HTTP_VERB_HEAD, "/BOGUS");
+                testResponseP(service, .code = 404);
+
+                TEST_RESULT_BOOL(
+                    storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+
+                // Check credential settings after auth (time is a bit imprecise since it is changing but verifies the range)
+                TEST_RESULT_STR_Z(driver->accessToken, TEST_ACCESS_TOKEN, "check access token value");
+                TEST_RESULT_BOOL(driver->accessTokenExpirationTime > time(NULL), true, "check expiration time min");
+                TEST_RESULT_BOOL(driver->accessTokenExpirationTime < time(NULL) + 3600, true, "check expiration time max");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for file");
+
+                testRequestP(service, HTTP_VERB_HEAD, "/subdir/file1.txt");
+                testResponseP(service, .header = "content-length:9999\r\nLast-Modified: Wed, 21 Oct 2015 07:28:00 GMT");
+
+                TEST_ASSIGN(info, storageInfoP(storage, STRDEF("subdir/file1.txt")), "file exists");
+                TEST_RESULT_BOOL(info.exists, true, "check exists");
+                TEST_RESULT_UINT(info.type, storageTypeFile, "check type");
+                TEST_RESULT_UINT(info.size, 9999, "check exists");
+                TEST_RESULT_INT(info.timeModified, 1445412480, "check time");
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);
