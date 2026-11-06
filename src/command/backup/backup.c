@@ -67,6 +67,7 @@ typedef struct BackupData
     unsigned int version;                                           // PostgreSQL version
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
     PgPageSize pageSize;                                            // PostgreSQL page size
+    unsigned int segmentPageTotal;                                  // PostgreSQL total pages in a relation segment
 } BackupData;
 
 static BackupData *
@@ -133,6 +134,7 @@ backupInit(const InfoBackup *const infoBackup)
     result->version = pgControl.version;
     result->walSegmentSize = pgControl.walSegmentSize;
     result->pageSize = pgControl.pageSize;
+    result->segmentPageTotal = pgControl.segmentPageTotal;
 
     // Validate pg_control info against the stanza
     if (result->version != infoPg.version || pgControl.systemId != infoPg.systemId)

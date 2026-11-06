@@ -53,6 +53,11 @@ concurrent reads and writes so retries are required.
 #define PG_CONTROL_DATA_SIZE                                        512
 
 /***********************************************************************************************************************************
+Maximum pages in a relation segment
+***********************************************************************************************************************************/
+#define PG_SEGMENT_PAGE_TOTAL_MAX                                   2147483647
+
+/***********************************************************************************************************************************
 PostgreSQL interface definitions
 
 The interface functions are documented here rather than the auto-generated file.
@@ -316,6 +321,15 @@ pgControlFromBuffer(const Buffer *const controlFile, const String *const pgVersi
 
     // Check the page size
     pgPageSizeCheck(result.pageSize);
+
+    // Check the relation segment size
+    if (result.segmentPageTotal == 0 || result.segmentPageTotal > PG_SEGMENT_PAGE_TOTAL_MAX)
+    {
+        THROW_FMT(
+            FormatError,
+            "relation segment size is %u pages but must be between 1 and " STRINGIFY(PG_SEGMENT_PAGE_TOTAL_MAX) " inclusive",
+            result.segmentPageTotal);
+    }
 
     // Check the checksum version
     if (result.pageChecksumVersion > PG_DATA_CHECKSUM_VERSION)
