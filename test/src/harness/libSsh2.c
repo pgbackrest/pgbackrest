@@ -3,6 +3,11 @@ libssh2 Test Harness
 ***********************************************************************************************************************************/
 #include <build.h>
 
+/***********************************************************************************************************************************
+Include shimmed C modules. This must be outside the HAVE_LIBSSH2 block since the shimmed modules are always required.
+***********************************************************************************************************************************/
+{[SHIM_MODULE]}
+
 #ifdef HAVE_LIBSSH2
 
 #include <stdio.h>
@@ -39,6 +44,27 @@ static unsigned int hrnLibSsh2ScriptSize;
 // rather than a bogus scripting error during cleanup
 static bool hrnLibSsh2ScriptFail;
 static char hrnLibSsh2ScriptError[4096];
+
+// User home directory to return from userHome() when set
+static const String *hrnLibSsh2UserHome;
+
+/***********************************************************************************************************************************
+Set user home directory
+***********************************************************************************************************************************/
+void
+hrnLibSsh2UserHomeSet(const String *const userHome)
+{
+    hrnLibSsh2UserHome = userHome;
+}
+
+/***********************************************************************************************************************************
+Shim for userHome() so the home directory of the user running the test is not modified
+***********************************************************************************************************************************/
+const String *
+userHome(void)
+{
+    return hrnLibSsh2UserHome != NULL ? hrnLibSsh2UserHome : userHome_SHIMMED();
+}
 
 /***********************************************************************************************************************************
 Set libssh2 script

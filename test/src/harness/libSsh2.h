@@ -18,17 +18,23 @@ Scripted testing for libssh2 so exact results can be returned for unit testing. 
 
 #include "common/macro.h"
 #include "common/time.h"
+#include "common/type/string.h"
 #include "version.h"
+
+/***********************************************************************************************************************************
+User home directory returned by the userHome() shim so tests do not modify files in the home directory of the user running them
+***********************************************************************************************************************************/
+#define HRN_LIBSSH2_USER_HOME                                       TEST_PATH "/home"
 
 /***********************************************************************************************************************************
 libssh2 authorization constants
 ***********************************************************************************************************************************/
-#define KEYPRIV                                                     STRDEF("/home/" TEST_USER "/.ssh/id_rsa")
-#define KEYPUB                                                      STRDEF("/home/" TEST_USER "/.ssh/id_rsa.pub")
-#define KEYPRIV_CSTR                                                "/home/" TEST_USER "/.ssh/id_rsa"
-#define KEYPUB_CSTR                                                 "/home/" TEST_USER "/.ssh/id_rsa.pub"
-#define KNOWNHOSTS_FILE_CSTR                                        "/home/" TEST_USER "/.ssh/known_hosts"
-#define KNOWNHOSTS2_FILE_CSTR                                       "/home/" TEST_USER "/.ssh/known_hosts2"
+#define KEYPRIV                                                     STRDEF(HRN_LIBSSH2_USER_HOME "/.ssh/id_rsa")
+#define KEYPUB                                                      STRDEF(HRN_LIBSSH2_USER_HOME "/.ssh/id_rsa.pub")
+#define KEYPRIV_CSTR                                                HRN_LIBSSH2_USER_HOME "/.ssh/id_rsa"
+#define KEYPUB_CSTR                                                 HRN_LIBSSH2_USER_HOME "/.ssh/id_rsa.pub"
+#define KNOWNHOSTS_FILE_CSTR                                        HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts"
+#define KNOWNHOSTS2_FILE_CSTR                                       HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts2"
 #define ETC_KNOWNHOSTS_FILE_CSTR                                    "/etc/ssh/ssh_known_hosts"
 #define ETC_KNOWNHOSTS2_FILE_CSTR                                   "/etc/ssh/ssh_known_hosts2"
 #define HOSTKEY                                                     "12345678901234567890"
@@ -331,6 +337,10 @@ Functions
     while (0)
 
 void hrnLibSsh2ScriptSet(const HrnLibSsh2 *script, unsigned int scriptSize);
+
+// Set the path returned by userHome(), e.g. HRN_LIBSSH2_USER_HOME. The string must remain valid while set. NULL returns the home
+// directory of the user running the test.
+void hrnLibSsh2UserHomeSet(const String *userHome);
 
 #endif // HARNESS_LIBSSH2_REAL
 
