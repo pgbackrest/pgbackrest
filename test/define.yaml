@@ -376,6 +376,15 @@ unit:
       - common/crypto/xxhash
 
   # --------------------------------------------------------------------------------------------------------------------------------
+  - name: common/format
+    total: 4
+
+    coverage:
+      - common/format/cipherBlockFormat
+      - common/format/cipherSpecMap
+      - common/format/format
+
+  # --------------------------------------------------------------------------------------------------------------------------------
   - name: common/io/tls
     total: 6
     feature: SOCKET
@@ -429,6 +438,7 @@ unit:
 
     coverage:
       - test/harness/exec
+      - common/exec: included
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: common/ini
@@ -593,7 +603,7 @@ unit:
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: storage/gcs
-    total: 4
+    total: 5
 
     coverage:
       - storage/gcs/helper
@@ -638,6 +648,7 @@ unit:
       - storage/sftp/write
 
     include:
+      - common/user
       - storage/helper
       - storage/read
       - storage/storage
@@ -697,7 +708,11 @@ unit:
         - info/manifest/manifest
 
     coverage:
+      - info/manifest/build.inc: included
+      - info/manifest/link.inc: included
       - info/manifest/manifest
+      - info/manifest/serialize.inc: included
+      - info/manifest/store.inc: included
 
     depend:
       - command/backup/common
@@ -808,7 +823,7 @@ unit:
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: command/expire
-    total: 9
+    total: 11
 
     coverage:
       - command/expire/expire
@@ -866,6 +881,7 @@ unit:
       - command/backup/pageChecksum
       - command/backup/process.inc: included
       - command/backup/protocol
+      - command/backup/resume.inc: included
       - command/restore/blockDelta
 
     include:

@@ -1,9 +1,9 @@
 """Test Code Linter.
 
 The linter is made of the scan for content that could hide code, the line length check, the check that StringId macros encode what
-they claim to, the check that a block macro is closed by the macro that matches it, and the check that every test module is
-declared, so all of them are tested here along with the lexer the block macro check reads C source with and the command that walks
-the repository and applies them."""
+they claim to, the check that a block macro is closed by the macro that matches it, the check that every test module is declared,
+and the check that every code module is covered, so all of them are tested here along with the lexer the block macro check reads C
+source with and the command that walks the repository and applies them."""
 
 ####################################################################################################################################
 import io
@@ -23,8 +23,30 @@ from common.error import *
 from common.log import *
 from common.render import LINE_LENGTH
 
-# A test definition with no test modules at all, which is what a repository has to have before the linter can scan it
-_DEFINE_NONE = b"unit: []\nintegration: []\nperformance: []\ntool: []\n"
+# A test definition that covers the code modules linted below, which is what a repository has to have before the linter can scan it
+_DEFINE_COVERAGE = b"""
+unit:
+  - name: x
+    total: 1
+
+    coverage:
+      - a
+      - b
+      - x
+      - x.inc: included
+      - x.vendor: included
+
+integration: []
+performance: []
+
+tool:
+  - name: test/common/vm
+
+    coverage:
+      - build/common/log
+      - test/common/log
+      - test/common/vm
+"""
 
 # A line that runs past the line length, written out rather than given literally since this file is itself checked
 _LINE_LONG = b"x" * (LINE_LENGTH + 1) + b"\n"
@@ -69,8 +91,8 @@ def _capture(function):
 def _lint(file_map, symlink=False):
     """Lint a repository built from the files given, returning the number of errors found and what was reported."""
 
-    # Every repository has a test definition, so supply one with no modules unless the test is providing its own
-    file_map = {"test/define.yaml": _DEFINE_NONE, **file_map}
+    # Every repository has a test definition, so supply one that covers the code modules unless the test is providing its own
+    file_map = {"test/define.yaml": _DEFINE_COVERAGE, **file_map}
 
     with tempfile.TemporaryDirectory() as path:
         for name, content in file_map.items():
@@ -496,5 +518,32 @@ def test_lint_test_module():
 
     # A file that is not where the test modules live is not a test module
     result, output = _lint({**file_map, "test/src/harness/config.c": b""})
+
+    assert_equal((result, output), (0, ""))
+
+
+####################################################################################################################################
+def test_lint_coverage():
+    """A code module must be covered by a test module."""
+
+    # C source in src, including an included .c.inc, and a python module in a tool library
+    result, output = _lint({"src/y.c": b"", "src/y.c.inc": b"", "doc/lib/common/y.py": b""})
+
+    assert_equal(result, 3)
+    assert_in("code module 'src/y.c' is not covered by a test module in test/define.yaml", output)
+    assert_in("code module 'src/y.c.inc' is not covered by a test module in test/define.yaml", output)
+    assert_in("code module 'doc/lib/common/y.py' is not covered by a test module in test/define.yaml", output)
+
+    # A header, a generated .auto.c.inc, C source outside src, a python module in the test harness, and a code module on the skip
+    # list
+    result, output = _lint(
+        {
+            "src/y.h": b"",
+            "src/y.auto.c.inc": b"",
+            "test/src/harness/y.c": b"",
+            "test/lib/harness/y.py": b"",
+            "src/main.c": b"",
+        }
+    )
 
     assert_equal((result, output), (0, ""))

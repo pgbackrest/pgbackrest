@@ -7,9 +7,9 @@ Harness for Creating Test Backups
 
 #include "command/backup/backup.h"
 #include "common/compress/helper.h"
-#include "common/crypto/cipherBlock.h"
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
+#include "common/format/cipherBlockFormat.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/manifest/manifest.h"
@@ -95,7 +95,7 @@ hrnBackupScriptSet(const HrnBackupScript *const script, const unsigned int scrip
 }
 
 /**********************************************************************************************************************************/
-static void
+static unsigned int
 backupProcess(const BackupData *const backupData, Manifest *const manifest, const CipherSpec *const cipherSpecManifest)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -142,9 +142,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
         hrnBackupLocal.scriptSize = 0;
     }
 
-    backupProcess_SHIMMED(backupData, manifest, cipherSpecManifest);
-
-    FUNCTION_HARNESS_RETURN_VOID();
+    FUNCTION_HARNESS_RETURN(UINT, backupProcess_SHIMMED(backupData, manifest, cipherSpecManifest));
 }
 
 /**********************************************************************************************************************************/
@@ -242,9 +240,14 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
                     if (param.walCompressType != compressTypeNone)
                         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilterP(param.walCompressType, 1));
 
-                    // Encrypt with the archive passphrase, which is what archive-push writes WAL with
-                    cipherBlockFilterGroupAdd(
-                        ioWriteFilterGroup(storageWriteIo(write)), cipherModeEncrypt, infoArchiveCipherSpec(infoArchive));
+                    // Encrypt with the current archive key the way archive-push writes WAL. Format >= 6 also stores the key id.
+                    const CipherSpecMap *const cipherSpecMap = infoArchiveCipherSpecMap(infoArchive);
+                    const String *const cipherId = cipherSpecMapIdCurrent(cipherSpecMap);
+
+                    cipherBlockFormatFilterGroupWriteAddP(
+                        ioWriteFilterGroup(storageWriteIo(write)),
+                        cipherId == NULL ? infoArchiveCipherSpec(infoArchive) : cipherSpecMapGet(cipherSpecMap, cipherId),
+                        infoArchiveFormat(infoArchive), .keyId = cipherId);
 
                     storagePutP(write, walBuffer);
                 }

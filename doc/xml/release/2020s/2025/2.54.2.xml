@@ -10,8 +10,20 @@
                 </release-item-contributor-list>
 
                 <p>Fix issue after disabling bundling with block incremental enabled.</p>
+
+                <p>When bundling was disabled after backups were made with bundling and block incremental enabled, the prior backups could not be read. The setting needed to read them is now preserved.</p>
             </release-item>
         </release-bug-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update LICENSE.txt and PostgreSQL copyright for 2025.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 
     <release-doc-list>
@@ -24,7 +36,34 @@
                 </release-item-contributor-list>
 
                 <p>Clarify behavior of multiple configuration files.</p>
+
+                <p>Each configuration file must be valid on its own, so a section must be specified in each file that sets an option in it. The documentation also notes that quoting is not supported, whitespace is trimmed from keys and values, and repeated sections are merged.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clarify that unhandled errors may occur in edge cases.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Fix compression type in integration tests."/>
+                <commit subject="Update runner versions on Github actions."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update CI and integration tests.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

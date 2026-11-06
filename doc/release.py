@@ -12,7 +12,6 @@ All output, including errors, goes to stdout so the run reads in the order it ha
 
 ####################################################################################################################################
 import argparse
-import json
 import os
 import re
 import shutil
@@ -35,12 +34,11 @@ from command.render.release import release_last  # noqa: E402
 from common.error import EXIT_ERROR, EXIT_TERM, ToolError, error_trace  # noqa: E402
 from common.exec import exec_result  # noqa: E402
 from common.log import *  # noqa: E402
-from common.storage import file_read, file_remove, file_write  # noqa: E402
+from common.storage import file_read, file_remove, path_list_recurse  # noqa: E402
 from common.xml import xml_document_parse, xml_node_attribute, xml_node_normalize  # noqa: E402
 from config.project import PROJECT_NAME, project_version  # noqa: E402
 
 # Where the documentation is built and where the release keeps what it needs
-_FILE_HISTORY = "resource/git-history.cache"
 _FILE_CACHE = "resource/exe.cache"
 _PATH_HTML = "output/html"
 _PATH_SITE = "site"
@@ -49,19 +47,16 @@ _PATH_SITE = "site"
 # CNAME is what points the domain at the site, so removing it takes the site off its domain until someone puts it back.
 _SITE_KEEP_LIST = ("CNAME",)
 
+# The footer of a page, and a release date as date_render() writes it or a release year within the footer
+_FOOTER_EXP = re.compile(r'<div class="page-footer">.*?</div>', re.DOTALL)
+_FOOTER_DATE_EXP = re.compile(r"[A-Z][a-z]+ [0-9]{1,2}, [0-9]{4}|[0-9]{4}")
+
 # The distributions the documentation is built for, named for the os type the documentation generates commands for. The user guide
 # for each is kept under a name of its own, since a reader picks the one for the system they are on.
 _DISTRO_LIST = ("debian", "rhel")
 
 _FILE_USER_GUIDE = "user-guide.html"
 _FILE_USER_GUIDE_RHEL = "user-guide-rhel.html"
-
-# What the release notes call a release, which is the subject of the commit that closed it. The body of such a commit is the release
-# notes themselves, so it is not kept in the history as well.
-_RELEASE_SUBJECT_EXP = re.compile(r"^v[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]+)?: ")
-
-# Fields of a commit and the order they are written in, which is the order a reader would want them
-_HISTORY_FIELD = ("commit", "date", "subject", "body")
 
 
 ####################################################################################################################################
@@ -74,7 +69,7 @@ def cfg_load(arg_list, path_repo):
     parser.add_argument("--build", action="store_true", help="build the cache before release (include in the release commit)")
     parser.add_argument("--deploy", action="store_true", help="deploy the documentation to the website")
     parser.add_argument("--dist", action="store_true", help="build the documentation that ships in the distribution")
-    parser.add_argument("--no-gen", dest="gen", action="store_false", help="do not regenerate the git history and coverage summary")
+    parser.add_argument("--no-gen", dest="gen", action="store_false", help="do not regenerate the coverage summary")
     parser.add_argument("--no-exe", dest="exe", action="store_false", help="do not run the commands (only applies to --dist)")
     parser.add_argument(
         "--distro", choices=_DISTRO_LIST, help="build the documentation for one distribution rather than for every one"
@@ -117,70 +112,10 @@ def user_guide_rename(config):
 
 
 ####################################################################################################################################
-def history_update(config):
-    """Add what has happened since the last release to the history the release notes are checked against.
-
-    The history is kept in the repository because it is fixed once a release is out and reading it from git on every documentation
-    build is slow. A commit that closed a release does not keep its body, since the release notes already say what it said."""
-
-    log(INFO, "update git history")
-
-    # Records are separated by a byte that cannot appear in a commit message, and so are the fields within a record
-    output = exec_result(
-        "git -C %s log --pretty=format:%%H%%x00%%ci%%x00%%s%%x00%%b%%x1e" % config.repo_path, suppress_stderr=True
-    )[1]
-
-    history = []
-
-    for record in output.split("\x1e"):
-        record = record.strip("\n")
-
-        if record == "":
-            continue
-
-        commit, date, subject, body = record.split("\x00", 3)
-        entry = {"commit": commit, "date": date, "subject": subject}
-        body = body.strip()
-
-        if body != "":
-            entry["body"] = body
-
-        history.append(entry)
-
-    path_history = os.path.join(config.doc_path, _FILE_HISTORY)
-    result = json.loads(file_read(path_history))
-    seen = {entry["commit"] for entry in result}
-
-    # Walk what git reported oldest first so that adding each to the front leaves the newest first
-    for entry in reversed(history):
-        if entry["commit"] not in seen:
-            result.insert(0, entry)
-
-    file_write(
-        path_history,
-        json.dumps(
-            [
-                {
-                    field: entry[field]
-                    for field in _HISTORY_FIELD
-                    if field in entry and not (field == "body" and _RELEASE_SUBJECT_EXP.match(entry["subject"]))
-                }
-                for entry in result
-            ],
-            indent=4,
-            ensure_ascii=False,
-        )
-        + "\n",
-    )
-
-
-####################################################################################################################################
 def cmd_build(config):
     """Build the documentation for a release, along with the cache that lets it be built again without running anything."""
 
     if config.gen:
-        history_update(config)
-
         log(INFO, "generate coverage summary")
 
         exec_result(
@@ -242,6 +177,25 @@ def host_remove():
 
 
 ####################################################################################################################################
+def footer_date_remove(content):
+    """Remove the release date and year from the footer of a page."""
+
+    return _FOOTER_EXP.sub(lambda match: _FOOTER_DATE_EXP.sub("", match.group(0)), content)
+
+
+####################################################################################################################################
+def site_file_copy(source, target):
+    """Copy a file to the site unless it is a page that differs from the copy on the site only in the release date and year."""
+
+    if not (
+        source.endswith(".html")
+        and os.path.isfile(target)
+        and footer_date_remove(file_read(source)) == footer_date_remove(file_read(target))
+    ):
+        shutil.copy2(source, target)
+
+
+####################################################################################################################################
 def cmd_deploy(config, dev):
     """Deploy the documentation to the website."""
 
@@ -264,8 +218,12 @@ def cmd_deploy(config, dev):
 
     path_prior = os.path.join(path_site, "prior", version)
 
-    shutil.rmtree(path_prior, ignore_errors=True)
-    shutil.copytree(path_html, path_prior)
+    # Remove files the build did not write
+    for name in path_list_recurse(path_prior):
+        if not os.path.isfile(os.path.join(path_html, name)):
+            file_remove(os.path.join(path_prior, name))
+
+    shutil.copytree(path_html, path_prior, dirs_exist_ok=True, copy_function=site_file_copy)
 
     # The main website is only replaced by a release, since a development build is of what is not out yet
     if not dev:
@@ -283,11 +241,17 @@ def cmd_deploy(config, dev):
             path = os.path.join(path_site, name)
 
             # Only what this build writes, which is regular files the site does not own. A link is the site's too, e.g. a retired
-            # platform name pointed at the guide that replaced it, so it is left where it is.
-            if name not in _SITE_KEEP_LIST and os.path.isfile(path) and not os.path.islink(path):
+            # platform name pointed at the guide that replaced it, so it is left where it is. A file the build wrote again is not
+            # removed.
+            if (
+                name not in _SITE_KEEP_LIST
+                and os.path.isfile(path)
+                and not os.path.islink(path)
+                and not os.path.isfile(os.path.join(path_html, name))
+            ):
                 os.remove(path)
 
-        shutil.copytree(path_html, path_site, dirs_exist_ok=True)
+        shutil.copytree(path_html, path_site, dirs_exist_ok=True, copy_function=site_file_copy)
 
         for name in ("README.md", "LICENSE"):
             shutil.copyfile(os.path.join(config.repo_path, name), os.path.join(path_site, name))

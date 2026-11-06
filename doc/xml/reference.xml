@@ -453,7 +453,7 @@
                         <text>
                             <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
 
-                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
+                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2 unless <br-option>repo-storage-verify-tls=n</br-option>.</admonition>
 
                             <p>The accepted cipher suites can be adjusted if need arises. The example is reasonable choice unless you have specific security requirements. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
                         </text>
@@ -467,12 +467,31 @@
                         <text>
                             <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
 
-                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
+                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2 unless <br-option>repo-storage-verify-tls=n</br-option>.</admonition>
 
                             <p>The accepted cipher suites can be adjusted if need arises. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
                         </text>
 
                         <example>TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256</example>
+                    </config-key>
+
+                    <config-key id="tls-min-version" name="TLS Minimum Version">
+                        <summary>Minimum TLS version.</summary>
+
+                        <text>
+                            <p>The minimum TLS version allowed for transport connections.</p>
+
+                            <allow-list caption="TLS versions">
+                                <allow-item id="1.2">TLSv1.2 and TLSv1.3</allow-item>
+                                <allow-item id="1.3">TLSv1.3 only</allow-item>
+                            </allow-list>
+
+                            <p>A higher minimum set in the <proper>OpenSSL</proper> configuration, e.g. <id>MinProtocol</id>, is not lowered by this option.</p>
+
+                            <admonition type="note">This option is ignored for repository storage connections when <br-option>repo-storage-verify-tls=n</br-option>.</admonition>
+                        </text>
+
+                        <example>1.3</example>
                     </config-key>
 
                 </config-key-list>
@@ -737,7 +756,7 @@
                         <summary>GCS repository key.</summary>
 
                         <text>
-                            <p>A token or service key file depending on the <br-option>repo-gcs-key-type</br-option> option.</p>
+                            <p>A token, service key file, or external account credential file depending on the <br-option>repo-gcs-key-type</br-option> option.</p>
                         </text>
 
                         <example>/etc/pgbackrest/gcs-key.json</example>
@@ -751,9 +770,14 @@
                                 <allow-item id="auto">Authorize using the instance service account.</allow-item>
                                 <allow-item id="service">Service account from locally stored key.</allow-item>
                                 <allow-item id="token">For local testing, e.g. <file>fakegcs</file>.</allow-item>
+                                <allow-item id="web-id">Authorize using Workload Identity Federation.</allow-item>
                             </allow-list>
 
                             <p>When <br-option>repo-gcs-key-type=service</br-option> the credentials will be reloaded when the authentication token is renewed.</p>
+
+                            <p>When <br-option>repo-gcs-key-type=web-id</br-option> the <br-option>repo-gcs-key</br-option> option must contain an external account credential file and the web identity token will be reloaded when the authentication token is renewed.</p>
+
+                            <p><id>service_account_impersonation_url</id> is not supported. Only <id>credential_source.file</id> is supported and when <id>credential_source.format</id> is specified the type must be <id>text</id>.</p>
                         </text>
 
                         <example>auto</example>
@@ -1372,11 +1396,13 @@
                         <example>16MiB</example>
                     </config-key>
 
-                    <config-key id="repo-storage-verify-tls" name="Repository Storage Certificate Verify">
-                        <summary>Repository storage certificate verify.</summary>
+                    <config-key id="repo-storage-verify-tls" name="Repository Storage TLS Verify">
+                        <summary>Repository storage TLS verify.</summary>
 
                         <text>
                             <p>This option provides the ability to enable/disable verification of the storage (e.g. S3, Azure) server TLS certificate. Disabling should only be used for testing or other scenarios where a certificate has been self-signed.</p>
+
+                            <p>Disabling also removes the TLSv1.2 minimum and ignores the <br-option>tls-cipher-12</br-option>, <br-option>tls-cipher-13</br-option>, and <br-option>tls-min-version</br-option> options for repository storage connections.</p>
                         </text>
 
                         <example>n</example>
@@ -1451,10 +1477,24 @@
                         <text>
                             <p>Passphrase used to encrypt/decrypt files of the repository.</p>
 
+                            <p>A stanza created at <br-option>repo-format</br-option> 6 or higher requires a passphrase generated from at least 256 random bits, e.g. with <code>openssl rand -base64 32</code>. The passphrase must be hex, base64, or unpadded base64url that decodes to at least 256 bits, the decoded bytes must not all be text, and they must contain at least 16 distinct values and at least 16 distinct differences between adjacent bytes. The last two rule out repeated values, sequences, and short repeating patterns.</p>
+
                             <admonition type="note">When run without the <br-option>stanza</br-option> option the <cmd>info</cmd> command reads encryption settings only from the <setting>global</setting> section. If encryption settings are configured per stanza, run the <cmd>info</cmd> command with the <br-option>stanza</br-option> option to read an encrypted stanza.</admonition>
                         </text>
 
-                        <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
+                        <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=</example>
+                    </config-key>
+
+                    <config-key id="repo-cipher-rotate" name="Repository Cipher Rotation">
+                        <summary>Archive key rotation period.</summary>
+
+                        <text>
+                            <p>When the key that encrypts archived WAL is older than this period, <cmd>expire</cmd> generates a new key and WAL archived after that is encrypted with it. WAL encrypted with an earlier key remains readable. If rotation is not desired then set the option to the max value.</p>
+
+                            <p>Archive key rotation requires <br-option>repo-format</br-option> 6 or higher.</p>
+                        </text>
+
+                        <example>30d</example>
                     </config-key>
                 </config-key-list>
             </config-section>
@@ -2239,6 +2279,16 @@
                 </text>
 
                 <option-list>
+                    <option id="checksum-page-error" name="Error on Invalid Page Checksums">
+                        <summary>Error on invalid page checksums.</summary>
+
+                        <text>
+                            <p>When enabled with the <br-option>checksum-page</br-option> option, a failure in page checksum validation will terminate the backup.</p>
+                        </text>
+
+                        <example>n</example>
+                    </option>
+
                     <option id="type" name="Type">
                         <summary>Backup type.</summary>
 
@@ -2337,6 +2387,18 @@
                 </text>
 
                 <option-list>
+                    <option id="checksum-page-error" name="Error on Invalid Page Checksums">
+                        <summary>Error on invalid page checksums.</summary>
+
+                        <text>
+                            <p>If enabled, the <cmd>expire</cmd> command will terminate with an error before any changes if the oldest retained backup would contain checksum errors. If this option is disabled, the <cmd>expire</cmd> will proceed and issue a warning if there are checksum errors in the oldest retained backup.</p>
+
+                            <p>If the <br-option>--set</br-option> is used, the <cmd>expire</cmd> will proceed even if this option is enabled. It will emit a warning if the oldest retained backup contains checksum errors.</p>
+                        </text>
+
+                        <example>n</example>
+                    </option>
+
                     <option id="archive-expire-before" name="Expire Archive Before">
                         <summary>Remove WAL archive earlier than the specified WAL segment.</summary>
 
@@ -2571,6 +2633,18 @@
                 </text>
 
                 <option-list>
+                    <option id="checksum-page-error" name="Error on Invalid Page Checksums">
+                        <summary>Error on invalid page checksums.</summary>
+
+                        <text>
+                            <p>If enabled, the <cmd>restore</cmd> command will terminate with an error if it encounters a file containing checksum errors.</p>
+
+                            <p>A warning will be emitted for each file with checksum errors if the setting is disabled.</p>
+                        </text>
+
+                        <example>n</example>
+                    </option>
+
                     <option id="set" name="Set">
                         <summary>Backup set to restore.</summary>
 
@@ -2929,7 +3003,7 @@
 
                             <allow-list caption="formats">
                                 <allow-item id="5">Format supported by all versions since <proper>1.00</proper></allow-item>
-                                <allow-item id="6">Adds no features yet and is reserved for features in development</allow-item>
+                                <allow-item id="6">Derives new repository encryption keys with <id>SHA-256</id> rather than <id>SHA-1</id></allow-item>
                             </allow-list>
 
                             <p>An existing stanza is migrated to a newer format with the <cmd>stanza-upgrade</cmd> command rather than with this command, which sets the format only for a stanza it creates.</p>
@@ -2968,9 +3042,13 @@
 
                             <p>The first backup after a migration is a full backup even when a differential or incremental backup is requested, since no backup in the repository was written at the new format.</p>
 
+                            <p>A passphrase already stored in the repository keeps deriving its key with <id>SHA-1</id>, since the files it encrypted are not rewritten by the migration. Only a new passphrase derives with <id>SHA-256</id>, i.e. the passphrase generated for each full backup written at the new format, or the passphrases of a stanza created at that format.</p>
+
                             <allow-list inherit="repo-format" command="stanza-create"/>
 
                             <p>Once the info files have been migrated, a version of <backrest/> that does not support the new format is no longer able to read the stanza at all, including the parts of it that are still at the older format. The format cannot be downgraded.</p>
+
+                            <p>On an encrypted repository such a version reports an error about the cipher rather than the format, since the header written from format 6 takes the place of the magic that an older version expects to find.</p>
 
                             <p>This option cannot be set in a configuration file but it can be set in the environment, where it applies to every <cmd>stanza-upgrade</cmd> run until it is removed.</p>
 

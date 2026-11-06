@@ -334,11 +334,40 @@ testRun(void)
         TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF(""))), "new read");
         TEST_ERROR(pckReadBuffer(packRead, 2), FormatError, "unexpected EOF");
 
+        TEST_ASSIGN(packWrite, pckWriteNewP(), "new write");
+        TEST_RESULT_VOID(pckWriteStrP(packWrite, STRDEF("abc")), "write string");
+        TEST_RESULT_VOID(pckWriteEndP(packWrite), "write end");
+
+        const Buffer *const packStr = pckToBuf(pckWriteResult(packWrite));
+
+        TEST_ASSIGN(
+            packRead, pckReadNewC(bufPtrConst(packStr), bufUsed(packStr) - 2), "new read without the last string byte and end");
+        TEST_ERROR(pckReadStrP(packRead), FormatError, "unexpected EOF");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid uint64");
 
         TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\255\255\255\255\255\255\255\255\255\255"))), "new read");
         TEST_ERROR(pckReadU64Internal(packRead), FormatError, "unterminated varint-128 integer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid field id");
+
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\046\377\377\377\377\177"))), "new read");
+        TEST_ERROR(pckReadNext(packRead), FormatError, "invalid field id");
+
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\040\046\377\377\377\377\177"))), "new read");
+        TEST_RESULT_BOOL(pckReadBoolP(packRead), false, "read bool");
+        TEST_ERROR(pckReadNext(packRead), FormatError, "invalid field id");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on zero-size pack");
+
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\360\002\000"))), "new read");
+        TEST_ERROR(pckReadPackReadP(packRead), FormatError, "invalid pack size");
+
+        TEST_ASSIGN(packRead, pckReadNew(pckFromBuf(BUFSTRDEF("\360\002\000"))), "new read");
+        TEST_ERROR(pckReadPackReadConstP(packRead), FormatError, "invalid pack size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read const packs");

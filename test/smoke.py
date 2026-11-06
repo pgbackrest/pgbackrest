@@ -143,7 +143,7 @@ def pg_bin_candidates(extra_dirs):
     """Candidate bin directories to search for a PostgreSQL installation.
 
     This is a superset of the list in test/src/harness/host.c since the smoke test also runs where the integration tests
-    cannot, i.e. MacOS and FreeBSD."""
+    cannot, i.e. MacOS, FreeBSD, and OmniOS."""
 
     candidates = []
     candidates += sorted(glob.glob("/usr/lib/postgresql/*/bin"))  # Debian
@@ -152,6 +152,7 @@ def pg_bin_candidates(extra_dirs):
     candidates += sorted(glob.glob("/opt/homebrew/opt/postgresql@*/bin"))  # MacOS (Homebrew on ARM)
     candidates += sorted(glob.glob("/usr/local/opt/postgresql@*/bin"))  # MacOS (Homebrew on Intel)
     candidates += ["/usr/local/bin"]  # FreeBSD
+    candidates += sorted(glob.glob("/opt/ooce/pgsql-*/bin"))  # OmniOS
     candidates += ["/usr/bin"]  # Native (e.g. RHEL application stream)
     candidates += list(extra_dirs)
 

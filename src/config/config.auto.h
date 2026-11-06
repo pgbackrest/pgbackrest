@@ -60,6 +60,7 @@ Option constants
 #define CFGOPT_BETA                                                 "beta"
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
 #define CFGOPT_CHECKSUM_PAGE                                        "checksum-page"
+#define CFGOPT_CHECKSUM_PAGE_ERROR                                  "checksum-page-error"
 #define CFGOPT_CMD                                                  "cmd"
 #define CFGOPT_CMD_SSH                                              "cmd-ssh"
 #define CFGOPT_COMPRESS                                             "compress"
@@ -135,6 +136,7 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
 #define CFGOPT_TLS_CIPHER_12                                        "tls-cipher-12"
 #define CFGOPT_TLS_CIPHER_13                                        "tls-cipher-13"
+#define CFGOPT_TLS_MIN_VERSION                                      "tls-min-version"
 #define CFGOPT_TLS_SERVER_ADDRESS                                   "tls-server-address"
 #define CFGOPT_TLS_SERVER_AUTH                                      "tls-server-auth"
 #define CFGOPT_TLS_SERVER_CA_FILE                                   "tls-server-ca-file"
@@ -145,7 +147,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            200
+#define CFG_OPTION_TOTAL                                            203
 
 /***********************************************************************************************************************************
 Option value constants
@@ -313,6 +315,9 @@ Option value constants
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO                            2
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO_STRID                      STRID5S("auto", 2, 0x7d2a16)
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO_Z                          "auto"
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_WEB_ID                          3
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_WEB_ID_STRID                    STRID5S("web-id", 3, 0x89d88b78)
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_WEB_ID_Z                        "web-id"
 
 #define CFGOPTVAL_REPO_HOST_TYPE_SSH                                STRID5("ssh", 0x22730)
 #define CFGOPTVAL_REPO_HOST_TYPE_SSH_Z                              "ssh"
@@ -498,6 +503,7 @@ typedef enum
     cfgOptBeta,
     cfgOptBufferSize,
     cfgOptChecksumPage,
+    cfgOptChecksumPageError,
     cfgOptCmd,
     cfgOptCmdSsh,
     cfgOptCompress,
@@ -585,6 +591,7 @@ typedef enum
     cfgOptRepoBundleLimit,
     cfgOptRepoBundleSize,
     cfgOptRepoCipherPass,
+    cfgOptRepoCipherRotate,
     cfgOptRepoCipherType,
     cfgOptRepoFormat,
     cfgOptRepoGcsBucket,
@@ -671,6 +678,7 @@ typedef enum
     cfgOptTcpKeepAliveInterval,
     cfgOptTlsCipher12,
     cfgOptTlsCipher13,
+    cfgOptTlsMinVersion,
     cfgOptTlsServerAddress,
     cfgOptTlsServerAuth,
     cfgOptTlsServerCaFile,

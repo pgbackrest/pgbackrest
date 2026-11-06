@@ -27,6 +27,8 @@
             </release-item>
 
             <release-item>
+                <commit subject="Fix delta restore failing when a linked file was missing."/>
+
                 <p>Fix delta restore failing when a linked file is missing.</p>
             </release-item>
 
@@ -77,12 +79,16 @@
             </release-item>
 
             <release-item>
+                <commit subject="Use path list in the backup manifest to do restore path syncs."/>
+
                 <p>Make backup/restore path sync more efficient.</p>
 
                 <p>Scanning the entire directory can be very expensive if there are a lot of small tables. The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.</p>
             </release-item>
 
             <release-item>
+                <commit subject="Show command parameters as well as command options in initial info message."/>
+
                 <p>Show command parameters as well as command options in initial info log message.</p>
             </release-item>
 

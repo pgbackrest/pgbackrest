@@ -3,6 +3,8 @@ Crypto Common
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <string.h>
+
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -10,6 +12,7 @@ Crypto Common
 #include <openssl/ssl.h>
 
 #include "common/crypto/common.h"
+#include "common/crypto/common.intern.h"
 #include "common/debug.h"
 #include "common/log.h"
 
@@ -28,7 +31,14 @@ cryptoError(const bool error, const char *const description)
     FUNCTION_TEST_END();
 
     if (error)
-        cryptoErrorCode(ERR_get_error(), description);
+    {
+        const unsigned long code = ERR_get_error();
+
+        // Clear errors remaining on the queue
+        ERR_clear_error();
+
+        cryptoErrorCode(code, description);
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -41,7 +51,15 @@ cryptoErrorCode(const unsigned long code, const char *const description)
         FUNCTION_TEST_PARAM(STRINGZ, description);
     FUNCTION_TEST_END();
 
-    const char *const errorMessage = ERR_reason_error_string(code);
+    const char *errorMessage = ERR_reason_error_string(code);
+
+#ifdef ERR_SYSTEM_ERROR
+    // ERR_reason_error_string() returns NULL for system errors in OpenSSL >= 3.0. The code for a system error contains the errno to
+    // get the message from strerror().
+    if (ERR_SYSTEM_ERROR(code))
+        errorMessage = strerror(ERR_GET_REASON(code));
+#endif
+
     THROW_FMT(CryptoError, "%s: [%lu] %s", description, code, errorMessage == NULL ? "no details available" : errorMessage);
 
     FUNCTION_TEST_NO_RETURN();
@@ -62,6 +80,9 @@ cryptoInit(void)
         // Initialization
         OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
 
+        // Clear errors queued while loading the OpenSSL config
+        ERR_clear_error();
+
         // Mark crypto as initialized
         cryptoInitDone = true;
     }
@@ -81,7 +102,27 @@ cryptoRandomBytes(uint8_t *const buffer, const size_t size)
     ASSERT(buffer != NULL);
     ASSERT(size > 0);
 
-    RAND_bytes(buffer, (int)size);
+    // A failure must not go unnoticed since the caller would be left with bytes that are not random
+    cryptoError(RAND_bytes(buffer, (int)size) != 1, "unable to generate random bytes");
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN const EVP_MD *
+cryptoDigest(const HashType type)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_ID, type);
+    FUNCTION_TEST_END();
+
+    char typeZ[STRID_MAX + 1];
+    strIdToZ(type, typeZ);
+
+    const EVP_MD *const result = EVP_get_digestbyname(typeZ);
+
+    if (result == NULL)
+        THROW_FMT(AssertError, "unable to load digest '%s'", typeZ);
+
+    FUNCTION_TEST_RETURN_TYPE_CONST_P(EVP_MD, result);
 }

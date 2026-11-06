@@ -966,6 +966,16 @@ option:
   tls-cipher-13:
     inherit: tls-cipher-12
 
+  # TLS minimum version
+  tls-min-version:
+    section: global
+    type: string
+    default: 1.2
+    allow-list:
+      - 1.2
+      - 1.3
+    command: buffer-size
+
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------
   log-level-console:
@@ -1158,6 +1168,19 @@ option:
     required: false
     command:
       backup: {}
+    command-role:
+      main: {}
+
+  checksum-page-error:
+    section: global
+    type: boolean
+    command:
+      backup:
+        default: false
+      restore:
+        default: true
+      expire:
+        default: true
     command-role:
       main: {}
 
@@ -1691,10 +1714,11 @@ option:
   # Command-line only so that a format left in a configuration file cannot upgrade a repository as a side effect of an unrelated
   # stanza-upgrade. This does not cover the environment, which can set any option that is valid for the command, so a format left
   # there does migrate on the next stanza-upgrade and the option reference documents it. The allow list must be kept in sync with
-  # REPOSITORY_FORMAT_MIN/MAX in version.h
+  # REPOSITORY_FORMAT_MIN/MAX in common/format/format.h
   repo-format:
     group: repo
     type: integer
+    internal: true
     default: 5
     allow-list:
       - 5
@@ -1729,6 +1753,23 @@ option:
     group: repo
     deprecate:
       repo-cipher-pass: {}
+
+  repo-cipher-rotate:
+    section: global
+    group: repo
+    type: time
+    internal: true
+    default: 90d
+    allow-range: [15d, 9999999d]
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+    depend:
+      option: repo-cipher-type
+      list:
+        - aes-256-cbc
 
   repo-hardlink:
     section: global
@@ -2325,6 +2366,7 @@ option:
       - service
       - token
       - auto
+      - web-id
     command: repo-type
     depend:
       option: repo-type
@@ -2342,6 +2384,7 @@ option:
       list:
         - service
         - token
+        - web-id
 
   repo-gcs-user-project:
     section: global

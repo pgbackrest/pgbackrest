@@ -1037,7 +1037,7 @@ manifestLoadFileCallback(void *const data, const unsigned int try)
             // Construct filename based on try
             const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
 
-            // Attempt to load the file
+            // Attempt to load the file. A manifest has no header of its own, so it is decrypted with the spec as it was given.
             IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
             cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, loadData->cipherSpec);
 

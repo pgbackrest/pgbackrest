@@ -155,6 +155,8 @@
             </release-item>
 
             <release-item>
+                <commit subject="Use clang for static code analysis during lint testing."/>
+
                 <p>Use clang for static code analysis.</p>
 
                 <p>Nothing found initially except for some functions that should have been marked <code>__noreturn__</code>.</p>

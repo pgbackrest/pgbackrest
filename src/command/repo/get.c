@@ -9,13 +9,16 @@ Repository Get Command
 #include "command/repo/get.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/regExp.h"
 #include "config/config.h"
 #include "storage/helper.h"
 
+#include "info/info.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 
@@ -47,12 +50,22 @@ storageGetProcess(IoWrite *const destination)
         IoRead *const source = storageReadIo(
             storageNewReadP(storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing)));
 
+        // Is the file an info file, i.e. one that has a header in front of its content?
+        bool fileIsInfo = false;
+
+        // Is the file missing?
+        bool missing = false;
+
         // Add decryption if needed
         if (!cfgOptionBool(cfgOptRaw))
         {
             const CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
 
-            if (repoCipherType != cipherTypeNone)
+            // Check for a missing file before finding the passphrase when missing files are ignored
+            if (repoCipherType != cipherTypeNone && cfgOptionBool(cfgOptIgnoreMissing))
+                missing = !storageExistsP(storageRepo(), file);
+
+            if (repoCipherType != cipherTypeNone && !missing)
             {
                 // Determine the passphrase using the following pattern:
                 //
@@ -64,10 +77,13 @@ storageGetProcess(IoWrite *const destination)
                 //      / backup  / stanza / set / (backup passphrase)
                 //      / backup  / stanza / backup.history / (manifest passphrase)
                 //
+                // Format >= 6 stores a manifest passphrase for each backup set by label.
+                //
                 // Nothing should be stored at the top level of the repo except the backup/archive paths. The backup/archive paths
                 // should contain only stanza paths.
                 // -----------------------------------------------------------------------------------------------------------------
                 const CipherSpec *cipherSpec = NULL;
+                const CipherSpecMap *cipherSpecMap = NULL;
                 const StringList *const filePathSplitLst = strLstNewSplit(file, FSLASH_STR);
 
                 // At a minimum the path must contain archive/backup, a stanza, and a file
@@ -86,15 +102,19 @@ storageGetProcess(IoWrite *const destination)
                     // Archive path
                     if (strEq(strLstGet(filePathSplitLst, 0), STORAGE_PATH_ARCHIVE_STR))
                     {
-                        cipherSpec = cfgCipherSpecMain();
-
-                        // Find the archive passphrase
+                        // Find the archive keys. WAL stores the id of the key it is encrypted with in the header.
                         if (!strEndsWithZ(file, INFO_ARCHIVE_FILE) && !strEndsWithZ(file, INFO_ARCHIVE_FILE INFO_COPY_EXT))
                         {
                             const InfoArchive *const info = infoArchiveLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanza), INFO_ARCHIVE_FILE),
                                 cfgCipherSpecMain());
-                            cipherSpec = infoArchiveCipherSpec(info);
+                            cipherSpecMap = infoArchiveCipherSpecMap(info);
+                        }
+                        // Else the file is the archive info, which the repo passphrase opens
+                        else
+                        {
+                            cipherSpec = cfgCipherSpecMain();
+                            fileIsInfo = true;
                         }
                     }
 
@@ -105,15 +125,37 @@ storageGetProcess(IoWrite *const destination)
 
                         if (!strEndsWithZ(file, INFO_BACKUP_FILE) && !strEndsWithZ(file, INFO_BACKUP_FILE INFO_COPY_EXT))
                         {
-                            // Find the manifest passphrase
+                            // Find the manifest passphrase by the label of the backup
                             const InfoBackup *const info = infoBackupLoadFile(
                                 storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanza), INFO_BACKUP_FILE),
                                 cfgCipherSpecMain());
-                            const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(info);
+                            const String *backupLabel = strLstGet(filePathSplitLst, 2);
+                            const bool history = strEq(backupLabel, STRDEF(BACKUP_PATH_HISTORY));
+
+                            // Get the label from the name of the history manifest
+                            if (history)
+                            {
+                                backupLabel = strBase(file);
+                            }
+                            // Else get the label from the destination of the latest link
+                            else if (strEq(backupLabel, STRDEF(BACKUP_LINK_LATEST)))
+                            {
+                                const StorageInfo latestInfo = storageInfoP(
+                                    storageRepo(), strNewFmt(STORAGE_PATH_BACKUP "/%s/" BACKUP_LINK_LATEST, strZ(stanza)),
+                                    .level = storageInfoLevelDetail, .ignoreMissing = true);
+
+                                if (latestInfo.type == storageTypeLink)
+                                    backupLabel = latestInfo.linkDestination;
+                            }
+
+                            const CipherSpec *const cipherSpecManifest =
+                                regExpMatchOne(
+                                    backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true),
+                                    backupLabel) ?
+                                    infoBackupCipherSpecManifest(info, backupLabel) : infoBackupCipherSpec(info);
 
                             // Find the backup passphrase if not a manifest
-                            if (!strEq(strLstGet(filePathSplitLst, 2), STRDEF(BACKUP_PATH_HISTORY)) &&
-                                !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
+                            if (!history && !strEndsWithZ(file, BACKUP_MANIFEST_FILE) &&
                                 !strEndsWithZ(file, BACKUP_MANIFEST_FILE INFO_COPY_EXT))
                             {
                                 const Manifest *const manifest = manifestLoadFile(
@@ -128,22 +170,32 @@ storageGetProcess(IoWrite *const destination)
                             else
                                 cipherSpec = cipherSpecManifest;
                         }
+                        // Else the file is the backup info, which the repo passphrase opens
+                        else
+                            fileIsInfo = true;
                     }
                 }
 
                 // Error when unable to determine cipher passphrase
-                if (cipherSpec == NULL)
+                if (cipherSpec == NULL && cipherSpecMap == NULL)
                     THROW_FMT(OptionInvalidValueError, "unable to determine cipher passphrase for '%s'", strZ(file));
 
-                ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
-
-                // Add encryption filter
-                cipherBlockFilterGroupAdd(ioReadFilterGroup(source), cipherModeDecrypt, cipherSpec);
+                // Add the decryption filter. An info file is read through the filter that reads its header and WAL through the
+                // filter that selects the key by the id in the header.
+                if (fileIsInfo)
+                    cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(source), cipherSpec);
+                else if (cipherSpecMap != NULL)
+                    cipherBlockFormatFilterGroupReadAddMap(ioReadFilterGroup(source), cipherSpecMap);
+                else
+                {
+                    ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
+                    cipherBlockFilterGroupAdd(ioReadFilterGroup(source), cipherModeDecrypt, cipherSpec);
+                }
             }
         }
 
         // Open source
-        if (ioReadOpen(source))
+        if (!missing && ioReadOpen(source))
         {
             // Open the destination file now that we know the source exists and is readable
             ioWriteOpen(destination);

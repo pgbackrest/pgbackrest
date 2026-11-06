@@ -19,6 +19,8 @@ Backup Command
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
+#include "common/format/format.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
 #include "common/regExp.h"
@@ -211,7 +213,6 @@ cmdBackup(void)
         // Load backup.info
         InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-        const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(infoBackup);
 
         // Get pg storage and database objects
         BackupData *const backupData = backupInit(infoBackup);
@@ -241,26 +242,39 @@ cmdBackup(void)
 
         // Build an incremental backup if type is not full (manifestPrior will be freed in this call)
         if (!backupBuildIncr(manifest, manifestPrior, backupStartResult.walSegmentName))
-            manifestCipherSpecSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType)));
+            manifestCipherSpecSet(manifest, cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType), manifestFormat(manifest)));
 
         // Set delta if it is not already set and the manifest requires it
         if (!cfgOptionBool(cfgOptDelta) && varBool(manifestData(manifest)->backupOptionDelta))
             cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
         // Resume a backup when possible
-        if (!backupResume(manifest, cipherSpecManifest))
+        if (!backupResume(manifest, infoBackup))
         {
             manifestBackupLabelSet(
                 manifest,
                 backupLabelCreate(
                     (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
+
+            // Format >= 6 stores a manifest key for a new backup set in backup.info before a manifest is encrypted with it
+            if (manifestFormat(manifest) >= REPOSITORY_FORMAT_6 && manifestData(manifest)->backupType == backupTypeFull &&
+                cfgOptionStrId(cfgOptRepoCipherType) != cipherTypeNone)
+            {
+                infoBackupCipherSpecAdd(
+                    infoBackup, manifestData(manifest)->backupLabel,
+                    cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType), manifestFormat(manifest)));
+                infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
+            }
         }
+
+        // Key for the manifest of the backup
+        const CipherSpec *const cipherSpecManifest = infoBackupCipherSpecManifest(infoBackup, manifestData(manifest)->backupLabel);
 
         // Save the manifest before processing starts
         backupManifestSaveCopy(manifest, cipherSpecManifest, false);
 
         // Process the backup manifest
-        backupProcess(backupData, manifest, cipherSpecManifest);
+        const unsigned int warningTotal = backupProcess(backupData, manifest, cipherSpecManifest);
 
         // Check that the clusters are alive and correctly configured after the backup
         backupDbPing(backupData, true);
@@ -304,6 +318,9 @@ cmdBackup(void)
             "%s backup size = %s, file total = %u", zNewStrId(manifestData(manifest)->backupType),
             strZ(strSizeFormat(infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
             manifestFileTotal(manifest));
+
+        if (warningTotal > 0)
+            LOG_WARN_FMT(CFGCMD_BACKUP " command encountered %u checksum warning(s), check the log file for details", warningTotal);
     }
     MEM_CONTEXT_TEMP_END();
 

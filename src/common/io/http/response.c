@@ -538,6 +538,10 @@ httpResponseMultiNext(HttpResponseMulti *const this)
 
     ASSERT(this != NULL);
 
+    // Return NULL when all parts have been read so the function may safely be called again
+    if (this->boundaryLast == NULL)
+        FUNCTION_LOG_RETURN(HTTP_RESPONSE, NULL);
+
     HttpResponse *result = NULL;
 
     // Find next boundary
@@ -586,6 +590,9 @@ httpResponseMultiNext(HttpResponseMulti *const this)
         }
         MEM_CONTEXT_TEMP_END();
     }
+    // Else all parts have been read
+    else
+        this->boundaryLast = NULL;
 
     FUNCTION_LOG_RETURN(HTTP_RESPONSE, result);
 }

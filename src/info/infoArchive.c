@@ -8,12 +8,14 @@ Archive Info Handler
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
+#include "common/format/format.h"
 #include "common/ini.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
+#include "common/type/convert.h"
 #include "info/infoArchive.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
@@ -58,13 +60,14 @@ infoArchiveNewInternal(void)
 /**********************************************************************************************************************************/
 FN_EXTERN InfoArchive *
 infoArchiveNew(
-    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int format, const CipherSpec *const cipherSpecSub)
+    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int format,
+    const CipherSpecMap *const cipherSpecMapSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT64, pgSystemId);
         FUNCTION_LOG_PARAM(UINT, format);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecSub);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC_MAP, cipherSpecMapSub);
     FUNCTION_LOG_END();
 
     ASSERT(pgVersion > 0 && pgSystemId > 0);
@@ -76,7 +79,8 @@ infoArchiveNew(
         this = infoArchiveNewInternal();
 
         // Initialize the pg data
-        this->pub.infoPg = infoPgNew(infoPgArchive, format, cipherSpecSub);
+        this->pub.infoPg = infoPgNew(infoPgArchive, format, NULL);
+        infoCipherSpecMapSet(infoPgInfo(this->pub.infoPg), cipherSpecMapSub);
         infoArchivePgSet(this, pgVersion, pgSystemId);
     }
     OBJ_NEW_END();
@@ -105,6 +109,35 @@ infoArchiveNewLoad(IoRead *const read, const CipherSpec *const cipherSpec)
     OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(INFO_ARCHIVE, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+infoArchiveCipherRotate(InfoArchive *const this, const CipherSpec *const cipherSpec, const time_t rotateTime)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_LOG_PARAM(TIME, rotateTime);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(infoArchiveFormat(this) >= REPOSITORY_FORMAT_6);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // The next key id follows the current key id, or is the first key id when there is no current key
+        const String *const idCurrent = cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(this));
+        const String *const id = strNewFmt("%u", idCurrent == NULL ? 1 : cvtZToUInt(strZ(idCurrent)) + 1);
+
+        Info *const info = infoPgInfo(infoArchivePg(this));
+
+        infoCipherSpecAdd(info, id, cipherSpec);
+        infoCipherRotateTimeSet(info, rotateTime);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -221,51 +254,16 @@ infoArchiveFormatSet(InfoArchive *const this, const unsigned int format)
 }
 
 /**********************************************************************************************************************************/
-typedef struct InfoArchiveLoadFileData
+// Create from a read of the file
+static void *
+infoArchiveLoadFileNew(IoRead *const read, const CipherSpec *const cipherSpec)
 {
-    MemContext *memContext;                                         // Mem context
-    const Storage *storage;                                         // Storage to load from
-    const String *fileName;                                         // Base filename
-    const CipherSpec *cipherSpec;                                   // Cipher spec
-    InfoArchive *infoArchive;                                       // Loaded infoArchive object
-} InfoArchiveLoadFileData;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, read);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
+    FUNCTION_TEST_END();
 
-static bool
-infoArchiveLoadFileCallback(void *const data, const unsigned int try)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(UINT, try);
-    FUNCTION_LOG_END();
-
-    ASSERT(data != NULL);
-
-    InfoArchiveLoadFileData *const loadData = data;
-    bool result = false;
-
-    if (try < 2)
-    {
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Construct filename based on try
-            const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
-
-            // Attempt to load the file
-            IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-            cipherBlockFilterGroupAdd(
-                ioReadFilterGroup(read), cipherModeDecrypt, loadData->cipherSpec);
-
-            MEM_CONTEXT_BEGIN(loadData->memContext)
-            {
-                loadData->infoArchive = infoArchiveNewLoad(read, loadData->cipherSpec);
-                result = true;
-            }
-            MEM_CONTEXT_END();
-        }
-        MEM_CONTEXT_TEMP_END();
-    }
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(INFO_ARCHIVE, infoArchiveNewLoad(read, cipherSpec));
 }
 
 FN_EXTERN InfoArchive *
@@ -282,40 +280,26 @@ infoArchiveLoadFile(
     ASSERT(fileName != NULL);
     ASSERT(cipherSpec != NULL);
 
-    InfoArchiveLoadFileData data =
-    {
-        .memContext = memContextCurrent(),
-        .storage = storage,
-        .fileName = fileName,
-        .cipherSpec = cipherSpec,
-    };
+    InfoArchive *result = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    TRY_BEGIN()
     {
-        const char *const fileNamePath = strZ(storagePathP(storage, fileName));
-
-        TRY_BEGIN()
-        {
-            infoLoad(
-                strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),
-                infoArchiveLoadFileCallback, &data);
-        }
-        CATCH_ANY()
-        {
-            THROWP_FMT(
-                errorType(),
-                "%s\n"
-                "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
-                "HINT: is archive_command configured correctly in postgresql.conf?\n"
-                "HINT: has a stanza-create been performed?\n"
-                "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
-                errorMessage());
-        }
-        TRY_END();
+        result = infoLoadFile(storage, fileName, cipherSpec, infoArchiveLoadFileNew);
     }
-    MEM_CONTEXT_TEMP_END();
+    CATCH_ANY()
+    {
+        THROWP_FMT(
+            errorType(),
+            "%s\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.",
+            errorMessage());
+    }
+    TRY_END();
 
-    FUNCTION_LOG_RETURN(INFO_ARCHIVE, data.infoArchive);
+    FUNCTION_LOG_RETURN(INFO_ARCHIVE, result);
 }
 
 /**********************************************************************************************************************************/
@@ -340,7 +324,7 @@ infoArchiveSaveFile(
         // Write output into a buffer since it needs to be saved to storage twice
         Buffer *const buffer = bufNew(ioBufferSize());
         IoWrite *const write = ioBufferWriteNew(buffer);
-        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpec);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, infoArchiveFormat(infoArchive));
         infoArchiveSave(infoArchive, write);
 
         // Save the file and make a copy

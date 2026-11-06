@@ -12,6 +12,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix incorrect time expiration being used for non-default repositories.</p>
+
+                <p>When <cmd>expire</cmd> ran without <br-option>repo</br-option>, the time-based <br-option>repo-retention-full</br-option> for every repository was read from the lowest-numbered repository. Each repository now uses its own value.</p>
             </release-item>
 
             <release-item>
@@ -25,6 +27,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix issue when listing directories recursively with a filter.</p>
+
+                <p><cmd>repo-ls</cmd> with <br-option>recurse</br-option> and <br-option>filter</br-option> could fail with a double free or segfault when the last entry in a directory was a directory that had entries. A parent list was freed before the entries of its subdirectories were processed.</p>
             </release-item>
         </release-bug-list>
 
@@ -40,6 +44,8 @@
                 </release-item-contributor-list>
 
                 <p>Backup key/value annotations.</p>
+
+                <p>Add key/value annotations to a backup with the <br-option>annotation</br-option> option of the <cmd>backup</cmd> command, and add, modify, or remove them later with the new <cmd>annotate</cmd> command. The <cmd>info</cmd> command shows annotations in text output when <br-option>set</br-option> is specified and always includes them in JSON output.</p>
             </release-item>
         </release-feature-list>
 
@@ -55,11 +61,16 @@
                 </release-item-contributor-list>
 
                 <p>Support <br-option>--set</br-option> in JSON output for <cmd>info</cmd> command.</p>
+
+                <p>With <br-option>set</br-option>, JSON output from <cmd>info</cmd> now includes the details that text output already showed, e.g. the error and tablespace lists.</p>
             </release-item>
 
             <release-item>
-                <github-issue id="1843"/>
-                <github-pull-request id="1847"/>
+                <commit subject="Allow quote tag in command-line help."/>
+                <commit subject="Allow upload chunk size to be configured for object stores.">
+                    <github-issue id="1843"/>
+                    <github-pull-request id="1847"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-ideator id="anton.glushakov"/>
@@ -68,6 +79,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow upload chunk size to be configured for object stores.</p>
+
+                <p>Set <br-option>repo-storage-upload-chunk-size</br-option> to change the size of each upload chunk for S3, GCS, or Azure. Larger chunks can improve performance but use more memory. The defaults are unchanged.</p>
             </release-item>
 
             <release-item>
@@ -81,6 +94,8 @@
                 </release-item-contributor-list>
 
                 <p>Update archive.info timestamps after a successful backup.</p>
+
+                <p><file>archive.info</file> and its copy were written only by <cmd>stanza-create</cmd> and <cmd>stanza-upgrade</cmd>, and an object store lifecycle policy that expires old files could remove them. Their timestamps are now updated after each successful backup.</p>
             </release-item>
 
             <release-item>
@@ -91,11 +106,12 @@
                     <release-item-ideator id="keith.fiske"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="stefan.fercot"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="keith.fiske"/>
+                    <release-item-tester id="keith.fiske"/>
                 </release-item-contributor-list>
 
                 <p>Move standby timeline check after checkpoint.</p>
+
+                <p>The check that the standby is on the expected timeline used <file>pg_control</file> as it was before the backup started. Right after a promotion the standby may not have written the new timeline to <file>pg_control</file> yet, and the backup failed with <quote>standby is on timeline ... but expected ...</quote>. The check now runs after the checkpoint.</p>
             </release-item>
 
             <release-item>
@@ -105,6 +121,8 @@
                 </release-item-contributor-list>
 
                 <p>Improve warning message on backup resume.</p>
+
+                <p>The warning read as if the user needed to take action. It now states that invalid files will be removed and then the backup will resume.</p>
             </release-item>
         </release-improvement-list>
 
@@ -145,6 +163,33 @@
 
                 <p>Add <code>FN_INLINE_ALWAYS</code> macro.</p>
             </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clear ProtocolClient callback after connection error.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Unify code builder binaries into a single binary."/>
+                <commit subject="Fix incorrect storage for rendering errors."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve the code builder.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess to latest version.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -157,7 +202,82 @@
                 </release-item-contributor-list>
 
                 <p>Add absolute path for <id>kill</id> in <file>pgbackrest.service</file>.</p>
+
+                <p>The <file>pgbackrest.service</file> example now uses <file>/bin/kill</file> in <id>ExecReload</id>. Older versions of <proper>systemd</proper> require an absolute path.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow host memory limits in the user guide to be disabled.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add reviewer for c267ba51."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add missed reviewer to the release notes.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Add module harness and shim support to the C test harness."/>
+                <commit subject="C test harness improvements."/>
+                <commit subject="More C test harness improvements and CI."/>
+                <commit subject="Move release build check to src/meson.build."/>
+                <commit subject="Integrate C test harness with Perl test harness."/>
+                <commit subject="Add coverage to C test harness."/>
+                <commit subject="Add profiling, performance, and optimization to C test harness."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Build unit and performance tests with the C test harness.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Copy repository links as files for testing."/>
+                <commit subject="Fix common/lock test creating &quot;750&quot; path."/>
+                <commit subject="Test Dockerfile improvements."/>
+                <commit subject="Remove Debian package patch now that it has been merged upstream."/>
+                <commit subject="Fix comment typos in command/expire unit test."/>
+                <commit subject="Fix comment typo."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests and test tools.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update Minio test/documentation container version.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update Cirrus CI FreedBSD 13 image version."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

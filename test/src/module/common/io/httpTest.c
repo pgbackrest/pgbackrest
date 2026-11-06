@@ -1039,6 +1039,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(responsePart)), "123", "response content");
 
                 TEST_RESULT_PTR(httpResponseMultiNext(responseMulti), NULL, "no more responses");
+                TEST_RESULT_PTR(httpResponseMultiNext(responseMulti), NULL, "no more responses after eof");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on full boundary in header or content");

@@ -15,6 +15,8 @@
                 </release-item-contributor-list>
 
                 <p>Skip writing <file>recovery.signal</file> by default for restores of offline backups.</p>
+
+                <p>On <postgres/> &gt;= 12, <file>recovery.signal</file> makes <postgres/> fail to start when the backup was made offline with <setting>wal_level=minimal</setting>. Restore now skips writing it for offline backups unless <br-option>type</br-option> is set explicitly, e.g. for Point-in-Time Recovery from an offline backup made with a higher <setting>wal_level</setting>.</p>
             </release-item>
         </release-bug-list>
 
@@ -30,7 +32,7 @@
                 <commit subject="Add optional raw format for compression types."/>
                 <commit subject="Use raw compression/encryption to bundling and block incremental backup."/>
                 <commit subject="Block-level incremental backup super blocks.">
-                    <github-pull-request id="2011"/>
+                    <github-pull-request id="1996"/>
                 </commit>
                 <commit subject="Use xxHash instead of SHA-1 for block incremental checksums."/>
                 <commit subject="Exclude backup set size from info for block incremental backups."/>
@@ -41,6 +43,7 @@
                 <commit subject="Block incremental map fixes and improvements.">
                     <github-pull-request id="2026"/>
                 </commit>
+                <commit subject="Add beta feature infrastructure."/>
                 <commit subject="Add beta feature and documentation for block incremental backup."/>
 
                 <release-item-contributor-list>
@@ -51,6 +54,8 @@
                 </release-item-contributor-list>
 
                 <p>Block incremental backup (BETA).</p>
+
+                <p>Block incremental stores only the parts of a file that changed since the prior backup instead of the entire file. Enable it with <setting>repo-block</setting>, which requires <setting>repo-bundle</setting>. The feature is in beta and also requires the <setting>beta</setting> option. Do not use it in production: the on-disk format will change before the GA release.</p>
             </release-item>
         </release-feature-list>
 
@@ -64,6 +69,8 @@
                 </release-item-contributor-list>
 
                 <p>Keep only one all-default group index.</p>
+
+                <p>An option that does not apply, e.g. <setting>repo2-s3-key</setting> when <setting>repo2-type</setting> is not <id>s3</id>, could add a phantom repository that has only default values. Repository and <postgres/> indexes with only default values are now removed unless no other index remains.</p>
             </release-item>
         </release-improvement-list>
 
@@ -81,6 +88,72 @@
 
                 <p>Add <br-option>pg-version-force</br-option> option for fork integration.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Prototype manifest command."/>
+                <commit subject="Updates required for new manifest command to work remotely."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add internal <cmd>manifest</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Use uncrustify for code formatting."/>
+                <commit subject="Reformat code with uncrustify."/>
+                <commit subject="Fix formatting errors."/>
+                <commit subject="Refactor loop limit in removeExpiredArchive()."/>
+                <commit subject="Check for stray execute permissions in test.pl --code-format."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Use uncrustify for code formatting.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Improved error handling in build-code binary."/>
+                <commit subject="Fix error handling in build-code binary."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve error handling in build-code binary.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve interface handling in storage module.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update comments missed in copy/paste."/>
+                <commit subject="Fix typo and remove extraneous linefeed."/>
+                <commit subject="Add FN_PRINTF() macro."/>
+                <commit subject="Refactor stackTraceToZ() to avoid multiple versions of the function."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code and comments.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess and config.sub to latest versions.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -96,6 +169,8 @@
                 </release-item-contributor-list>
 
                 <p>Add explicit instructions for upgrading between <id>2.x</id> versions.</p>
+
+                <p>A new user guide section explains that upgrading between <id>2.x</id> versions requires only installing the new binaries. Downgrading is also possible when no features unsupported by the older version were used.</p>
             </release-item>
 
             <release-item>
@@ -104,7 +179,34 @@
                 </release-item-contributor-list>
 
                 <p>Remove references to <proper>SSH</proper> made obsolete when <proper>TLS</proper> was introduced.</p>
+
+                <p>The help for <setting>repo-host</setting>, <setting>pg-host</setting>, and their port options no longer refers to <proper>SSH</proper> as the only remote protocol. Details about <proper>SSH</proper> compression were also removed.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix contributors in release notes.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Move backup pq test script generation to backup harness."/>
+                <commit subject="Add missing header."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

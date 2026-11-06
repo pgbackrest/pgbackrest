@@ -36,6 +36,18 @@ testRun(void)
         TEST_ERROR(jsonReadBool(read), JsonFormatError, "missing comma at: true]");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on unexpected comma");
+
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF(" ,\"a\""))), JsonFormatError, "unexpected comma at: ,\"a\"");
+
+        TEST_ASSIGN(read, jsonReadNew(STRDEF("[,true]")), "new read");
+
+        TEST_RESULT_VOID(jsonReadArrayBegin(read), "array begin");
+        TEST_ERROR(jsonReadBool(read), JsonFormatError, "unexpected comma at: ,true]");
+
+        TEST_ERROR(jsonValidate(STRDEF("{\"a\":,\"b\"}")), JsonFormatError, "unexpected comma at: ,\"b\"}");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on mismatched container end");
 
         TEST_ASSIGN(read, jsonReadNew(STRDEF("\r{ ] ")), "new read");
@@ -60,6 +72,24 @@ testRun(void)
         TEST_TITLE("error on invalid ascii encoding");
 
         TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u1111"))), JsonFormatError, "unable to decode at: \\u1111");
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u00x1"))), JsonFormatError, "unable to decode at: \\u00x1");
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u00a"))), JsonFormatError, "unable to decode at: \\u00a");
+        TEST_ERROR(jsonReadStr(jsonReadNew(STRDEF("\"\\u0000\""))), JsonFormatError, "unable to decode at: \\u0000\"");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on maximum depth");
+
+        String *const depthArray = strNew();
+        String *const depthObject = strNew();
+
+        for (unsigned int depthIdx = 0; depthIdx < 32; depthIdx++)
+        {
+            strCatChr(depthArray, '[');
+            strCatZ(depthObject, "{\"a\":");
+        }
+
+        TEST_ERROR(jsonToVar(strNewFmt("%s{", strZ(depthArray))), JsonFormatError, "maximum depth of 32 exceeded at: {");
+        TEST_ERROR(jsonValidate(strNewFmt("%s[", strZ(depthObject))), JsonFormatError, "maximum depth of 32 exceeded at: [");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid escape");
@@ -214,8 +244,12 @@ testRun(void)
         TEST_TITLE("validate");
 
         TEST_RESULT_VOID(jsonValidate(json), "valid");
+        TEST_RESULT_VOID(jsonValidate(STRDEF("[\"\\u0041\",\"\\u1234\"]")), "valid escapes before end of string");
+        TEST_RESULT_VOID(jsonValidate(STRDEF("[\"\\u003c\",\"\\uFFFF\"]")), "valid hex escapes");
+        TEST_ERROR(jsonValidate(STRDEF("\"\\u0041")), JsonFormatError, "expected '\"' but found null delimiter");
         TEST_ERROR(jsonValidate(STRDEF("\"\\u000")), JsonFormatError, "unable to decode at: \\u000");
         TEST_ERROR(jsonValidate(STRDEF("\"")), JsonFormatError, "expected '\"' but found null delimiter");
+        TEST_ERROR(jsonValidate(STRDEF("\"\\")), JsonFormatError, "expected '\"' but found null delimiter");
         TEST_ERROR(jsonValidate(STRDEF("{\"key\"x")), JsonFormatError, "expected : after key at: x");
         TEST_ERROR(jsonValidate(strNewFmt("%s]", strZ(json))), JsonFormatError, "characters after JSON at: ]");
     }

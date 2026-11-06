@@ -16,6 +16,8 @@
                 </release-item-contributor-list>
 
                 <p>Retry errors in S3 batch file delete.</p>
+
+                <p>A failed batch delete was retried, but errors for individual files in the batch were not, and <backrest/> could terminate during expire or when removing a backup that could not be resumed. Files that fail in a batch are now deleted individually with the usual HTTP retries.</p>
             </release-item>
 
             <release-item>
@@ -29,6 +31,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow case-insensitive matching of <proper>HTTP</proper> <id>connection</id> header values.</p>
+
+                <p>The HTTP specification allows <id>connection</id> header values in any case, e.g. <id>Close</id>.</p>
             </release-item>
         </release-bug-list>
 
@@ -40,11 +44,12 @@
                 <release-item-contributor-list>
                     <release-item-contributor id="christoph.berg"/>
                     <release-item-reviewer id="david.steele"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="tharindu.amila"/>
+                    <release-item-tester id="tharindu.amila"/>
                 </release-item-contributor-list>
 
                 <p>Add support for <proper>AWS</proper> <proper>S3</proper> server-side encryption using <proper>KMS</proper>.</p>
+
+                <p>Set <br-option>repo-s3-kms-key-id</br-option> to encrypt objects with a key managed by <proper>AWS KMS</proper>.</p>
             </release-item>
 
             <release-item>
@@ -56,6 +61,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <br-option>archive-missing-retry</br-option> option.</p>
+
+                <p>By default <cmd>archive-get</cmd> retries a WAL segment it already reported as missing, which ignores missing notifications left in the spool path by a prior restore. With <br-option>archive-missing-retry=n</br-option>, <postgres/> can detect the end of the archive and switch to streaming even while WAL is being archived. The spool path must then be empty when recovery starts.</p>
             </release-item>
 
             <release-item>
@@ -68,6 +75,8 @@
                 </release-item-contributor-list>
 
                 <p>Add backup type filter to <cmd>info</cmd> command.</p>
+
+                <p>Set <br-option>type</br-option> to show only backups of that type, e.g. <br-option>type=full</br-option>.</p>
             </release-item>
         </release-feature-list>
 
@@ -90,6 +99,8 @@
                 </release-item-contributor-list>
 
                 <p>Retry on page validation failure during <cmd>backup</cmd>.</p>
+
+                <p>A page that fails checksum validation is now read again. It is reported as an error only when it has not changed. A changed page is being written by <postgres/>, and the WAL contains a full page image. Zero pages are now checked to be all zeroes rather than only by the <id>pd_upper</id> field.</p>
             </release-item>
 
             <release-item>
@@ -98,13 +109,14 @@
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="remi.vidier"/>
                     <release-item-reviewer id="david.christensen"/>
                     <release-item-reviewer id="stephen.frost"/>
+                    <release-item-tester id="remi.vidier"/>
                 </release-item-contributor-list>
 
                 <p>Handle <proper>TLS</proper> servers that do not close connections gracefully.</p>
+
+                <p>Some servers close the socket rather than the TLS connection. When a response has no content length or chunked encoding and its content can be parsed, the closed socket is now treated as EOF. These servers stopped working in v2.35.</p>
             </release-item>
 
             <release-item>
@@ -116,6 +128,8 @@
                 </release-item-contributor-list>
 
                 <p>Add backup LSNs to <cmd>info</cmd> command output.</p>
+
+                <p>The start and stop LSNs of a backup are shown with <br-option>set</br-option> and in JSON output, for use with LSN-based Point-in-Time Recovery.</p>
             </release-item>
 
             <release-item>
@@ -127,12 +141,16 @@
                 </release-item-contributor-list>
 
                 <p>Automatically strip trailing slashes for <cmd>repo-ls</cmd> paths.</p>
+
+                <p>A trailing slash on the path made <cmd>repo-ls</cmd> show no content on some repository storage types.</p>
             </release-item>
 
             <release-item>
                 <commit subject="Improve protocol module error test for protocolClientFree()."/>
                 <commit subject="Use normal error for protocol module error retry test."/>
-                <commit subject="Do not retry fatal errors."/>
+                <commit subject="Do not retry fatal errors.">
+                    <github-pull-request id="1658"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -140,6 +158,8 @@
                 </release-item-contributor-list>
 
                 <p>Do not retry fatal errors.</p>
+
+                <p>Retrying fatal errors, especially out of memory errors, may cause lockups. Assertion and memory errors are now reported without retrying.</p>
             </release-item>
 
             <release-item>
@@ -152,6 +172,8 @@
                 </release-item-contributor-list>
 
                 <p>Remove support for <proper>PostgreSQL</proper> <id>8.3</id>/<id>8.4</id>.</p>
+
+                <p>There is no evidence that these versions are still in use and supporting them costs development and test time. Use an older version of <backrest/> to back up or migrate from these versions.</p>
             </release-item>
 
             <release-item>
@@ -164,6 +186,8 @@
                 </release-item-contributor-list>
 
                 <p>Remove logic that tried to determine additional file system compression.</p>
+
+                <p>After a file was copied, <backrest/> checked its size on disk to detect compression by the file system, e.g. ZFS. This was untested, slow with many small files, and blocked file bundling. The repository size in <cmd>info</cmd> is now what <backrest/> wrote.</p>
             </release-item>
         </release-improvement-list>
 
@@ -172,7 +196,6 @@
                 <commit subject="Disconnect help.auto.c from build-help in Makefile.">
                     <github-pull-request id="1672"/>
                 </commit>
-                <commit subject="Fix release note attribution in cacfdd94 and f798458e."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="daniel.gustafsson"/>
@@ -183,18 +206,29 @@
             </release-item>
 
             <release-item>
-                <commit subject="Add read range to all storage drivers."/>
+                <release-note version="2.39" subject="Backup file bundling for improved small file support."/>
+                <commit subject="Add read range to all storage drivers.">
+                    <github-pull-request id="1619"/>
+                </commit>
                 <commit subject="Implement restore ownership without updating manifest internals."/>
                 <commit subject="Fix issue with Posix read offset handling after an error."/>
                 <commit subject="Refactor backupProcessQueue() to use BackupJobData struct."/>
                 <commit subject="Use the PG_FILE_POSTMTRPID constant where appropriate."/>
-                <commit subject="Remove primary flag from manifest."/>
+                <commit subject="Remove primary flag from manifest.">
+                    <github-pull-request id="1630"/>
+                </commit>
                 <commit subject="Simplify base path mode in mock/all integration tests."/>
-                <commit subject="Simplify manifest defaults."/>
+                <commit subject="Simplify manifest defaults.">
+                    <github-pull-request id="1631"/>
+                </commit>
                 <commit subject="Convert varNewUInt64() to VARUINT64() where possible in manifest."/>
-                <commit subject="Pack manifest file structs to save memory."/>
+                <commit subject="Pack manifest file structs to save memory.">
+                    <github-pull-request id="1626"/>
+                </commit>
                 <commit subject="Optimization for jsonFromStrInternal()."/>
-                <commit subject="Simplify manifest file defaults."/>
+                <commit subject="Simplify manifest file defaults.">
+                    <github-pull-request id="1632"/>
+                </commit>
                 <commit subject="Simplify filename construction in command/verify module."/>
                 <commit subject="Bundle files in the repository during backup.">
                     <github-issue id="1149"/>
@@ -216,14 +250,17 @@
             </release-item>
 
             <release-item>
+                <release-note version="2.39" subject="Show backup percent complete in info output."/>
                 <commit subject="Add ioBufferReadNewOpen() and ioBufferWriteNewOpen()."/>
-                <commit subject="Refactor lock code."/>
+                <commit subject="Refactor lock code.">
+                    <github-pull-request id="1643"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
                 </release-item-contributor-list>
 
-                <p>Add percent complete to lock file.</p>
+                <p>Refactor lock code.</p>
             </release-item>
 
             <release-item>
@@ -242,6 +279,53 @@
 
                 <p>Configuration refactoring.</p>
             </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add XML to invalid XML error message.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix invalid file descriptor being passed to close().</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add ioCopy().</p>
+            </release-item>
+
+            <release-item>
+                <commit id="226cfbdcd" subject="Fix typo."/>
+                <commit subject="Fix comment missed in 6bd280f7."/>
+                <commit subject="Fix typo in error message."/>
+                <commit id="91721e391" subject="Fix typo."/>
+                <commit subject="Remove extra spaces."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code and comments.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess and config.sub to latest versions.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -254,6 +338,8 @@
                 </release-item-contributor-list>
 
                 <p>Move <id>repo</id> options in <proper>TLS</proper> documentation to the <id>global</id> section.</p>
+
+                <p>The user guide set these options in the stanza section, which works in some cases but is not best practice.</p>
             </release-item>
 
             <release-item>
@@ -263,6 +349,8 @@
                 </release-item-contributor-list>
 
                 <p>Remove unused <br-option>backup-standby</br-option> option from stanza commands.</p>
+
+                <p><cmd>stanza-create</cmd> and <cmd>stanza-upgrade</cmd> listed <br-option>backup-standby</br-option> in the command reference and help, but did not use it.</p>
             </release-item>
 
             <release-item>
@@ -288,6 +376,8 @@
                 </release-item-contributor-list>
 
                 <p>Add aliveness check to <proper>systemd</proper> service configuration.</p>
+
+                <p>The <file>pgbackrest.service</file> example now checks that the server is still running shortly after it starts. Before, a server that failed to start reported no error while <proper>systemd</proper> retried in the background.</p>
             </release-item>
 
             <release-item>
@@ -301,6 +391,8 @@
                 </release-item-contributor-list>
 
                 <p>Add FAQ explaining WAL archive suffix.</p>
+
+                <p>The suffix on a WAL file in the repository is its SHA1 checksum, which is used to verify the file. It cannot be omitted.</p>
             </release-item>
 
             <release-item>
@@ -317,5 +409,67 @@
                 <p>Note that replications slots are not restored.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Create create_test_table() function earlier in user guide."/>
+                <commit subject="Centralize common PostgreSQL options in the user guide."/>
+                <commit subject="Download correct key on aarch64 in the user guide."/>
+                <commit subject="Revert PGDG yum repo workaround for aarch64."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the user guide.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Use vagrant user in the Docker container."/>
+                <commit subject="Suppress errors when there is stderr output for Docker builds."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve the documentation build.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove release note about the default port being provisional."/>
+                <commit subject="Most recent news for postgresql.org."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the release notes and NEWS.md.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Combine encrypted backupFile() tests with unencrypted tests."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix language in rh7 test container for aarch64."/>
+                <commit subject="Revert Minio to prior release."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

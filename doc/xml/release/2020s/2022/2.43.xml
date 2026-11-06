@@ -2,8 +2,11 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
-                <github-issue id="1933"/>
-                <github-pull-request id="1935"/>
+                <commit subject="Move manifestBackupLabelSet() test in info/manifest unit."/>
+                <commit subject="Fix missing reference in diff/incr backup.">
+                    <github-issue id="1933"/>
+                    <github-pull-request id="1935"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-ideator id="marcel.borger"/>
@@ -14,6 +17,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix missing reference in diff/incr backup.</p>
+
+                <p>In v2.42 a diff or incr backup failed with <quote>unable to find '...' in string list</quote> when its prior backup was made by an earlier version. The reference list built for a manifest from an earlier version now includes the backup's own label.</p>
             </release-item>
         </release-bug-list>
 
@@ -28,7 +33,19 @@
                 </release-item-contributor-list>
 
                 <p>Add hint when an option is specified without an index.</p>
+
+                <p>An option that requires an index, e.g. <setting>repo-storage-ca-file</setting>, now errors with a hint that shows the indexed name, e.g. <setting>repo1-storage-ca-file</setting>. A deprecated option also gets a hint with its current name.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess and config.sub to latest versions.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 </release>

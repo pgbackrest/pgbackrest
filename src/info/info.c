@@ -9,8 +9,11 @@ Info Handler
 
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
+#include "common/format/format.h"
 #include "common/ini.h"
 #include "common/io/filter/filter.h"
+#include "common/io/io.h"
 #include "common/log.h"
 #include "common/type/convert.h"
 #include "common/type/json.h"
@@ -25,6 +28,7 @@ Object types
 struct Info
 {
     InfoPub pub;                                                    // Publicly accessible variables
+    const CipherSpec *cipherSpecNone;                               // Returned by infoCipherSpec() when there are no keys
 };
 
 struct InfoSave
@@ -122,6 +126,10 @@ infoNew(const unsigned int format, const CipherSpec *const cipherSpecSub)
 #define INFO_KEY_CHECKSUM                                           "backrest-checksum"
 #define INFO_SECTION_CIPHER                                         "cipher"
 #define INFO_KEY_CIPHER_PASS                                        "cipher-pass"
+#define INFO_KEY_CIPHER_PASS_CURRENT                                "cipher-pass-current"
+#define INFO_KEY_CIPHER_PASS_ROTATE                                 "cipher-pass-rotate"
+#define INFO_KEY_CIPHER_DIGEST                                      "digest"
+#define INFO_KEY_CIPHER_KEY                                         "key"
 
 FN_EXTERN Info *
 infoNewLoad(
@@ -186,30 +194,10 @@ infoNewLoad(
                             // Validate and store format
                             if (strEqZ(value->key, INFO_KEY_FORMAT))
                             {
-                                const uint64_t format = varUInt64(jsonToVar(value->value));
+                                const unsigned int format = jsonReadUInt(jsonReadNew(value->value));
+                                repoFormatValidate(format);
 
-                                // A format newer than this version can read requires an upgrade. Do not suggest a version since
-                                // this version cannot know which version added the format.
-                                if (format > REPOSITORY_FORMAT_MAX)
-                                {
-                                    THROW_FMT(
-                                        FormatError,
-                                        "repository format %" PRIu64 " requires a newer version of " PROJECT_NAME "\n"
-                                        "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format %d to %d.",
-                                        format, REPOSITORY_FORMAT_MIN, REPOSITORY_FORMAT_MAX);
-                                }
-
-                                // A format older than this version can read requires an older version to migrate the repository
-                                if (format < REPOSITORY_FORMAT_MIN)
-                                {
-                                    THROW_FMT(
-                                        FormatError,
-                                        "repository format %" PRIu64 " is no longer supported by " PROJECT_NAME "\n"
-                                        "HINT: " PROJECT_NAME " " PROJECT_VERSION " supports repository format %d to %d.",
-                                        format, REPOSITORY_FORMAT_MIN, REPOSITORY_FORMAT_MAX);
-                                }
-
-                                this->pub.format = (unsigned int)format;
+                                this->pub.format = format;
                             }
                             // Store pgBackRest version
                             else if (strEqZ(value->key, INFO_KEY_VERSION))
@@ -236,14 +224,62 @@ infoNewLoad(
                             // No validation needed for cipher-pass, just store it
                             if (strEqZ(value->key, INFO_KEY_CIPHER_PASS))
                             {
-                                MEM_CONTEXT_OBJ_BEGIN(this)
+                                MEM_CONTEXT_TEMP_BEGIN()
                                 {
-                                    // The dependent files are encrypted with the same cipher type as this one
-                                    this->pub.cipherSpec = cipherSpecNew(
-                                        cipherSpecType(cipherSpec), BUFSTR(varStr(jsonToVar(value->value))));
+                                    // Dependent files are encrypted with the same cipher type as this one
+                                    const CipherType cipherType = cipherSpecType(cipherSpec);
+                                    CipherSpecMap *const cipherSpecMap = cipherSpecMapNew();
+                                    const Variant *const cipherPass = jsonToVar(value->value);
+
+                                    // Format >= 6 stores every key by id along with the digest it derives with. A key that derives
+                                    // with SHA-1 is from format 5 and is stored as text as before. Format 6 keys are stored as
+                                    // base64 and decoded to the bytes they derive with.
+                                    if (infoFormat(this) >= REPOSITORY_FORMAT_6)
+                                    {
+                                        const KeyValue *const keyKv = varKv(cipherPass);
+                                        const VariantList *const idList = kvKeyList(keyKv);
+
+                                        for (unsigned int idIdx = 0; idIdx < varLstSize(idList); idIdx++)
+                                        {
+                                            const Variant *const id = varLstGet(idList, idIdx);
+                                            const KeyValue *const keyData = varKv(kvGet(keyKv, id));
+                                            const String *const key = varStr(kvGet(keyData, VARSTRDEF(INFO_KEY_CIPHER_KEY)));
+                                            const HashType digest = strIdFromZ(
+                                                strZ(varStr(kvGet(keyData, VARSTRDEF(INFO_KEY_CIPHER_DIGEST)))));
+
+                                            cipherSpecMapAdd(
+                                                cipherSpecMap, varStr(id),
+                                                cipherSpecNewP(
+                                                    cipherType,
+                                                    digest == hashTypeSha1 ? BUFSTR(key) : bufNewDecode(encodingBase64, key),
+                                                    .digest = digest));
+                                        }
+                                    }
+                                    // Else there is one key with no id and no digest, which every repository derives with SHA-1
+                                    else
+                                    {
+                                        cipherSpecMapAdd(
+                                            cipherSpecMap, CIPHER_SPEC_MAP_ID_DEFAULT_STR,
+                                            cipherSpecNewP(cipherType, BUFSTR(varStr(cipherPass)), .digest = hashTypeSha1));
+                                    }
+
+                                    infoCipherSpecMapSet(this, cipherSpecMap);
                                 }
-                                MEM_CONTEXT_OBJ_END();
+                                MEM_CONTEXT_TEMP_END();
                             }
+                            // Current key id
+                            else if (strEqZ(value->key, INFO_KEY_CIPHER_PASS_CURRENT))
+                            {
+                                MEM_CONTEXT_TEMP_BEGIN()
+                                {
+                                    cipherSpecMapIdCurrentSet(
+                                        this->pub.cipherSpecMap, jsonReadStr(jsonReadNew(value->value)));
+                                }
+                                MEM_CONTEXT_TEMP_END();
+                            }
+                            // Time of the last key rotation
+                            else if (strEqZ(value->key, INFO_KEY_CIPHER_PASS_ROTATE))
+                                this->pub.cipherRotateTime = (time_t)jsonReadInt64(jsonReadNew(value->value));
                         }
                         // Else pass to callback for processing
                         else
@@ -281,12 +317,28 @@ infoNewLoad(
             // format is zero until the key is found and the value stored, so if we got here then the key was not found.
             if (infoFormat(this) == 0)
                 THROW(FormatError, "repository format not found\nHINT: is this a valid " PROJECT_NAME " info file?");
+
+            // Only a read that looked for a header reports a format, so a result here means the file had one. The header is written
+            // from the same format as the content, so a file where they disagree has been damaged or put together from parts of two
+            // files.
+            PackRead *const cipherResult = ioFilterGroupResultP(ioReadFilterGroup(read), CIPHER_BLOCK_FORMAT_FILTER_TYPE);
+
+            if (cipherResult != NULL)
+            {
+                const unsigned int formatHeader = cipherBlockFormatResult(cipherResult);
+
+                if (this->pub.format != formatHeader)
+                {
+                    THROW_FMT(
+                        FormatError, "repository format %u does not match header format %u", this->pub.format, formatHeader);
+                }
+            }
         }
         MEM_CONTEXT_TEMP_END();
 
         // A file with no cipher section has no encrypted dependent files
-        if (this->pub.cipherSpec == NULL)
-            infoCipherSpecSet(this, NULL);
+        if (this->pub.cipherSpecMap == NULL)
+            infoCipherSpecMapSet(this, NULL);
     }
     OBJ_NEW_END();
 
@@ -402,13 +454,74 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
         infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_FORMAT, jsonFromVar(VARUINT(infoFormat(this))));
         infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_VERSION, jsonFromVar(VARSTRDEF(PROJECT_VERSION)));
 
-        // Add cipher passphrase if defined
-        if (cipherSpecType(infoCipherSpec(this)) != cipherTypeNone)
+        // Add cipher keys if defined
+        const CipherSpecMap *const cipherSpecMap = infoCipherSpecMap(this);
+
+        if (!cipherSpecMapEmpty(cipherSpecMap))
         {
             callbackFunction(callbackData, STRDEF(INFO_SECTION_CIPHER), &data);
-            infoSaveValue(
-                &data, INFO_SECTION_CIPHER, INFO_KEY_CIPHER_PASS,
-                jsonFromVar(VARSTR(strNewBuf(cipherSpecPass(infoCipherSpec(this))))));
+
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                JsonWrite *const json = jsonWriteNewP();
+
+                // Format >= 6 stores every key by id along with the digest it derives with. A key that derives with SHA-1 is from
+                // format 5 and is stored as its text. Other keys are stored as base64.
+                if (infoFormat(this) >= REPOSITORY_FORMAT_6)
+                {
+                    jsonWriteObjectBegin(json);
+
+                    for (unsigned int keyIdx = 0; keyIdx < cipherSpecMapSize(cipherSpecMap); keyIdx++)
+                    {
+                        const CipherSpecMapItem *const item = cipherSpecMapGetIdx(cipherSpecMap, keyIdx);
+
+                        // A key must have a digest to store. Release builds check this too, instead of silently writing a key
+                        // that no reader can derive.
+                        CHECK(AssertError, cipherSpecDigest(item->cipherSpec) != 0, "cipher key must have a digest from format 6");
+
+                        jsonWriteObjectBegin(jsonWriteKey(json, item->id));
+                        jsonWriteStrId(jsonWriteKeyZ(json, INFO_KEY_CIPHER_DIGEST), cipherSpecDigest(item->cipherSpec));
+                        jsonWriteStr(
+                            jsonWriteKeyZ(json, INFO_KEY_CIPHER_KEY),
+                            cipherSpecDigest(item->cipherSpec) == hashTypeSha1 ?
+                                strNewBuf(cipherSpecPass(item->cipherSpec)) :
+                                strNewEncode(encodingBase64, cipherSpecPass(item->cipherSpec)));
+                        jsonWriteObjectEnd(json);
+                    }
+
+                    jsonWriteObjectEnd(json);
+                }
+                // Else store only the key
+                else
+                {
+                    const CipherSpec *const cipherSpec = infoCipherSpec(this);
+
+                    CHECK(AssertError, cipherSpecMapSize(cipherSpecMap) == 1, "only one cipher key can be stored before format 6");
+                    CHECK(
+                        AssertError, cipherSpecDigest(cipherSpec) == hashTypeSha1,
+                        "cipher key must derive with sha1 before format 6");
+
+                    jsonWriteStr(json, strNewBuf(cipherSpecPass(cipherSpec)));
+                }
+
+                infoSaveValue(&data, INFO_SECTION_CIPHER, INFO_KEY_CIPHER_PASS, jsonWriteResult(json));
+
+                // Record the current key id, which only exists at format >= 6
+                if (cipherSpecMapIdCurrent(cipherSpecMap) != NULL)
+                {
+                    infoSaveValue(
+                        &data, INFO_SECTION_CIPHER, INFO_KEY_CIPHER_PASS_CURRENT,
+                        jsonFromVar(VARSTR(cipherSpecMapIdCurrent(cipherSpecMap))));
+                }
+
+                // Record the time of the last key rotation
+                if (infoCipherRotateTime(this) != 0)
+                {
+                    infoSaveValue(
+                        &data, INFO_SECTION_CIPHER, INFO_KEY_CIPHER_PASS_ROTATE, jsonFromVar(VARINT64(infoCipherRotateTime(this))));
+                }
+            }
+            MEM_CONTEXT_TEMP_END();
         }
 
         // Flush out any additional sections
@@ -449,6 +562,95 @@ infoFormatSet(Info *const this, const unsigned int format)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+FN_EXTERN const CipherSpec *
+infoCipherSpec(const Info *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    if (this->cipherSpecNone != NULL)
+        FUNCTION_TEST_RETURN_CONST(CIPHER_SPEC, this->cipherSpecNone);
+
+    FUNCTION_TEST_RETURN_CONST(CIPHER_SPEC, cipherSpecMapGet(infoCipherSpecMap(this), CIPHER_SPEC_MAP_ID_DEFAULT_STR));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+infoCipherSpecMapSet(Info *const this, const CipherSpecMap *const cipherSpecMap)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC_MAP, cipherSpecMap);
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_IF(memContextCurrent() != objMemContext(this));  // Do not audit calls from within the object
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_OBJ_BEGIN(this)
+    {
+        // NULL becomes an empty map so the getter never returns NULL
+        this->pub.cipherSpecMap = cipherSpecMap == NULL ? cipherSpecMapNew() : cipherSpecMapDup(cipherSpecMap);
+
+        // The default key is looked up on demand, so only a caller that asks for one key errors when there is no default
+        this->cipherSpecNone = cipherSpecMapEmpty(this->pub.cipherSpecMap) ? cipherSpecNewNone() : NULL;
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+infoCipherSpecAdd(Info *const this, const String *const id, const CipherSpec *const cipherSpec)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+        FUNCTION_TEST_PARAM(STRING, id);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_IF(memContextCurrent() != objMemContext(this));  // Do not audit calls from within the object
+
+    ASSERT(this != NULL);
+    ASSERT(id != NULL);
+    ASSERT(cipherSpec != NULL && cipherSpecType(cipherSpec) != cipherTypeNone);
+    ASSERT(cipherSpecDigest(cipherSpec) != 0);
+
+    MEM_CONTEXT_OBJ_BEGIN(this)
+    {
+        CipherSpecMap *const cipherSpecMap = cipherSpecMapDup(this->pub.cipherSpecMap);
+        cipherSpecMapAdd(cipherSpecMap, id, cipherSpec);
+
+        this->pub.cipherSpecMap = cipherSpecMap;
+        this->cipherSpecNone = NULL;
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+infoCipherRotateTimeSet(Info *const this, const time_t cipherRotateTime)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+        FUNCTION_TEST_PARAM(TIME, cipherRotateTime);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(cipherRotateTime > 0);
+
+    this->pub.cipherRotateTime = cipherRotateTime;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN void
 infoCipherSpecSet(Info *const this, const CipherSpec *const cipherSpec)
 {
@@ -461,12 +663,25 @@ infoCipherSpecSet(Info *const this, const CipherSpec *const cipherSpec)
 
     ASSERT(this != NULL);
 
-    MEM_CONTEXT_OBJ_BEGIN(this)
+    // No keys needed when there is nothing to encrypt
+    if (cipherSpec == NULL || cipherSpecType(cipherSpec) == cipherTypeNone)
     {
-        // Copy so the caller is free to release what was passed in, and so the getter never returns NULL
-        this->pub.cipherSpec = cipherSpec == NULL ? cipherSpecNewNone() : cipherSpecDup(cipherSpec);
+        infoCipherSpecMapSet(this, NULL);
     }
-    MEM_CONTEXT_OBJ_END();
+    // Else the one key, stored under the default id
+    else
+    {
+        ASSERT(cipherSpecDigest(cipherSpec) != 0);
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            CipherSpecMap *const cipherSpecMap = cipherSpecMapNew();
+            cipherSpecMapAdd(cipherSpecMap, CIPHER_SPEC_MAP_ID_DEFAULT_STR, cipherSpec);
+
+            infoCipherSpecMapSet(this, cipherSpecMap);
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -491,7 +706,7 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
         volatile bool done = false;                                 // Are all files tried? Must be preserved even on error.
         volatile bool loaded = false;                               // Was a file loaded? Must be preserved even on error.
         const ErrorType *loadErrorType = NULL;
-        String *loadErrorMessage = NULL;
+        StringList *const loadErrorList = strLstNew();
 
         do
         {
@@ -507,10 +722,7 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
             {
                 // Set error type if none has been set
                 if (loadErrorType == NULL)
-                {
                     loadErrorType = errorType();
-                    loadErrorMessage = strCatFmt(strNew(), "%s:", strZ(error));
-                }
                 // Else if the error type is different
                 else if (loadErrorType != errorType())
                 {
@@ -524,8 +736,11 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
                         loadErrorType = &FileOpenError;
                 }
 
-                // Append new error
-                strCatFmt(loadErrorMessage, "\n%s: %s", errorTypeName(errorType()), errorMessage());
+                // Add the error unless the same error has already been added
+                const String *const loadError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
+
+                if (!strLstExists(loadErrorList, loadError))
+                    strLstAdd(loadErrorList, loadError);
 
                 // Try again
                 try++;
@@ -536,9 +751,98 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
 
         // Error when no file was loaded
         if (!loaded)
-            THROWP(loadErrorType, strZ(loadErrorMessage));
+            THROWP_FMT(loadErrorType, "%s:\n%s", strZ(error), strZ(strLstJoin(loadErrorList, "\n")));
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+typedef struct InfoLoadFileData
+{
+    MemContext *memContext;                                         // Mem context
+    const Storage *storage;                                         // Storage to load from
+    const String *fileName;                                         // Base filename
+    const CipherSpec *cipherSpec;                                   // Cipher spec
+    InfoLoadFileNewCallback *newLoad;                               // Create the object from a read of the file
+    void *result;                                                   // Loaded object
+} InfoLoadFileData;
+
+static bool
+infoLoadFileCallback(void *const data, const unsigned int try)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(UINT, try);
+    FUNCTION_LOG_END();
+
+    ASSERT(data != NULL);
+
+    InfoLoadFileData *const loadData = data;
+    bool result = false;
+
+    if (try < 2)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Construct filename based on try
+            const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
+
+            // Attempt to load the file
+            IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
+            cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), loadData->cipherSpec);
+
+            MEM_CONTEXT_BEGIN(loadData->memContext)
+            {
+                loadData->result = loadData->newLoad(read, loadData->cipherSpec);
+                result = true;
+            }
+            MEM_CONTEXT_END();
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+FN_EXTERN void *
+infoLoadFile(
+    const Storage *const storage, const String *const fileName, const CipherSpec *const cipherSpec,
+    InfoLoadFileNewCallback *const newLoad)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_LOG_PARAM(FUNCTIONP, newLoad);
+    FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_CALLBACK();
+
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT(cipherSpec != NULL);
+    ASSERT(newLoad != NULL);
+
+    InfoLoadFileData data =
+    {
+        .memContext = memContextCurrent(),
+        .storage = storage,
+        .fileName = fileName,
+        .cipherSpec = cipherSpec,
+        .newLoad = newLoad,
+    };
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const char *const fileNamePath = strZ(storagePathP(storage, fileName));
+
+        infoLoad(
+            strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath), infoLoadFileCallback,
+            &data);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_P(VOID, data.result);
 }

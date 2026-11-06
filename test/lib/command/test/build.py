@@ -359,6 +359,7 @@ class TestBuild:
             + "        lib_openssl,\n"
             + "        lib_lz4,\n"
             + "        lib_pq,\n"
+            + "        lib_socket,\n"
             + "        lib_ssh2,\n"
             + "        lib_xml,\n"
             + "        lib_z,\n"

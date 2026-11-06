@@ -334,7 +334,7 @@ dbBackupStartQuery(const unsigned int pgVersion, const bool startFast)
         strNew(),
         "select lsn::text as lsn,\n"
         "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name\n"
-        "  from pg_catalog.pg_%s('" PROJECT_NAME " backup started at ' || current_timestamp",
+        "  from pg_catalog.pg_%s('" PROJECT_NAME " backup started at ' || current_timestamp::text",
         strZ(pgWalName(pgVersion)), pgVersion >= PG_VERSION_15 ? "backup_start" : "start_backup");
 
     // Start backup after immediate checkpoint

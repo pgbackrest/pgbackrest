@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.60.0dev',
+    version: '2.61.0dev',
     license: 'MIT',
     meson_version: '>=0.55.3',
     default_options: [
@@ -50,6 +50,8 @@ if host_machine.system() == 'linux'
     add_global_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
 elif host_machine.system() == 'darwin'
     add_global_arguments('-D_DARWIN_C_SOURCE', language: 'c')
+elif host_machine.system() == 'sunos'
+    add_global_arguments('-D_POSIX_C_SOURCE=200809L', '-D__EXTENSIONS__', language: 'c')
 endif
 
 ####################################################################################################################################
@@ -196,6 +198,11 @@ if cc.compiles('''int main(void) {__builtin_types_compatible_p(char *, const cha
     configuration.set('HAVE_BUILTIN_TYPES_COMPATIBLE_P', true, description: 'Is __builtin_types_compatible_p present?')
 endif
 
+# Check C compiler support for __builtin_expect()
+if cc.links('''int main(void) {__builtin_expect(0, 0);}''')
+    configuration.set('HAVE_BUILTIN_EXPECT', true, description: 'Is __builtin_expect present?')
+endif
+
 # Find optional backtrace library
 lib_backtrace = cc.find_library('backtrace', required: false, has_headers: 'backtrace.h')
 
@@ -222,6 +229,13 @@ lib_xml = dependency('libxml-2.0')
 lib_z = dependency('zlib')
 
 configuration.set('ZLIB_CONST', true, description: 'Require zlib const input buffer')
+
+# Find socket library on illumos/Solaris, where sockets are not in libc
+lib_socket = dependency('', required: false)
+
+if host_machine.system() == 'sunos'
+    lib_socket = cc.find_library('socket')
+endif
 
 # Find optional systemd library
 lib_systemd = dependency('libsystemd', required: get_option('libsystemd'))

@@ -81,29 +81,62 @@ testRun(void)
         TEST_RESULT_UINT(infoBackupFormat(infoBackup), REPOSITORY_FORMAT_6, "format updated");
         TEST_RESULT_BOOL(infoBackup->pub.updated, true, "updated after format set");
 
+        // Backup set key with no shared key
+        TEST_RESULT_VOID(
+            infoBackupCipherSpecAdd(
+                infoBackup, STRDEF("20261017-120000F"),
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("setkey"), .digest = hashTypeSha256)),
+            "add backup set key");
+        TEST_ERROR(
+            infoBackupCipherSpecManifest(infoBackup, STRDEF("20261016-120000F")), CryptoError,
+            "unable to find key for backup set '20261016-120000F'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check cipher pass");
 
         TEST_ASSIGN(
             infoBackup,
             infoBackupNew(
-                PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT,
-                cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
+                PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_6,
+                cipherSpecNewP(
+                    cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"),
+                    .digest = hashTypeSha256)),
             "infoBackupNew() - cipher sub");
+
+        const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
 
         contentSave = bufNew(0);
 
-        TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentSave)), "save new with cipher sub");
+        IoWrite *write = ioBufferWriteNew(contentSave);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, REPOSITORY_FORMAT_6);
+
+        TEST_RESULT_VOID(infoBackupSave(infoBackup, write), "save new with cipher sub");
+        TEST_RESULT_STR_Z(
+            strNewZN((const char *)bufPtrConst(contentSave), 8), "PGBR006_", "header names the format");
 
         infoBackup = NULL;
-        TEST_ASSIGN(
-            infoBackup, infoBackupNewLoad(ioBufferReadNew(contentSave), cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
-            "load backup info with cipher sub");
+
+        IoRead *const read = ioBufferReadNew(contentSave);
+        cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), cipherSpec);
+
+        TEST_ASSIGN(infoBackup, infoBackupNewLoad(read, cipherSpec), "load backup info with cipher sub");
         TEST_RESULT_PTR(infoBackupPg(infoBackup), infoBackupPg(infoBackup), "infoPg set");
         TEST_RESULT_STR_Z(
             strNewBuf(cipherSpecPass(infoBackupCipherSpec(infoBackup))),
             "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 1, "history set");
+
+        TEST_RESULT_VOID(
+            infoBackupCipherSpecAdd(
+                infoBackup, STRDEF("20261017-120000F"),
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("setkey"), .digest = hashTypeSha256)),
+            "add backup set key");
+        TEST_RESULT_STR_Z(
+            strNewBuf(cipherSpecPass(infoBackupCipherSpecManifest(infoBackup, STRDEF("20261017-120000F_20261018-120000I")))),
+            "setkey", "backup set key");
+        TEST_RESULT_STR_Z(
+            strNewBuf(cipherSpecPass(infoBackupCipherSpecManifest(infoBackup, STRDEF("20261016-120000F")))),
+            "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "shared key");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("add pg info");

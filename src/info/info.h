@@ -11,6 +11,7 @@ typedef struct Info Info;
 typedef struct InfoSave InfoSave;
 
 #include "common/crypto/spec.h"
+#include "common/format/cipherSpecMap.h"
 #include "common/ini.h"
 #include "common/type/json.h"
 #include "storage/storage.h"
@@ -33,6 +34,9 @@ Function types for loading and saving
 typedef bool InfoLoadCallback(void *data, unsigned int try);
 // {uncrustify_on}
 
+// Create an object from a read of an info file
+typedef void *InfoLoadFileNewCallback(IoRead *read, const CipherSpec *cipherSpec);
+
 typedef void InfoLoadNewCallback(void *data, const String *section, const String *key, JsonRead *value);
 typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
 
@@ -41,8 +45,9 @@ Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Info *infoNew(unsigned int format, const CipherSpec *cipherSpecSub);
 
-// Create new object and load contents from a file. The cipher spec the file is read with supplies the type for the cipher spec
-// built from the pass stored in it.
+// Create new object and load contents from a file. Decryption is added by the caller since which filter a file needs depends on
+// whether it begins with a header. The cipher spec the file is read with supplies the type for the cipher spec built from the pass
+// stored in it.
 FN_EXTERN Info *infoNewLoad(
     IoRead *read, const CipherSpec *cipherSpec, InfoLoadNewCallback *callbackFunction, void *callbackData);
 
@@ -53,7 +58,8 @@ typedef struct InfoPub
 {
     unsigned int format;                                            // Repository format the file was written with
     const String *backrestVersion;                                  // pgBackRest version
-    const CipherSpec *cipherSpec;                                   // Cipher spec for dependent files
+    CipherSpecMap *cipherSpecMap;                                   // Cipher keys for dependent files
+    time_t cipherRotateTime;                                        // Time of the last cipher key rotation
 } InfoPub;
 
 // Repository format
@@ -65,16 +71,33 @@ infoFormat(const Info *const this)
 
 FN_EXTERN void infoFormatSet(Info *this, unsigned int format);
 
-// Cipher spec for the files that depend on this one, e.g. the manifest for backup.info. Never NULL, so it can be handed on
-// without a check, and none when there is no pass.
-FN_INLINE_ALWAYS const CipherSpec *
-infoCipherSpec(const Info *const this)
+// Cipher keys for the files that require multiple keys, e.g. manifests. Never NULL, empty when there are no keys.
+FN_INLINE_ALWAYS const CipherSpecMap *
+infoCipherSpecMap(const Info *const this)
 {
-    return THIS_PUB(Info)->cipherSpec;
+    return THIS_PUB(Info)->cipherSpecMap;
 }
 
-// Set cipher spec for dependent files. NULL means they are not encrypted.
+// Default cipher spec or none when there are no keys
+FN_EXTERN const CipherSpec *infoCipherSpec(const Info *this);
+
+// Set cipher keys for dependent files. NULL means they are not encrypted.
+FN_EXTERN void infoCipherSpecMapSet(Info *this, const CipherSpecMap *cipherSpecMap);
+
+// Set a single cipher spec for dependent files under the default id. NULL means they are not encrypted.
 FN_EXTERN void infoCipherSpecSet(Info *this, const CipherSpec *cipherSpec);
+
+// Add a cipher key for dependent files under an id and make it current
+FN_EXTERN void infoCipherSpecAdd(Info *this, const String *id, const CipherSpec *cipherSpec);
+
+// Time of the last cipher key rotation, zero when none
+FN_INLINE_ALWAYS time_t
+infoCipherRotateTime(const Info *const this)
+{
+    return THIS_PUB(Info)->cipherRotateTime;
+}
+
+FN_EXTERN void infoCipherRotateTimeSet(Info *this, time_t cipherRotateTime);
 
 // pgBackRest version
 FN_INLINE_ALWAYS const String *
@@ -100,6 +123,10 @@ Helper functions
 ***********************************************************************************************************************************/
 // Load info file(s) and throw error for each attempt if none are successful
 FN_EXTERN void infoLoad(const String *error, InfoLoadCallback *callbackFunction, void *callbackData);
+
+// Load an info file, else its copy, and throw an error for each attempt if neither is loaded
+FN_EXTERN void *infoLoadFile(
+    const Storage *storage, const String *fileName, const CipherSpec *cipherSpec, InfoLoadFileNewCallback *newLoad);
 
 /***********************************************************************************************************************************
 Macros for function logging

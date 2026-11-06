@@ -94,7 +94,7 @@ typedef struct ArchiveGetFindCacheArchive
 typedef struct ArchiveGetFindCacheRepo
 {
     unsigned int repoIdx;
-    const CipherSpec *cipherSpecArchive;                            // Repo archive cipher spec
+    const CipherSpecMap *cipherSpecArchive;                         // Repo archive cipher keys
     List *archiveList;                                              // Cached list of archiveIds and associated paths
     StringList *warnList;                                           // Track repo warnings so each is only reported once
 } ArchiveGetFindCacheRepo;
@@ -416,7 +416,7 @@ archiveGetCheck(const StringList *const archiveRequestList)
                 // Build cipher spec in the result list context once rather than rebuilding it per candidate file later
                 MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))
                 {
-                    cacheRepo.cipherSpecArchive = cipherSpecDup(infoArchiveCipherSpec(info));
+                    cacheRepo.cipherSpecArchive = cipherSpecMapDup(infoArchiveCipherSpecMap(info));
                 }
                 MEM_CONTEXT_END();
 
@@ -924,7 +924,7 @@ archiveGetAsyncCallback(void *const data, const unsigned int clientIdx)
                 pckWriteStrP(param, actual->file);
                 pckWriteU32P(param, actual->repoIdx);
                 pckWriteStrP(param, actual->archiveId);
-                cipherSpecPack(param, actual->cipherSpecArchive);
+                cipherSpecMapPack(param, actual->cipherSpecArchive);
             }
 
             MEM_CONTEXT_PRIOR_BEGIN()

@@ -16,6 +16,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix <cmd>restore</cmd> delta link mapping when path/file already exists.</p>
+
+                <p>When <br-option>link-map</br-option> or <br-option>link-all</br-option> mapped a path or file that already existed to a link, a delta restore left the existing path or file in place. It is now replaced by the link.</p>
             </release-item>
 
             <release-item>
@@ -29,6 +31,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix socket leak on connection retries.</p>
+
+                <p>In optimized builds the socket of a failed connection attempt was not closed, and each retry leaked a socket.</p>
             </release-item>
         </release-bug-list>
 
@@ -46,11 +50,12 @@
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="stephen.frost"/>
                     <release-item-reviewer id="reid.thompson"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="andrew.lecuyer"/>
+                    <release-item-tester id="andrew.lecuyer"/>
                 </release-item-contributor-list>
 
                 <p>Add <proper>TLS</proper> server.</p>
+
+                <p>The <cmd>server</cmd> command starts a TLS server that can be used instead of SSH to reach repository and <postgres/> hosts. Set <br-option>repo-host-type=tls</br-option> or <br-option>pg-host-type=tls</br-option> on the client, and configure certificates and client authorization with the <br-option>tls-server-*</br-option> options. <id>SIGHUP</id> reloads the configuration and <id>SIGTERM</id> stops the server.</p>
             </release-item>
 
             <release-item>
@@ -65,6 +70,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <br-option>--cmd</br-option> option.</p>
+
+                <p>Set <br-option>cmd</br-option> to the <backrest/> executable used in commands that <backrest/> writes, e.g. <id>restore_command</id> in <file>recovery.conf</file>.</p>
             </release-item>
         </release-feature-list>
 
@@ -80,6 +87,8 @@
                 </release-item-contributor-list>
 
                 <p>Check archive immediately after backup start.</p>
+
+                <p>A backup failed because WAL archiving was not working only after all files were copied. The archive is now checked right after the backup starts. On an idle system a restore point is created to switch the WAL segment.</p>
             </release-item>
 
             <release-item>
@@ -92,6 +101,8 @@
                 </release-item-contributor-list>
 
                 <p>Add timeline and checkpoint checks to backup.</p>
+
+                <p>The backup now checks that <file>pg_control</file> has the checkpoint and timeline of the backup start, and that a standby is following the primary, i.e. it is on the same timeline and its checkpoint is not later than the backup checkpoint.</p>
             </release-item>
 
             <release-item>
@@ -103,6 +114,8 @@
                 </release-item-contributor-list>
 
                 <p>Check that clusters are alive and correctly configured during a backup.</p>
+
+                <p>A backup now fails as soon as a cluster stops or the standby is promoted. Before, a stopped primary was detected only at the end of the backup and a promoted standby was not detected.</p>
             </release-item>
 
             <release-item>
@@ -117,6 +130,8 @@
                 </release-item-contributor-list>
 
                 <p>Error when <cmd>restore</cmd> is unable to find a backup to match the time target.</p>
+
+                <p>This was a warning that was easy to miss, and a lot of time could be lost restoring a backup that cannot reach the target.</p>
             </release-item>
 
             <release-item>
@@ -129,6 +144,8 @@
                 </release-item-contributor-list>
 
                 <p>Parse protocol/port in <proper>S3</proper>/<proper>Azure</proper> endpoints.</p>
+
+                <p><br-option>repo-s3-endpoint</br-option>, <br-option>repo-azure-endpoint</br-option>, and <br-option>repo-storage-host</br-option> may now include a protocol and port, e.g. <id>https://host:9000</id>.</p>
             </release-item>
 
             <release-item>
@@ -140,6 +157,8 @@
                 </release-item-contributor-list>
 
                 <p>Add warning when <pg-setting>checkpoint_timeout</pg-setting> exceeds <br-option>db-timeout</br-option>.</p>
+
+                <p>With <br-option>start-fast=n</br-option>, a backup can time out waiting for the checkpoint when <pg-setting>checkpoint_timeout</pg-setting> is greater than <br-option>db-timeout</br-option>. The backup now warns in this case.</p>
             </release-item>
 
             <release-item>
@@ -185,6 +204,8 @@
                 </release-item-contributor-list>
 
                 <p>Make backup size logging exactly match <cmd>info</cmd> command output.</p>
+
+                <p>The logged backup size now includes only the files copied, plus <file>backup_label</file> and <file>tablespace_map</file>. Before, e.g. an incremental backup after a switchover logged the size of every file checked.</p>
             </release-item>
         </release-improvement-list>
 
@@ -217,6 +238,53 @@
                 </release-item-contributor-list>
 
                 <p>Add <code>StringId</code> as an option type.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Do not delete manifests individually during stanza delete.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Use ASSERT() or TEST_RESULT*() instead of CHECK() in test modules."/>
+                <commit subject="Ensure ASSERT() macro is always available in test modules."/>
+                <commit subject="Add error type and message to CHECK() macro."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add error type and message to CHECK() macro.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove placeholder bz2 helper data."/>
+                <commit subject="Remove unused protocol log level."/>
+                <commit subject="Use void * instead of List * to avoid Coverity false positives."/>
+                <commit subject="Refactor switch statements in strIdBitFromZN()."/>
+                <commit subject="Optional parameters for tlsClientNew()."/>
+                <commit subject="Refactor postgres/client module with inline getters/setters."/>
+                <commit subject="Fix parameter test logging in parseOptionIdxValue()."/>
+                <commit subject="Add linefeed and remove space."/>
+                <commit subject="Add infoBackupLabelExists()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Clean up and refactor code.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update LICENSE.txt and PostgreSQL copyright for 2022.</p>
             </release-item>
         </release-development-list>
     </release-core-list>
@@ -254,7 +322,52 @@
                 </release-item-contributor-list>
 
                 <p>Remove obsolete statement about future multi-repository support.</p>
+
+                <p>The documentation stated that only one repository was allowed, but multiple repositories have been supported since v2.33.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Add path to pgbench used for stress test in user guide."/>
+                <commit subject="Add findutils package to RHEL 8 documentation container."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the user guide.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update automake version."/>
+                <commit subject="Add release note regarding IANA approval of the default TLS port."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the release notes and RELEASE.md.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Revive archive performance test."/>
+                <commit subject="Add tablespace_map file to command/backup test module."/>
+                <commit subject="Autogenerate test system identifiers."/>
+                <commit subject="Add HRN_PG_CONTROL_PUT() and HRN_PG_CONTROL_TIME()."/>
+                <commit subject="Close expect log file when unit test completes."/>
+                <commit subject="Remove dead test code."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit and performance tests.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

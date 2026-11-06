@@ -12,6 +12,8 @@
                 </release-item-contributor-list>
 
                 <p>Revert <quote>calculate content-md5 on S3 only when required</quote>.</p>
+
+                <p><proper>S3</proper> requires either <id>content-md5</id> or an <id>x-amz-content-*</id> checksum for uploads when object lock is enabled, and <proper>Scality</proper> did not accept the alternate checksums, so uploads failed. <id>content-md5</id> is calculated for all requests with content again.</p>
             </release-item>
 
             <release-item>
@@ -26,7 +28,21 @@
                 </release-item-contributor-list>
 
                 <p>Fix lower bounds checking for option keys.</p>
+
+                <p>An indexed option with a key of 0, e.g. <setting>pg0-path</setting>, caused a segfault. It is now an error.</p>
             </release-item>
         </release-bug-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add details about notifying packagers to release instructions.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
 </release>

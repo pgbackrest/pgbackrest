@@ -15,6 +15,8 @@
                 </release-item-contributor-list>
 
                 <p>Preserve block incremental info in manifest during delta backup.</p>
+
+                <p>When a file changed so that it would not use block incremental if it were new, e.g. it shrank below the block incremental limit or its timestamp moved far enough into the past, its block incremental info was lost from the manifest of a delta backup even though the file could still be referenced to the prior backup.</p>
             </release-item>
 
             <release-item>
@@ -28,6 +30,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix block incremental file names in <cmd>verify</cmd> command.</p>
+
+                <p>The <cmd>verify</cmd> command used the compression extension instead of <file>.pgbi</file> for block incremental files stored outside a bundle, so it could not find them.</p>
             </release-item>
 
             <release-item>
@@ -42,6 +46,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix spurious automatic delta backup on backup from standby.</p>
+
+                <p>File sizes on the standby can differ from the primary, e.g. for free space maps, so the next incremental backup could see a size change on the primary and switch to a checksum delta, which can take much longer. The original size is now kept in the manifest and used for the comparison.</p>
             </release-item>
 
             <release-item>
@@ -55,6 +61,8 @@
                 </release-item-contributor-list>
 
                 <p>Skip <file>recovery.signal</file> for <postgres/> &gt;= 12 when recovery <br-option>type=none</br-option>.</p>
+
+                <p>With <br-option>type=none</br-option>, <file>recovery.signal</file> is no longer written for <postgres/> &gt;= 12, which matches the behavior for earlier versions.</p>
             </release-item>
 
             <release-item>
@@ -67,6 +75,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix unique label generation for diff/incr backup.</p>
+
+                <p>With at least two full backups and the latest expired, a diff or incr backup failed as if the clock had gone backward, because its label was compared with the label of the expired full backup.</p>
             </release-item>
 
             <release-item>
@@ -79,6 +89,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix time-based archive expiration when no backups are expired.</p>
+
+                <p>When time-based retention was met but no backups were expired, archive was not expired and <quote>time-based archive retention not met</quote> was logged. One more backup was then needed to expire the earlier WAL.</p>
             </release-item>
         </release-bug-list>
 
@@ -97,6 +109,8 @@
                 </release-item-contributor-list>
 
                 <p>Improve performance of <proper>SFTP</proper> storage driver.</p>
+
+                <p>The <proper>SFTP</proper> storage driver waited for a fixed time when <proper>libssh2</proper> could not continue. It now waits until the socket can be read or written.</p>
             </release-item>
 
             <release-item>
@@ -114,6 +128,8 @@
                 </release-item-contributor-list>
 
                 <p>Add timezone offset to <cmd>info</cmd> command date/time output.</p>
+
+                <p>Timestamps in the <cmd>info</cmd> command output now include the timezone offset, so they can be used directly as a recovery target, e.g. with <br-option>--target</br-option>.</p>
             </release-item>
 
             <release-item>
@@ -128,13 +144,64 @@
                 </release-item-contributor-list>
 
                 <p>Centralize error handling for unsupported features.</p>
+
+                <p>Errors for features that were not compiled in, e.g. <proper>lz4</proper>, are now more detailed and consistent. Specifying <proper>SFTP</proper> storage when it was not compiled in no longer fails an assertion.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Use new LibXML error handler.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix missed memory auditing in FUNCTION_LOG_RETURN_VOID().</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Increase protocolServerError() logging to debug level.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Log when file size changes during backup.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Improve comments in protocol/command module."/>
+                <commit subject="Clarify comments for the handling of pg_control during restore."/>
+                <commit subject="Remove unresolved todo from 87087fac."/>
+                <commit subject="Update comments for removal of chunking and block numbers."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve comments.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 
     <release-doc-list>
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2090"/>
+
                 <release-item-contributor-list>
                     <release-item-ideator id="dr-kd"/>
                     <release-item-contributor id="david.steele"/>
@@ -144,5 +211,61 @@
                 <p>Clarify preference to install from packages in the user guide.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Explicitly create SSH directory in SFTP setup."/>
+                <commit subject="Fix sftp-all=y in the user guide so it creates a valid configuration."/>
+                <commit subject="Remove user-facing documentation references to --vm=none."/>
+                <commit subject="Move delete stanza section in user guide."/>
+                <commit subject="Fix typo in &quot;Upgrading PostgreSQL&quot; section of user guide."/>
+                <commit subject="Update NEWS.md for new version and features.">
+                    <github-pull-request id="2077"/>
+                </commit>
+                <commit subject="Mention block-level backups in feature list."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the user guide, feature list, and NEWS.md.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Build u20 image to speed contributing document generation.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Add missed --no-log-timestamp in unit tests and improved formatting."/>
+                <commit subject="Add --tz param missed in C unit test migration."/>
+                <commit subject="Add test for configuration hash type override behavior."/>
+                <commit subject="Rename macros in command/verify unit test."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="New CI container build for PostgreSQL 16 beta1."/>
+                <commit subject="Update Fedora test image to Fedora 38."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

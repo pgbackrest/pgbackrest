@@ -265,6 +265,8 @@
     <release-test-list>
         <release-improvement-list>
             <release-item>
+                <commit subject="Error if LibC build is performed outside test environment."/>
+
                 <p>Error if LibC build is performed outside the test environment.</p>
 
                 <p>LibC is no longer required for production builds.</p>

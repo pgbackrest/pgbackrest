@@ -49,6 +49,9 @@ jobs:
   bsd:
     uses: ./.github/workflows/test-bsd.yml
 
+  illumos:
+    uses: ./.github/workflows/test-illumos.yml
+
   compile:
     uses: ./.github/workflows/test-compile.yml
 
@@ -57,3 +60,9 @@ jobs:
 
   misc:
     uses: ./.github/workflows/test-misc.yml
+
+  fuzz:
+    uses: ./.github/workflows/test-fuzz.yml
+
+  security:
+    uses: ./.github/workflows/test-security.yml

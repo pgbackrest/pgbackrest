@@ -1475,7 +1475,7 @@ testRun(void)
                 "pg_data={\"path\":\"/pg/base\",\"type\":\"path\"}\n"
                 "\n"
                 "[cipher]\n"
-                "cipher-pass=\"somepass\"\n"
+                "cipher-pass={\"0\":{\"digest\":\"sha256\",\"key\":\"c29tZXBhc3M=\"}}\n"
                 "\n"
                 "[target:file]\n"
                 "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20190808-163540F\""
@@ -1499,9 +1499,11 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            TEST_ASSIGN(
-                manifest, manifestNewLoad(ioBufferReadNew(contentLoad), cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))),
-                "load manifest");
+            const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"), .digest = hashTypeSha1);
+            IoRead *const read = ioBufferReadNew(harnessInfoEncryptP(contentLoad, cipherSpec));
+            cipherBlockFilterGroupAdd(ioReadFilterGroup(read), cipherModeDecrypt, cipherSpec);
+
+            TEST_ASSIGN(manifest, manifestNewLoad(read, cipherSpec), "load manifest");
             TEST_RESULT_VOID(manifestMove(manifest, memContextPrior()), "move manifest");
         }
         MEM_CONTEXT_TEMP_END();
@@ -1803,7 +1805,8 @@ testRun(void)
 
         TEST_RESULT_UINT(cipherSpecType(manifestCipherSpec(manifest)), cipherTypeNone, "check cipher subpass");
         TEST_RESULT_VOID(
-            manifestCipherSpecSet(manifest, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("supersecret"))),
+            manifestCipherSpecSet(
+                manifest, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("supersecret"), .digest = hashTypeSha1)),
             "cipher subpass set");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(manifestCipherSpec(manifest))), "supersecret", "check cipher subpass");
 

@@ -69,7 +69,10 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     // Add decrypt filter
     if (param.cipherSpec != NULL && cipherSpecType(param.cipherSpec) != cipherTypeNone)
     {
-        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, param.cipherSpec));
+        // A key with no digest of its own derives with SHA-1, the digest of format 5
+        ioFilterGroupAdd(
+            filterGroup,
+            cipherBlockNewP(cipherModeDecrypt, cipherSpecDupP(param.cipherSpec, .digestDefault = hashTypeSha1)));
 
         strCatFmt(
             filter, "enc[%s,%s] ", zNewStrId(cipherSpecType(param.cipherSpec)),
@@ -393,7 +396,12 @@ hrnStoragePut(
 
     // Add encrypted filter
     if (param.cipherSpec != NULL && cipherSpecType(param.cipherSpec) != cipherTypeNone)
-        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, param.cipherSpec));
+    {
+        // A key with no digest of its own derives with SHA-1, the digest of format 5
+        ioFilterGroupAdd(
+            filterGroup,
+            cipherBlockNewP(cipherModeEncrypt, cipherSpecDupP(param.cipherSpec, .digestDefault = hashTypeSha1)));
+    }
 
     // Add file name
     printf(

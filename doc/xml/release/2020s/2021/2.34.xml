@@ -10,11 +10,12 @@
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="cynthia.shang"/>
                     <release-item-reviewer id="stefan.fercot"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="floris.van.nee"/>
+                    <release-item-tester id="floris.van.nee"/>
                 </release-item-contributor-list>
 
                 <p>Fix issues with leftover spool files from a prior <cmd>restore</cmd>.</p>
+
+                <p>A notification left in the spool path by a prior restore could make <cmd>archive-get</cmd> report a WAL segment as missing. When this notification is found on the first check, it is now removed and the async process is run again. An error is reported when the async process does not respond, rather than reporting the WAL segment as missing.</p>
             </release-item>
 
             <release-item>
@@ -25,11 +26,12 @@
                     <release-item-ideator id="avinash.vallarapu"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="cynthia.shang"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="avinash.vallarapu"/>
+                    <release-item-tester id="avinash.vallarapu"/>
                 </release-item-contributor-list>
 
                 <p>Fix issue when checking links for large numbers of tablespaces.</p>
+
+                <p>The link check used a lot of memory with many tablespaces and could crash. The new check is much faster, uses far less memory, and also detects duplicate file links.</p>
             </release-item>
 
             <release-item>
@@ -43,6 +45,8 @@
                 </release-item-contributor-list>
 
                 <p>Free no longer needed remotes so they do not timeout during <cmd>restore</cmd>.</p>
+
+                <p>The connections to remotes were held for the whole restore and could time out, which logged a harmless but distracting warning at the end of a long restore. They are now closed after the manifest is loaded.</p>
             </release-item>
 
             <release-item>
@@ -50,10 +54,13 @@
 
                 <release-item-contributor-list>
                     <release-item-ideator id="cynthia.shang"/>
+                    <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
                 <p>Fix <cmd>help</cmd> when a valid option is invalid for the specified command.</p>
+
+                <p><cmd>help</cmd> segfaulted when asked about an option that is not valid for the command.</p>
             </release-item>
         </release-bug-list>
 
@@ -67,6 +74,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <proper>PostgreSQL 14</proper> support.</p>
+
+                <p><postgres/> 14 needs no code changes from <postgres/> 13. The catalog version may now change during the <postgres/> beta/rc period without requiring a new <backrest/> release.</p>
             </release-item>
 
             <release-item>
@@ -79,11 +88,12 @@
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="jan.wieck"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="daniel.farina"/>
+                    <release-item-tester id="daniel.farina"/>
                 </release-item-contributor-list>
 
                 <p>Add automatic <proper>GCS</proper> authentication for <proper>GCE</proper> instances.</p>
+
+                <p>Set <br-option>repo-gcs-key-type=auto</br-option> to get the authentication token from the instance metadata on a <proper>GCE</proper> instance.</p>
             </release-item>
 
             <release-item>
@@ -96,6 +106,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <br-option>repo-retention-history</br-option> option to expire backup history.</p>
+
+                <p>Set the number of days of backup history to keep. By default all history is kept, and history for backups still in the repository is never expired. When a full backup manifest expires, the manifests of its differential and incremental backups expire as well.</p>
             </release-item>
 
             <release-item>
@@ -108,6 +120,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <br-option>db-exclude</br-option> option.</p>
+
+                <p>Restore excludes the specified databases by writing them as sparse, zeroed files. <postgres/> can still perform recovery, and the databases can be dropped after recovery. With <br-option>db-include</br-option>, <br-option>db-exclude</br-option> applies only to the system databases <id>template0</id>, <id>template1</id>, and <id>postgres</id>.</p>
             </release-item>
         </release-feature-list>
 
@@ -134,10 +148,12 @@
                 </release-item-contributor-list>
 
                 <p>Remove stanza archive spool path on <cmd>restore</cmd>.</p>
+
+                <p>Files in the spool path could interfere with the new cluster, e.g. old <cmd>archive-push</cmd> acknowledgements could make it skip archiving WAL.</p>
             </release-item>
 
             <release-item>
-                <github-issue id="1373"/>
+                <github-pull-request id="1373"/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -147,6 +163,8 @@
                 </release-item-contributor-list>
 
                 <p>Do not write files atomically or sync paths during <cmd>backup</cmd> copy.</p>
+
+                <p>Atomic writes are not needed since checksums are validated when a failed backup is resumed, and all paths are synced at the end of the backup.</p>
             </release-item>
         </release-improvement-list>
 
@@ -206,6 +224,7 @@
                 </commit>
 
                 <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="cynthia.shang"/>
                 </release-item-contributor-list>
 
@@ -222,7 +241,12 @@
                 <commit subject="Add local process shim to archive-get/archive-push unit tests."/>
                 <commit subject="Set buffer-size in the configuration test harness."/>
                 <commit subject="Factor remote process exec out of protocolRemoteGet()."/>
+                <commit subject="Add remote process shim."/>
                 <commit subject="Refactor storage/remote unit test using the protocol remote shim."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
 
                 <p>Add local process shim.</p>
             </release-item>
@@ -231,6 +255,7 @@
                 <github-pull-request id="1381"/>
 
                 <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="cynthia.shang"/>
                 </release-item-contributor-list>
 
@@ -238,6 +263,8 @@
             </release-item>
 
             <release-item>
+                <commit subject="Revert ignoring catalog version when identifying a PostgreSQL version."/>
+
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="cynthia.shang"/>
@@ -265,6 +292,70 @@
 
                 <p>Simplify defaults for <br-option>--force</br-option> option.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Refactor List, StringList, and VariantList for performance."/>
+                <commit subject="Refactor storage modules with inline getters/setters."/>
+                <commit subject="Replace OBJECT_DEFINE_GET() with *Pub struct pattern."/>
+                <commit subject="Replace OBJECT_DEFINE_FREE_RESOURCE_BEGIN() with normal functions."/>
+                <commit subject="Replace OBJECT_DEFINE_MOVE() and OBJECT_DEFINE_FREE() with inlines."/>
+                <commit subject="Refactor protocol modules with inline getters/setters."/>
+                <commit subject="Refactor info modules with inline getters/setters."/>
+                <commit subject="Refactor db module with inline getters/setters."/>
+                <commit subject="Refactor common/exec module with inline getters/setters."/>
+                <commit subject="Remove unused XML constructors."/>
+                <commit subject="Refactor common/type/xml module with inline getters/setters."/>
+                <commit subject="Refactor common/type/keyValue module with inline getters/setters."/>
+                <commit subject="Refactor common/io/filter module with inline getters/setters."/>
+                <commit subject="Refactor remaining common/io modules with inline getters/setters."/>
+                <commit subject="Add THIS_PUB() macro to simplify inline object accessors."/>
+                <commit subject="Add storageDriver() inlines missed in b715c70b."/>
+                <commit subject="Add const to inline functions where appropriate."/>
+                <commit subject="Refactor String, Buffer, and Variant types with inline getters."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor modules with inline getters/setters.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add const keyword to module scope constants."/>
+                <commit subject="Define DEBUG in build.auto.c."/>
+                <commit subject="Remove lockClear()."/>
+                <commit subject="Fix indentation."/>
+                <commit subject="Use option constants in warnings."/>
+                <commit subject="Remove auto-generated option String constants."/>
+                <commit subject="Remove redundant CompressType conversions."/>
+                <commit subject="Replace misused kvAdd() with kvPut()."/>
+                <commit subject="Remove documentation about enum truncation and add tests."/>
+                <commit subject="Preserve unused YAML fix for older Debian/Ubuntu distributions."/>
+                <commit subject="Fix comments where &#x27;output&#x27; was misspelled as &#x27;ouput&#x27;."/>
+                <commit subject="Fix an ungrammatical error message in config parsing."/>
+                <commit subject="Remove overzealous cast."/>
+                <commit subject="Move includes after typedef in info/manifest.h."/>
+                <commit subject="Fix typo in struct typedef."/>
+                <commit subject="Add missing header."/>
+                <commit subject="Update negate to indicate that it should not be used for new options."/>
+                <commit subject="Rename strNew() to strNewZ() and add parameter-less strNew()."/>
+                <commit subject="Add missing parameter log debug."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code and comments.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.sub to latest version.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -280,6 +371,8 @@
                 </release-item-contributor-list>
 
                 <p>Update contributing documentation.</p>
+
+                <p>The contributing guide has more examples of how to write code, add configuration options, and test.</p>
             </release-item>
 
             <release-item>
@@ -291,6 +384,8 @@
                 </release-item-contributor-list>
 
                 <p>Consolidate <proper>RHEL</proper>/<proper>CentOS</proper> user guide into a single document.</p>
+
+                <p>The second guide existed mainly to document <br-option>stop-auto</br-option> for <postgres/> &lt;= 9.5, which is now EOL. The option is still documented in the reference.</p>
             </release-item>
 
             <release-item>
@@ -304,5 +399,81 @@
                 <p>Clarify that <br-option>repo-s3-role</br-option> is not an <id>ARN</id>.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Add new instructions for PostgreSQL news and include a sample."/>
+                <commit subject="Change CentOS 7 documentation test to CentOS 8."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the user guide and release documentation.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Move PostgreSQL version interface test functions to a test harness."/>
+                <commit subject="Add recursion to TEST_STORAGE_LIST() macro."/>
+                <commit subject="Add defines for many test*() getter functions."/>
+                <commit subject="Remove comment formatting from TEST_*() macros."/>
+                <commit subject="Replace TEST_ERROR_FMT() with TEST_ERROR() where possible."/>
+                <commit subject="Replace hrnLogResult() with TEST_RESULT_LOG/_FMT()."/>
+                <commit subject="Rename TEST_SYSTEM*() to HRN_SYSTEM*()."/>
+                <commit subject="Replace system() in tests with HRN_SYSTEM*()."/>
+                <commit subject="Remove unused padding parameter from hrnTestLogPrefix()."/>
+                <commit subject="Remove line parameter from hrnTestResultBegin()."/>
+                <commit subject="Use L to denote line numbers in test output."/>
+                <commit subject="Improve storage harness/test macros."/>
+                <commit subject="Add HRN_STORAGE_PATH_CREATE() macro."/>
+                <commit subject="Replace harnessCfgLoad*() functions with HRN_CFG_LOAD() macro."/>
+                <commit subject="Add HRN_STORAGE_PATH_REMOVE() macro."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Improve test harness macros.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update to remove files after archive-get test completes."/>
+                <commit subject="Fix incorrect test title."/>
+                <commit subject="Exclude Dockerfile from code count."/>
+                <commit subject="Add instructions to install lcov for MacOS."/>
+                <commit subject="Remove default VM for test.pl --coverage-only option."/>
+                <commit subject="Fix invalid type in test function."/>
+                <commit subject="Minor fixes for command/archive-get unit test."/>
+                <commit subject="Move protocol test module before config module."/>
+                <commit subject="Show diff when test.pl --gen-check detects unexpected autogeneration."/>
+                <commit subject="Replace storageTest with storagePg*() in command/archive-get test."/>
+                <commit subject="Add storage/remote test for unknown user/group name."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests and test tools.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add Ubuntu 20.04 test VM definition."/>
+                <commit subject="Add bash to Cirrus CI FreeBSD package install."/>
+                <commit subject="Update Cirrus CI FreeBSD release to 12.2."/>
+                <commit subject="Test pull requests in Cirrus CI."/>
+                <commit subject="Basic multi-architecture support for test containers."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

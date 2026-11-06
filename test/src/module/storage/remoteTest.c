@@ -378,11 +378,13 @@ testRun(void)
         TEST_ASSIGN(
             fileRead, storageNewReadP(storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .limit = VARUINT64(8)), "new read");
 
+        const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"), .digest = hashTypeSha256);
+
         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
         ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
-        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
-        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeEncrypt, cipherSpec));
+        ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, cipherSpec));
         ioFilterGroupAdd(filterGroup, compressFilterP(compressTypeGz, 3));
         ioFilterGroupAdd(filterGroup, decompressFilterP(compressTypeGz));
 
@@ -422,7 +424,7 @@ testRun(void)
         // Write an encrypted file larger than the buffer size so the error will happen after the first chunk has been read
         HRN_STORAGE_PUT(
             storageTest, TEST_PATH "/repo128/test.bin", contentBuf,
-            .cipherSpec = cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x")));
+            .cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x")));
 
         // Enable read retry to show that it is disabled when the filters are passed to the remote
         uint64_t featureOld = storageRepo->pub.interface.feature;
@@ -435,7 +437,7 @@ testRun(void)
 
         ioFilterGroupAdd(
             ioReadFilterGroup(storageReadIo(fileRead)),
-            cipherBlockNewP(cipherModeDecrypt, cipherSpecNew(cipherTypeAes256Cbc, BUFSTRDEF("x"))));
+            cipherBlockNewP(cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"), .digest = hashTypeSha1)));
 
         TEST_ERROR(storageGetP(fileRead), CryptoError, "raised from remote-0 shim protocol: unable to flush");
 

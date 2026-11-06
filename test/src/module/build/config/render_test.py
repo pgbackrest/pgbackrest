@@ -517,7 +517,7 @@ def test_config_render_value():
     )
     assert_in("    parseRuleValStrQT_16KiB_QT,", parse)
     assert_in(
-        """static const unsigned int parseRuleValueTime[] =
+        """static const int64_t parseRuleValueTime[] =
 {
     100,""",
         parse,

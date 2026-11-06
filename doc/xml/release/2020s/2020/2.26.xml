@@ -15,10 +15,9 @@
         <release-improvement-list>
             <release-item>
                 <release-item-contributor-list>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="slava.moudry"/>
                     <release-item-reviewer id="cynthia.shang"/>
                     <release-item-reviewer id="stephen.frost"/>
+                    <release-item-tester id="slava.moudry"/>
                 </release-item-contributor-list>
 
                 <p>Non-blocking TLS implementation.</p>

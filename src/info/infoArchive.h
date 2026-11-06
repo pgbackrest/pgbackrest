@@ -30,7 +30,7 @@ STRING_DECLARE(INFO_ARCHIVE_PATH_FILE_COPY_STR);
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN InfoArchive *infoArchiveNew(
-    const unsigned int pgVersion, const uint64_t pgSystemId, unsigned int format, const CipherSpec *cipherSpecSub);
+    const unsigned int pgVersion, const uint64_t pgSystemId, unsigned int format, const CipherSpecMap *cipherSpecMapSub);
 
 // Create new object and load contents from IoRead
 FN_EXTERN InfoArchive *infoArchiveNewLoad(IoRead *read, const CipherSpec *cipherSpec);
@@ -67,6 +67,20 @@ infoArchiveCipherSpec(const InfoArchive *const this)
     return infoPgCipherSpec(infoArchivePg(this));
 }
 
+// Cipher keys for dependent files
+FN_INLINE_ALWAYS const CipherSpecMap *
+infoArchiveCipherSpecMap(const InfoArchive *const this)
+{
+    return infoCipherSpecMap(infoPgInfo(infoArchivePg(this)));
+}
+
+// Time of the last archive key rotation, zero when none
+FN_INLINE_ALWAYS time_t
+infoArchiveCipherRotateTime(const InfoArchive *const this)
+{
+    return infoCipherRotateTime(infoPgInfo(infoArchivePg(this)));
+}
+
 // Repository format
 FN_INLINE_ALWAYS unsigned int
 infoArchiveFormat(const InfoArchive *const this)
@@ -79,6 +93,10 @@ FN_EXTERN void infoArchiveFormatSet(InfoArchive *this, unsigned int format);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Add a cipher key for WAL at the next key id, make it current, and record the time of the rotation. Key ids are sequential from
+// one and are never reused. Id zero is reserved for a key migrated from format 5.
+FN_EXTERN void infoArchiveCipherRotate(InfoArchive *this, const CipherSpec *cipherSpec, time_t rotateTime);
+
 // Given a backrest history id and postgres systemId and version, return the archiveId of the best match
 FN_EXTERN const String *infoArchiveIdHistoryMatch(
     const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId);

@@ -103,7 +103,8 @@ backupFileBlockIncr(
                 if (cipherSpecType(cipherSpecBackup) != cipherTypeNone)
                 {
                     ioFilterGroupAdd(
-                        ioWriteFilterGroup(blockMapWrite), cipherBlockNewP(cipherModeDecrypt, cipherSpecBackup, .raw = true));
+                        ioWriteFilterGroup(blockMapWrite), cipherBlockNewP(
+                            cipherModeDecrypt, cipherSpecBackup, .header = cipherBlockHeaderNone));
                 }
 
                 ioWriteOpen(blockMapWrite);
@@ -370,7 +371,8 @@ backupFile(
                     IoFilter *const encrypt =
                         cipherSpecType(cipherSpecBackup) != cipherTypeNone ?
                             cipherBlockNewP(
-                                cipherModeEncrypt, cipherSpecBackup, .raw = bundleRaw || file->blockIncrSize != 0) :
+                                cipherModeEncrypt, cipherSpecBackup,
+                                .header = bundleRaw || file->blockIncrSize != 0 ? cipherBlockHeaderNone : cipherBlockHeaderMagic) :
                             NULL;
 
                     // If block incremental then add the filter and pass compress/encrypt filters to it since each block is

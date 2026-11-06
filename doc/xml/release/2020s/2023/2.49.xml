@@ -19,6 +19,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix regression in retries.</p>
+
+                <p>v2.48 dropped the retry that was made when an operation used up its whole timeout, so a timeout became an error, e.g. waiting for a socket to be writable on an object store. Two retries are now made even when the timeout has expired.</p>
             </release-item>
 
             <release-item>
@@ -32,6 +34,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix recursive path remove in <proper>SFTP</proper> storage driver.</p>
+
+                <p>Some <proper>SFTP</proper> servers report permission denied instead of a failure when a directory is unlinked as a file, so removing a path recursively failed on those servers.</p>
             </release-item>
         </release-bug-list>
 
@@ -45,6 +49,8 @@
                 </release-item-contributor-list>
 
                 <p>Remove support for <proper>PostgreSQL</proper> <id>9.3</id>.</p>
+
+                <p><postgres/> 9.3 is no longer supported, per the policy of supporting five end-of-life versions of <postgres/>.</p>
             </release-item>
         </release-improvement-list>
 
@@ -58,6 +64,25 @@
                 </release-item-contributor-list>
 
                 <p>Fix <code>storageReadRemote()</code> to return actual read bytes.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess and config.sub to latest versions.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="More efficient/compact calculations for encoded sizes."/>
+                <commit subject="Remove unused parameter in backupProcess()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code.</p>
             </release-item>
         </release-development-list>
     </release-core-list>
@@ -73,6 +98,8 @@
                 </release-item-contributor-list>
 
                 <p>Document maintainer options.</p>
+
+                <p>Maintainer options are now documented in their own section with the caveats for using them, and <setting>pg-version-force</setting> is no longer internal.</p>
             </release-item>
 
             <release-item>
@@ -81,6 +108,8 @@
                 </release-item-contributor-list>
 
                 <p>Update point-in-time recovery documentation for <postgres/> &gt;= 13.</p>
+
+                <p>Since <postgres/> 13 recovery errors when the recovery target is not reached. The point-in-time recovery section now works for <postgres/> 13 and later as well as for earlier versions.</p>
             </release-item>
         </release-feature-list>
 
@@ -95,7 +124,30 @@
                 <commit subject="Simplify section titles in configuration reference."/>
                 <commit subject="Simplify description rendering in command and configuration reference."/>
 
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
                 <p>Build command and configuration reference in C.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Tidy and align site introduction and description."/>
+                <commit subject="Remove old version conditionals from user guide."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the site introduction and the user guide.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update Minio test/documentation container version.</p>
             </release-item>
         </release-development-list>
     </release-doc-list>
@@ -126,6 +178,32 @@
                 </release-item-contributor-list>
 
                 <p>Remove unused fields from <code>backupJobResult()</code> test in command/backup unit.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix common/lock test failing with -Werror=unused-result.">
+                    <github-pull-request id="2195"/>
+                </commit>
+                <commit subject="Adjust timeouts in the common/io/tls test to fix flapping coverage."/>
+                <commit subject="Refactor of pq shim to allow more flexible scripting."/>
+                <commit subject="Migrate backupFile() tests in command/backup module."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests.</p>
+            </release-item>
+
+            <release-item>
+                <release-note version="2.50" subject="Skip files truncated during backup when bundling."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add test to show behavior of bundled files truncated during backup.</p>
             </release-item>
         </release-development-list>
     </release-test-list>

@@ -4,8 +4,15 @@ Cipher Spec
 Everything needed to encrypt or decrypt, kept together so that adding to it does not mean changing every function and protocol
 message that contains it.
 
-The passphrase (pass) contains the bytes the key is derived from. There is no pass when the type is none, and the pass is never
-logged.
+The pass holds the bytes used to derive the key. The digest travels with the pass because the two are chosen together and deriving
+with the wrong digest gives a wrong key instead of an error.
+
+The pass is a buffer rather than a string because it may be binary or it may be text and nothing here needs to know which. It is
+copied into the object, so the caller can release whatever it read the pass from.
+
+An unset digest means the repository format of the file being read or written specifies it.
+
+There is no digest or pass when the type is none, and the pass is never logged.
 ***********************************************************************************************************************************/
 #ifndef COMMON_CRYPTO_SPEC_H
 #define COMMON_CRYPTO_SPEC_H
@@ -23,14 +30,23 @@ typedef struct CipherSpec CipherSpec;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-// Create from a pass
-FN_EXTERN CipherSpec *cipherSpecNew(CipherType type, const Buffer *pass);
+// Create from a pass, which is the key bytes or the passphrase text
+typedef struct CipherSpecNewParam
+{
+    VAR_PARAM_HEADER;
+    HashType digest;                                                // Digest to derive the key with, unset when specified by format
+} CipherSpecNewParam;
 
-// Create for no encryption
+#define cipherSpecNewP(type, pass, ...)                                                                                            \
+    cipherSpecNew(type, pass, (CipherSpecNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN CipherSpec *cipherSpecNew(CipherType type, const Buffer *pass, CipherSpecNewParam param);
+
+// Create for data that is not encrypted
 FN_INLINE_ALWAYS CipherSpec *
 cipherSpecNewNone(void)
 {
-    return cipherSpecNew(cipherTypeNone, NULL);
+    return cipherSpecNewP(cipherTypeNone, NULL);
 }
 
 // Create from a pack written by cipherSpecPack()
@@ -42,6 +58,7 @@ Getters/Setters
 typedef struct CipherSpecPub
 {
     CipherType type;                                                // Cipher type, none when not encrypted
+    HashType digest;                                                // Digest the pass derives with, unset when specified by format
     const Buffer *pass;                                             // Passphrase text or key bytes
 } CipherSpecPub;
 
@@ -50,6 +67,13 @@ FN_INLINE_ALWAYS CipherType
 cipherSpecType(const CipherSpec *const this)
 {
     return THIS_PUB(CipherSpec)->type;
+}
+
+// Digest the pass derives the key with, unset when specified by the format
+FN_INLINE_ALWAYS HashType
+cipherSpecDigest(const CipherSpec *const this)
+{
+    return THIS_PUB(CipherSpec)->digest;
 }
 
 // Passphrase text or key bytes
@@ -63,11 +87,16 @@ cipherSpecPass(const CipherSpec *const this)
 Functions
 ***********************************************************************************************************************************/
 // Duplicate
-FN_INLINE_ALWAYS CipherSpec *
-cipherSpecDup(const CipherSpec *const this)
+typedef struct CipherSpecDupParam
 {
-    return cipherSpecNew(cipherSpecType(this), cipherSpecPass(this));
-}
+    VAR_PARAM_HEADER;
+    HashType digestDefault;                                         // Digest to use when the spec has none
+} CipherSpecDupParam;
+
+#define cipherSpecDupP(this, ...)                                                                                                  \
+    cipherSpecDup(this, (CipherSpecDupParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN CipherSpec *cipherSpecDup(const CipherSpec *this, CipherSpecDupParam param);
 
 // Write to a pack so it can be passed over a protocol
 FN_EXTERN void cipherSpecPack(PackWrite *packWrite, const CipherSpec *this);

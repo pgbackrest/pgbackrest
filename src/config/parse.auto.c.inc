@@ -24,11 +24,14 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("0B"),                                                                                              // val/str
     PARSE_RULE_STRPUB("0s"),                                                                                              // val/str
     PARSE_RULE_STRPUB("1"),                                                                                               // val/str
+    PARSE_RULE_STRPUB("1.2"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("1.3"),                                                                                             // val/str
     PARSE_RULE_STRPUB("100ms"),                                                                                           // val/str
     PARSE_RULE_STRPUB("1024"),                                                                                            // val/str
     PARSE_RULE_STRPUB("12"),                                                                                              // val/str
     PARSE_RULE_STRPUB("128KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("128MiB"),                                                                                          // val/str
+    PARSE_RULE_STRPUB("15d"),                                                                                             // val/str
     PARSE_RULE_STRPUB("15m"),                                                                                             // val/str
     PARSE_RULE_STRPUB("15s"),                                                                                             // val/str
     PARSE_RULE_STRPUB("16GiB"),                                                                                           // val/str
@@ -72,8 +75,10 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("8MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("9"),                                                                                               // val/str
     PARSE_RULE_STRPUB("900"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("90d"),                                                                                             // val/str
     PARSE_RULE_STRPUB("999"),                                                                                             // val/str
     PARSE_RULE_STRPUB("9999999"),                                                                                         // val/str
+    PARSE_RULE_STRPUB("9999999d"),                                                                                        // val/str
     PARSE_RULE_STRPUB("accept-new"),                                                                                      // val/str
     PARSE_RULE_STRPUB("aes-256-cbc"),                                                                                     // val/str
     PARSE_RULE_STRPUB("asc"),                                                                                             // val/str
@@ -163,11 +168,14 @@ typedef enum
     parseRuleValStrQT_0B_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_0s_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_1_QT,                                                                                          // val/str/enum
+    parseRuleValStrQT_1_DT_2_QT,                                                                                     // val/str/enum
+    parseRuleValStrQT_1_DT_3_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_100ms_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_1024_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_12_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_128KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_128MiB_QT,                                                                                     // val/str/enum
+    parseRuleValStrQT_15d_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_15m_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_15s_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_16GiB_QT,                                                                                      // val/str/enum
@@ -211,8 +219,10 @@ typedef enum
     parseRuleValStrQT_8MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_9_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_900_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_90d_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_999_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_9999999_QT,                                                                                    // val/str/enum
+    parseRuleValStrQT_9999999d_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_accept_DS_new_QT,                                                                              // val/str/enum
     parseRuleValStrQT_aes_DS_256_DS_cbc_QT,                                                                          // val/str/enum
     parseRuleValStrQT_asc_QT,                                                                                        // val/str/enum
@@ -471,7 +481,7 @@ Rule Times
 ***********************************************************************************************************************************/
 #define PARSE_RULE_VAL_TIME(value)                                  PARSE_RULE_U32_1(parseRuleValTime##value)
 
-static const unsigned int parseRuleValueTime[] =
+static const int64_t parseRuleValueTime[] =
 {
     0,                                                                                                                   // val/time
     100,                                                                                                                 // val/time
@@ -483,6 +493,9 @@ static const unsigned int parseRuleValueTime[] =
     3600000,                                                                                                             // val/time
     86400000,                                                                                                            // val/time
     604800000,                                                                                                           // val/time
+    1296000000,                                                                                                          // val/time
+    7776000000,                                                                                                          // val/time
+    863999913600000,                                                                                                     // val/time
 };
 
 static const uint8_t parseRuleValueTimeStrMap[] =
@@ -497,6 +510,9 @@ static const uint8_t parseRuleValueTimeStrMap[] =
     parseRuleValStrQT_1h_QT,                                                                                      // val/time/strmap
     parseRuleValStrQT_1d_QT,                                                                                      // val/time/strmap
     parseRuleValStrQT_7d_QT,                                                                                      // val/time/strmap
+    parseRuleValStrQT_15d_QT,                                                                                     // val/time/strmap
+    parseRuleValStrQT_90d_QT,                                                                                     // val/time/strmap
+    parseRuleValStrQT_9999999d_QT,                                                                                // val/time/strmap
 };
 
 typedef enum
@@ -511,6 +527,9 @@ typedef enum
     parseRuleValTime1h,                                                                                             // val/time/enum
     parseRuleValTime1d,                                                                                             // val/time/enum
     parseRuleValTime7d,                                                                                             // val/time/enum
+    parseRuleValTime15d,                                                                                            // val/time/enum
+    parseRuleValTime90d,                                                                                            // val/time/enum
+    parseRuleValTime9999999d,                                                                                       // val/time/enum
 } ParseRuleValueTime;
 
 /***********************************************************************************************************************************
@@ -1643,6 +1662,53 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                   // opt/checksum-page
         ),                                                                                                      // opt/checksum-page
     ),                                                                                                          // opt/checksum-page
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                     // opt/checksum-page-error
+    (                                                                                                     // opt/checksum-page-error
+        PARSE_RULE_OPTION_NAME("checksum-page-error"),                                                    // opt/checksum-page-error
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                  // opt/checksum-page-error
+        PARSE_RULE_OPTION_NEGATE(true),                                                                   // opt/checksum-page-error
+        PARSE_RULE_OPTION_RESET(true),                                                                    // opt/checksum-page-error
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                 // opt/checksum-page-error
+        PARSE_RULE_OPTION_SECTION(Global),                                                                // opt/checksum-page-error
+                                                                                                          // opt/checksum-page-error
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/checksum-page-error
+        (                                                                                                 // opt/checksum-page-error
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                             // opt/checksum-page-error
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                             // opt/checksum-page-error
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/checksum-page-error
+        ),                                                                                                // opt/checksum-page-error
+                                                                                                          // opt/checksum-page-error
+        PARSE_RULE_OPTIONAL                                                                               // opt/checksum-page-error
+        (                                                                                                 // opt/checksum-page-error
+            PARSE_RULE_OPTIONAL_GROUP                                                                     // opt/checksum-page-error
+            (                                                                                             // opt/checksum-page-error
+                PARSE_RULE_FILTER_CMD                                                                     // opt/checksum-page-error
+                (                                                                                         // opt/checksum-page-error
+                    PARSE_RULE_VAL_CMD(Backup),                                                           // opt/checksum-page-error
+                ),                                                                                        // opt/checksum-page-error
+                                                                                                          // opt/checksum-page-error
+                PARSE_RULE_OPTIONAL_DEFAULT                                                               // opt/checksum-page-error
+                (                                                                                         // opt/checksum-page-error
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                            // opt/checksum-page-error
+                ),                                                                                        // opt/checksum-page-error
+            ),                                                                                            // opt/checksum-page-error
+                                                                                                          // opt/checksum-page-error
+            PARSE_RULE_OPTIONAL_GROUP                                                                     // opt/checksum-page-error
+            (                                                                                             // opt/checksum-page-error
+                PARSE_RULE_FILTER_CMD                                                                     // opt/checksum-page-error
+                (                                                                                         // opt/checksum-page-error
+                    PARSE_RULE_VAL_CMD(Expire),                                                           // opt/checksum-page-error
+                    PARSE_RULE_VAL_CMD(Restore),                                                          // opt/checksum-page-error
+                ),                                                                                        // opt/checksum-page-error
+                                                                                                          // opt/checksum-page-error
+                PARSE_RULE_OPTIONAL_DEFAULT                                                               // opt/checksum-page-error
+                (                                                                                         // opt/checksum-page-error
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                             // opt/checksum-page-error
+                ),                                                                                        // opt/checksum-page-error
+            ),                                                                                            // opt/checksum-page-error
+        ),                                                                                                // opt/checksum-page-error
+    ),                                                                                                    // opt/checksum-page-error
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                     // opt/cmd
     (                                                                                                                     // opt/cmd
@@ -5936,6 +6002,46 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                   // opt/repo-cipher-pass
     ),                                                                                                       // opt/repo-cipher-pass
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                      // opt/repo-cipher-rotate
+    (                                                                                                      // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_NAME("repo-cipher-rotate"),                                                      // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_TYPE(Time),                                                                      // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_INTERNAL(true)                                                                   // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_RESET(true),                                                                     // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                  // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_SECTION(Global),                                                                 // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                  // opt/repo-cipher-rotate
+                                                                                                           // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-cipher-rotate
+        (                                                                                                  // opt/repo-cipher-rotate
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                              // opt/repo-cipher-rotate
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                              // opt/repo-cipher-rotate
+        ),                                                                                                 // opt/repo-cipher-rotate
+                                                                                                           // opt/repo-cipher-rotate
+        PARSE_RULE_OPTIONAL                                                                                // opt/repo-cipher-rotate
+        (                                                                                                  // opt/repo-cipher-rotate
+            PARSE_RULE_OPTIONAL_GROUP                                                                      // opt/repo-cipher-rotate
+            (                                                                                              // opt/repo-cipher-rotate
+                PARSE_RULE_OPTIONAL_DEPEND                                                                 // opt/repo-cipher-rotate
+                (                                                                                          // opt/repo-cipher-rotate
+                    PARSE_RULE_VAL_OPT(RepoCipherType),                                                    // opt/repo-cipher-rotate
+                    PARSE_RULE_VAL_STRID(aes_DS_256_DS_cbc),                                               // opt/repo-cipher-rotate
+                ),                                                                                         // opt/repo-cipher-rotate
+                                                                                                           // opt/repo-cipher-rotate
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                            // opt/repo-cipher-rotate
+                (                                                                                          // opt/repo-cipher-rotate
+                    PARSE_RULE_VAL_TIME(15d),                                                              // opt/repo-cipher-rotate
+                    PARSE_RULE_VAL_TIME(9999999d),                                                         // opt/repo-cipher-rotate
+                ),                                                                                         // opt/repo-cipher-rotate
+                                                                                                           // opt/repo-cipher-rotate
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                // opt/repo-cipher-rotate
+                (                                                                                          // opt/repo-cipher-rotate
+                    PARSE_RULE_VAL_TIME(90d),                                                              // opt/repo-cipher-rotate
+                ),                                                                                         // opt/repo-cipher-rotate
+            ),                                                                                             // opt/repo-cipher-rotate
+        ),                                                                                                 // opt/repo-cipher-rotate
+    ),                                                                                                     // opt/repo-cipher-rotate
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                        // opt/repo-cipher-type
     (                                                                                                        // opt/repo-cipher-type
         PARSE_RULE_OPTION_NAME("repo-cipher-type"),                                                          // opt/repo-cipher-type
@@ -6023,6 +6129,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                             // opt/repo-format
         PARSE_RULE_OPTION_NAME("repo-format"),                                                                    // opt/repo-format
         PARSE_RULE_OPTION_TYPE(Integer),                                                                          // opt/repo-format
+        PARSE_RULE_OPTION_INTERNAL(true)                                                                          // opt/repo-format
         PARSE_RULE_OPTION_REQUIRED(true),                                                                         // opt/repo-format
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                   // opt/repo-format
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                         // opt/repo-format
@@ -6282,6 +6389,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_OPT(RepoGcsKeyType),                                                          // opt/repo-gcs-key
                     PARSE_RULE_VAL_STRID(service),                                                               // opt/repo-gcs-key
                     PARSE_RULE_VAL_STRID(token),                                                                 // opt/repo-gcs-key
+                    PARSE_RULE_VAL_STRID(web_DS_id),                                                             // opt/repo-gcs-key
                 ),                                                                                               // opt/repo-gcs-key
             ),                                                                                                   // opt/repo-gcs-key
         ),                                                                                                       // opt/repo-gcs-key
@@ -6367,6 +6475,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_STRID(service),                                                          // opt/repo-gcs-key-type
                     PARSE_RULE_VAL_STRID(token),                                                            // opt/repo-gcs-key-type
                     PARSE_RULE_VAL_STRID(auto),                                                             // opt/repo-gcs-key-type
+                    PARSE_RULE_VAL_STRID(web_DS_id),                                                        // opt/repo-gcs-key-type
                 ),                                                                                          // opt/repo-gcs-key-type
                                                                                                             // opt/repo-gcs-key-type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                 // opt/repo-gcs-key-type
@@ -11526,6 +11635,89 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                      // opt/tls-cipher-13
     ),                                                                                                          // opt/tls-cipher-13
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                         // opt/tls-min-version
+    (                                                                                                         // opt/tls-min-version
+        PARSE_RULE_OPTION_NAME("tls-min-version"),                                                            // opt/tls-min-version
+        PARSE_RULE_OPTION_TYPE(String),                                                                       // opt/tls-min-version
+        PARSE_RULE_OPTION_RESET(true),                                                                        // opt/tls-min-version
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                     // opt/tls-min-version
+        PARSE_RULE_OPTION_SECTION(Global),                                                                    // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                        // opt/tls-min-version
+        (                                                                                                     // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                               // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                             // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                            // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                  // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                   // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                               // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Server)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                             // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                           // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                           // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                          // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/tls-min-version
+        ),                                                                                                    // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                       // opt/tls-min-version
+        (                                                                                                     // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                             // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                            // opt/tls-min-version
+        ),                                                                                                    // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                       // opt/tls-min-version
+        (                                                                                                     // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                             // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                            // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/tls-min-version
+        ),                                                                                                    // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                      // opt/tls-min-version
+        (                                                                                                     // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                               // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                             // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                            // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                  // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                   // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                               // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                 // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                           // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                           // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                          // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/tls-min-version
+        ),                                                                                                    // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+        PARSE_RULE_OPTIONAL                                                                                   // opt/tls-min-version
+        (                                                                                                     // opt/tls-min-version
+            PARSE_RULE_OPTIONAL_GROUP                                                                         // opt/tls-min-version
+            (                                                                                                 // opt/tls-min-version
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                // opt/tls-min-version
+                (                                                                                             // opt/tls-min-version
+                    PARSE_RULE_VAL_STR(QT_1_DT_2_QT),                                                         // opt/tls-min-version
+                    PARSE_RULE_VAL_STR(QT_1_DT_3_QT),                                                         // opt/tls-min-version
+                ),                                                                                            // opt/tls-min-version
+                                                                                                              // opt/tls-min-version
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                   // opt/tls-min-version
+                (                                                                                             // opt/tls-min-version
+                    PARSE_RULE_VAL_STR(QT_1_DT_2_QT),                                                         // opt/tls-min-version
+                ),                                                                                            // opt/tls-min-version
+            ),                                                                                                // opt/tls-min-version
+        ),                                                                                                    // opt/tls-min-version
+    ),                                                                                                        // opt/tls-min-version
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                      // opt/tls-server-address
     (                                                                                                      // opt/tls-server-address
         PARSE_RULE_OPTION_NAME("tls-server-address"),                                                      // opt/tls-server-address
@@ -12048,6 +12240,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptBeta,                                                                                                 // opt-resolve-order
     cfgOptBufferSize,                                                                                           // opt-resolve-order
     cfgOptChecksumPage,                                                                                         // opt-resolve-order
+    cfgOptChecksumPageError,                                                                                    // opt-resolve-order
     cfgOptCmd,                                                                                                  // opt-resolve-order
     cfgOptCmdSsh,                                                                                               // opt-resolve-order
     cfgOptCompress,                                                                                             // opt-resolve-order
@@ -12136,6 +12329,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptTcpKeepAliveInterval,                                                                                 // opt-resolve-order
     cfgOptTlsCipher12,                                                                                          // opt-resolve-order
     cfgOptTlsCipher13,                                                                                          // opt-resolve-order
+    cfgOptTlsMinVersion,                                                                                        // opt-resolve-order
     cfgOptTlsServerAddress,                                                                                     // opt-resolve-order
     cfgOptTlsServerAuth,                                                                                        // opt-resolve-order
     cfgOptTlsServerCaFile,                                                                                      // opt-resolve-order
@@ -12170,6 +12364,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoBlockSizeSuper,                                                                                   // opt-resolve-order
     cfgOptRepoBlockSizeSuperFull,                                                                               // opt-resolve-order
     cfgOptRepoCipherPass,                                                                                       // opt-resolve-order
+    cfgOptRepoCipherRotate,                                                                                     // opt-resolve-order
     cfgOptRepoGcsKeyType,                                                                                       // opt-resolve-order
     cfgOptRepoHost,                                                                                             // opt-resolve-order
     cfgOptRepoHostConfig,                                                                                       // opt-resolve-order

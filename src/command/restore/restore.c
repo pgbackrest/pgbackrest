@@ -73,7 +73,7 @@ cmdRestore(void)
                 strNewFmt("%s-%u", strZ(pgVersionToStr(data->pgVersion)), data->pgId), data->pgVersion,
                 cvtZToUIntBase(strZ(strSubN(data->archiveStart, 0, 8)), 16), pgLsnFromStr(data->lsnStart),
                 cfgOptionStrNull(cfgOptTargetTimeline), cfgOptionSeq(cfgOptType),
-                infoArchiveCipherSpec(archiveInfo));
+                infoArchiveCipherSpecMap(archiveInfo));
         }
 
         // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
@@ -90,7 +90,7 @@ cmdRestore(void)
         manifestValidate(jobData.manifest, false);
 
         // Get the cipher spec used to decrypt files in the backup
-        jobData.cipherSpecBackup = manifestCipherSpec(jobData.manifest);
+        jobData.cipherSpecBackup = cipherSpecDupP(manifestCipherSpec(jobData.manifest));
 
         // Validate the manifest
         restoreManifestValidate(jobData.manifest, backupData.backupSet);
@@ -127,7 +127,9 @@ cmdRestore(void)
         // Generate processing queues
         const uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
 
-        // Save manifest to the data directory so we can restart a delta restore even if the PG_VERSION file is missing
+        // Save manifest to the data directory without the passphrase for the files so we can restart a delta restore even if the
+        // PG_VERSION file is missing
+        manifestCipherSpecSet(jobData.manifest, NULL);
         manifestSave(jobData.manifest, storageWriteIo(storageNewWriteP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR)));
 
         // Create the parallel executor
@@ -146,6 +148,8 @@ cmdRestore(void)
             .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeRestored),
             .size = VARUINT64(sizeTotal));
 
+        unsigned int checksumErrorFileTotal = 0;
+
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             do
@@ -156,7 +160,7 @@ cmdRestore(void)
                 {
                     sizeRestored = restoreJobResult(
                         jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeRestored,
-                        &currentPercentComplete);
+                        &checksumErrorFileTotal, &currentPercentComplete);
                 }
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing
@@ -261,6 +265,13 @@ cmdRestore(void)
         // Restore info
         LOG_INFO_FMT(
             "restore size = %s, file total = %u", strZ(strSizeFormat(sizeRestored)), manifestFileTotal(jobData.manifest));
+
+        if (checksumErrorFileTotal > 0)
+        {
+            LOG_WARN_FMT(
+                CFGCMD_RESTORE " command encountered page checksum error(s) in %u file(s), check the log file for details",
+                checksumErrorFileTotal);
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
