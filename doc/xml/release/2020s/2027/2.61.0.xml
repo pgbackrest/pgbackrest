@@ -45,6 +45,20 @@
 
                 <p>Each super block read left a file open on the server until the session ended. A restore could reach the open file limit of the server and fail with an error such as <quote>sftp errno [4]</quote> or <quote>client state is 'response' but expected 'idle'</quote>. Super block reads are now closed before they are freed.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2884"/>
+                <github-pull-request id="2903"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix use of <proper>SFTP</proper> file handles after a reconnect.</p>
+
+                <p>A reconnect freed the session while other files could still be open on it and the next read or write of one of those files used freed memory. These now fail with <quote>connection was lost</quote>, which allows the job to be retried.</p>
+            </release-item>
         </release-bug-list>
 
         <release-feature-list>

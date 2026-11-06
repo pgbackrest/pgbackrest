@@ -2693,6 +2693,8 @@ testRun(void)
         TEST_TITLE("read open reconnects after the connection is lost");
 
         HRN_LIBSSH2_SCRIPT_SET(
+            // File left open across the reconnect
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt"),
             // First open fails because the server dropped the idle connection
             HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_BAD_USE),
@@ -2712,9 +2714,19 @@ testRun(void)
             HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt"),
             HRN_LIBSSH2_CLOSE());
 
+        StorageRead *fileStale = NULL;
+
+        TEST_ASSIGN(fileStale, storageNewReadP(storageTest, fileName), "new read file left open");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileStale)), true, "open file before reconnect");
+
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file after reconnect");
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
+
+        TEST_ERROR(
+            ioRead(storageReadIo(fileStale), outBuffer), FileReadError,
+            "unable to read '" TEST_PATH "/readtest.txt': connection was lost");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(fileStale)), "close skipped when connection was lost");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read open errors when the open fails again after reconnect (only one retry)");
@@ -2896,6 +2908,8 @@ testRun(void)
         TEST_TITLE("write open reconnects after the connection is lost");
 
         HRN_LIBSSH2_SCRIPT_SET(
+            // File left open across the reconnect
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub1/testfile.pgbackrest.tmp"),
             // First open fails because the server dropped the idle connection
             HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub1/testfile.pgbackrest.tmp", .resultNull = true),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_DISCONNECT),
@@ -2907,9 +2921,21 @@ testRun(void)
             HRN_LIBSSH2_CLOSE(),
             HRN_LIBSSH2_RENAME(TEST_PATH "/sub1/testfile.pgbackrest.tmp", TEST_PATH "/sub1/testfile"));
 
+        StorageWrite *fileStale = NULL;
+
+        TEST_ASSIGN(fileStale, storageNewWriteP(storageTest, fileName), "new write file left open");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(fileStale)), "open file before reconnect");
+
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file after reconnect");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
+
+        TEST_ERROR(
+            storageWriteSftp(fileStale->driver, BUFSTRDEF("X")), FileWriteError,
+            "unable to write '" TEST_PATH "/sub1/testfile.pgbackrest.tmp': connection was lost");
+        TEST_ERROR(
+            storageWriteSftpClose(fileStale->driver), FileCloseError,
+            "unable to close file '" TEST_PATH "/sub1/testfile.pgbackrest.tmp' after write: connection was lost");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write open errors when the open fails again after reconnect (only one retry)");
