@@ -46,8 +46,10 @@ testRun(void)
     // Install shim to manage true/false return for fdReady
     hrnFdReadyShimInstall();
 
-    // Use a home directory in the test path so the home directory of the user running the test is not modified
-    hrnLibSsh2UserHomeSet(STRDEF(HRN_LIBSSH2_USER_HOME));
+    // Use a home directory in the test path so the home directory of the user running the test is not modified. Initialize user
+    // info first so userInit() does not overwrite the home directory later.
+    userInit();
+    userLocalData.userHome = STRDEF(HRN_LIBSSH2_USER_HOME);
 
     // Directory and file that cannot be accessed to test permissions errors
     const String *fileNoPerm = STRDEF(TEST_PATH "/noperm/noperm");

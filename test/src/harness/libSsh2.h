@@ -18,11 +18,10 @@ Scripted testing for libssh2 so exact results can be returned for unit testing. 
 
 #include "common/macro.h"
 #include "common/time.h"
-#include "common/type/string.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
-User home directory returned by the userHome() shim so tests do not modify files in the home directory of the user running them
+User home directory for tests so they do not modify files in the home directory of the user running them
 ***********************************************************************************************************************************/
 #define HRN_LIBSSH2_USER_HOME                                       TEST_PATH "/home"
 
@@ -337,10 +336,6 @@ Functions
     while (0)
 
 void hrnLibSsh2ScriptSet(const HrnLibSsh2 *script, unsigned int scriptSize);
-
-// Set the path returned by userHome(), e.g. HRN_LIBSSH2_USER_HOME. The string must remain valid while set. NULL returns the home
-// directory of the user running the test.
-void hrnLibSsh2UserHomeSet(const String *userHome);
 
 #endif // HARNESS_LIBSSH2_REAL
 

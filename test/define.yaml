@@ -640,10 +640,6 @@ unit:
     harness:
       name: libSsh2
       integration: false
-      shim:
-        - name: common/user
-          function:
-            - userHome
 
     coverage:
       - storage/sftp/helper
@@ -652,6 +648,7 @@ unit:
       - storage/sftp/write
 
     include:
+      - common/user
       - storage/helper
       - storage/read
       - storage/storage
