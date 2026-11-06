@@ -411,7 +411,7 @@ infoBackupFormatSet(InfoBackup *const this, const unsigned int format)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoBackupUpdatedSet(InfoBackup *const this)
+infoBackupCipherPriorClear(InfoBackup *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_BACKUP, this);
@@ -419,6 +419,7 @@ infoBackupUpdatedSet(InfoBackup *const this)
 
     ASSERT(this != NULL);
 
+    infoCipherPriorSet(infoPgInfo(infoBackupPg(this)), false);
     this->pub.updated = true;
 
     FUNCTION_TEST_RETURN_VOID();
@@ -762,14 +763,18 @@ infoBackupDataDependentList(const InfoBackup *const this, const String *const ba
 /**********************************************************************************************************************************/
 // Create from a read of the file
 static void *
-infoBackupLoadFileNew(IoRead *const read, const CipherSpec *const cipherSpec)
+infoBackupLoadFileNew(IoRead *const read, const CipherSpec *const cipherSpec, const bool prior)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_READ, read);
         FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_TEST_PARAM(BOOL, prior);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(INFO_BACKUP, infoBackupNewLoad(read, cipherSpec));
+    InfoBackup *const result = infoBackupNewLoad(read, cipherSpec);
+    infoCipherPriorSet(infoPgInfo(infoBackupPg(result)), prior);
+
+    FUNCTION_TEST_RETURN(INFO_BACKUP, result);
 }
 
 FN_EXTERN InfoBackup *
@@ -958,6 +963,7 @@ infoBackupSaveFile(
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
     ASSERT(cipherSpec != NULL);
+    ASSERT(!infoBackupCipherPrior(infoBackup) || cipherSpecPrior(cipherSpec) != NULL);
 
     if (infoBackup->pub.updated)
     {
@@ -966,7 +972,9 @@ infoBackupSaveFile(
             // Write output into a buffer since it needs to be saved to storage twice
             Buffer *const buffer = bufNew(ioBufferSize());
             IoWrite *const write = ioBufferWriteNew(buffer);
-            cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, infoBackupFormat(infoBackup));
+            cipherBlockFormatFilterGroupWriteAddP(
+                ioWriteFilterGroup(write), infoBackupCipherPrior(infoBackup) ? cipherSpecPrior(cipherSpec) : cipherSpec,
+                infoBackupFormat(infoBackup));
             infoBackupSave(infoBackup, write);
 
             // Save the file and make a copy

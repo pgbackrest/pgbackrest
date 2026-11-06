@@ -1696,11 +1696,24 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepo, "3");
         HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
 
-        // Save archive.info with the new passphrase and leave backup.info with the old passphrase
+        // Save archive.info with the old passphrase before the rekey
         TEST_RESULT_VOID(
             infoArchiveSaveFile(
                 infoArchiveLoadFile(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2)), storageRepoIdxWrite(2),
                 INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2)),
+            "save archive info");
+        TEST_RESULT_BOOL(
+            infoArchiveCipherPrior(infoArchiveLoadFile(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2))),
+            true, "archive info has old passphrase");
+
+        // Save archive.info with the new passphrase and leave backup.info with the old passphrase
+        InfoArchive *const infoArchiveRekey = infoArchiveLoadFile(
+            storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2));
+
+        infoArchiveCipherPriorClear(infoArchiveRekey);
+
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(infoArchiveRekey, storageRepoIdxWrite(2), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2)),
             "save archive info with new passphrase");
 
         TEST_RESULT_VOID(cmdStanzaRekey(), "stanza rekey");

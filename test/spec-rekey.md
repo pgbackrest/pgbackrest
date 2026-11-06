@@ -104,11 +104,13 @@ cipher-pass={"1":{"key":"afg...","digest":"sha256"}, ...}
 
 ### Fallback to the old passphrase
 
-- When `repo-cipher-pass-old` is set, an info file load that fails to decrypt or checksum with `repo-cipher-pass` is retried with `repo-cipher-pass-old`. Saves always use `repo-cipher-pass`.
-- The retry is logged at debug level. The info load can run remotely, and a warning on stdout would corrupt the output of `info --output=json` and `repo-get`. Instead `check` warns while `repo-cipher-pass-old` is set, with a hint to run `stanza-rekey` and then remove the option. `check` tests the option rather than the files, so it also reports an option left set after the rekey.
+- When `repo-cipher-pass-old` is set, an info file load that fails to decrypt or checksum with `repo-cipher-pass` is retried with `repo-cipher-pass-old`. A save uses the passphrase that decrypted the file and only `stanza-rekey` changes it, so `stanza-rekey` is the only cutover.
+- The retry is logged at debug level. The info load can run remotely, and a warning on stdout would corrupt the output of `info --output=json` and `repo-get`. Instead `check` warns while `repo-cipher-pass-old` is set. It loads the info files to report whether the stanza has been rekeyed, with a hint to run `stanza-rekey` and then remove the option or only to remove the option.
 - Without the fallback, archiving would have to be stopped on every host while the repository is rekeyed and the config is updated. A failing archive-push fills `pg_wal` and a failing archive-get stalls standbys.
 - The old spec is attached to the main spec by `cfgCipherSpecMainIdx()`, so the info file call sites are unchanged and only the info load retries.
-- Any command that saves an info file with the fallback in effect rekeys that file. This is harmless since loads accept both passphrases.
+- A command that saves an info file with the fallback in effect keeps the old passphrase. Backup saves both info files on completion, so using the new passphrase here would lock out a host that has not been updated. Hosts can be updated at any pace and the config can be reverted any time before the rekey.
+- `stanza-upgrade` to format 6 before the rekey writes format 6 info files with the old passphrase, which `stanzaCipherPassCheck()` does not check. `stanza-rekey` replaces it and checks the new passphrase.
+- A full backup before the rekey stores its key in an info file encrypted with the old passphrase and the rekey does not replace that key. After an exposure the next full backup after the rekey replaces it.
 - `verify` reads the info files itself rather than through the info load, so it retries with the prior spec in `verifyInfoFile()` and reports a file read that way at detail level. When both reads fail it reports the error from `repo-cipher-pass`.
 - `repo-get` reads an info file directly and does not fall back. Until the stanza is rekeyed, it can read an info file only when `repo-cipher-pass` is the passphrase it was encrypted with.
 - Nothing helps a host that has only the old passphrase in `repo-cipher-pass` once the stanza is rekeyed: every command on it fails. The documented procedure is to set both options on every host where `repo-cipher-pass` is configured before running `stanza-rekey`.

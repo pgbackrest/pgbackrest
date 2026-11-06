@@ -249,6 +249,18 @@ testRun(void)
                 strstr(strZ(hrnHostExecBrP(pg1, CFGCMD_CHECK)), "option 'repo1-cipher-pass-old' is set") != NULL, true,
                 "check with old passphrase");
 
+            // Info files saved by a backup remain encrypted with the old passphrase
+            TEST_HOST_BR(pg1, CFGCMD_BACKUP, .option = "--type=incr");
+
+            TEST_RESULT_VOID(
+                infoArchiveLoadFile(
+                    hrnHostRepo1Storage(repo), STRDEF("archive/" HRN_STANZA "/archive.info"), cipherSpecPrior(hrnHostCipherSpec())),
+                "archive info not rekeyed");
+            TEST_RESULT_VOID(
+                infoBackupLoadFile(
+                    hrnHostRepo1Storage(repo), STRDEF("backup/" HRN_STANZA "/backup.info"), cipherSpecPrior(hrnHostCipherSpec())),
+                "backup info not rekeyed");
+
             // Rekey and remove the old passphrase
             TEST_HOST_BR(pg1, CFGCMD_STANZA_REKEY);
 

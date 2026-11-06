@@ -125,8 +125,15 @@ infoBackupFormat(const InfoBackup *const this)
 
 FN_EXTERN void infoBackupFormatSet(InfoBackup *this, unsigned int format);
 
-// Mark as updated
-FN_EXTERN void infoBackupUpdatedSet(InfoBackup *this);
+// Was the file decrypted with the prior cipher spec?
+FN_INLINE_ALWAYS bool
+infoBackupCipherPrior(const InfoBackup *const this)
+{
+    return infoCipherPrior(infoPgInfo(infoBackupPg(this)));
+}
+
+// Encrypt with the cipher spec on the next save and mark as updated
+FN_EXTERN void infoBackupCipherPriorClear(InfoBackup *this);
 
 // Return a structure of the backup data from a specific index
 FN_EXTERN InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
@@ -201,7 +208,7 @@ FN_EXTERN InfoBackup *infoBackupLoadFile(const Storage *storage, const String *f
 FN_EXTERN InfoBackup *infoBackupLoadFileReconstruct(
     const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
-// Save backup info
+// Save backup info. The file is encrypted with the prior cipher spec when it was decrypted with the prior cipher spec.
 FN_EXTERN void infoBackupSaveFile(
     InfoBackup *infoBackup, const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 

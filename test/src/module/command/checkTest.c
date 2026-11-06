@@ -546,8 +546,32 @@ testRun(void)
             "P00   INFO: check repo2 archive for WAL (primary)\n"
             "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo2/archive/test1/15-1"
             "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2\n"
-            "P00   WARN: option 'repo2-cipher-pass-old' is set\n"
+            "P00   WARN: option 'repo2-cipher-pass-old' is set and the stanza has not been rekeyed\n"
             "            HINT: run stanza-rekey and then remove the option.");
+
+        // Save archive.info with the new passphrase and leave backup.info with the old passphrase
+        InfoArchive *const infoArchiveRekey = infoArchiveLoadFile(
+            storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
+
+        infoArchiveCipherPriorClear(infoArchiveRekey);
+        infoArchiveSaveFile(infoArchiveRekey, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
+
+        TEST_RESULT_VOID(checkCipherPassOld(), "backup info has old passphrase");
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'repo2-cipher-pass-old' is set and the stanza has not been rekeyed\n"
+            "            HINT: run stanza-rekey and then remove the option.");
+
+        // Save backup.info with the new passphrase
+        InfoBackup *const infoBackupRekey = infoBackupLoadFile(
+            storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
+
+        infoBackupCipherPriorClear(infoBackupRekey);
+        infoBackupSaveFile(infoBackupRekey, storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
+
+        TEST_RESULT_VOID(checkCipherPassOld(), "info files have new passphrase");
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'repo2-cipher-pass-old' is set and the stanza has been rekeyed\n"
+            "            HINT: remove the option.");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPassOld, 2);

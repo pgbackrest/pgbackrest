@@ -94,11 +94,12 @@ cmdStanzaRekey(void)
             }
 
             // Save the info files with the passphrase
+            infoArchiveCipherPriorClear(infoArchive);
             infoArchiveSaveFile(infoArchive, storageRepoIdxWrite(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain);
 
             if (rekey)
             {
-                infoBackupUpdatedSet(infoBackup);
+                infoBackupCipherPriorClear(infoBackup);
                 infoBackupSaveFile(infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cipherSpecMain);
 
                 LOG_INFO("rekey info files with the new passphrase");

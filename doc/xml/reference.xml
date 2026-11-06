@@ -1489,7 +1489,7 @@
                         <summary>Repository cipher passphrase before a rekey.</summary>
 
                         <text>
-                            <p>Previous value of <br-option>repo-cipher-pass</br-option> while the repository is rekeyed with the <cmd>stanza-rekey</cmd> command. An info file that cannot be decrypted with <br-option>repo-cipher-pass</br-option> is decrypted with this passphrase. The <cmd>check</cmd> command warns while this option is set.</p>
+                            <p>Previous value of <br-option>repo-cipher-pass</br-option> while the repository is rekeyed with the <cmd>stanza-rekey</cmd> command. An info file that cannot be decrypted with <br-option>repo-cipher-pass</br-option> is decrypted with this passphrase and saved with it until <cmd>stanza-rekey</cmd> runs. The <cmd>check</cmd> command warns while this option is set.</p>
 
                             <p>Set <br-option>repo-cipher-pass</br-option> to the new passphrase and this option to the old passphrase on every host where <br-option>repo-cipher-pass</br-option> is configured, run <cmd>stanza-rekey</cmd>, then remove this option.</p>
                         </text>
@@ -3087,13 +3087,13 @@
                         <list-item>Run the <cmd>check</cmd> command, which warns while <br-option>repo-cipher-pass-old</br-option> is set.</list-item>
                     </list>
 
-                    <p>A host with no encryption settings gets both options from the repository host. Every host where <br-option>repo-cipher-pass</br-option> is configured must have both options set before <cmd>stanza-rekey</cmd> runs. Once the stanza is rekeyed, a host that still has the old passphrase in <br-option>repo-cipher-pass</br-option> can no longer read the stanza.</p>
+                    <p>A host with no encryption settings gets both options from the repository host. Every host where <br-option>repo-cipher-pass</br-option> is configured must have both options set before <cmd>stanza-rekey</cmd> runs. Until then the info files remain encrypted with the old passphrase, so backups and archiving can continue while hosts are updated. Once the stanza is rekeyed, a host that still has the old passphrase in <br-option>repo-cipher-pass</br-option> can no longer read the stanza.</p>
 
                     <p>Until the stanza is rekeyed, <cmd>repo-get</cmd> can read an info file only when <br-option>repo-cipher-pass</br-option> is the passphrase it was encrypted with.</p>
 
                     <p>Each encrypted repository with <br-option>repo-cipher-pass-old</br-option> set is rekeyed. The command does not connect to <postgres/>.</p>
 
-                    <p>The archive key of each encrypted repository is also rotated, even when <br-option>repo-cipher-pass-old</br-option> is not set. A new key is generated to encrypt archived WAL and WAL encrypted with an earlier key remains readable. A backup set gets a new key with the next full backup. Archive key rotation requires <br-option>repo-format</br-option> 6 or higher.</p>
+                    <p>The archive key of each encrypted repository is also rotated, even when <br-option>repo-cipher-pass-old</br-option> is not set. A new key is generated to encrypt archived WAL and WAL encrypted with an earlier key remains readable. A backup set gets a new key with the next full backup, which should run after the stanza is rekeyed when the old passphrase was exposed. Archive key rotation requires <br-option>repo-format</br-option> 6 or higher.</p>
 
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>

@@ -652,6 +652,22 @@ infoCipherRotateTimeSet(Info *const this, const time_t cipherRotateTime)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
+infoCipherPriorSet(Info *const this, const bool cipherPrior)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+        FUNCTION_TEST_PARAM(BOOL, cipherPrior);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    this->pub.cipherPrior = cipherPrior;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
 infoCipherSpecSet(Info *const this, const CipherSpec *const cipherSpec)
 {
     FUNCTION_TEST_BEGIN();
@@ -798,7 +814,8 @@ infoLoadFileCallback(void *const data, const unsigned int try)
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
-                loadData->result = loadData->newLoad(read, cipherSpec);
+                // Try >= 2 decrypts with the prior cipher spec. The object records this and a save encrypts with the same spec.
+                loadData->result = loadData->newLoad(read, cipherSpec, try >= 2);
                 result = true;
             }
             MEM_CONTEXT_END();
