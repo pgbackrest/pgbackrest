@@ -648,6 +648,7 @@ unit:
       - storage/sftp/write
 
     include:
+      - common/user
       - storage/helper
       - storage/read
       - storage/storage

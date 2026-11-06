@@ -46,6 +46,11 @@ testRun(void)
     // Install shim to manage true/false return for fdReady
     hrnFdReadyShimInstall();
 
+    // Use a home directory in the test path to avoid modifying the home directory of the user running the test. Call userInit()
+    // first to prevent it from overwriting the home directory.
+    userInit();
+    userLocalData.userHome = STRDEF(HRN_LIBSSH2_USER_HOME);
+
     // Directory and file that cannot be accessed to test permissions errors
     const String *fileNoPerm = STRDEF(TEST_PATH "/noperm/noperm");
     String *pathNoPerm = strPath(fileNoPerm);
@@ -543,9 +548,9 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2_knownhost_init failed for '/home/" TEST_USER "/.ssh/known_hosts' for update: libssh2 errno [-6] "
-            "Unable to allocate memory for known-hosts collection");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: libssh2_knownhost_init failed for '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts' for update: libssh2 errno "
+            "[-6] Unable to allocate memory for known-hosts collection");
 
         storageHelperFree();
 
@@ -576,10 +581,10 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2 unable to read '/home/" TEST_USER "/.ssh/known_hosts' for update: libssh2 errno [-16] Failed "
-            "to open file\n"
-            "            HINT: does '/home/" TEST_USER "/.ssh/known_hosts' exist with proper permissions?");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: libssh2 unable to read '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts' for update: libssh2 errno [-16] "
+            "Failed to open file\n"
+            "            HINT: does '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts' exist with proper permissions?");
 
         storageHelperFree();
 
@@ -587,7 +592,7 @@ testRun(void)
         TEST_TITLE("knownhost_init WARN unable to read user's known_host file for update - hostKeyCheckType = accept-new");
 
         // Create known_hosts file so it can be found by storageExistsP(), i.e. file exists but is unreadable
-        HRN_SYSTEM_FMT("touch %s", strZ(strNewFmt("%s/.ssh/known_hosts", strZ(userHome()))));
+        HRN_SYSTEM("touch " KNOWNHOSTS_FILE_CSTR);
 
         HRN_LIBSSH2_SCRIPT_SET(
             HRN_LIBSSH2_INIT(),
@@ -608,13 +613,13 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2 unable to read '/home/" TEST_USER "/.ssh/known_hosts' for update: libssh2 errno [-16] Failed "
-            "to open file\n"
-            "            HINT: does '/home/" TEST_USER "/.ssh/known_hosts' exist with proper permissions?");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: libssh2 unable to read '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts' for update: libssh2 errno [-16] "
+            "Failed to open file\n"
+            "            HINT: does '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts' exist with proper permissions?");
 
         // Remove known_hosts file
-        HRN_SYSTEM_FMT("rm %s", strZ(strNewFmt("%s/.ssh/known_hosts", strZ(userHome()))));
+        HRN_SYSTEM("rm " KNOWNHOSTS_FILE_CSTR);
 
         storageHelperFree();
 
@@ -639,10 +644,10 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: libssh2 unable to read '/home/" TEST_USER "/.ssh/known_hosts' for update: libssh2 errno [-46] Failed to "
-            "parse known hosts file\n"
-            "            HINT: does '/home/" TEST_USER "/.ssh/known_hosts' exist with proper permissions?");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: libssh2 unable to read '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts' for update: libssh2 errno [-46] "
+            "Failed to parse known hosts file\n"
+            "            HINT: does '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts' exist with proper permissions?");
 
         storageHelperFree();
 
@@ -689,14 +694,15 @@ testRun(void)
 
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
-            "P00 DETAIL: libssh2 '/home/" TEST_USER "/.ssh/known_hosts' file is empty\n"
-            "P00 DETAIL: libssh2 read '/home/" TEST_USER "/.ssh/known_hosts2' failed: libssh2 errno [-16] Failed to open file\n"
+            "P00 DETAIL: libssh2 '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts' file is empty\n"
+            "P00 DETAIL: libssh2 read '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts2' failed: libssh2 errno [-16] Failed to open "
+            "file\n"
             "P00 DETAIL: libssh2 read '/etc/ssh/ssh_known_hosts' failed: libssh2 errno [-16] Failed to open file\n"
             "P00 DETAIL: libssh2 read '/etc/ssh/ssh_known_hosts2' failed: libssh2 errno [-16] libssh2 no session error message "
             "provided [-16]\n"
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: pgBackRest added new host 'localhost' to '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'");
 
         harnessLogLevelReset();
         storageHelperFree();
@@ -726,8 +732,8 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: pgBackRest added new host 'localhost' to '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'");
 
         storageHelperFree();
 
@@ -757,8 +763,8 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: pgBackRest added new host 'localhost' to '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'");
 
         storageHelperFree();
 #endif
@@ -789,8 +795,8 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: pgBackRest added new host 'localhost' to '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'");
 
         storageHelperFree();
 #endif
@@ -821,8 +827,8 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: pgBackRest added new host 'localhost' to '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'");
 
         storageHelperFree();
 #endif
@@ -853,8 +859,8 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: pgBackRest added new host 'localhost' to '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'");
 
         storageHelperFree();
 #endif
@@ -884,8 +890,8 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: pgBackRest unable to write '/home/" TEST_USER "/.ssh/known_hosts' for update");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: pgBackRest unable to write '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts' for update");
 
         storageHelperFree();
 
@@ -912,7 +918,7 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
             "P00   WARN: unsupported key type [9], unable to update knownhosts for 'localhost'");
 
         storageHelperFree();
@@ -941,7 +947,7 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
             "P00   WARN: pgBackRest failed to add 'localhost' to known_hosts internal list");
 
         storageHelperFree();
@@ -1071,8 +1077,8 @@ testRun(void)
         TEST_RESULT_VOID(storageRepo(), "new storage");
         TEST_RESULT_LOG(
             "P00   WARN: host 'localhost' not found in known hosts files, attempting to add host to "
-            "'/home/" TEST_USER "/.ssh/known_hosts'\n"
-            "P00   WARN: pgBackRest added new host 'localhost' to '/home/" TEST_USER "/.ssh/known_hosts'");
+            "'" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'\n"
+            "P00   WARN: pgBackRest added new host 'localhost' to '" HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts'");
 
         storageHelperFree();
 
@@ -1128,7 +1134,7 @@ testRun(void)
             HRN_LIBSSH2_SESSION_INIT(),
             HRN_LIBSSH2_HANDSHAKE(),
             HRN_LIBSSH2_KNOWNHOST_INIT(),
-            HRN_LIBSSH2_KNOWNHOST_READFILE("/home/" TEST_USER "/.ssh/pgbackrest_known_hosts", .resultInt = 5),
+            HRN_LIBSSH2_KNOWNHOST_READFILE(HRN_LIBSSH2_USER_HOME "/.ssh/pgbackrest_known_hosts", .resultInt = 5),
             HRN_LIBSSH2_HOSTKEY(),
             HRN_LIBSSH2_KNOWNHOST_CHECK(LIBSSH2_KNOWNHOST_CHECK_MATCH),
             HRN_LIBSSH2_USERAUTH(),
@@ -3334,7 +3340,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, KEYPRIV_CSTR);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpPublicKeyFile, KEYPUB_CSTR);
         hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, "~/.ssh/known_hosts");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, "/home/" TEST_USER "/.ssh/known_hosts2");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts2");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         storageTest = storageRepoWrite();
@@ -3443,17 +3449,18 @@ testRun(void)
 
         argList = strLstDup(argCommonList);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, "/home/" TEST_USER "/.ssh/known_hosts  ");
-        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, "      /home/" TEST_USER "/.ssh/known_hosts2");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts  ");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpKnownHost, "      " HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts2");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         storageTest = storageRepoWrite();
 
         TEST_RESULT_STR_Z(
-            strLstGet(strLstNewVarLst(cfgOptionLst(cfgOptRepoSftpKnownHost)), 1), "/home/" TEST_USER "/.ssh/known_hosts  ",
+            strLstGet(strLstNewVarLst(cfgOptionLst(cfgOptRepoSftpKnownHost)), 1), HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts  ",
             "check known hosts path trailing spaces");
         TEST_RESULT_STR_Z(
-            strLstGet(strLstNewVarLst(cfgOptionLst(cfgOptRepoSftpKnownHost)), 2), "      /home/" TEST_USER "/.ssh/known_hosts2",
+            strLstGet(strLstNewVarLst(cfgOptionLst(cfgOptRepoSftpKnownHost)), 2),
+            "      " HRN_LIBSSH2_USER_HOME "/.ssh/known_hosts2",
             "check known hosts path leading spaces");
 
         TEST_ASSIGN(

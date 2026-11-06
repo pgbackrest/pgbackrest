@@ -147,4 +147,21 @@
             </release-item>
         </release-feature-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2904"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Prevent the <proper>SFTP</proper> unit test from modifying <file>~/.ssh/known_hosts</file>.</p>
+
+                <p>The test created and removed <file>~/.ssh/known_hosts</file> so running it outside a container deleted the file of the current user. The test now uses a home directory in the test path.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
 </release>
