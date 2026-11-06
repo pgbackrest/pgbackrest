@@ -1385,6 +1385,15 @@ testRun(void)
             manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-same-size", .size = 6, .sizeRepo = 6,
             .timestamp = 1482182860, .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
+        // Prior file has a map and size is equal but below the prior block size
+        HRN_MANIFEST_FILE_ADD(
+            manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-same-size-map", .copy = true, .size = 6, .sizeRepo = 6,
+            .timestamp = 1482182860, .group = "test", .user = "test");
+        HRN_MANIFEST_FILE_ADD(
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-same-size-map", .size = 6, .sizeRepo = 37,
+            .blockIncrSize = 8192, .blockIncrChecksumSize = 6, .blockIncrMapSize = 31, .timestamp = 1482182860,
+            .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
+
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000030000000300000003")), "incremental manifest");
 
@@ -1410,6 +1419,9 @@ testRun(void)
                     ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":8193,\"szo\":16384,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-same-size={\"bi\":1,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
                     ",\"reference\":\"20190101-010101F\",\"size\":6,\"timestamp\":1482182861}\n"
+                    "pg_data/block-incr-same-size-map={\"bi\":1,\"bim\":31"
+                    ",\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\",\"reference\":\"20190101-010101F\",\"repo-size\":37"
+                    ",\"size\":6,\"timestamp\":1482182860}\n"
                     "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
