@@ -1579,7 +1579,7 @@ testRun(void)
         TEST_ERROR(cmdStanzaRekey(), RepoInvalidError, "stanza-rekey requires an encrypted repository");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("create encrypted stanzas at format 6 on repo2 and format 5 on repo3");
+        TEST_TITLE("encrypted stanzas at format 6 and format 5");
 
         argList = strLstDup(argListBase);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
@@ -1605,7 +1605,7 @@ testRun(void)
         hrnCfgArgKeyRawStrId(argListRekey, cfgOptRepoCipherType, 3, cipherTypeAes256Cbc);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("rotate the archive key without a rekey");
+        TEST_TITLE("archive key rotation without a rekey");
 
         argList = strLstDup(argListRekey);
         hrnCfgArgRawZ(argList, cfgOptRepo, "2");
@@ -1622,7 +1622,7 @@ testRun(void)
             "2", "archive key rotated");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("new passphrase is the old passphrase");
+        TEST_TITLE("new passphrase equal to the old passphrase");
 
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 2, TEST_CIPHER_PASS_FMT6);
         HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
@@ -1633,7 +1633,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: stanza-rekey for stanza 'db' on repo2");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("new passphrase does not look generated");
+        TEST_TITLE("new passphrase that is not generated");
 
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
         HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
