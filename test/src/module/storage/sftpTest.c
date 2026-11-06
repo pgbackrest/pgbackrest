@@ -1114,6 +1114,9 @@ testRun(void)
             HRN_LIBSSH2_HOSTKEY(),
             HRN_LIBSSH2_KNOWNHOST_CHECK(LIBSSH2_KNOWNHOST_CHECK_MATCH),
             HRN_LIBSSH2_USERAUTH(),
+            HRN_LIBSSH2_SFTP_INIT(.resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
             HRN_LIBSSH2_SFTP_INIT(),
             HRNLIBSSH2_MACRO_SHUTDOWN());
 
@@ -1122,7 +1125,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "accept-new");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
-        TEST_RESULT_VOID(storageRepo(), "new storage");
+        TEST_RESULT_UINT(((StorageSftp *)storageDriver(storageRepo()))->waitEnd, 0, "wait ended by completed init");
 
         storageHelperFree();
 
@@ -2445,6 +2448,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - unlink LIBSSH2_ERROR_EAGAIN timeout");
 
+        StorageSftp *const storageSftp = storageDriver(storageTest);
+        const TimeMSec timeoutPrior = storageSftp->timeout;
+
+        storageSftp->timeout = 1;
+
         HRN_LIBSSH2_SCRIPT_SET(
             HRN_LIBSSH2_OPENDIR(TEST_PATH "/remove1"),
             HRN_LIBSSH2_READDIR("remove2"),
@@ -2457,13 +2465,92 @@ testRun(void)
             HRN_LIBSSH2_READDIR(""),
             HRN_LIBSSH2_CLOSE(),
             HRN_LIBSSH2_UNLINK(TEST_PATH "/remove1/remove2/remove.txt", .resultInt = LIBSSH2_ERROR_EAGAIN),
-            HRN_LIBSSH2_BLOCK(),
-            HRN_LIBSSH2_UNLINK(TEST_PATH "/remove1/remove2/remove.txt", .resultInt = LIBSSH2_ERROR_EAGAIN),
-            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING));
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            // Socket activity wakes the wait but does not extend it
+            HRN_LIBSSH2_UNLINK(TEST_PATH "/remove1/remove2/remove.txt", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 2),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING));
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError, "timeout removing file '%s'",
             strZ(fileRemove));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("wait ended by completed list calls");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            HRN_LIBSSH2_OPENDIR(TEST_PATH, .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            HRN_LIBSSH2_OPENDIR(TEST_PATH),
+            HRN_LIBSSH2_READDIR("", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 2),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            HRN_LIBSSH2_READDIR("file"),
+            HRN_LIBSSH2_READDIR("", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 2),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            HRN_LIBSSH2_READDIR(""),
+            HRN_LIBSSH2_CLOSE());
+
+        TEST_RESULT_STRLST_Z(storageListP(storageTest, NULL), "file\n", "list");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("wait ended by completed read open");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/file", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/file"),
+            HRN_LIBSSH2_CLOSE(.resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 2),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            HRN_LIBSSH2_CLOSE());
+
+        StorageRead *fileRead = NULL;
+
+        TEST_ASSIGN(fileRead, storageNewReadP(storageTest, STRDEF(TEST_PATH "/file")), "new read file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open file");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(fileRead)), "close file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("wait ended by completed write opens");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            // Path exists
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/file", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/file"),
+            HRN_LIBSSH2_CLOSE(.resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 2),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            HRN_LIBSSH2_CLOSE(),
+            // Path created
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub/file", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_NO_SUCH_FILE),
+            HRN_LIBSSH2_MKDIR(TEST_PATH "/sub"),
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub/file", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub/file"),
+            HRN_LIBSSH2_CLOSE(.resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 2),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            HRN_LIBSSH2_CLOSE());
+
+        StorageWrite *fileWrite = NULL;
+
+        TEST_ASSIGN(
+            fileWrite, storageNewWriteP(storageTest, STRDEF(TEST_PATH "/file"), .noAtomic = true, .noSyncFile = true),
+            "new write file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(fileWrite)), "open file");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(fileWrite)), "close file");
+
+        TEST_ASSIGN(
+            fileWrite, storageNewWriteP(storageTest, STRDEF(TEST_PATH "/sub/file"), .noAtomic = true, .noSyncFile = true),
+            "new write file in missing path");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(fileWrite)), "open file");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(fileWrite)), "close file");
+
+        storageSftp->timeout = timeoutPrior;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - rmdir LIBSSH2_ERROR_EAGAIN timeout");
