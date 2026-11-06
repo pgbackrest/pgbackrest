@@ -2443,6 +2443,13 @@ option:
     deprecate:
       repo-s3-key-secret: {}
 
+  repo-s3-kms-encryption-context:
+    inherit: repo-s3-bucket
+    type: hash
+    required: false
+    depend:
+      option: repo-s3-kms-key-id
+
   repo-s3-kms-key-id:
     inherit: repo-s3-bucket
     required: false

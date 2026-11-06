@@ -1079,6 +1079,23 @@
                         <example>AQoDYXdzEPT//////////wEXAMPLEtc764bNrC9SAPBSM22 ...</example>
                     </config-key>
 
+                    <config-key id="repo-s3-kms-encryption-context" name="S3 Repository KMS Encryption Context">
+                        <summary>S3 repository KMS encryption context.</summary>
+
+                        <text>
+                            <p>This option adds an encryption context for S3 server-side encryption with AWS KMS. It requires <br-option>repo-s3-kms-key-id</br-option>.</p>
+
+                            <p>Each entry is a key/value pair, for example <setting>repo1-s3-kms-encryption-context=cluster_id=pg-prod-01</setting>. Multiple entries require a separate option for each entry.</p>
+
+                            <p><backrest/> sends the context when it creates objects, including multipart uploads. This option does not change existing objects. S3 stores the context with each object and uses it to decrypt the object.</p>
+
+                            <p>Encryption context is not secret and must not contain sensitive information.</p>
+                        </text>
+
+                        <example>cluster_id=pg-prod-01</example>
+                        <example>tenant_id=tenant-01</example>
+                    </config-key>
+
                     <config-key id="repo-s3-kms-key-id" name="S3 Repository KMS Key ID">
                         <summary>S3 repository KMS key.</summary>
 

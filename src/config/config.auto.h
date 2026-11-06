@@ -625,6 +625,7 @@ typedef enum
     cfgOptRepoS3Key,
     cfgOptRepoS3KeySecret,
     cfgOptRepoS3KeyType,
+    cfgOptRepoS3KmsEncryptionContext,
     cfgOptRepoS3KmsKeyId,
     cfgOptRepoS3ProcessCmd,
     cfgOptRepoS3Region,
