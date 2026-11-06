@@ -113,7 +113,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
             storageTest, PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .timeline = 47,
-            .walSegmentSize = 1024 * 1024);
+            .segmentPageTotal = 6, .walSegmentSize = 1024 * 1024);
 
         PgControl info = {0};
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v11");
@@ -122,6 +122,7 @@ testRun(void)
         TEST_RESULT_UINT(info.catalogVersion, 201809051, "   check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xEEFFEEFFAABBAABB, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 47, "check timeline");
+        TEST_RESULT_UINT(info.segmentPageTotal, 6, "check segment page total");
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = UINT_MAX); // UINT_MAX forces size to 0
