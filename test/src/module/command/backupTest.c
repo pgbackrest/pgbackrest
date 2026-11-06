@@ -670,7 +670,12 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("PageChecksum"))
     {
-        #define PG_SEGMENT_PAGE_DEFAULT                             131072
+        #define PG_SEGMENT_PAGE_DEFAULT                             (HRN_PG_SEGMENT_SIZE_DEFAULT / pgPageSize8)
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("segment page default");
+
+        TEST_RESULT_UINT(PG_SEGMENT_PAGE_DEFAULT, 131072, "check pages per segment");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("two misaligned buffers in a row");
@@ -2063,8 +2068,8 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "a73da1cfddf849880b4f6f0f4209ce71043f2ac1" : "807d4464138ef085e41844a9f488f067b3d46d46") :
-                "c09a7f1d2ff6131ec467e18b781970a86efd4e5b");
+                (TEST_BIG_ENDIAN() ? "884c00e2f6fcfc2c73364a285175483783a7cace" : "7583cfcf2d4c882b248898162a17a19929ed6f61") :
+                "5cf90a168630adb21cd2352036e2be3af86d7474");
 
         // Make pg no longer appear to be running
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
@@ -3417,7 +3422,7 @@ testRun(void)
             // Create pg_control with unexpected catalog and control version
             HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(
                 storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211110, .pageChecksumVersion = 1,
-                .segmentPageTotal = 131072, .walSegmentSize = 1024 * 1024);
+                .walSegmentSize = 1024 * 1024);
 
             // Set to a smaller values than the defaults allow
             cfgOptionSet(cfgOptRepoBundleSize, cfgSourceParam, VARINT64(pgPageSize8));
@@ -4368,7 +4373,7 @@ testRun(void)
             // Update pg_control
             HRN_PG_CONTROL_PUT(
                 storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 1, .walSegmentSize = 2 * 1024 * 1024,
-                .pageSize = pgPageSize4, .segmentPageTotal = 262144);
+                .pageSize = pgPageSize4);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);

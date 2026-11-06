@@ -171,6 +171,7 @@ backupFile(
     ASSERT(cipherSpecBackup != NULL);
     ASSERT(fileList != NULL && !lstEmpty(fileList));
     ASSERT(pgPageSizeValid(pageSize));
+    ASSERT(segmentPageTotal > 0);
 
     // Backup file results
     List *const result = lstNewP(sizeof(BackupFileResult));
