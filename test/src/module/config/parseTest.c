@@ -1369,6 +1369,17 @@ testRun(void)
             "'bogus' is not allowed for 'type' option\n"
             "HINT: allowed values are 'default', 'preserve', 'immediate', 'standby', 'none', 'name', 'time', 'lsn', 'xid'");
 
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptTlsMinVersion, "1.1");
+        strLstAddZ(argList, TEST_COMMAND_RESTORE);
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
+            "'1.1' is not allowed for 'tls-min-version' option\n"
+            "HINT: allowed values are '1.2', '1.3'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lower and upper bounds for integer ranges");
 

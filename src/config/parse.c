@@ -2722,6 +2722,10 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
                                     switch (ruleOption->type)
                                     {
+                                        case cfgOptTypeString:
+                                            allowListFound = strEq(PARSE_RULE_VAL_STR_IDX(valueIdx), configOptionValue->display);
+                                            break;
+
                                         case cfgOptTypeStringId:
                                         {
                                             if (strEq(PARSE_RULE_VAL_STR_IDX(valueIdx), configOptionValue->display))
