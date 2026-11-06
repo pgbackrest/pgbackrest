@@ -956,6 +956,35 @@ testRun(void)
             infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()),
             "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("save backup info file with the old and new passphrases");
+
+        const CipherSpec *const cipherSpecOld = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"));
+        const CipherSpec *const cipherSpecRekey = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("new"), .prior = cipherSpecOld);
+
+        TEST_RESULT_BOOL(infoBackup->pub.updated, false, "not updated after load");
+        TEST_RESULT_VOID(infoBackupCipherPriorClear(infoBackup), "clear prior");
+        TEST_RESULT_BOOL(infoBackup->pub.updated, true, "updated");
+        TEST_RESULT_VOID(infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecOld), "save backup info");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, STRDEF(INFO_BACKUP_FILE)), true, "main saved");
+
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey), "load old passphrase");
+        TEST_RESULT_BOOL(infoBackupCipherPrior(infoBackup), true, "decrypted with old passphrase");
+
+        infoBackupFormatSet(infoBackup, infoBackupFormat(infoBackup));
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey), "save backup info");
+        TEST_RESULT_BOOL(
+            infoBackupCipherPrior(infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey)), true,
+            "encrypted with old passphrase");
+
+        TEST_RESULT_VOID(infoBackupCipherPriorClear(infoBackup), "clear prior");
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey), "save backup info");
+        TEST_RESULT_BOOL(
+            infoBackupCipherPrior(infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey)), false,
+            "encrypted with new passphrase");
     }
 
     // *****************************************************************************************************************************

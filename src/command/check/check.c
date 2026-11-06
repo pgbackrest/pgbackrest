@@ -18,6 +18,7 @@ Check Command
 #include "config/parse.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
+#include "info/infoBackup.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
 #include "storage/helper.h"
@@ -173,6 +174,44 @@ checkPrimary(const DbGetResult dbGroup)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+// Warn when the old passphrase is set
+static void
+checkCipherPassOld(void)
+{
+    FUNCTION_LOG_VOID(logLevelDebug);
+
+    for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+    {
+        if (cfgOptionIdxTest(cfgOptRepoCipherPassOld, repoIdx))
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                const Storage *const storageRepo = storageRepoIdx(repoIdx);
+                const CipherSpec *const cipherSpec = cfgCipherSpecMainIdx(repoIdx);
+
+                if (infoArchiveCipherPrior(infoArchiveLoadFile(storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cipherSpec)) ||
+                    infoBackupCipherPrior(infoBackupLoadFile(storageRepo, INFO_BACKUP_PATH_FILE_STR, cipherSpec)))
+                {
+                    LOG_WARN_FMT(
+                        "option '%s' is set and the stanza has not been rekeyed\n"
+                        "HINT: run " CFGCMD_STANZA_REKEY " and then remove the option.",
+                        cfgOptionIdxName(cfgOptRepoCipherPassOld, repoIdx));
+                }
+                else
+                {
+                    LOG_WARN_FMT(
+                        "option '%s' is set and the stanza has been rekeyed\n"
+                        "HINT: remove the option.",
+                        cfgOptionIdxName(cfgOptRepoCipherPassOld, repoIdx));
+                }
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN void
 cmdCheck(void)
@@ -232,6 +271,7 @@ cmdCheck(void)
                 const unsigned int pgPathDefinedTotal = checkManifest();
                 checkStandby(dbGroup, pgPathDefinedTotal);
                 checkPrimary(dbGroup);
+                checkCipherPassOld();
             }
         }
     }

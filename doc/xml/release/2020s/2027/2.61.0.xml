@@ -79,6 +79,9 @@
                 <commit subject="Add cipherSpecMapEmpty()."/>
                 <commit subject="Move stanza passphrase checks to stanzaCipherPassCheck()."/>
                 <commit subject="Load archive.info and backup.info through infoLoadFile()."/>
+                <commit subject="Add stanza-rekey command to change the repository passphrase.">
+                    <github-pull-request id="2898"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>

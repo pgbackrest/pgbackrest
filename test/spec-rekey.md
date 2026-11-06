@@ -6,7 +6,7 @@
 
 - Rotate the archive key, which is the only bulk-data key that never rotates today.
 - Give each backup set one key covering both its manifests and its data files, rotating with every full backup.
-- Rotate the user passphrase without touching bulk data, when the user asks for it. Later commit.
+- Rotate the user passphrase without touching bulk data, when the user asks for it.
 
 ## Current State (Format 5)
 
@@ -96,10 +96,42 @@ cipher-pass={"1":{"key":"afg...","digest":"sha256"}, ...}
 - Backup used to resave `archive.info` at completion only to freshen its timestamp so object-store lifecycle settings do not remove it early. That resave moved to expire, which saves `archive.info` on every run that is not a dry run, so backup no longer writes `archive.info`. With `expire-auto` disabled the timestamp is freshened only when expire is run separately.
 - With directly-reached storage (object stores, shared NFS) and writers invoked from several hosts there is no common lock point. This predates this work and applies to backup and expire today. The documented practice remains to run backup and expire against a given repo from one place.
 
-## Later Commits
+## Passphrase Rekey
 
-- User passphrase rotation. `repo-cipher-pass` wraps only the info files, so rotating it rewrites four small objects (`backup.info`, `archive.info`, and their copies) and never touches bulk data. The plan is a config-first flow: set `repo-cipher-pass` to the new passphrase and `repo-cipher-pass-old` to the old one, then run a command that converges each info file. Every command retries an info file load with the old passphrase and warns when the fallback is used, so config can be updated across hosts non-atomically.
-- A `stanza-rekey` command to drive that convergence and to force an archive key rotation on demand. It is repo-only by design, with no cluster access, so keys can be rotated during incident response with the cluster down or unreachable. That is why it is not a flag on `stanza-upgrade`, which requires cluster access for `pgValidate()`.
+- `repo-cipher-pass` encrypts only `archive.info`, `backup.info`, and their copies. Every other file is encrypted with a key stored in one of them, so changing the passphrase rewrites four small files and never touches bulk data.
+- `repo-cipher-pass` always holds the new passphrase. A new secure, repo-indexed option `repo-cipher-pass-old` holds the previous one. Secure options cannot be given on the command line, so both come from the config file or the environment. The end state is the normal config, so finishing is removing `repo-cipher-pass-old`. A `-new` option would need a second config edit on every host to swap the values.
+- The procedure is: set `repo-cipher-pass` to the new passphrase and `repo-cipher-pass-old` to the old one on every host where `repo-cipher-pass` is configured, run `stanza-rekey` once, then remove `repo-cipher-pass-old` from those hosts. A host with no encryption settings gets both options from the repository host when the remote starts.
+
+### Fallback to the old passphrase
+
+- When `repo-cipher-pass-old` is set, an info file load that fails to decrypt or checksum with `repo-cipher-pass` is retried with `repo-cipher-pass-old`. A save uses the passphrase that decrypted the file and only `stanza-rekey` changes it, so `stanza-rekey` is the only cutover.
+- The retry is logged at debug level. The info load can run remotely, and a warning on stdout would corrupt the output of `info --output=json` and `repo-get`. Instead `check` warns while `repo-cipher-pass-old` is set. It loads the info files to report whether the stanza has been rekeyed, with a hint to run `stanza-rekey` and then remove the option or only to remove the option.
+- Without the fallback, archiving would have to be stopped on every host while the repository is rekeyed and the config is updated. A failing archive-push fills `pg_wal` and a failing archive-get stalls standbys.
+- The old spec is attached to the main spec by `cfgCipherSpecMainIdx()`, so the info file call sites are unchanged and only the info load retries.
+- A command that saves an info file with the fallback in effect keeps the old passphrase. Backup saves both info files on completion, so using the new passphrase here would lock out a host that has not been updated. Hosts can be updated at any pace and the config can be reverted any time before the rekey.
+- `stanza-upgrade` to format 6 before the rekey writes format 6 info files with the old passphrase, which `stanzaCipherPassCheck()` does not check. `stanza-rekey` replaces it and checks the new passphrase.
+- A full backup before the rekey stores its key in an info file encrypted with the old passphrase and the rekey does not replace that key. After an exposure the next full backup after the rekey replaces it.
+- `verify` reads the info files itself rather than through the info load, so it retries with the prior spec in `verifyInfoFile()` and reports a file read that way at detail level. When both reads fail it reports the error from `repo-cipher-pass`.
+- `repo-get` reads an info file directly and does not fall back. Until the stanza is rekeyed, it can read an info file only when `repo-cipher-pass` is the passphrase it was encrypted with.
+- Nothing helps a host that has only the old passphrase in `repo-cipher-pass` once the stanza is rekeyed: every command on it fails. The documented procedure is to set both options on every host where `repo-cipher-pass` is configured before running `stanza-rekey`.
+- `stanza-rekey` and `repo-cipher-pass-old` are internal until format 6 is released, like `repo-format` and `repo-cipher-rotate`.
+
+### stanza-rekey
+
+- Repo-only by design, with no cluster access, so the passphrase can be changed during incident response with the cluster down or unreachable. That is why it is not a flag on `stanza-upgrade`, which requires cluster access for `pgValidate()`.
+- Locks like `stanza-upgrade`: lock type all with the remote lock required.
+- Loads each info file with either passphrase and saves it and its copy with `repo-cipher-pass`, so running it again after a crash converges.
+- Checks the new passphrase like `stanza-create`: the documentation example prefix is rejected at every format and `cipherPassGenerated()` applies at format >= 6. The new passphrase must differ from the old one.
+- Rekeys at every format. Enabling encryption is a different operation, so unencrypted repositories are skipped.
+- Rekeys each encrypted repository with `repo-cipher-pass-old` set and rotates the archive key of each encrypted repository. `--repo` limits it to one. It errors when no repository is encrypted.
+- The format of `archive.info` decides the passphrase checks and whether the archive key can rotate. `stanza-upgrade` saves `archive.info` first, so it is never at a lower format than `backup.info`.
+
+### Key rotation on rekey
+
+- `stanza-rekey` always rotates the archive key: a new key is appended and made current, the same as the scheduled rotation at expire. Without `repo-cipher-pass-old` it only rotates the archive key. Each run adds one key, including a run that repeats after a crash.
+- At format 5 there is only one archive key, so rotation is skipped. A run without `repo-cipher-pass-old` has nothing to do and warns.
+- A backup set key rotates with the next full backup, since keys are found by the label of the full. The id 0 key of a migrated stanza cannot change without rewriting the manifests that use it and remains until they expire.
+- Retired keys stay in the maps so existing data stays readable. When the old passphrase and the repository were both exposed, rotation protects only data written afterwards.
 
 ## Documentation Plan
 
