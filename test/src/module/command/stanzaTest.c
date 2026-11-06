@@ -1696,6 +1696,13 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepo, "3");
         HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
 
+        // Save archive.info with the new passphrase and leave backup.info with the old passphrase
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(
+                infoArchiveLoadFile(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2)), storageRepoIdxWrite(2),
+                INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2)),
+            "save archive info with new passphrase");
+
         TEST_RESULT_VOID(cmdStanzaRekey(), "stanza rekey");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-rekey for stanza 'db' on repo3\n"
