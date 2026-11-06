@@ -46,7 +46,7 @@ storageReadSftpOpen(THIS_VOID)
 
     // Retry the open once if the connection was lost (e.g. the server dropped an idle connection) and reopened successfully
     unsigned int retry = 0;
-    int connErrno;
+    int connErrno = LIBSSH2_ERROR_NONE;
 
     do
     {
