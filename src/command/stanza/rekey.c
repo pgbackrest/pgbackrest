@@ -71,7 +71,7 @@ cmdStanzaRekey(void)
             InfoArchive *const infoArchive = infoArchiveLoadFile(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain);
             InfoBackup *const infoBackup = infoBackupLoadFile(storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cipherSpecMain);
 
-            // Format of the repository. stanza-upgrade saves archive.info before backup.info.
+            // Format of the repository
             const unsigned int format = infoArchiveFormat(infoArchive);
 
             // Warn when there is nothing to do. Format < 6 has a single archive key that cannot be rotated.
