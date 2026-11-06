@@ -598,6 +598,7 @@ typedef enum
     cfgOptRepoGcsEndpoint,
     cfgOptRepoGcsKey,
     cfgOptRepoGcsKeyType,
+    cfgOptRepoGcsKmsKeyName,
     cfgOptRepoGcsUserProject,
     cfgOptRepoHardlink,
     cfgOptRepoHost,

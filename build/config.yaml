@@ -2386,6 +2386,10 @@ option:
         - token
         - web-id
 
+  repo-gcs-kms-key-name:
+    inherit: repo-gcs-bucket
+    required: false
+
   repo-gcs-user-project:
     section: global
     type: string

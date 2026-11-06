@@ -149,7 +149,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *const this, const bool done)
         if (this->uploadId == NULL)
         {
             HttpResponse *response = storageGcsRequestP(
-                this->storage, HTTP_VERB_POST_STR, .upload = true, .tag = this->tag, .query = query);
+                this->storage, HTTP_VERB_POST_STR, .upload = true, .tag = this->tag, .kms = true, .query = query);
 
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
@@ -287,7 +287,8 @@ storageWriteGcsClose(THIS_VOID)
                 storageWriteGcsVerify(
                     this,
                     storageGcsRequestP(
-                        this->storage, HTTP_VERB_POST_STR, .upload = true, .query = query, .content = this->chunkBuffer));
+                        this->storage, HTTP_VERB_POST_STR, .upload = true, .kms = true, .query = query,
+                        .content = this->chunkBuffer));
             }
 
             bufFree(this->chunkBuffer);

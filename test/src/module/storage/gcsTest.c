@@ -24,6 +24,9 @@ STRING_STATIC(TEST_BUCKET_STR,                                      TEST_BUCKET)
 STRING_STATIC(TEST_KEY_FILE_STR,                                    TEST_KEY_FILE);
 #define TEST_TOKEN                                                  "X X"
 STRING_STATIC(TEST_TOKEN_STR,                                       TEST_TOKEN);
+#define TEST_KMS_KEY_NAME                                           "projects/p/locations/us-east1/keyRings/ring/cryptoKeys/key"
+#define TEST_KMS_KEY_QUERY                                          "kmsKeyName=projects%2Fp%2Flocations%2Fus-east1%2FkeyRings%2F" \
+                                                                    "ring%2FcryptoKeys%2Fkey"
 
 // {uncrustify_off - comment inside string}
 #define TEST_KEY                                                                                                                   \
@@ -402,7 +405,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), false, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL, 1, 0)),
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL, NULL, 1, 0)),
             "read-only gcs storage - service key");
         TEST_RESULT_STR_Z(httpUrlHost(storage->authUrl), "test.com", "check host");
         TEST_RESULT_STR_Z(httpUrlPath(storage->authUrl), "/token", "check path");
@@ -427,7 +430,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), true, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL, 1, 0)),
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL, NULL, 1, 0)),
             "read/write gcs storage - service key");
 
         TEST_RESULT_STR_Z(
@@ -1590,6 +1593,134 @@ testRun(void)
 
                 TEST_RESULT_BOOL(
                     storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("configure a repository KMS key");
+
+                hrnServerScriptClose(service);
+
+                StringList *argListKms = strLstDup(argListUserProject);
+                hrnCfgArgRawZ(argListKms, cfgOptRepoGcsKmsKeyName, TEST_KMS_KEY_NAME);
+                hrnCfgArgKeyRawStrId(argListKms, cfgOptRepoType, 2, STORAGE_GCS_TYPE);
+                hrnCfgArgKeyRawZ(argListKms, cfgOptRepoPath, 2, "/repo2");
+                hrnCfgArgKeyRawZ(argListKms, cfgOptRepoGcsBucket, 2, TEST_BUCKET);
+                hrnCfgArgKeyRawZ(argListKms, cfgOptRepoGcsKeyType, 2, "token");
+                hrnCfgEnvKeyRawZ(cfgOptRepoGcsKey, 2, TEST_TOKEN);
+                hrnCfgArgKeyRawFmt(argListKms, cfgOptRepoGcsEndpoint, 2, "https://%s:%u", strZ(hrnServerHost()), testPort);
+                hrnCfgArgKeyRawBool(argListKms, cfgOptRepoStorageVerifyTls, 2, TEST_IN_CONTAINER);
+                hrnCfgArgKeyRawZ(argListKms, cfgOptRepoGcsKmsKeyName, 2, TEST_KMS_KEY_NAME "2");
+                hrnCfgArgKeyRawZ(argListKms, cfgOptRepoRetentionFull, 2, "1");
+                HRN_CFG_LOAD(cfgCmdExpire, argListKms);
+                hrnCfgEnvKeyRemoveRaw(cfgOptRepoGcsKey, 2);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+                ((StorageGcs *)storageDriver(storage))->chunkSize = TEST_CHUNK_SIZE;
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write with a KMS key and retry");
+
+                testRequestP(
+                    service, HTTP_VERB_POST, .upload = true,
+                    .query = "fields=md5Hash%2Csize&" TEST_KMS_KEY_QUERY "&name=file.txt&uploadType=media&userProject=usrprj",
+                    .content = "ABCD");
+                testResponseP(service, .code = 503);
+                testRequestP(
+                    service, HTTP_VERB_POST, .upload = true,
+                    .query = "fields=md5Hash%2Csize&" TEST_KMS_KEY_QUERY "&name=file.txt&uploadType=media&userProject=usrprj",
+                    .content = "ABCD");
+                testResponseP(service, .content = "{\"md5Hash\":\"ywjKSnu1+Wg8GRM6hIcspw==\",\"size\":\"4\"}");
+
+                TEST_RESULT_VOID(storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), BUFSTRDEF("ABCD")), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write zero-length file with a KMS key");
+
+                testRequestP(
+                    service, HTTP_VERB_POST, .upload = true,
+                    .query = "fields=md5Hash%2Csize&" TEST_KMS_KEY_QUERY "&name=file.txt&uploadType=media&userProject=usrprj");
+                testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"0\"}");
+
+                TEST_RESULT_VOID(storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), NULL), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write chunks with a KMS key and tags");
+
+                testRequestP(
+                    service, HTTP_VERB_POST, .upload = true,
+                    .query = TEST_KMS_KEY_QUERY "&name=file.txt&uploadType=resumable&userProject=usrprj",
+                    .contentType = "application/json", .content = "{\"metadata\":{\" Key 2\":\" Value 2\",\"Key1\":\"Value1\"}}");
+                testResponseP(service, .header = "x-guploader-uploadid:ulid4");
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid4&userProject=usrprj",
+                    .contentRange = "0-15/*", .content = "1234567890123456");
+                testResponseP(service, .code = 308);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid4&userProject=usrprj",
+                    .contentRange = "16-19/20", .content = "7890");
+                testResponseP(service, .content = "{\"md5Hash\":\"/YXmLZvrRUKHcexohBiycQ==\",\"size\":\"20\"}");
+
+                ((StorageGcs *)storageDriver(storage))->tag = tag;
+                TEST_RESULT_VOID(
+                    storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), BUFSTRDEF("12345678901234567890")), "write");
+                ((StorageGcs *)storageDriver(storage))->tag = NULL;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("KMS key errors do not fall back to default encryption");
+
+                for (unsigned int uploadIdx = 0; uploadIdx < 2; uploadIdx++)
+                {
+                    const String *const query = strNewFmt(
+                        "%s%s&name=file.txt&uploadType=%s&userProject=usrprj",
+                        uploadIdx == 0 ? "fields=md5Hash%2Csize&" : "", TEST_KMS_KEY_QUERY,
+                        uploadIdx == 0 ? "media" : "resumable");
+
+                    testRequestP(
+                        service, HTTP_VERB_POST, .upload = true, .query = strZ(query), .content = uploadIdx == 0 ? "ABCD" : NULL);
+                    testResponseP(service, .code = 403);
+
+                    TEST_ERROR_FMT(
+                        storagePutP(
+                            storageNewWriteP(storage, STRDEF("file.txt")),
+                            uploadIdx == 0 ? BUFSTRDEF("ABCD") : BUFSTRDEF("12345678901234567890")),
+                        ProtocolError,
+                        "HTTP request failed with 403 (Forbidden):\n"
+                        "*** Path/Query ***:\n"
+                        "POST /upload/storage/v1/b/bucket/o?%s\n"
+                        "*** Request Headers ***:\n"
+                        "authorization: <redacted>\n"
+                        "content-length: %u\n"
+                        "host: %s",
+                        strZ(query), uploadIdx == 0 ? 4U : 0U, strZ(hrnServerHost()));
+                }
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("reads omit the configured KMS key");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media&userProject=usrprj");
+                testResponseP(service, .content = "ABCD");
+
+                TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "ABCD", "read");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("second repository uses its own KMS key");
+
+                hrnServerScriptClose(service);
+                TEST_ASSIGN(storage, storageRepoGet(1, true), "get second repo storage");
+                hrnServerScriptAccept(service);
+
+                testRequestP(
+                    service, HTTP_VERB_POST, .upload = true,
+                    .query = "fields=md5Hash%2Csize&" TEST_KMS_KEY_QUERY "2&name=repo2%2Ffile.txt&uploadType=media",
+                    .content = "ABCD");
+                testResponseP(service, .content = "{\"md5Hash\":\"ywjKSnu1+Wg8GRM6hIcspw==\",\"size\":\"4\"}");
+
+                TEST_RESULT_VOID(storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), BUFSTRDEF("ABCD")), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to target time");
