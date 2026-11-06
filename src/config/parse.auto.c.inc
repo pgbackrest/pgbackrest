@@ -11929,6 +11929,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ServerPing)                                                             // opt/tls-min-version
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                           // opt/tls-min-version
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                           // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                            // opt/tls-min-version
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                          // opt/tls-min-version
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/tls-min-version
         ),                                                                                                    // opt/tls-min-version
@@ -11964,6 +11965,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                // opt/tls-min-version
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                           // opt/tls-min-version
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                           // opt/tls-min-version
+            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                            // opt/tls-min-version
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                          // opt/tls-min-version
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                 // opt/tls-min-version
         ),                                                                                                    // opt/tls-min-version
