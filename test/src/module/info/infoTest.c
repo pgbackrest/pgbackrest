@@ -569,8 +569,5 @@ testRun(void)
         TEST_RESULT_PTR_NE(
             infoLoadFile(storageTest, STRDEF("test.info"), cipherSpecRekey, testInfoLoadFileNew), NULL, "load with old passphrase");
         TEST_RESULT_STR_Z(testInfoLoadFileContent, "[c] key=\"old\"\n", "old passphrase content");
-        TEST_RESULT_LOG(
-            "P00   WARN: '" TEST_PATH "/test.info' was decrypted with the old passphrase\n"
-            "            HINT: run stanza-rekey to encrypt it with the new passphrase.");
     }
 }

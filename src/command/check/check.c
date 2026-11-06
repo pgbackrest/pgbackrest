@@ -232,6 +232,18 @@ cmdCheck(void)
                 const unsigned int pgPathDefinedTotal = checkManifest();
                 checkStandby(dbGroup, pgPathDefinedTotal);
                 checkPrimary(dbGroup);
+
+                // Warn when the old passphrase is set
+                for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+                {
+                    if (cfgOptionIdxTest(cfgOptRepoCipherPassOld, repoIdx))
+                    {
+                        LOG_WARN_FMT(
+                            "option '%s' is set\n"
+                            "HINT: run " CFGCMD_STANZA_REKEY " and then remove the option.",
+                            cfgOptionIdxName(cfgOptRepoCipherPassOld, repoIdx));
+                    }
+                }
             }
         }
     }

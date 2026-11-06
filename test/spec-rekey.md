@@ -104,7 +104,8 @@ cipher-pass={"1":{"key":"afg...","digest":"sha256"}, ...}
 
 ### Fallback to the old passphrase
 
-- When `repo-cipher-pass-old` is set, an info file load that fails to decrypt or checksum with `repo-cipher-pass` is retried with `repo-cipher-pass-old`, and a warning with a hint to run `stanza-rekey` is logged. Saves always use `repo-cipher-pass`.
+- When `repo-cipher-pass-old` is set, an info file load that fails to decrypt or checksum with `repo-cipher-pass` is retried with `repo-cipher-pass-old`. Saves always use `repo-cipher-pass`.
+- The retry is logged at debug level. The info load can run remotely, and a warning on stdout would corrupt the output of `info --output=json` and `repo-get`. Instead `check` warns while `repo-cipher-pass-old` is set, with a hint to run `stanza-rekey` and then remove the option. `check` tests the option rather than the files, so it also reports an option left set after the rekey.
 - Without the fallback, archiving would have to be stopped on every host while the repository is rekeyed and the config is updated. A failing archive-push fills `pg_wal` and a failing archive-get stalls standbys.
 - The old spec is attached to the main spec by `cfgCipherSpecMainIdx()`, so the info file call sites are unchanged and only the info load retries.
 - Any command that saves an info file with the fallback in effect rekeys that file. This is harmless since loads accept both passphrases.
@@ -117,7 +118,7 @@ cipher-pass={"1":{"key":"afg...","digest":"sha256"}, ...}
 
 - Repo-only by design, with no cluster access, so the passphrase can be changed during incident response with the cluster down or unreachable. That is why it is not a flag on `stanza-upgrade`, which requires cluster access for `pgValidate()`.
 - Locks like `stanza-upgrade`: lock type all with the remote lock required.
-- Loads each info file with either passphrase and saves it and its copy with `repo-cipher-pass`, so running it again after a crash converges. It loads with `repo-cipher-pass` and then `repo-cipher-pass-old` itself rather than through the fallback, so it does not log the fallback warning.
+- Loads each info file with either passphrase and saves it and its copy with `repo-cipher-pass`, so running it again after a crash converges.
 - Checks the new passphrase like `stanza-create`: the documentation example prefix is rejected at every format and `cipherPassGenerated()` applies at format >= 6. The new passphrase must differ from the old one.
 - Rekeys at every format. Enabling encryption is a different operation, so unencrypted repositories are skipped.
 - Rekeys each encrypted repository with `repo-cipher-pass-old` set and rotates the archive key of each encrypted repository. `--repo` limits it to one. It errors when no repository is encrypted.

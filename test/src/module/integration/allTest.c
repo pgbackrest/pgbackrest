@@ -244,9 +244,9 @@ testRun(void)
                 .cipherSpec = cipherSpecNewP(
                     cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_REKEY), .prior = hrnHostCipherSpec()));
 
-            // Info files are decrypted with the old passphrase from the repository host
+            // Info files are decrypted with the old passphrase from the repository host and check warns
             TEST_RESULT_BOOL(
-                strstr(strZ(hrnHostExecBrP(pg1, CFGCMD_CHECK)), "was decrypted with the old passphrase") != NULL, true,
+                strstr(strZ(hrnHostExecBrP(pg1, CFGCMD_CHECK)), "option 'repo1-cipher-pass-old' is set") != NULL, true,
                 "check with old passphrase");
 
             // Rekey and remove the old passphrase
@@ -254,9 +254,9 @@ testRun(void)
 
             hrnHostConfigUpdateP(.cipherSpec = cipherSpecRekey);
 
-            // Info files are decrypted with the new passphrase
+            // Info files are decrypted with the new passphrase and check does not warn
             TEST_RESULT_BOOL(
-                strstr(strZ(hrnHostExecBrP(pg1, CFGCMD_CHECK)), "was decrypted with the old passphrase") == NULL, true,
+                strstr(strZ(hrnHostExecBrP(pg1, CFGCMD_CHECK)), "option 'repo1-cipher-pass-old' is set") == NULL, true,
                 "check with new passphrase");
             TEST_RESULT_VOID(
                 infoArchiveLoadFile(hrnHostRepo1Storage(repo), STRDEF("archive/" HRN_STANZA "/archive.info"), cipherSpecRekey),

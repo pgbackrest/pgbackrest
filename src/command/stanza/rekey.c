@@ -17,69 +17,6 @@ Stanza Rekey Command
 #include "info/infoBackup.h"
 #include "storage/helper.h"
 
-/***********************************************************************************************************************************
-Load an info file with the passphrase, else with the old passphrase
-***********************************************************************************************************************************/
-static InfoArchive *
-stanzaRekeyInfoArchiveLoad(const Storage *const storage, const CipherSpec *const cipherSpec, const CipherSpec *const cipherSpecOld)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecOld);
-    FUNCTION_LOG_END();
-
-    ASSERT(storage != NULL);
-    ASSERT(cipherSpec != NULL);
-
-    InfoArchive *result = NULL;
-
-    TRY_BEGIN()
-    {
-        result = infoArchiveLoadFile(storage, INFO_ARCHIVE_PATH_FILE_STR, cipherSpec);
-    }
-    CATCH_ANY()
-    {
-        if (cipherSpecOld == NULL)
-            RETHROW();
-
-        result = infoArchiveLoadFile(storage, INFO_ARCHIVE_PATH_FILE_STR, cipherSpecOld);
-    }
-    TRY_END();
-
-    FUNCTION_LOG_RETURN(INFO_ARCHIVE, result);
-}
-
-static InfoBackup *
-stanzaRekeyInfoBackupLoad(const Storage *const storage, const CipherSpec *const cipherSpec, const CipherSpec *const cipherSpecOld)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecOld);
-    FUNCTION_LOG_END();
-
-    ASSERT(storage != NULL);
-    ASSERT(cipherSpec != NULL);
-
-    InfoBackup *result = NULL;
-
-    TRY_BEGIN()
-    {
-        result = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cipherSpec);
-    }
-    CATCH_ANY()
-    {
-        if (cipherSpecOld == NULL)
-            RETHROW();
-
-        result = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cipherSpecOld);
-    }
-    TRY_END();
-
-    FUNCTION_LOG_RETURN(INFO_BACKUP, result);
-}
-
 /**********************************************************************************************************************************/
 FN_EXTERN void
 cmdStanzaRekey(void)
@@ -128,14 +65,11 @@ cmdStanzaRekey(void)
                     cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx), cfgOptionIdxName(cfgOptRepoCipherPassOld, repoIdx));
             }
 
-            // Load the info files (errors if missing). The passphrase is loaded without the old passphrase attached.
+            // Load the info files (errors if missing)
             const CipherSpec *const cipherSpecMain = cfgCipherSpecMainIdx(repoIdx);
-            const CipherSpec *const cipherSpec = cipherSpecNewP(cipherType, cipherSpecPass(cipherSpecMain));
 
-            InfoArchive *const infoArchive = stanzaRekeyInfoArchiveLoad(
-                storageRepoReadStanza, cipherSpec, cipherSpecPrior(cipherSpecMain));
-            InfoBackup *const infoBackup = stanzaRekeyInfoBackupLoad(
-                storageRepoReadStanza, cipherSpec, cipherSpecPrior(cipherSpecMain));
+            InfoArchive *const infoArchive = infoArchiveLoadFile(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain);
+            InfoBackup *const infoBackup = infoBackupLoadFile(storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cipherSpecMain);
 
             // Format of the repository. stanza-upgrade saves archive.info before backup.info.
             const unsigned int format = infoArchiveFormat(infoArchive);

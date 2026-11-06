@@ -803,14 +803,9 @@ infoLoadFileCallback(void *const data, const unsigned int try)
             }
             MEM_CONTEXT_END();
 
-            // Warn when the file was decrypted with the prior cipher spec
+            // Log when the file was decrypted with the prior cipher spec
             if (try >= 2)
-            {
-                LOG_WARN_FMT(
-                    "'%s' was decrypted with the old passphrase\n"
-                    "HINT: run stanza-rekey to encrypt it with the new passphrase.",
-                    strZ(storagePathP(loadData->storage, fileName)));
-            }
+                LOG_DEBUG_FMT("'%s' was decrypted with the old passphrase", strZ(storagePathP(loadData->storage, fileName)));
         }
         MEM_CONTEXT_TEMP_END();
     }
