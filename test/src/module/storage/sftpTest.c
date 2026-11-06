@@ -46,8 +46,8 @@ testRun(void)
     // Install shim to manage true/false return for fdReady
     hrnFdReadyShimInstall();
 
-    // Use a home directory in the test path so the home directory of the user running the test is not modified. Initialize user
-    // info first so userInit() does not overwrite the home directory later.
+    // Use a home directory in the test path to avoid modifying the home directory of the user running the test. Call userInit()
+    // first to prevent it from overwriting the home directory.
     userInit();
     userLocalData.userHome = STRDEF(HRN_LIBSSH2_USER_HOME);
 
