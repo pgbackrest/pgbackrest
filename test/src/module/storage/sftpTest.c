@@ -1971,6 +1971,11 @@ testRun(void)
             HRN_LIBSSH2_OPENDIR(TEST_PATH "/BOGUS", .resultNull = true, .resultInt = LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING),
+            // The session is reopened but the retried open also times out
+            HRNLIBSSH2_MACRO_RECONNECT(),
+            HRN_LIBSSH2_OPENDIR(TEST_PATH "/BOGUS", .resultNull = true, .resultInt = LIBSSH2_ERROR_EAGAIN),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN));
 
         TEST_ERROR_FMT(
@@ -2529,9 +2534,14 @@ testRun(void)
         TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("read missing - EAGAIN timeout");
+        TEST_TITLE("read open - timeout before and after reconnect");
 
         HRN_LIBSSH2_SCRIPT_SET(
+            // First open times out in libssh2
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_TIMEOUT),
+            // The session is reopened but the retried open times out waiting on the socket
+            HRNLIBSSH2_MACRO_RECONNECT(),
             HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_WRITING),
@@ -2865,6 +2875,12 @@ testRun(void)
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
+            // The session is reopened but the retried open also times out
+            HRNLIBSSH2_MACRO_RECONNECT(),
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/noperm/noperm", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN));
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = false), "new write file");
@@ -3179,6 +3195,13 @@ testRun(void)
                 TEST_PATH "/sub1/testfile.pgbackrest.tmp", .resultNull = true, .resultInt = LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING),
+            // The session is reopened but the retried open also times out
+            HRNLIBSSH2_MACRO_RECONNECT(),
+            HRN_LIBSSH2_OPEN_WRITE(
+                TEST_PATH "/sub1/testfile.pgbackrest.tmp", .resultNull = true, .resultInt = LIBSSH2_ERROR_EAGAIN),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN));
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noSyncFile = true), "storageWriteSftpOpen timeout EAGAIN");
@@ -3257,8 +3280,11 @@ testRun(void)
             // Permission denied
             HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/noperm/noperm", .resultNull = true),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
-            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING),
+            HRN_LIBSSH2_BLOCK(),
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/noperm/noperm", .resultNull = true, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_PERMISSION_DENIED),
             HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_PERMISSION_DENIED),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
             HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_PERMISSION_DENIED),
