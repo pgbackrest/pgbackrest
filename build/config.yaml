@@ -966,6 +966,16 @@ option:
   tls-cipher-13:
     inherit: tls-cipher-12
 
+  # TLS minimum version
+  tls-min-version:
+    section: global
+    type: string
+    default: 1.2
+    allow-list:
+      - 1.2
+      - 1.3
+    command: buffer-size
+
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------
   log-level-console:

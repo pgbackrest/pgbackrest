@@ -1,5 +1,66 @@
 <release date="XXXX-XX-XX" version="2.61.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2889"/>
+                <github-pull-request id="2900"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix reporting of <proper>OpenSSL</proper> errors.</p>
+
+                <p>An error queued by the <proper>OpenSSL</proper> config or left over from an earlier failure could be reported instead of the actual failure, e.g. <quote>ssl command section not found</quote> for an invalid <br-option>tls-cipher-12</br-option> value. System errors such as a missing CA file reported <quote>no details available</quote> with <proper>OpenSSL</proper> &gt;= 3.0 and now report the system error message.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2889"/>
+                <github-pull-request id="2899"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Do not lower a minimum TLS version set by the <proper>OpenSSL</proper> config.</p>
+
+                <p>The minimum TLS version was set to 1.2 after the <proper>OpenSSL</proper> config was applied. This lowered a higher minimum such as <code>MinProtocol = TLSv1.3</code> so TLS 1.2 connections were still allowed. The minimum is now set only when the minimum from the config is lower than TLS 1.2.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2884"/>
+                <github-pull-request id="2902"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="fineline19"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix possible block incremental restore failure on <proper>SFTP</proper> storage.</p>
+
+                <p>Each super block read left a file open on the server until the session ended. A restore could reach the open file limit of the server and fail with an error such as <quote>sftp errno [4]</quote> or <quote>client state is 'response' but expected 'idle'</quote>. Super block reads are now closed before they are freed.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2884"/>
+                <github-pull-request id="2903"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix use of <proper>SFTP</proper> file handles after a reconnect.</p>
+
+                <p>A reconnect freed the session while other files could still be open on it and the next read or write of one of those files used freed memory. These now fail with <quote>connection was lost</quote>, which allows the job to be retried.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-feature-list>
             <release-item>
                 <commit subject="Use 256-bit subkeys for repository format 6.">
@@ -27,6 +88,23 @@
                 </release-item-contributor-list>
 
                 <p>Repository encryption key rotation.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2889"/>
+                <github-pull-request id="2901"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="gunnar.bluth"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="gunnar.bluth"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>tls-min-version</br-option> option.</p>
+
+                <p>Set <br-option>tls-min-version=1.3</br-option> to allow only TLS 1.3, e.g. for compliance. The default is <id>1.2</id>. A higher minimum set in the <proper>OpenSSL</proper> config is not lowered. The option is ignored for repository storage connections when <br-option>repo-storage-verify-tls=n</br-option>.</p>
             </release-item>
         </release-feature-list>
 

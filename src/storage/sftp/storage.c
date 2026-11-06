@@ -37,6 +37,7 @@ struct StorageSftp
     IoSession *ioSession;                                           // IoSession (socket) connection to SFTP server
     LIBSSH2_SESSION *session;                                       // LibSsh2 session
     LIBSSH2_SFTP *sftpSession;                                      // LibSsh2 session sftp session
+    unsigned int connId;                                            // Connection id, incremented when the session is freed
     TimeMSec timeout;                                               // Session timeout
 
     // Connection parameters retained so the session can be reopened after the server drops an idle connection
@@ -1189,6 +1190,18 @@ storageSftpSessionSftp(StorageSftp *const this)
     FUNCTION_TEST_RETURN_TYPE_P(LIBSSH2_SFTP, this->sftpSession);
 }
 
+FN_EXTERN unsigned int
+storageSftpConnId(StorageSftp *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_SFTP, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(UINT, this->connId);
+}
+
 /***********************************************************************************************************************************
 Is the libssh2 error a sign that the connection to the server has been lost? Socket-level errors always mean the connection is gone.
 LIBSSH2_ERROR_SOCKET_SEND is intentionally excluded since a failed send is ambiguous (and is used throughout the unit tests as a
@@ -1261,6 +1274,7 @@ storageSftpConnFree(StorageSftp *const this)
 
     this->session = NULL;
     this->sftpSession = NULL;
+    this->connId++;
 
     // Free the socket session, which closes the file descriptor
     ioSessionFree(this->ioSession);
