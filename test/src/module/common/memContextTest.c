@@ -354,6 +354,9 @@ testRun(void)
         TEST_RESULT_BOOL(largeOther == large, false, "different size allocated fresh");
         TEST_RESULT_VOID(memFree(largeOther), "free different size");
         TEST_RESULT_UINT(memFreeList.bucketListSize, 2, "second bucket created");
+        TEST_RESULT_UINT(memFreeList.bucket[1].blockListSize, 0, "first block of a new size is not retained");
+        TEST_RESULT_VOID(memFree(memNew(128 * 1024)), "free a second block of the same size");
+        TEST_RESULT_UINT(memFreeList.bucket[1].blockListSize, 1, "second block is retained");
 
         // Freeing more same-size blocks than the per-bucket limit returns the extra to the allocator
         void *fill[MEM_FREE_LIST_BLOCK_MAX + 1];
@@ -390,12 +393,13 @@ testRun(void)
         TEST_RESULT_VOID(memFree(memNew(1024 * 1024)), "new size evicts a bucket");
         TEST_RESULT_UINT(memFreeList.bucket[1].size, sizeof(MemContextAlloc) + 1024 * 1024, "evicted slot reused for new size");
         TEST_RESULT_UINT(memFreeList.bucketListSize, MEM_FREE_LIST_SIZE_MAX, "bucket count unchanged");
+        TEST_RESULT_UINT(memFreeList.bucket[1].blockListSize, 0, "first block of a replacement size is not retained");
         TEST_RESULT_UINT(memFreeList.bucket[2].reuse, 0, "reuse of remaining bucket decremented");
 
         // The bucket that was just cached has a higher count than the eroded buckets so the next new size evicts a different
         // bucket rather than stealing the slot back, which would leave the two sizes trading the same slot and never settling
         TEST_RESULT_VOID(memFree(memNew(2 * 1024 * 1024)), "another new size evicts a different bucket");
-        TEST_RESULT_UINT(memFreeList.bucket[1].size, sizeof(MemContextAlloc) + 1024 * 1024, "just cached bucket survives");
+        TEST_RESULT_UINT(memFreeList.bucket[1].size, sizeof(MemContextAlloc) + 1024 * 1024, "just assigned bucket survives");
         TEST_RESULT_UINT(
             memFreeList.bucket[2].size, sizeof(MemContextAlloc) + 2 * 1024 * 1024, "next slot reused for new size");
 

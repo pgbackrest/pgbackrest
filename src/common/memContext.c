@@ -600,6 +600,18 @@ memFreeReuse(MemContextAlloc *const alloc)
             }
         }
 
+        // Retain the block only if the size already has a bucket with room
+        if (bucket != NULL && bucket->blockListSize < MEM_FREE_LIST_BLOCK_MAX)
+        {
+            bucket->block[bucket->blockListSize++] = alloc;
+            memFreeList.size += size;
+
+            // Poison so use-after-free is still detected while the block is retained
+            VALGRIND_MAKE_MEM_NOACCESS(alloc, size);
+
+            FUNCTION_TEST_RETURN_VOID();
+        }
+
         // Create a bucket for this size if there is none and there is room for one. The reuse starts at one so a new bucket is not
         // evicted before it has had a chance to be reused, which would leave two sizes trading the same slot and never settling.
         if (bucket == NULL && memFreeList.bucketListSize < MEM_FREE_LIST_SIZE_MAX)
@@ -637,18 +649,6 @@ memFreeReuse(MemContextAlloc *const alloc)
             }
 
             *bucket = (MemFreeBucket){.size = (unsigned int)size, .reuse = 1};
-        }
-
-        // Retain the block if there is room in the bucket
-        if (bucket->blockListSize < MEM_FREE_LIST_BLOCK_MAX)
-        {
-            bucket->block[bucket->blockListSize++] = alloc;
-            memFreeList.size += size;
-
-            // Poison so use-after-free is still detected while the block is retained
-            VALGRIND_MAKE_MEM_NOACCESS(alloc, size);
-
-            FUNCTION_TEST_RETURN_VOID();
         }
     }
 
