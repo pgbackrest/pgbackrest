@@ -994,11 +994,11 @@ testRun(void)
 
         bufUsedSet(chunkInput, 8);
         TEST_RESULT_VOID(storageWriteChunkBufferResize(chunkInput, 0, chunkBuffer, 40), "resize on first write");
-        TEST_RESULT_UINT(bufSize(chunkBuffer), 16, "chunk buffer is double input buffer");
+        TEST_RESULT_UINT(bufSize(chunkBuffer), 40, "chunk buffer is sized to the max chunk size");
 
-        bufUsedSet(chunkBuffer, 16);
-        TEST_RESULT_VOID(storageWriteChunkBufferResize(chunkInput, 0, chunkBuffer, 16), "resize at max chunk size");
-        TEST_RESULT_UINT(bufSize(chunkBuffer), 16, "chunk buffer not resized");
+        bufUsedSet(chunkBuffer, 40);
+        TEST_RESULT_VOID(storageWriteChunkBufferResize(chunkInput, 0, chunkBuffer, 40), "resize at max chunk size");
+        TEST_RESULT_UINT(bufSize(chunkBuffer), 40, "chunk buffer not resized");
 
         Buffer *const chunkBufferSmall = bufNew(0);
 
