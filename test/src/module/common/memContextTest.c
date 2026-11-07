@@ -358,13 +358,13 @@ testRun(void)
         TEST_RESULT_VOID(memFree(memNew(128 * 1024)), "free a second block of the same size");
         TEST_RESULT_UINT(memFreeList.bucket[1].blockListSize, 1, "second block is retained");
 
-        // Freeing more same-size blocks than the per-bucket limit returns the extra to the allocator
-        void *fill[MEM_FREE_LIST_BLOCK_MAX + 1];
+        // The first free creates the bucket and the last free exceeds its block limit
+        void *fill[MEM_FREE_LIST_BLOCK_MAX + 2];
 
-        for (unsigned int fillIdx = 0; fillIdx <= MEM_FREE_LIST_BLOCK_MAX; fillIdx++)
+        for (unsigned int fillIdx = 0; fillIdx < LENGTH_OF(fill); fillIdx++)
             fill[fillIdx] = memNew(96 * 1024);
 
-        for (unsigned int fillIdx = 0; fillIdx <= MEM_FREE_LIST_BLOCK_MAX; fillIdx++)
+        for (unsigned int fillIdx = 0; fillIdx < LENGTH_OF(fill); fillIdx++)
             memFree(fill[fillIdx]);
 
         TEST_RESULT_UINT(memFreeList.bucket[2].blockListSize, MEM_FREE_LIST_BLOCK_MAX, "bucket holds at most the per-bucket limit");
