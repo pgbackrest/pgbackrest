@@ -126,7 +126,7 @@ FN_EXTERN StorageWrite *
 storageWriteNew(
     const Storage *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
     const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
-    const bool atomic, const bool truncate, const bool compressible)
+    const bool atomic, const bool truncate, const bool compressible, const bool tmp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -142,6 +142,7 @@ storageWriteNew(
         FUNCTION_LOG_PARAM(BOOL, atomic);
         FUNCTION_LOG_PARAM(BOOL, truncate);
         FUNCTION_LOG_PARAM(BOOL, compressible);
+        FUNCTION_LOG_PARAM(BOOL, tmp);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -156,7 +157,7 @@ storageWriteNew(
             .driver = storageInterfaceNewWriteP(
                 storageDriver(storage), name, .modeFile = modeFile, .modePath = modePath, .user = user, .group = group,
                 .timeModified = timeModified, .createPath = createPath, .syncFile = syncFile, .syncPath = syncPath,
-                .atomic = atomic, .truncate = truncate, .compressible = compressible),
+                .atomic = atomic, .truncate = truncate, .compressible = compressible, .tmp = tmp),
             .pub =
             {
                 .type = storageType(storage),

@@ -17,12 +17,13 @@ backupManifestSaveCopy(Manifest *const manifest, const CipherSpec *const cipherS
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Open file for write
+            // Open file for write. Checkpoint copies are tmp since they will be overwritten by the next save.
             IoWrite *const write = storageWriteIo(
                 storageNewWriteP(
                     storageRepoWrite(),
                     strNewFmt(
-                        STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestData(manifest)->backupLabel))));
+                        STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestData(manifest)->backupLabel)),
+                    .tmp = !final));
 
             // Add encryption filter if required
             cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherModeEncrypt, cipherSpecManifest);

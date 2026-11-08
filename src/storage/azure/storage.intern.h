@@ -44,6 +44,7 @@ typedef struct StorageAzureRequestAsyncParam
     const Buffer *content;                                          // Request content
     const List *contentList;                                        // Request content part list
     bool tag;                                                       // Add tags when available?
+    bool immutabilityPolicy;                                        // Add tmp immutability policy when configured?
 } StorageAzureRequestAsyncParam;
 
 #define storageAzureRequestAsyncP(this, verb, ...)                                                                                 \
@@ -75,6 +76,7 @@ typedef struct StorageAzureRequestParam
     bool allowMissing;                                              // Allow missing files (caller can check response code)
     bool contentIo;                                                 // Is IoRead interface required to read content?
     bool tag;                                                       // Add tags when available?
+    bool immutabilityPolicy;                                        // Add tmp immutability policy when configured?
 } StorageAzureRequestParam;
 
 #define storageAzureRequestP(this, verb, ...)                                                                                      \

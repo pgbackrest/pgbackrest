@@ -193,6 +193,11 @@ typedef struct StorageNewWriteParam
     bool noTruncate;
 
     bool compressible;
+
+    // The file is not intended to last longer than the current operation, e.g. a checkpoint that will be overwritten. Storage may
+    // treat the file differently, e.g. by applying a shorter retention.
+    bool tmp;
+
     mode_t modeFile;
     mode_t modePath;
     time_t timeModified;

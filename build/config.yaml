@@ -2280,6 +2280,19 @@ option:
         - gcs
         - s3
 
+  repo-storage-tmp-retention:
+    section: global
+    group: repo
+    type: time
+    required: false
+    allow-range: [1m, 36500d]
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - s3
+
   # Repository Azure storage options
   #---------------------------------------------------------------------------------------------------------------------------------
   repo-azure-account:
@@ -2334,6 +2347,19 @@ option:
     allow-list:
       - host
       - path
+    command: repo-type
+    depend: repo-azure-account
+
+  repo-azure-tmp-retention-mode:
+    section: global
+    group: repo
+    type: string-id
+    sequence: true
+    default: unlocked
+    # Keep synced with StorageAzureImmutabilityPolicyMode enum
+    allow-list:
+      - unlocked
+      - locked
     command: repo-type
     depend: repo-azure-account
 
@@ -2446,6 +2472,16 @@ option:
   repo-s3-kms-key-id:
     inherit: repo-s3-bucket
     required: false
+
+  repo-s3-tmp-retention-mode:
+    inherit: repo-s3-bucket
+    type: string-id
+    sequence: true
+    default: governance
+    # Keep synced with StorageS3ObjectLockMode enum
+    allow-list:
+      - governance
+      - compliance
 
   repo-s3-sse-customer-key:
     inherit: repo-s3-bucket

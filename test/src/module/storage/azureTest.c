@@ -37,6 +37,7 @@ typedef struct TestRequestParam
     const char *blobType;
     const char *range;
     const char *tag;
+    const char *immutabilityPolicyMode;
     bool multiPart;
 } TestRequestParam;
 
@@ -111,6 +112,13 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
     // Add blob type
     if (param.blobType != NULL)
         strCatFmt(request, "x-ms-blob-type:%s\r\n", param.blobType);
+
+    // Add immutability policy mode and until date
+    if (param.immutabilityPolicyMode != NULL)
+    {
+        strCatFmt(request, "x-ms-immutability-policy-mode:%s\r\n", param.immutabilityPolicyMode);
+        strCatZ(request, "x-ms-immutability-policy-until-date:???, ?? ??? ???? ??:??:?? GMT\r\n");
+    }
 
     // Add tags
     if (param.tag != NULL)
@@ -421,7 +429,7 @@ testRun(void)
                 storageAzureNew(
                     STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
                     TEST_KEY_SHARED_STR, 16, NULL, STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000,
-                    httpProtocolTypeHttps, true, NULL, NULL, 1, 0)),
+                    httpProtocolTypeHttps, true, NULL, NULL, 0, storageAzureImmutabilityPolicyModeUnlocked, 1, 0)),
             "new azure storage - shared key");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -464,7 +472,7 @@ testRun(void)
                 storageAzureNew(
                     STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeSas, TEST_KEY_SAS_STR,
                     16, NULL, STRDEF("blob.core.usgovcloudapi.net"), storageAzureUriStyleHost, 443, 1000, httpProtocolTypeHttps,
-                    true, NULL, NULL, 1, 0)),
+                    true, NULL, NULL, 0, storageAzureImmutabilityPolicyModeUnlocked, 1, 0)),
             "new azure storage - sas key");
 
         query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
@@ -520,6 +528,8 @@ testRun(void)
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
                 hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, "Key1=Value1");
                 hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, " Key 2= Value 2");
+                hrnCfgArgRawZ(argList, cfgOptRepoStorageTmpRetention, "1d");
+                hrnCfgArgRawZ(argList, cfgOptRepoAzureTmpRetentionMode, "locked");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 Storage *storage = NULL;
@@ -527,6 +537,12 @@ testRun(void)
 
                 driver = (StorageAzure *)storageDriver(storage);
                 TEST_RESULT_STR(driver->host, hrnServerHost(), "check host");
+                TEST_RESULT_UINT(driver->tmpRetention, 86400000, "check tmp retention");
+                TEST_RESULT_UINT(driver->tmpRetentionMode, storageAzureImmutabilityPolicyModeLocked, "check tmp retention mode");
+
+                // Tests expect the unlocked mode unless they set it
+                driver->tmpRetentionMode = storageAzureImmutabilityPolicyModeUnlocked;
+
                 TEST_RESULT_STR_Z(driver->pathPrefix, "/" TEST_ACCOUNT "/" TEST_CONTAINER, "check path prefix");
                 TEST_RESULT_BOOL(driver->fileId == 0, false, "check file id");
 
@@ -752,6 +768,63 @@ testRun(void)
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write tmp file in one part with unlocked immutability policy");
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1", .immutabilityPolicyMode = "unlocked");
+                testResponseP(service);
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt"), .tmp = true), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write tmp file without tmp retention");
+
+                driver->tmpRetention = 0;
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCD",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
+                testResponseP(service);
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt"), .tmp = true), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
+
+                driver->tmpRetention = 86400000;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write tmp file in chunks with locked immutability policy only on block list");
+
+                driver->tmpRetentionMode = storageAzureImmutabilityPolicyModeLocked;
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCCx0000000&comp=block", .content = "1234567890123456");
+                testResponseP(service);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCCx0000001&comp=block", .content = "7890123456789012");
+                testResponseP(service);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt?comp=blocklist",
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                        "<BlockList>"
+                        "<Uncommitted>0AAAAAAACCCCCCCCx0000000</Uncommitted>"
+                        "<Uncommitted>0AAAAAAACCCCCCCCx0000001</Uncommitted>"
+                        "</BlockList>\n",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1", .immutabilityPolicyMode = "locked");
+                testResponseP(service);
+
+                driver->fileId = 0x0AAAAAAACCCCCCCC;
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt"), .tmp = true), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
+
+                driver->tmpRetentionMode = storageAzureImmutabilityPolicyModeUnlocked;
 
                 // Stop writing tags
                 driver->tag = NULL;

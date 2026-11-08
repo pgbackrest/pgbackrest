@@ -34,6 +34,7 @@ struct StorageWriteRemote
     bool syncFile;                                                  // Sync file
     bool syncPath;                                                  // Sync path
     bool atomic;                                                    // Atomic write
+    bool tmp;                                                       // File will not last longer than the current operation
     bool compressible;                                              // Is this file compressible?
     unsigned int compressLevel;                                     // Level to use for compression
 
@@ -95,6 +96,7 @@ storageWriteRemoteOpen(THIS_VOID)
         pckWriteBoolP(param, this->syncFile);
         pckWriteBoolP(param, this->syncPath);
         pckWriteBoolP(param, this->atomic);
+        pckWriteBoolP(param, this->tmp);
         pckWritePackP(param, ioFilterGroupParamAll(this->filterGroup));
 
         protocolClientSessionOpenP(this->session, .param = param);
@@ -196,7 +198,8 @@ FN_EXTERN StorageWriteRemote *
 storageWriteRemoteNew(
     StorageRemote *const storage, ProtocolClient *const client, const String *const name, const mode_t modeFile,
     const mode_t modePath, const String *const user, const String *const group, const time_t timeModified, const bool createPath,
-    const bool syncFile, const bool syncPath, const bool atomic, const bool compressible, const unsigned int compressLevel)
+    const bool syncFile, const bool syncPath, const bool atomic, const bool tmp, const bool compressible,
+    const unsigned int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
@@ -210,6 +213,7 @@ storageWriteRemoteNew(
         FUNCTION_LOG_PARAM(BOOL, syncFile);
         FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
+        FUNCTION_LOG_PARAM(BOOL, tmp);
         FUNCTION_LOG_PARAM(BOOL, compressible);
         FUNCTION_LOG_PARAM(UINT, compressLevel);
     FUNCTION_LOG_END();
@@ -238,6 +242,7 @@ storageWriteRemoteNew(
             .syncFile = syncFile,
             .syncPath = syncPath,
             .atomic = atomic,
+            .tmp = tmp,
             .compressible = compressible,
             .compressLevel = compressLevel,
         };

@@ -32,13 +32,22 @@ typedef enum
 } StorageAzureUriStyle;
 
 /***********************************************************************************************************************************
+Immutability policy mode
+***********************************************************************************************************************************/
+typedef enum
+{
+    storageAzureImmutabilityPolicyModeUnlocked,                     // Retention can be shortened or removed
+    storageAzureImmutabilityPolicyModeLocked,                       // Retention cannot be shortened or removed
+} StorageAzureImmutabilityPolicyMode;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Storage *storageAzureNew(
     const String *path, bool write, time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *container, const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize,
     const KeyValue *tag, const String *endpoint, StorageAzureUriStyle uriStyle, unsigned int port, TimeMSec timeout,
-    HttpProtocolType protocolType, bool verifyPeer, const String *caFile, const String *caPath, unsigned int prefetch,
-    uint64_t readOver);
+    HttpProtocolType protocolType, bool verifyPeer, const String *caFile, const String *caPath, TimeMSec tmpRetention,
+    StorageAzureImmutabilityPolicyMode tmpRetentionMode, unsigned int prefetch, uint64_t readOver);
 
 #endif

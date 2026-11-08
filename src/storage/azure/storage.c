@@ -30,6 +30,10 @@ Defaults
 Azure http headers
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_HEADER_TAGS,                                    "x-ms-tags");
+STRING_STATIC(AZURE_HEADER_IMMUTABILITY_POLICY_MODE_STR,            "x-ms-immutability-policy-mode");
+STRING_STATIC(AZURE_HEADER_IMMUTABILITY_POLICY_MODE_UNLOCKED_STR,   "unlocked");
+STRING_STATIC(AZURE_HEADER_IMMUTABILITY_POLICY_MODE_LOCKED_STR,     "locked");
+STRING_STATIC(AZURE_HEADER_IMMUTABILITY_POLICY_UNTIL_DATE_STR,      "x-ms-immutability-policy-until-date");
 STRING_STATIC(AZURE_HEADER_VERSION_STR,                             "x-ms-version");
 STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                       "2024-08-04");
 
@@ -105,6 +109,8 @@ struct StorageAzure
     size_t blockSize;                                               // Block size for multi-block upload
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     const String *tag;                                              // Tags to be applied to objects
+    TimeMSec tmpRetention;                                          // Immutability policy retention for tmp files (0 = default)
+    StorageAzureImmutabilityPolicyMode tmpRetentionMode;            // Immutability policy mode for tmp files
     const String *pathPrefix;                                       // Account/container prefix
 
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
@@ -303,6 +309,7 @@ storageAzureRequestAsync(StorageAzure *const this, const String *const verb, Sto
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(LIST, param.contentList);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(BOOL, param.immutabilityPolicy);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -363,6 +370,19 @@ storageAzureRequestAsync(StorageAzure *const this, const String *const verb, Sto
         // Set tags when requested and available
         if (param.tag && this->tag != NULL)
             httpHeaderPut(requestHeader, AZURE_HEADER_TAGS, this->tag);
+
+        // Set immutability policy for tmp files when configured. A policy set on upload overrides the default policy configured
+        // on the container or account.
+        if (param.immutabilityPolicy && this->tmpRetention != 0)
+        {
+            httpHeaderPut(
+                requestHeader, AZURE_HEADER_IMMUTABILITY_POLICY_MODE_STR,
+                this->tmpRetentionMode == storageAzureImmutabilityPolicyModeLocked ?
+                    AZURE_HEADER_IMMUTABILITY_POLICY_MODE_LOCKED_STR : AZURE_HEADER_IMMUTABILITY_POLICY_MODE_UNLOCKED_STR);
+            httpHeaderPut(
+                requestHeader, AZURE_HEADER_IMMUTABILITY_POLICY_UNTIL_DATE_STR,
+                httpDateFromTime(time(NULL) + (time_t)(this->tmpRetention / MSEC_PER_SEC)));
+        }
 
         // Encode path
         const String *const path = httpUriEncode(param.path, true);
@@ -433,11 +453,12 @@ storageAzureRequest(StorageAzure *const this, const String *const verb, const St
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(BOOL, param.immutabilityPolicy);
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageAzureRequestAsyncP(
         this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content,
-        .contentList = param.contentList, .tag = param.tag);
+        .contentList = param.contentList, .tag = param.tag, .immutabilityPolicy = param.immutabilityPolicy);
     HttpResponse *const result = storageAzureResponseP(request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
 
     httpRequestFree(request);
@@ -766,7 +787,7 @@ storageAzureNewWrite(THIS_VOID, const String *const file, const StorageInterface
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(BOOL, param.tmp);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -777,7 +798,7 @@ storageAzureNewWrite(THIS_VOID, const String *const file, const StorageInterface
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE_AZURE, storageWriteAzureNew(this, file, this->fileId++, this->blockSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_AZURE, storageWriteAzureNew(this, file, this->fileId++, this->blockSize, param.tmp));
 }
 
 /**********************************************************************************************************************************/
@@ -1003,7 +1024,8 @@ storageAzureNew(
     const String *const container, const String *const account, const StorageAzureKeyType keyType, const String *const key,
     const size_t blockSize, const KeyValue *const tag, const String *const endpoint, const StorageAzureUriStyle uriStyle,
     const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType, const bool verifyPeer,
-    const String *const caFile, const String *const caPath, const unsigned int prefetch, const uint64_t readOver)
+    const String *const caFile, const String *const caPath, const TimeMSec tmpRetention,
+    const StorageAzureImmutabilityPolicyMode tmpRetentionMode, const unsigned int prefetch, const uint64_t readOver)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1024,6 +1046,8 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
+        FUNCTION_LOG_PARAM(TIME_MSEC, tmpRetention);
+        FUNCTION_LOG_PARAM(ENUM, tmpRetentionMode);
         FUNCTION_LOG_PARAM(UINT, prefetch);
         FUNCTION_LOG_PARAM(UINT64, readOver);
     FUNCTION_LOG_END();
@@ -1049,6 +1073,8 @@ storageAzureNew(
                     strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
             .deleteMax = STORAGE_AZURE_DELETE_MAX,
             .keyType = keyType,
+            .tmpRetention = tmpRetention,
+            .tmpRetentionMode = tmpRetentionMode,
         };
 
         // Set prefetch and read over

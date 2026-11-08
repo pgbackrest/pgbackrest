@@ -597,6 +597,14 @@ testRun(void)
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
         TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storageRepo, STRDEF("test.txt"))), contentBuf), true, "check file");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write tmp file");
+
+        TEST_ASSIGN(write, storageNewWriteP(storageRepoWrite, STRDEF("test.txt"), .tmp = true), "new write file");
+        TEST_RESULT_BOOL(((StorageWriteRemote *)write->driver)->tmp, true, "check tmp");
+        TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
+        TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storageRepo, STRDEF("test.txt"))), contentBuf), true, "check file");
+
         // Enable protocol compression in the storage object
         ((StorageRemote *)storageDriver(storageRepoWrite))->compressLevel = 3;
 

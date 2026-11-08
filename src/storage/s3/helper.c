@@ -109,6 +109,9 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         const StringList *const credCmd =
             keyType == storageS3KeyTypeProcess ? strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoS3ProcessCmd, repoIdx)) : NULL;
 
+        // Object lock retention for tmp files
+        const bool tmpRetention = cfgOptionIdxTest(cfgOptRepoStorageTmpRetention, repoIdx);
+
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageS3New(
@@ -123,6 +126,8 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), host, port, ioTimeoutMs(), protocolType,
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx), cfgOptionIdxBool(cfgOptRepoS3RequesterPays, repoIdx),
+                tmpRetention ? cfgOptionIdxUInt64(cfgOptRepoStorageTmpRetention, repoIdx) : 0,
+                (StorageS3ObjectLockMode)cfgOptionIdxSeq(cfgOptRepoS3TmpRetentionMode, repoIdx),
                 cfgOptionIdxUInt(cfgOptRepoStoragePrefetch, repoIdx), cfgOptionIdxUInt64(cfgOptRepoStorageReadOver, repoIdx));
         }
         MEM_CONTEXT_PRIOR_END();

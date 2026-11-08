@@ -15,7 +15,8 @@ typedef struct StorageWriteAzure StorageWriteAzure;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageWriteAzure *storageWriteAzureNew(StorageAzure *storage, const String *name, uint64_t fileId, size_t blockSize);
+FN_EXTERN StorageWriteAzure *storageWriteAzureNew(
+    StorageAzure *storage, const String *name, uint64_t fileId, size_t blockSize, bool tmp);
 
 /***********************************************************************************************************************************
 Macros for function logging

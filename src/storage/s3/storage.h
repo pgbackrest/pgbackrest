@@ -34,6 +34,15 @@ typedef enum
 } StorageS3UriStyle;
 
 /***********************************************************************************************************************************
+Object lock mode
+***********************************************************************************************************************************/
+typedef enum
+{
+    storageS3ObjectLockModeGovernance,                              // Retention can be removed by users with special permissions
+    storageS3ObjectLockModeCompliance,                              // Retention cannot be removed by any user
+} StorageS3ObjectLockMode;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Storage *storageS3New(
@@ -43,6 +52,7 @@ FN_EXTERN Storage *storageS3New(
     const String *sseCustomerKey, const String *credRole, const String *tokenFile, const String *credUrl,
     const StringList *credCmd, const String *stsHost, size_t partSize, const KeyValue *tag, const String *host,
     unsigned int port, TimeMSec timeout, HttpProtocolType protocolType, bool verifyPeer, const String *caFile,
-    const String *caPath, bool requesterPays, unsigned int prefetch, uint64_t readOver);
+    const String *caPath, bool requesterPays, TimeMSec tmpRetention, StorageS3ObjectLockMode tmpRetentionMode,
+    unsigned int prefetch, uint64_t readOver);
 
 #endif

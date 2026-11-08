@@ -50,6 +50,7 @@ struct StorageWriteAzure
     HttpRequest *request;                                           // Async block upload request
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
     size_t blockSize;                                               // Size of blocks for multi-block upload
+    bool tmp;                                                       // File will not last longer than the current operation
     Buffer *blockBuffer;                                            // Block buffer (stores data until blockSize is reached)
     StringList *blockIdList;                                        // List of uploaded block ids
 };
@@ -220,7 +221,7 @@ storageWriteAzureClose(THIS_VOID)
                 storageAzureRequestP(
                     this->storage, HTTP_VERB_PUT_STR, .path = this->name,
                     .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_LIST_STR),
-                    .content = xmlDocumentBuf(blockXml), .tag = true);
+                    .content = xmlDocumentBuf(blockXml), .tag = true, .immutabilityPolicy = this->tmp);
             }
             // Else upload all the data in a single block
             else
@@ -228,7 +229,7 @@ storageWriteAzureClose(THIS_VOID)
                 storageAzureRequestP(
                     this->storage, HTTP_VERB_PUT_STR, .path = this->name,
                     httpHeaderAdd(httpHeaderNew(NULL), AZURE_HEADER_BLOB_TYPE_STR, AZURE_HEADER_VALUE_BLOCK_BLOB_STR),
-                    .content = this->blockBuffer, .tag = true);
+                    .content = this->blockBuffer, .tag = true, .immutabilityPolicy = this->tmp);
             }
 
             bufFree(this->blockBuffer);
@@ -248,13 +249,15 @@ static const StorageWriteInterface storageWriteAzureInterface =
 };
 
 FN_EXTERN StorageWriteAzure *
-storageWriteAzureNew(StorageAzure *const storage, const String *const name, const uint64_t fileId, const size_t blockSize)
+storageWriteAzureNew(
+    StorageAzure *const storage, const String *const name, const uint64_t fileId, const size_t blockSize, const bool tmp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(UINT64, fileId);
         FUNCTION_LOG_PARAM(UINT64, blockSize);
+        FUNCTION_LOG_PARAM(BOOL, tmp);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -269,6 +272,7 @@ storageWriteAzureNew(StorageAzure *const storage, const String *const name, cons
             .name = strDup(name),
             .fileId = fileId,
             .blockSize = blockSize,
+            .tmp = tmp,
             .blockBuffer = bufNew(0),
         };
     }

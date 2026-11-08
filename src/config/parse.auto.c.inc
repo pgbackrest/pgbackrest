@@ -59,6 +59,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("32KiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("360"),                                                                                             // val/str
     PARSE_RULE_STRPUB("3600"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("36500d"),                                                                                          // val/str
     PARSE_RULE_STRPUB("443"),                                                                                             // val/str
     PARSE_RULE_STRPUB("4MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("4PiB"),                                                                                            // val/str
@@ -87,6 +88,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("blob.core.windows.net"),                                                                           // val/str
     PARSE_RULE_STRPUB("bz2"),                                                                                             // val/str
     PARSE_RULE_STRPUB("cifs"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("compliance"),                                                                                      // val/str
     PARSE_RULE_STRPUB("count"),                                                                                           // val/str
     PARSE_RULE_STRPUB("debug"),                                                                                           // val/str
     PARSE_RULE_STRPUB("default"),                                                                                         // val/str
@@ -97,6 +99,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("fingerprint"),                                                                                     // val/str
     PARSE_RULE_STRPUB("full"),                                                                                            // val/str
     PARSE_RULE_STRPUB("gcs"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("governance"),                                                                                      // val/str
     PARSE_RULE_STRPUB("gz"),                                                                                              // val/str
     PARSE_RULE_STRPUB("host"),                                                                                            // val/str
     PARSE_RULE_STRPUB("immediate"),                                                                                       // val/str
@@ -105,6 +108,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("json"),                                                                                            // val/str
     PARSE_RULE_STRPUB("latest"),                                                                                          // val/str
     PARSE_RULE_STRPUB("localhost"),                                                                                       // val/str
+    PARSE_RULE_STRPUB("locked"),                                                                                          // val/str
     PARSE_RULE_STRPUB("lsn"),                                                                                             // val/str
     PARSE_RULE_STRPUB("lz4"),                                                                                             // val/str
     PARSE_RULE_STRPUB("md5"),                                                                                             // val/str
@@ -144,6 +148,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("tls"),                                                                                             // val/str
     PARSE_RULE_STRPUB("token"),                                                                                           // val/str
     PARSE_RULE_STRPUB("trace"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("unlocked"),                                                                                        // val/str
     PARSE_RULE_STRPUB("warn"),                                                                                            // val/str
     PARSE_RULE_STRPUB("web-id"),                                                                                          // val/str
     PARSE_RULE_STRPUB("xid"),                                                                                             // val/str
@@ -203,6 +208,7 @@ typedef enum
     parseRuleValStrQT_32KiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_360_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_3600_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_36500d_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_443_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_4MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_4PiB_QT,                                                                                       // val/str/enum
@@ -231,6 +237,7 @@ typedef enum
     parseRuleValStrQT_blob_DT_core_DT_windows_DT_net_QT,                                                             // val/str/enum
     parseRuleValStrQT_bz2_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_cifs_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_compliance_QT,                                                                                 // val/str/enum
     parseRuleValStrQT_count_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_debug_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_default_QT,                                                                                    // val/str/enum
@@ -241,6 +248,7 @@ typedef enum
     parseRuleValStrQT_fingerprint_QT,                                                                                // val/str/enum
     parseRuleValStrQT_full_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_gcs_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_governance_QT,                                                                                 // val/str/enum
     parseRuleValStrQT_gz_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_host_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_immediate_QT,                                                                                  // val/str/enum
@@ -249,6 +257,7 @@ typedef enum
     parseRuleValStrQT_json_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_latest_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_localhost_QT,                                                                                  // val/str/enum
+    parseRuleValStrQT_locked_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_lsn_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_lz4_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_md5_QT,                                                                                        // val/str/enum
@@ -288,6 +297,7 @@ typedef enum
     parseRuleValStrQT_tls_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_token_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_trace_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_unlocked_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_warn_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_web_DS_id_QT,                                                                                  // val/str/enum
     parseRuleValStrQT_xid_QT,                                                                                        // val/str/enum
@@ -495,6 +505,7 @@ static const int64_t parseRuleValueTime[] =
     604800000,                                                                                                           // val/time
     1296000000,                                                                                                          // val/time
     7776000000,                                                                                                          // val/time
+    3153600000000,                                                                                                       // val/time
     863999913600000,                                                                                                     // val/time
 };
 
@@ -512,6 +523,7 @@ static const uint8_t parseRuleValueTimeStrMap[] =
     parseRuleValStrQT_7d_QT,                                                                                      // val/time/strmap
     parseRuleValStrQT_15d_QT,                                                                                     // val/time/strmap
     parseRuleValStrQT_90d_QT,                                                                                     // val/time/strmap
+    parseRuleValStrQT_36500d_QT,                                                                                  // val/time/strmap
     parseRuleValStrQT_9999999d_QT,                                                                                // val/time/strmap
 };
 
@@ -529,6 +541,7 @@ typedef enum
     parseRuleValTime7d,                                                                                             // val/time/enum
     parseRuleValTime15d,                                                                                            // val/time/enum
     parseRuleValTime90d,                                                                                            // val/time/enum
+    parseRuleValTime36500d,                                                                                         // val/time/enum
     parseRuleValTime9999999d,                                                                                       // val/time/enum
 } ParseRuleValueTime;
 
@@ -5532,6 +5545,95 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                // opt/repo-azure-key-type
     ),                                                                                                    // opt/repo-azure-key-type
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                           // opt/repo-azure-tmp-retention-mode
+    (                                                                                           // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTION_NAME("repo-azure-tmp-retention-mode"),                                // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTION_TYPE(StringId),                                                       // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                       // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTION_RESET(true),                                                          // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTION_REQUIRED(true),                                                       // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTION_SECTION(Global),                                                      // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                       // opt/repo-azure-tmp-retention-mode
+                                                                                                // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                          // opt/repo-azure-tmp-retention-mode
+        (                                                                                       // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                 // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                               // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                              // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                   // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Check)                                                    // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                   // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Info)                                                     // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                 // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                  // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                   // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                   // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                  // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                             // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                             // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                            // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                   // opt/repo-azure-tmp-retention-mode
+        ),                                                                                      // opt/repo-azure-tmp-retention-mode
+                                                                                                // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                         // opt/repo-azure-tmp-retention-mode
+        (                                                                                       // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                               // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                              // opt/repo-azure-tmp-retention-mode
+        ),                                                                                      // opt/repo-azure-tmp-retention-mode
+                                                                                                // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                         // opt/repo-azure-tmp-retention-mode
+        (                                                                                       // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                               // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                              // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                   // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                  // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                   // opt/repo-azure-tmp-retention-mode
+        ),                                                                                      // opt/repo-azure-tmp-retention-mode
+                                                                                                // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                        // opt/repo-azure-tmp-retention-mode
+        (                                                                                       // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                 // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                               // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                              // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                   // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Check)                                                    // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                   // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Info)                                                     // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                 // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                  // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                   // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                   // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                  // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                             // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                             // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                            // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                   // opt/repo-azure-tmp-retention-mode
+        ),                                                                                      // opt/repo-azure-tmp-retention-mode
+                                                                                                // opt/repo-azure-tmp-retention-mode
+        PARSE_RULE_OPTIONAL                                                                     // opt/repo-azure-tmp-retention-mode
+        (                                                                                       // opt/repo-azure-tmp-retention-mode
+            PARSE_RULE_OPTIONAL_GROUP                                                           // opt/repo-azure-tmp-retention-mode
+            (                                                                                   // opt/repo-azure-tmp-retention-mode
+                PARSE_RULE_OPTIONAL_DEPEND                                                      // opt/repo-azure-tmp-retention-mode
+                (                                                                               // opt/repo-azure-tmp-retention-mode
+                    PARSE_RULE_VAL_OPT(RepoType),                                               // opt/repo-azure-tmp-retention-mode
+                    PARSE_RULE_VAL_STRID(azure),                                                // opt/repo-azure-tmp-retention-mode
+                ),                                                                              // opt/repo-azure-tmp-retention-mode
+                                                                                                // opt/repo-azure-tmp-retention-mode
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                  // opt/repo-azure-tmp-retention-mode
+                (                                                                               // opt/repo-azure-tmp-retention-mode
+                    PARSE_RULE_VAL_STRID(unlocked),                                             // opt/repo-azure-tmp-retention-mode
+                    PARSE_RULE_VAL_STRID(locked),                                               // opt/repo-azure-tmp-retention-mode
+                ),                                                                              // opt/repo-azure-tmp-retention-mode
+                                                                                                // opt/repo-azure-tmp-retention-mode
+                PARSE_RULE_OPTIONAL_DEFAULT                                                     // opt/repo-azure-tmp-retention-mode
+                (                                                                               // opt/repo-azure-tmp-retention-mode
+                    PARSE_RULE_VAL_STRID(unlocked),                                             // opt/repo-azure-tmp-retention-mode
+                ),                                                                              // opt/repo-azure-tmp-retention-mode
+            ),                                                                                  // opt/repo-azure-tmp-retention-mode
+        ),                                                                                      // opt/repo-azure-tmp-retention-mode
+    ),                                                                                          // opt/repo-azure-tmp-retention-mode
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                    // opt/repo-azure-uri-style
     (                                                                                                    // opt/repo-azure-uri-style
         PARSE_RULE_OPTION_NAME("repo-azure-uri-style"),                                                  // opt/repo-azure-uri-style
@@ -8674,6 +8776,95 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                   // opt/repo-s3-sts-host
     ),                                                                                                       // opt/repo-s3-sts-host
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                              // opt/repo-s3-tmp-retention-mode
+    (                                                                                              // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTION_NAME("repo-s3-tmp-retention-mode"),                                      // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTION_TYPE(StringId),                                                          // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                          // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTION_RESET(true),                                                             // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTION_REQUIRED(true),                                                          // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTION_SECTION(Global),                                                         // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                          // opt/repo-s3-tmp-retention-mode
+                                                                                                   // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                             // opt/repo-s3-tmp-retention-mode
+        (                                                                                          // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                    // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                  // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                 // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                      // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Check)                                                       // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                      // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Info)                                                        // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                    // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                     // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                      // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                      // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                     // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                               // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                      // opt/repo-s3-tmp-retention-mode
+        ),                                                                                         // opt/repo-s3-tmp-retention-mode
+                                                                                                   // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                            // opt/repo-s3-tmp-retention-mode
+        (                                                                                          // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                  // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                 // opt/repo-s3-tmp-retention-mode
+        ),                                                                                         // opt/repo-s3-tmp-retention-mode
+                                                                                                   // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                            // opt/repo-s3-tmp-retention-mode
+        (                                                                                          // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                  // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                 // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                      // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                     // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                      // opt/repo-s3-tmp-retention-mode
+        ),                                                                                         // opt/repo-s3-tmp-retention-mode
+                                                                                                   // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                           // opt/repo-s3-tmp-retention-mode
+        (                                                                                          // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                    // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                  // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                 // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                      // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Check)                                                       // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                      // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Info)                                                        // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                    // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                     // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                      // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                      // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                     // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                               // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                      // opt/repo-s3-tmp-retention-mode
+        ),                                                                                         // opt/repo-s3-tmp-retention-mode
+                                                                                                   // opt/repo-s3-tmp-retention-mode
+        PARSE_RULE_OPTIONAL                                                                        // opt/repo-s3-tmp-retention-mode
+        (                                                                                          // opt/repo-s3-tmp-retention-mode
+            PARSE_RULE_OPTIONAL_GROUP                                                              // opt/repo-s3-tmp-retention-mode
+            (                                                                                      // opt/repo-s3-tmp-retention-mode
+                PARSE_RULE_OPTIONAL_DEPEND                                                         // opt/repo-s3-tmp-retention-mode
+                (                                                                                  // opt/repo-s3-tmp-retention-mode
+                    PARSE_RULE_VAL_OPT(RepoType),                                                  // opt/repo-s3-tmp-retention-mode
+                    PARSE_RULE_VAL_STRID(s3),                                                      // opt/repo-s3-tmp-retention-mode
+                ),                                                                                 // opt/repo-s3-tmp-retention-mode
+                                                                                                   // opt/repo-s3-tmp-retention-mode
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                     // opt/repo-s3-tmp-retention-mode
+                (                                                                                  // opt/repo-s3-tmp-retention-mode
+                    PARSE_RULE_VAL_STRID(governance),                                              // opt/repo-s3-tmp-retention-mode
+                    PARSE_RULE_VAL_STRID(compliance),                                              // opt/repo-s3-tmp-retention-mode
+                ),                                                                                 // opt/repo-s3-tmp-retention-mode
+                                                                                                   // opt/repo-s3-tmp-retention-mode
+                PARSE_RULE_OPTIONAL_DEFAULT                                                        // opt/repo-s3-tmp-retention-mode
+                (                                                                                  // opt/repo-s3-tmp-retention-mode
+                    PARSE_RULE_VAL_STRID(governance),                                              // opt/repo-s3-tmp-retention-mode
+                ),                                                                                 // opt/repo-s3-tmp-retention-mode
+            ),                                                                                     // opt/repo-s3-tmp-retention-mode
+        ),                                                                                         // opt/repo-s3-tmp-retention-mode
+    ),                                                                                             // opt/repo-s3-tmp-retention-mode
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                           // opt/repo-s3-token
     (                                                                                                           // opt/repo-s3-token
         PARSE_RULE_OPTION_NAME("repo-s3-token"),                                                                // opt/repo-s3-token
@@ -10230,6 +10421,90 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                               // opt/repo-storage-tag
         ),                                                                                                   // opt/repo-storage-tag
     ),                                                                                                       // opt/repo-storage-tag
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                              // opt/repo-storage-tmp-retention
+    (                                                                                              // opt/repo-storage-tmp-retention
+        PARSE_RULE_OPTION_NAME("repo-storage-tmp-retention"),                                      // opt/repo-storage-tmp-retention
+        PARSE_RULE_OPTION_TYPE(Time),                                                              // opt/repo-storage-tmp-retention
+        PARSE_RULE_OPTION_RESET(true),                                                             // opt/repo-storage-tmp-retention
+        PARSE_RULE_OPTION_REQUIRED(false),                                                         // opt/repo-storage-tmp-retention
+        PARSE_RULE_OPTION_SECTION(Global),                                                         // opt/repo-storage-tmp-retention
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                          // opt/repo-storage-tmp-retention
+                                                                                                   // opt/repo-storage-tmp-retention
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                             // opt/repo-storage-tmp-retention
+        (                                                                                          // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                    // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                  // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                 // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                      // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Check)                                                       // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                      // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Info)                                                        // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                    // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                     // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                      // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                      // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                     // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                               // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                      // opt/repo-storage-tmp-retention
+        ),                                                                                         // opt/repo-storage-tmp-retention
+                                                                                                   // opt/repo-storage-tmp-retention
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                            // opt/repo-storage-tmp-retention
+        (                                                                                          // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                  // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                 // opt/repo-storage-tmp-retention
+        ),                                                                                         // opt/repo-storage-tmp-retention
+                                                                                                   // opt/repo-storage-tmp-retention
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                            // opt/repo-storage-tmp-retention
+        (                                                                                          // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                  // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                 // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                      // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                     // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                      // opt/repo-storage-tmp-retention
+        ),                                                                                         // opt/repo-storage-tmp-retention
+                                                                                                   // opt/repo-storage-tmp-retention
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                           // opt/repo-storage-tmp-retention
+        (                                                                                          // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                    // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                  // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                 // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                      // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Check)                                                       // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                      // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Info)                                                        // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                    // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                     // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                      // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                      // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                     // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                               // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                      // opt/repo-storage-tmp-retention
+        ),                                                                                         // opt/repo-storage-tmp-retention
+                                                                                                   // opt/repo-storage-tmp-retention
+        PARSE_RULE_OPTIONAL                                                                        // opt/repo-storage-tmp-retention
+        (                                                                                          // opt/repo-storage-tmp-retention
+            PARSE_RULE_OPTIONAL_GROUP                                                              // opt/repo-storage-tmp-retention
+            (                                                                                      // opt/repo-storage-tmp-retention
+                PARSE_RULE_OPTIONAL_DEPEND                                                         // opt/repo-storage-tmp-retention
+                (                                                                                  // opt/repo-storage-tmp-retention
+                    PARSE_RULE_VAL_OPT(RepoType),                                                  // opt/repo-storage-tmp-retention
+                    PARSE_RULE_VAL_STRID(azure),                                                   // opt/repo-storage-tmp-retention
+                    PARSE_RULE_VAL_STRID(s3),                                                      // opt/repo-storage-tmp-retention
+                ),                                                                                 // opt/repo-storage-tmp-retention
+                                                                                                   // opt/repo-storage-tmp-retention
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                    // opt/repo-storage-tmp-retention
+                (                                                                                  // opt/repo-storage-tmp-retention
+                    PARSE_RULE_VAL_TIME(1m),                                                       // opt/repo-storage-tmp-retention
+                    PARSE_RULE_VAL_TIME(36500d),                                                   // opt/repo-storage-tmp-retention
+                ),                                                                                 // opt/repo-storage-tmp-retention
+            ),                                                                                     // opt/repo-storage-tmp-retention
+        ),                                                                                         // opt/repo-storage-tmp-retention
+    ),                                                                                             // opt/repo-storage-tmp-retention
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                          // opt/repo-storage-upload-chunk-size
     (                                                                                          // opt/repo-storage-upload-chunk-size
@@ -12356,6 +12631,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoAzureContainer,                                                                                   // opt-resolve-order
     cfgOptRepoAzureEndpoint,                                                                                    // opt-resolve-order
     cfgOptRepoAzureKeyType,                                                                                     // opt-resolve-order
+    cfgOptRepoAzureTmpRetentionMode,                                                                            // opt-resolve-order
     cfgOptRepoAzureUriStyle,                                                                                    // opt-resolve-order
     cfgOptRepoBlock,                                                                                            // opt-resolve-order
     cfgOptRepoBlockAgeMap,                                                                                      // opt-resolve-order
@@ -12383,6 +12659,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoS3Service,                                                                                        // opt-resolve-order
     cfgOptRepoS3SseCustomerKey,                                                                                 // opt-resolve-order
     cfgOptRepoS3StsHost,                                                                                        // opt-resolve-order
+    cfgOptRepoS3TmpRetentionMode,                                                                               // opt-resolve-order
     cfgOptRepoS3Token,                                                                                          // opt-resolve-order
     cfgOptRepoS3UriStyle,                                                                                       // opt-resolve-order
     cfgOptRepoSftpHost,                                                                                         // opt-resolve-order
@@ -12401,6 +12678,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoStoragePrefetch,                                                                                  // opt-resolve-order
     cfgOptRepoStorageReadOver,                                                                                  // opt-resolve-order
     cfgOptRepoStorageTag,                                                                                       // opt-resolve-order
+    cfgOptRepoStorageTmpRetention,                                                                              // opt-resolve-order
     cfgOptRepoStorageUploadChunkSize,                                                                           // opt-resolve-order
     cfgOptRepoStorageVerifyTls,                                                                                 // opt-resolve-order
     cfgOptRepoSymlink,                                                                                          // opt-resolve-order

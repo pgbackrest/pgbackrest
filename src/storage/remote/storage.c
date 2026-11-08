@@ -319,6 +319,7 @@ storageRemoteNewWrite(THIS_VOID, const String *const file, const StorageInterfac
         FUNCTION_LOG_PARAM(BOOL, param.syncFile);
         FUNCTION_LOG_PARAM(BOOL, param.syncPath);
         FUNCTION_LOG_PARAM(BOOL, param.atomic);
+        FUNCTION_LOG_PARAM(BOOL, param.tmp);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
     FUNCTION_LOG_END();
 
@@ -330,7 +331,7 @@ storageRemoteNewWrite(THIS_VOID, const String *const file, const StorageInterfac
         STORAGE_WRITE_REMOTE,
         storageWriteRemoteNew(
             this, this->client, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
-            param.syncFile, param.syncPath, param.atomic, this->compressLevel > 0 ? param.compressible : false,
+            param.syncFile, param.syncPath, param.atomic, param.tmp, this->compressLevel > 0 ? param.compressible : false,
             this->compressLevel));
 }
 

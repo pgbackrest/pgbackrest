@@ -15,7 +15,7 @@ typedef struct StorageWriteS3 StorageWriteS3;
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageWriteS3 *storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize);
+FN_EXTERN StorageWriteS3 *storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize, bool tmp);
 
 /***********************************************************************************************************************************
 Macros for function logging

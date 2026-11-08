@@ -613,6 +613,21 @@
                         <example>sas</example>
                     </config-key>
 
+                    <config-key id="repo-azure-tmp-retention-mode" name="Azure Repository Temporary File Retention Mode">
+                        <summary>Azure temporary file retention mode.</summary>
+
+                        <text>
+                            <p>Immutability policy mode applied to temporary files when <br-option>repo-storage-tmp-retention</br-option> is set.</p>
+
+                            <allow-list caption="retention modes">
+                                <allow-item id="unlocked">The retention can be shortened, extended, or removed.</allow-item>
+                                <allow-item id="locked">The retention can be extended but cannot be shortened or removed until it expires.</allow-item>
+                            </allow-list>
+                        </text>
+
+                        <example>locked</example>
+                    </config-key>
+
                     <config-key id="repo-azure-uri-style" name="Azure Repository URI Style">
                         <summary>Azure URI Style.</summary>
 
@@ -1089,6 +1104,21 @@
                         <example>bceb4f13-6939-4be3-910d-df54dee817b7</example>
                     </config-key>
 
+                    <config-key id="repo-s3-tmp-retention-mode" name="S3 Repository Temporary File Retention Mode">
+                        <summary>S3 temporary file retention mode.</summary>
+
+                        <text>
+                            <p>Object Lock retention mode applied to temporary files when <br-option>repo-storage-tmp-retention</br-option> is set.</p>
+
+                            <allow-list caption="retention modes">
+                                <allow-item id="governance">Users with the required permissions can shorten or remove the retention.</allow-item>
+                                <allow-item id="compliance">The retention cannot be shortened or removed by any user until it expires.</allow-item>
+                            </allow-list>
+                        </text>
+
+                        <example>compliance</example>
+                    </config-key>
+
                     <config-key id="repo-s3-bucket" name="S3 Repository Bucket">
                         <summary>S3 repository bucket.</summary>
 
@@ -1378,6 +1408,24 @@
                         </text>
 
                         <example>key1=value1</example>
+                    </config-key>
+
+                    <config-key id="repo-storage-tmp-retention" name="Repository Storage Temporary File Retention">
+                        <summary>Repository temporary file retention.</summary>
+
+                        <text>
+                            <p>Retention period for temporary files written to the repository. Temporary files are not intended to last longer than the current operation, e.g. the checkpoint copies of <file>backup.manifest.copy</file> that are saved periodically during a backup when <br-option>resume</br-option> is enabled. When the storage is configured to retain every version of a file for a default period, each save creates a new version that is retained for that period, which may be far longer than these files are useful.</p>
+
+                            <p>When this option is set, <backrest/> sets an explicit retention on temporary files that overrides the default retention of the storage. Other files, including the final <file>backup.manifest.copy</file> and <file>backup.manifest</file>, are not affected and continue to use the default retention. The retention must be between one minute and 36500 days.</p>
+
+                            <p>For <proper>S3</proper> an Object Lock retention is set with the mode from <br-option>repo-s3-tmp-retention-mode</br-option>. Object Lock must be enabled on the bucket and the credentials must have the <id>s3:PutObjectRetention</id> permission or writes will fail.</p>
+
+                            <p>For <proper>Azure</proper> an immutability policy is set with the mode from <br-option>repo-azure-tmp-retention-mode</br-option>. Version-level immutability must be enabled on the container or account or writes will fail.</p>
+
+                            <p>This option is not supported for <proper>GCS</proper> since an object retention cannot shorten the retention policy of a bucket.</p>
+                        </text>
+
+                        <example>1d</example>
                     </config-key>
 
                     <config-key id="repo-storage-upload-chunk-size" name="Repository Storage Upload Chunk Size">

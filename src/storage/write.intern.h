@@ -31,7 +31,8 @@ Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageWrite *storageWriteNew(
     const Storage *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,
-    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool truncate, bool compressible);
+    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool truncate, bool compressible,
+    bool tmp);
 
 /***********************************************************************************************************************************
 Getters

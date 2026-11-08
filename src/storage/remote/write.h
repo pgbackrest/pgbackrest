@@ -18,8 +18,8 @@ Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageWriteRemote *storageWriteRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, mode_t modeFile, mode_t modePath, const String *user,
-    const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool compressible,
-    unsigned int compressLevel);
+    const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool tmp,
+    bool compressible, unsigned int compressLevel);
 
 /***********************************************************************************************************************************
 Macros for function logging

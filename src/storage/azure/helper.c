@@ -76,6 +76,9 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
         if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
             port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
+        // Immutability policy retention for tmp files
+        const bool tmpRetention = cfgOptionIdxTest(cfgOptRepoStorageTmpRetention, repoIdx);
+
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageAzureNew(
@@ -84,7 +87,10 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
                 (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), endpoint, uriStyle, port, ioTimeoutMs(), protocolType,
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx), cfgOptionIdxUInt(cfgOptRepoStoragePrefetch, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx),
+                tmpRetention ? cfgOptionIdxUInt64(cfgOptRepoStorageTmpRetention, repoIdx) : 0,
+                (StorageAzureImmutabilityPolicyMode)cfgOptionIdxSeq(cfgOptRepoAzureTmpRetentionMode, repoIdx),
+                cfgOptionIdxUInt(cfgOptRepoStoragePrefetch, repoIdx),
                 cfgOptionIdxUInt64(cfgOptRepoStorageReadOver, repoIdx));
         }
         MEM_CONTEXT_PRIOR_END();

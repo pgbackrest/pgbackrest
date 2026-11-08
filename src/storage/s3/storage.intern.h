@@ -25,6 +25,7 @@ typedef struct StorageS3RequestAsyncParam
     bool sseKms;                                                    // Enable server-side encryption?
     bool sseC;                                                      // Enable server-side encryption with customer-provided keys?
     bool tag;                                                       // Add tags when available?
+    bool objectLock;                                                // Add tmp object lock retention when configured?
 } StorageS3RequestAsyncParam;
 
 #define storageS3RequestAsyncP(this, verb, path, ...)                                                                              \
@@ -58,6 +59,7 @@ typedef struct StorageS3RequestParam
     bool sseKms;                                                    // Enable server-side encryption?
     bool sseC;                                                      // Enable server-side encryption with customer-provided keys?
     bool tag;                                                       // Add tags when available?
+    bool objectLock;                                                // Add tmp object lock retention when configured?
 } StorageS3RequestParam;
 
 #define storageS3RequestP(this, verb, path, ...)                                                                                   \

@@ -171,6 +171,10 @@ typedef struct StorageInterfaceNewWriteParam
 
     // Is the file compressible? This is used when the file must be moved across a network and temporary compression is helpful.
     bool compressible;
+
+    // The file is not intended to last longer than the current operation, e.g. a checkpoint that will be overwritten. The driver
+    // decides what to do with this, e.g. apply a shorter retention, or ignore it.
+    bool tmp;
 } StorageInterfaceNewWriteParam;
 
 typedef void *StorageInterfaceNewWrite(void *thisVoid, const String *file, StorageInterfaceNewWriteParam param);

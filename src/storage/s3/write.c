@@ -43,6 +43,7 @@ struct StorageWriteS3
 
     HttpRequest *request;                                           // Async request
     size_t partSize;
+    bool tmp;                                                       // File will not last longer than the current operation
     Buffer *partBuffer;
     const String *uploadId;
     StringList *uploadPartList;
@@ -102,7 +103,7 @@ storageWriteS3PartAsync(StorageWriteS3 *const this)
                         storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->name,
                             .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true,
-                            .sseC = true, .tag = true))));
+                            .sseC = true, .tag = true, .objectLock = this->tmp))));
 
             // Store the upload id
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -235,7 +236,7 @@ storageWriteS3Close(THIS_VOID)
             {
                 storageS3RequestP(
                     this->storage, HTTP_VERB_PUT_STR, this->name, .content = this->partBuffer, .sseKms = true,
-                    .sseC = true, .tag = true);
+                    .sseC = true, .tag = true, .objectLock = this->tmp);
             }
 
             bufFree(this->partBuffer);
@@ -255,12 +256,13 @@ static const StorageWriteInterface storageWriteS3Interface =
 };
 
 FN_EXTERN StorageWriteS3 *
-storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize)
+storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize, const bool tmp)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(SIZE, partSize);
+        FUNCTION_LOG_PARAM(BOOL, tmp);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -274,6 +276,7 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
             .storage = storage,
             .name = strDup(name),
             .partSize = partSize,
+            .tmp = tmp,
             .partBuffer = bufNew(0),
         };
     }

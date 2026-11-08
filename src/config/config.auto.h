@@ -147,7 +147,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            203
+#define CFG_OPTION_TOTAL                                            206
 
 /***********************************************************************************************************************************
 Option value constants
@@ -294,6 +294,13 @@ Option value constants
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_AUTO_STRID                    STRID5S("auto", 2, 0x7d2a16)
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_AUTO_Z                        "auto"
 
+#define CFGOPTVAL_REPO_AZURE_TMP_RETENTION_MODE_UNLOCKED            0
+#define CFGOPTVAL_REPO_AZURE_TMP_RETENTION_MODE_UNLOCKED_STRID      STRID5S("unlocked", 0, 0x215637b1d52)
+#define CFGOPTVAL_REPO_AZURE_TMP_RETENTION_MODE_UNLOCKED_Z          "unlocked"
+#define CFGOPTVAL_REPO_AZURE_TMP_RETENTION_MODE_LOCKED              1
+#define CFGOPTVAL_REPO_AZURE_TMP_RETENTION_MODE_LOCKED_STRID        STRID5S("locked", 1, 0x8558dec4)
+#define CFGOPTVAL_REPO_AZURE_TMP_RETENTION_MODE_LOCKED_Z            "locked"
+
 #define CFGOPTVAL_REPO_AZURE_URI_STYLE_HOST                         0
 #define CFGOPTVAL_REPO_AZURE_URI_STYLE_HOST_STRID                   STRID5S("host", 0, 0xa4de82)
 #define CFGOPTVAL_REPO_AZURE_URI_STYLE_HOST_Z                       "host"
@@ -353,6 +360,13 @@ Option value constants
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_PROCESS                          4
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_PROCESS_STRID                    STRID5S("process", 4, 0x4e651be50a)
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_PROCESS_Z                        "process"
+
+#define CFGOPTVAL_REPO_S3_TMP_RETENTION_MODE_GOVERNANCE             0
+#define CFGOPTVAL_REPO_S3_TMP_RETENTION_MODE_GOVERNANCE_STRID       STRID5S("governance", 0, 0xa3705d22d9e72)
+#define CFGOPTVAL_REPO_S3_TMP_RETENTION_MODE_GOVERNANCE_Z           "governance"
+#define CFGOPTVAL_REPO_S3_TMP_RETENTION_MODE_COMPLIANCE             1
+#define CFGOPTVAL_REPO_S3_TMP_RETENTION_MODE_COMPLIANCE_STRID       STRID5S("compliance", 1, 0xa37052c835e34)
+#define CFGOPTVAL_REPO_S3_TMP_RETENTION_MODE_COMPLIANCE_Z           "compliance"
 
 #define CFGOPTVAL_REPO_S3_URI_STYLE_HOST                            0
 #define CFGOPTVAL_REPO_S3_URI_STYLE_HOST_STRID                      STRID5S("host", 0, 0xa4de82)
@@ -580,6 +594,7 @@ typedef enum
     cfgOptRepoAzureEndpoint,
     cfgOptRepoAzureKey,
     cfgOptRepoAzureKeyType,
+    cfgOptRepoAzureTmpRetentionMode,
     cfgOptRepoAzureUriStyle,
     cfgOptRepoBlock,
     cfgOptRepoBlockAgeMap,
@@ -633,6 +648,7 @@ typedef enum
     cfgOptRepoS3Service,
     cfgOptRepoS3SseCustomerKey,
     cfgOptRepoS3StsHost,
+    cfgOptRepoS3TmpRetentionMode,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
     cfgOptRepoSftpHost,
@@ -652,6 +668,7 @@ typedef enum
     cfgOptRepoStoragePrefetch,
     cfgOptRepoStorageReadOver,
     cfgOptRepoStorageTag,
+    cfgOptRepoStorageTmpRetention,
     cfgOptRepoStorageUploadChunkSize,
     cfgOptRepoStorageVerifyTls,
     cfgOptRepoSymlink,
