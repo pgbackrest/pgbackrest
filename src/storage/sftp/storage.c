@@ -830,6 +830,17 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
                     }
                     while (storageSftpWaitFd(this, len));
 
+                    // Error when the read timed out or failed
+                    if (len == LIBSSH2_ERROR_EAGAIN)
+                        THROW_FMT(FileReadError, "timeout reading directory '%s'", strZ(path));
+
+                    if (len < 0)
+                    {
+                        storageSftpEvalLibSsh2Error(
+                            len, libssh2_sftp_last_error(this->sftpSession), &PathOpenError,
+                            strNewFmt(STORAGE_ERROR_LIST_INFO, strZ(path)), NULL);
+                    }
+
                     if (len > 0)
                     {
                         filename[len] = '\0';

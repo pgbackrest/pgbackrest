@@ -2094,7 +2094,23 @@ testRun(void)
             HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING),
             HRN_LIBSSH2_CLOSE());
 
-        TEST_RESULT_VOID(storageListP(storageTest, NULL, .errorOnMissing = true), "storageSftpList readdir EAGAIN timeout");
+        TEST_ERROR_FMT(
+            storageListP(storageTest, NULL, .errorOnMissing = true), FileReadError,
+            "timeout reading directory '" TEST_PATH "'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageSftpList() readdir error after an entry");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            HRN_LIBSSH2_OPENDIR(TEST_PATH),
+            HRN_LIBSSH2_READDIR("file"),
+            HRN_LIBSSH2_READDIR("", .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_FAILURE),
+            HRN_LIBSSH2_CLOSE());
+
+        TEST_ERROR_FMT(
+            storageListP(storageTest, NULL, .errorOnMissing = true), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [4] failure", TEST_PATH);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageSftpList() fail to close path after listing EAGAIN timeout");
