@@ -312,6 +312,7 @@ testRun(void)
             "  --repo-gcs-endpoint                 GCS repository endpoint\n"
             "  --repo-gcs-key                      GCS repository key\n"
             "  --repo-gcs-key-type                 GCS repository key type\n"
+            "  --repo-gcs-kms-key-name             GCS repository KMS key name\n"
             "  --repo-gcs-user-project             GCS project ID\n"
             "  --repo-host                         repository host when operating remotely\n"
             "                                      [current=<multi>]\n"

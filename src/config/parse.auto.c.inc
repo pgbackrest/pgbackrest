@@ -6486,6 +6486,82 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                  // opt/repo-gcs-key-type
     ),                                                                                                      // opt/repo-gcs-key-type
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                   // opt/repo-gcs-kms-key-name
+    (                                                                                                   // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_NAME("repo-gcs-kms-key-name"),                                                // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_TYPE(String),                                                                 // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_RESET(true),                                                                  // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_REQUIRED(false),                                                              // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_SECTION(Global),                                                              // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                               // opt/repo-gcs-kms-key-name
+                                                                                                        // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                  // opt/repo-gcs-kms-key-name
+        (                                                                                               // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                         // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                           // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Check)                                                            // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                           // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Info)                                                             // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                         // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                          // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                           // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                           // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                     // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                     // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                    // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-gcs-kms-key-name
+        ),                                                                                              // opt/repo-gcs-kms-key-name
+                                                                                                        // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                 // opt/repo-gcs-kms-key-name
+        (                                                                                               // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-gcs-kms-key-name
+        ),                                                                                              // opt/repo-gcs-kms-key-name
+                                                                                                        // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                 // opt/repo-gcs-kms-key-name
+        (                                                                                               // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                           // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-gcs-kms-key-name
+        ),                                                                                              // opt/repo-gcs-kms-key-name
+                                                                                                        // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                // opt/repo-gcs-kms-key-name
+        (                                                                                               // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                         // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                           // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Check)                                                            // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                           // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Info)                                                             // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                         // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                          // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                           // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                           // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                     // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                     // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                    // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-gcs-kms-key-name
+        ),                                                                                              // opt/repo-gcs-kms-key-name
+                                                                                                        // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTIONAL                                                                             // opt/repo-gcs-kms-key-name
+        (                                                                                               // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTIONAL_GROUP                                                                   // opt/repo-gcs-kms-key-name
+            (                                                                                           // opt/repo-gcs-kms-key-name
+                PARSE_RULE_OPTIONAL_DEPEND                                                              // opt/repo-gcs-kms-key-name
+                (                                                                                       // opt/repo-gcs-kms-key-name
+                    PARSE_RULE_VAL_OPT(RepoGcsKeyType),                                                 // opt/repo-gcs-kms-key-name
+                ),                                                                                      // opt/repo-gcs-kms-key-name
+            ),                                                                                          // opt/repo-gcs-kms-key-name
+        ),                                                                                              // opt/repo-gcs-kms-key-name
+    ),                                                                                                  // opt/repo-gcs-kms-key-name
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                   // opt/repo-gcs-user-project
     (                                                                                                   // opt/repo-gcs-user-project
         PARSE_RULE_OPTION_NAME("repo-gcs-user-project"),                                                // opt/repo-gcs-user-project
@@ -12366,6 +12442,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoCipherPass,                                                                                       // opt-resolve-order
     cfgOptRepoCipherRotate,                                                                                     // opt-resolve-order
     cfgOptRepoGcsKeyType,                                                                                       // opt-resolve-order
+    cfgOptRepoGcsKmsKeyName,                                                                                    // opt-resolve-order
     cfgOptRepoHost,                                                                                             // opt-resolve-order
     cfgOptRepoHostConfig,                                                                                       // opt-resolve-order
     cfgOptRepoHostConfigIncludePath,                                                                            // opt-resolve-order
