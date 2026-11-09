@@ -11,6 +11,7 @@ Backup Info Handler
 #include "command/backup/common.h"
 #include "common/debug.h"
 #include "common/format/cipherBlockFormat.h"
+#include "common/format/format.h"
 #include "common/ini.h"
 #include "common/io/bufferWrite.h"
 #include "common/io/io.h"
@@ -409,6 +410,65 @@ infoBackupFormatSet(InfoBackup *const this, const unsigned int format)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN const CipherSpec *
+infoBackupCipherSpecManifest(const InfoBackup *const this, const String *const backupLabel)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_BACKUP, this);
+        FUNCTION_TEST_PARAM(STRING, backupLabel);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(backupLabel != NULL);
+    ASSERT(strSize(backupLabel) > DATE_TIME_LEN);
+
+    const CipherSpec *result;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const CipherSpecMap *const cipherSpecMap = infoCipherSpecMap(infoPgInfo(infoBackupPg(this)));
+
+        // Key of the backup set by the label of the full backup
+        result = cipherSpecMapFind(cipherSpecMap, strSubN(backupLabel, 0, DATE_TIME_LEN + 1));
+
+        // Else the shared key
+        if (result == NULL)
+        {
+            // Error when there are keys but no shared key
+            if (!cipherSpecMapEmpty(cipherSpecMap) && cipherSpecMapFind(cipherSpecMap, CIPHER_SPEC_MAP_ID_DEFAULT_STR) == NULL)
+                THROW_FMT(CryptoError, "unable to find key for backup set '%s'", strZ(backupLabel));
+
+            result = infoBackupCipherSpec(this);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_CONST(CIPHER_SPEC, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+infoBackupCipherSpecAdd(InfoBackup *const this, const String *const backupLabel, const CipherSpec *const cipherSpec)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, this);
+        FUNCTION_LOG_PARAM(STRING, backupLabel);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(infoBackupFormat(this) >= REPOSITORY_FORMAT_6);
+    ASSERT(backupLabel != NULL);
+    ASSERT(strSize(backupLabel) == DATE_TIME_LEN + 1);
+    ASSERT(cipherSpec != NULL);
+
+    infoCipherSpecAdd(infoPgInfo(infoBackupPg(this)), backupLabel, cipherSpec);
+    this->pub.updated = true;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN InfoBackupData
 infoBackupData(const InfoBackup *const this, const unsigned int backupDataIdx)
 {
@@ -685,50 +745,16 @@ infoBackupDataDependentList(const InfoBackup *const this, const String *const ba
 }
 
 /**********************************************************************************************************************************/
-typedef struct InfoBackupLoadFileData
+// Create from a read of the file
+static void *
+infoBackupLoadFileNew(IoRead *const read, const CipherSpec *const cipherSpec)
 {
-    MemContext *memContext;                                         // Mem context
-    const Storage *storage;                                         // Storage to load from
-    const String *fileName;                                         // Base filename
-    const CipherSpec *cipherSpec;                                   // Cipher spec
-    InfoBackup *infoBackup;                                         // Loaded infoBackup object
-} InfoBackupLoadFileData;
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(IO_READ, read);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
+    FUNCTION_TEST_END();
 
-static bool
-infoBackupLoadFileCallback(void *const data, const unsigned int try)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM_P(VOID, data);
-        FUNCTION_LOG_PARAM(UINT, try);
-    FUNCTION_LOG_END();
-
-    ASSERT(data != NULL);
-
-    InfoBackupLoadFileData *const loadData = data;
-    bool result = false;
-
-    if (try < 2)
-    {
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            // Construct filename based on try
-            const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
-
-            // Attempt to load the file
-            IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-            cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), loadData->cipherSpec);
-
-            MEM_CONTEXT_BEGIN(loadData->memContext)
-            {
-                loadData->infoBackup = infoBackupNewLoad(read, loadData->cipherSpec);
-                result = true;
-            }
-            MEM_CONTEXT_END();
-        }
-        MEM_CONTEXT_TEMP_END();
-    }
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(INFO_BACKUP, infoBackupNewLoad(read, cipherSpec));
 }
 
 FN_EXTERN InfoBackup *
@@ -745,38 +771,24 @@ infoBackupLoadFile(
     ASSERT(fileName != NULL);
     ASSERT(cipherSpec != NULL);
 
-    InfoBackupLoadFileData data =
-    {
-        .memContext = memContextCurrent(),
-        .storage = storage,
-        .fileName = fileName,
-        .cipherSpec = cipherSpec,
-    };
+    InfoBackup *result = NULL;
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    TRY_BEGIN()
     {
-        const char *const fileNamePath = strZ(storagePathP(storage, fileName));
-
-        TRY_BEGIN()
-        {
-            infoLoad(
-                strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),
-                infoBackupLoadFileCallback, &data);
-        }
-        CATCH_ANY()
-        {
-            THROWP_FMT(
-                errorType(),
-                "%s\n"
-                "HINT: backup.info cannot be opened and is required to perform a backup.\n"
-                "HINT: has a stanza-create been performed?",
-                errorMessage());
-        }
-        TRY_END();
+        result = infoLoadFile(storage, fileName, cipherSpec, infoBackupLoadFileNew);
     }
-    MEM_CONTEXT_TEMP_END();
+    CATCH_ANY()
+    {
+        THROWP_FMT(
+            errorType(),
+            "%s\n"
+            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "HINT: has a stanza-create been performed?",
+            errorMessage());
+    }
+    TRY_END();
 
-    FUNCTION_LOG_RETURN(INFO_BACKUP, data.infoBackup);
+    FUNCTION_LOG_RETURN(INFO_BACKUP, result);
 }
 
 /**********************************************************************************************************************************/
@@ -881,7 +893,8 @@ infoBackupLoadFileReconstruct(
                 if (storageExistsP(storage, manifestFileName))
                 {
                     bool found = false;
-                    const Manifest *const manifest = manifestLoadFile(storage, manifestFileName, infoBackupCipherSpec(infoBackup));
+                    const Manifest *const manifest = manifestLoadFile(
+                        storage, manifestFileName, infoBackupCipherSpecManifest(infoBackup, backupLabel));
                     const ManifestData *const manData = manifestData(manifest);
 
                     // If the pg data for the manifest exists in the history, then add it to current, but if something doesn't match

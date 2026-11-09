@@ -22,6 +22,7 @@ stress testing as needed.
 #include "common/io/filter/sink.h"
 #include "common/io/io.h"
 #include "common/type/object.h"
+#include "postgres/interface/static.vendor.h"
 #include "protocol/client.h"
 #include "protocol/server.h"
 #include "storage/posix/storage.h"
@@ -108,6 +109,83 @@ testIoRateNew(uint64_t bytesPerSec)
     OBJ_NEW_END();
 
     return ioFilterNewP(STRID5("test-io-rate", 0x2d032dbd3ba4cb40), this, NULL, .in = testIoRateProcess);
+}
+
+/***********************************************************************************************************************************
+Build heap pages for a table with a single int4 column and one row inserted per transaction
+***********************************************************************************************************************************/
+// Heap tuple header followed by the int4 column
+typedef struct TestHeapTuple
+{
+    uint32_t xmin;                                                  // Inserting transaction id
+    uint32_t xmax;                                                  // Deleting transaction id
+    uint32_t cid;                                                   // Command id
+    uint16_t blockHi;                                               // Block of the tuple (high bits)
+    uint16_t blockLo;                                               // Block of the tuple (low bits)
+    uint16_t posId;                                                 // Line pointer of the tuple
+    uint16_t infoMask2;                                             // Number of attributes
+    uint16_t infoMask;                                              // Flags
+    uint8_t hOff;                                                   // Offset to the column data
+    int32_t value;                                                  // Column value
+} TestHeapTuple;
+
+static Buffer *
+testPageBuild(const unsigned int pageTotal)
+{
+    Buffer *const result = bufNew(pageTotal * pgPageSize8);
+    memset(bufPtr(result), 0, bufSize(result));
+    bufUsedSet(result, bufSize(result));
+
+    // Tuple size aligned to 8 bytes
+    const unsigned int tupleSize = (sizeof(TestHeapTuple) + 7) & ~7U;
+    const unsigned int tupleTotal = (pgPageSize8 - sizeof(PageHeaderData)) / (sizeof(ItemIdData) + tupleSize);
+    uint32_t xid = 1000;
+    uint64_t seed = 0;
+
+    for (unsigned int pageIdx = 0; pageIdx < pageTotal; pageIdx++)
+    {
+        PageHeaderData *const page = (PageHeaderData *)(bufPtr(result) + pageIdx * pgPageSize8);
+
+        // LSN increases by the WAL written for one page of rows
+        *page = (PageHeaderData)
+        {
+            .pd_lsn = {.lsn = 0x17CCE98 + (uint64_t)pageIdx * 25384},
+            .pd_lower = (LocationIndex)(sizeof(PageHeaderData) + tupleTotal * sizeof(ItemIdData)),
+            .pd_upper = (LocationIndex)(pgPageSize8 - tupleTotal * tupleSize),
+            .pd_special = pgPageSize8,
+            .pd_pagesize_version = pgPageSize8 | 4,
+        };
+
+        for (unsigned int tupleIdx = 0; tupleIdx < tupleTotal; tupleIdx++)
+        {
+            const unsigned int offset = pgPageSize8 - (tupleIdx + 1) * tupleSize;
+
+            // Normal line pointer. The ItemIdData bit-fields are 15 bits wide.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wconversion"
+            page->pd_linp[tupleIdx] = (ItemIdData){.lp_off = offset, .lp_flags = 1, .lp_len = sizeof(TestHeapTuple)};
+#pragma GCC diagnostic pop
+
+            // One-line pseudo-random number generator (Knuth MMIX linear congruential generator). A fixed seed produces the same
+            // values on every platform and every run.
+            seed = seed * 6364136223846793005ULL + 1442695040888963407ULL;
+
+            // Tuple with an invalid xmax and a value in [0, 2000000000)
+            *(TestHeapTuple *)((unsigned char *)page + offset) = (TestHeapTuple)
+            {
+                .xmin = xid++,
+                .blockHi = (uint16_t)(pageIdx >> 16),
+                .blockLo = (uint16_t)pageIdx,
+                .posId = (uint16_t)(tupleIdx + 1),
+                .infoMask2 = 1,
+                .infoMask = 0x0800,
+                .hOff = 24,
+                .value = (int32_t)((seed >> 33) % 2000000000),
+            };
+        }
+    }
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -223,8 +301,8 @@ testRun(void)
         uint64_t rateIn = 0; // MB/s (0 disables)
         uint64_t rateOut = 0; // MB/s (0 disables)
 
-        // Get the sample pages from disk
-        Buffer *block = storageGetP(storageNewReadP(storagePosixNewP(HRN_PATH_REPO_STR), STRDEF("test/data/filecopy.table.bin")));
+        // Build the sample pages
+        Buffer *block = testPageBuild(1024 * 1024 / pgPageSize8);
         ASSERT(bufUsed(block) == 1024 * 1024);
 
         // Build the input buffer

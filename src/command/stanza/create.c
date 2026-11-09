@@ -79,6 +79,9 @@ cmdStanzaCreate(void)
                 // Format for the new stanza
                 const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
 
+                // Check the passphrase of a new encrypted stanza
+                stanzaCipherPassCheck(repoIdx, format);
+
                 // If the repo is encrypted, generate a cipher passphrase for encrypting archive files. Format >= 6 adds it by
                 // rotating to the first key id and earlier formats store it as the default key with no id.
                 const CipherSpec *const cipherSpecArchive = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), format);
@@ -95,9 +98,10 @@ cmdStanzaCreate(void)
 
                 infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 
-                // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent manifests
-                const CipherSpec *const cipherSpecManifest = cipherSpecGen(
-                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), format);
+                // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent manifests. Format >= 6 adds a
+                // key for each backup set when the full backup is created.
+                const CipherSpec *const cipherSpecManifest =
+                    format < REPOSITORY_FORMAT_6 ? cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), format) : NULL;
 
                 // Create and save backup info
                 infoBackup = infoBackupNew(

@@ -340,6 +340,7 @@ typedef struct BackupJobData
     RegExp *standbyExp;                                             // Identify files that may be copied from the standby
     const CipherSpec *const cipherSpecBackup;                       // Cipher spec used to encrypt files in the backup
     const PgPageSize pageSize;                                      // Page size
+    const unsigned int segmentPageTotal;                            // Total pages in a relation segment
     const CompressType compressType;                                // Backup compression type
     const int compressLevel;                                        // Compress level if backup is compressed
     const bool delta;                                               // Is this a checksum delta backup?
@@ -692,6 +693,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                     pckWriteI32P(param, jobData->compressLevel);
                     cipherSpecPack(param, jobData->cipherSpecBackup);
                     pckWriteU32P(param, jobData->pageSize);
+                    pckWriteU32P(param, jobData->segmentPageTotal);
                     pckWriteStrP(param, cfgOptionStrNull(cfgOptPgVersionForce));
                 }
 
@@ -806,6 +808,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherSpecBackup = manifestCipherSpec(manifest),
             .pageSize = backupData->pageSize,
+            .segmentPageTotal = backupData->segmentPageTotal,
             .delta = cfgOptionBool(cfgOptDelta),
             .bundle = cfgOptionBool(cfgOptRepoBundle),
             .bundleId = 1,

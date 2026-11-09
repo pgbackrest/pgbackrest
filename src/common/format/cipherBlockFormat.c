@@ -348,7 +348,7 @@ cipherBlockFormatNew(const CipherSpecMap *const cipherSpecMap, const CipherBlock
     FUNCTION_AUDIT_HELPER();
 
     ASSERT(cipherSpecMap != NULL);
-    ASSERT(cipherSpecMapSize(cipherSpecMap) != 0);
+    ASSERT(!cipherSpecMapEmpty(cipherSpecMap));
 
     OBJ_NEW_BEGIN(CipherBlockFormat, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -653,7 +653,7 @@ cipherBlockFormatFilterGroupReadAddMap(IoFilterGroup *const filterGroup, const C
     ASSERT(cipherSpecMap != NULL);
 
     // An unencrypted repository has no keys, so there is nothing to decrypt
-    if (cipherSpecMapSize(cipherSpecMap) != 0)
+    if (!cipherSpecMapEmpty(cipherSpecMap))
         ioFilterGroupAdd(filterGroup, cipherBlockFormatNewP(cipherSpecMap));
 
     FUNCTION_LOG_RETURN(IO_FILTER_GROUP, filterGroup);

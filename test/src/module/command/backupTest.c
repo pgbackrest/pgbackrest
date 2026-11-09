@@ -424,8 +424,13 @@ testBackupValidate(const Storage *const storage, const String *const path, const
         // -------------------------------------------------------------------------------------------------------------------------
         const InfoBackup *const infoBackup = infoBackupLoadFile(
             storageRepo(), INFO_BACKUP_PATH_FILE_STR, param.cipherSpecMain == NULL ? cipherSpecNewNone() : param.cipherSpecMain);
+
+        // The label of the backup is the destination when the path is a link
+        const StorageInfo pathInfo = storageInfoP(storage, path);
+        const String *const backupLabel = strBase(pathInfo.type == storageTypeLink ? pathInfo.linkDestination : path);
+
         Manifest *manifest = manifestLoadFile(
-            storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), infoBackupCipherSpec(infoBackup));
+            storage, strNewFmt("%s/" BACKUP_MANIFEST_FILE, strZ(path)), infoBackupCipherSpecManifest(infoBackup, backupLabel));
 
         // Build list of files in the manifest
         StringList *const manifestFileList = strLstNew();
@@ -665,7 +670,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("PageChecksum"))
     {
-        #define PG_SEGMENT_PAGE_DEFAULT                             (PG_SEGMENT_SIZE_DEFAULT / pgPageSize8)
+        #define PG_SEGMENT_PAGE_DEFAULT                             (HRN_PG_SEGMENT_SIZE_DEFAULT / pgPageSize8)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("segment page default");
@@ -1732,12 +1737,15 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptCompress, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
+        const InfoBackup *const infoBackup = infoBackupNew(
+            PG_VERSION_12, HRN_PG_SYSTEMID_12, hrnPgCatalogVersion(PG_VERSION_12), REPOSITORY_FORMAT_DEFAULT, NULL);
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cannot resume when manifest and copy are missing");
 
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F");
 
-        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, cipherSpecNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, infoBackup), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed: partially deleted by prior resume or invalid");
@@ -1751,7 +1759,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
 
-        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, cipherSpecNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind((Manifest *)1, infoBackup), NULL, "find resumable backup");
 
         TEST_RESULT_LOG("P00   INFO: backup '20191003-105320F' cannot be resumed: resume is disabled");
 
@@ -1775,7 +1783,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, "X");
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, infoBackup), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed: unable to read"
@@ -1807,7 +1815,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, infoBackup), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -1828,7 +1836,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, infoBackup), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -1850,7 +1858,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, infoBackup), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -1872,7 +1880,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, infoBackup), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -1893,7 +1901,7 @@ testRun(void)
                 storageNewWriteP(
                     storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/20191003-105320F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT))));
 
-        TEST_RESULT_PTR(backupResumeFind(manifest, cipherSpecNewNone()), NULL, "find resumable backup");
+        TEST_RESULT_PTR(backupResumeFind(manifest, infoBackup), NULL, "find resumable backup");
 
         TEST_RESULT_LOG(
             "P00   WARN: backup '20191003-105320F' cannot be resumed:"
@@ -2060,8 +2068,8 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "a73da1cfddf849880b4f6f0f4209ce71043f2ac1" : "807d4464138ef085e41844a9f488f067b3d46d46") :
-                "c09a7f1d2ff6131ec467e18b781970a86efd4e5b");
+                (TEST_BIG_ENDIAN() ? "884c00e2f6fcfc2c73364a285175483783a7cace" : "7583cfcf2d4c882b248898162a17a19929ed6f61") :
+                "5cf90a168630adb21cd2352036e2be3af86d7474");
 
         // Make pg no longer appear to be running
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
@@ -3040,7 +3048,8 @@ testRun(void)
 
         {
             // Update pg_control
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 1, .walSegmentSize = 1024 * 1024);
+            HRN_PG_CONTROL_PUT(
+                storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 1, .segmentPageTotal = 8, .walSegmentSize = 1024 * 1024);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
@@ -3115,17 +3124,19 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
 
-            // File with bad page checksum
+            // File with bad page checksum in the second relation segment
+            HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/4", .errorOnMissing = true);
+
             relation = bufNew(pgPageSize8 * 3);
             memset(bufPtr(relation), 0, bufSize(relation));
             *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
             *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x01)) = (PageHeaderData){.pd_upper = 0x08};
             *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x02)) = (PageHeaderData){.pd_upper = 0xFF};
             ((PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x02)))->pd_checksum = pgPageChecksum(
-                bufPtr(relation) + (pgPageSize8 * 0x02), 2, pgPageSize8);
+                bufPtr(relation) + (pgPageSize8 * 0x02), 10, pgPageSize8);
             bufUsedSet(relation, bufSize(relation));
 
-            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/4.1", relation, .timeModified = backupTimeStart);
 
             // Add a tablespace
             HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_PGTBLSPC);
@@ -3158,8 +3169,8 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000000105DB5DE000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (40KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: invalid page checksums found in file " TEST_PATH "/pg1/base/1/3 at pages 0, 2-4\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/4 (24KB, [PCT]) checksum [SHA1]\n"
-                "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/base/1/4 at page 1\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/4.1 (24KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/base/1/4.1 at page 9\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (8.5KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: page misalignment in file " TEST_PATH "/pg1/base/1/2: file size 8704 is not divisible by page size"
@@ -3187,7 +3198,7 @@ testRun(void)
                 "pg_data/base/1/1.gz {s=16384, ckp=t}\n"
                 "pg_data/base/1/2.gz {s=8704, ckp=t}\n"
                 "pg_data/base/1/3.gz {s=40960, ckp=[0,[2,4]]}\n"
-                "pg_data/base/1/4.gz {s=24576, ckp=[1]}\n"
+                "pg_data/base/1/4.1.gz {s=24576, ckp=[9]}\n"
                 "pg_data/global/pg_control.gz {s=8192}\n"
                 "pg_data/pg_tblspc/\n"
                 "pg_data/pg_wal/0000000105DB5DE000000000.gz {s=1048576, ts=+2}\n"
@@ -3205,7 +3216,7 @@ testRun(void)
 
             // Remove test files but base/1/3 (with its invalid page checksums) for the following test
             HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/2", .errorOnMissing = true);
-            HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/4", .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/4.1", .errorOnMissing = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -4008,12 +4019,13 @@ testRun(void)
         backupTimeStart = BACKUP_EPOCH + 3200000;
 
         {
-            // Create encrypted stanza
+            // Create encrypted stanza at format 6
             StringList *argList = strLstNew();
             hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawBool(argList, cfgOptOnline, false);
+            hrnCfgArgRawZ(argList, cfgOptRepoFormat, "6");
             hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
             hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
             HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
@@ -4089,6 +4101,18 @@ testRun(void)
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
                 "compare file list");
+
+            // History manifest has no passphrase for the files
+            const InfoBackup *const infoBackup = infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, TEST_CIPHER_SPEC);
+            const CipherSpec *const cipherSpecManifest = infoBackupCipherSpecManifest(infoBackup, STRDEF("20191108-080000F"));
+            StorageRead *const read = storageNewReadP(
+                storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/2019/20191108-080000F.manifest.gz"));
+            cipherBlockFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), cipherModeDecrypt, cipherSpecManifest);
+            ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(read)), decompressFilterP(compressTypeGz));
+
+            TEST_RESULT_UINT(
+                cipherSpecType(manifestCipherSpec(manifestNewLoad(storageReadIo(read), cipherSpecManifest))), cipherTypeNone,
+                "history manifest has no file passphrase");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -4423,6 +4447,28 @@ testRun(void)
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
                 "compare file list");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup set keys");
+        {
+            const InfoBackup *const infoBackup = infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, TEST_CIPHER_SPEC);
+            const CipherSpecMap *const cipherSpecMap = infoCipherSpecMap(infoPgInfo(infoBackupPg(infoBackup)));
+
+            TEST_RESULT_UINT(cipherSpecMapSize(cipherSpecMap), 2, "manifest key for each full backup");
+            TEST_RESULT_STR_Z(cipherSpecMapGetIdx(cipherSpecMap, 0)->id, "20191108-080000F", "first backup set key id");
+            TEST_RESULT_STR_Z(cipherSpecMapGetIdx(cipherSpecMap, 1)->id, "20191111-192000F", "second backup set key id");
+
+            const String *const backupLabel = STRDEF("20191108-080000F_20191111-052640I");
+            const CipherSpec *const cipherSpecManifest = infoBackupCipherSpecManifest(infoBackup, backupLabel);
+
+            const Manifest *const manifest = manifestLoadFile(
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)), cipherSpecManifest);
+
+            TEST_RESULT_UINT(cipherSpecType(manifestCipherSpec(manifest)), cipherTypeAes256Cbc, "manifest stores file key");
+            TEST_RESULT_BOOL(
+                bufEq(cipherSpecPass(manifestCipherSpec(manifest)), cipherSpecPass(cipherSpecManifest)), false,
+                "file key is not manifest key");
         }
     }
 

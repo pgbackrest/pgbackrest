@@ -57,12 +57,22 @@ cipherSpecMapSize(const CipherSpecMap *const this)
     return lstSize(THIS_PUB(CipherSpecMap)->list);
 }
 
+// Is the map empty?
+FN_INLINE_ALWAYS bool
+cipherSpecMapEmpty(const CipherSpecMap *const this)
+{
+    return cipherSpecMapSize(this) == 0;
+}
+
 // Key by index
 FN_INLINE_ALWAYS const CipherSpecMapItem *
 cipherSpecMapGetIdx(const CipherSpecMap *const this, const unsigned int idx)
 {
     return lstGet(THIS_PUB(CipherSpecMap)->list, idx);
 }
+
+// Key by id, NULL when the id is not found
+FN_EXTERN const CipherSpec *cipherSpecMapFind(const CipherSpecMap *this, const String *id);
 
 // Key by id. Errors when the id is not found.
 FN_EXTERN const CipherSpec *cipherSpecMapGet(const CipherSpecMap *this, const String *id);

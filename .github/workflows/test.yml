@@ -63,3 +63,6 @@ jobs:
 
   fuzz:
     uses: ./.github/workflows/test-fuzz.yml
+
+  security:
+    uses: ./.github/workflows/test-security.yml

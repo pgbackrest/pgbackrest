@@ -1,10 +1,9 @@
 <release date="XXXX-XX-XX" version="2.61.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
-        <release-feature-list>
+        <release-bug-list>
             <release-item>
-                <commit subject="Use 256-bit subkeys for repository format 6.">
-                    <github-pull-request id="2879"/>
-                </commit>
+                <github-issue id="2889"/>
+                <github-pull-request id="2900"/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -12,11 +11,178 @@
                     <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
+                <p>Fix reporting of <proper>OpenSSL</proper> errors.</p>
+
+                <p>An error queued by the <proper>OpenSSL</proper> config or left over from an earlier failure could be reported instead of the actual failure, e.g. <quote>ssl command section not found</quote> for an invalid <br-option>tls-cipher-12</br-option> value. System errors such as a missing CA file reported <quote>no details available</quote> with <proper>OpenSSL</proper> &gt;= 3.0 and now report the system error message.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2889"/>
+                <github-pull-request id="2899"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Do not lower a minimum TLS version set by the <proper>OpenSSL</proper> config.</p>
+
+                <p>The minimum TLS version was set to 1.2 after the <proper>OpenSSL</proper> config was applied. This lowered a higher minimum such as <code>MinProtocol = TLSv1.3</code> so TLS 1.2 connections were still allowed. The minimum is now set only when the minimum from the config is lower than TLS 1.2.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2884"/>
+                <github-pull-request id="2902"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="fineline19"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix possible block incremental restore failure on <proper>SFTP</proper> storage.</p>
+
+                <p>Each super block read left a file open on the server until the session ended. A restore could reach the open file limit of the server and fail with an error such as <quote>sftp errno [4]</quote> or <quote>client state is 'response' but expected 'idle'</quote>. Super block reads are now closed before they are freed.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2884"/>
+                <github-pull-request id="2903"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix use of <proper>SFTP</proper> file handles after a reconnect.</p>
+
+                <p>A reconnect freed the session while other files could still be open on it and the next read or write of one of those files used freed memory. These now fail with <quote>connection was lost</quote>, which allows the job to be retried.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="705"/>
+                <github-issue id="2893"/>
+                <github-pull-request id="2906"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="loehrson"/>
+                    <release-item-ideator id="pg-fdelac"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix page checksum validation for non-default relation segment sizes.</p>
+
+                <p><postgres/> can be built with a relation segment size other than 1GB, e.g. <code>--with-segsize=2</code>. Page checksums were validated for a 1GB segment so pages in every segment after the first were reported as invalid and corruption past the first 1GB of a larger segment was not reported. The segment size is now read from <file>pg_control</file>.</p>
+
+                <p>Backups of these clusters taken with earlier versions may contain false page checksum errors, which cause the <cmd>restore</cmd> command to fail and the <cmd>expire</cmd> command to refuse to expire. Set <br-option>checksum-page-error=n</br-option> for these backups. Differential and incremental backups keep the errors for unchanged files until the next full backup.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2909"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix <br-option>io-timeout</br-option> for <proper>SFTP</proper> storage while server keepalives are arriving.</p>
+
+                <p>Each wait for the server restarted the timeout and any packet from the server ended the wait. When the server stopped responding but still sent keepalives more often than <br-option>io-timeout</br-option> an operation such as a file write or remove could wait indefinitely. The timeout now limits how long an operation can wait without making progress. A directory read that timed out or failed ended the list without an error and now reports the error.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <commit subject="Use 256-bit subkeys for repository format 6.">
+                    <github-pull-request id="2879"/>
+                </commit>
+                <commit subject="Redact the backup passphrase from history and restored manifests.">
+                    <github-pull-request id="2881"/>
+                </commit>
+                <commit subject="Index the base64 and hex decode tables with unsigned bytes."/>
+                <commit subject="Require a generated repository passphrase for new format 6 stanzas.">
+                    <github-pull-request id="2880"/>
+                </commit>
+                <commit subject="Generate a manifest key for each backup set in repository format 6.">
+                    <github-pull-request id="2882"/>
+                </commit>
+                <commit subject="Add cipherSpecMapEmpty()."/>
+                <commit subject="Move stanza passphrase checks to stanzaCipherPassCheck()."/>
+                <commit subject="Load archive.info and backup.info through infoLoadFile()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="baptiste.arnoux"/>
+                </release-item-contributor-list>
+
                 <p>Repository encryption key rotation.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2889"/>
+                <github-pull-request id="2901"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="gunnar.bluth"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="gunnar.bluth"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>tls-min-version</br-option> option.</p>
+
+                <p>Set <br-option>tls-min-version=1.3</br-option> to allow only TLS 1.3, e.g. for compliance. The default is <id>1.2</id>. A higher minimum set in the <proper>OpenSSL</proper> config is not lowered. The option is ignored for repository storage connections when <br-option>repo-storage-verify-tls=n</br-option>.</p>
             </release-item>
         </release-feature-list>
 
         <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2895"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Improve errors for an info file or manifest that cannot be loaded.</p>
+
+                <p>A file decrypted with the wrong <br-option>repo-cipher-pass</br-option> was reported with the random bytes it decrypted to, once for the file and again for its copy. A line that is not text is now shown as <code>&lt;binary data&gt;</code> and an error that repeats for the copy is reported once.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2877"/>
+                <github-pull-request id="2908"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="clayton.azzopardi"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect <proper>SFTP</proper> storage after an open times out.</p>
+
+                <p>An <proper>SFTP</proper> server can stop responding on a session while the connection stays up. An open on that session failed with <quote>libssh2 error [-9]</quote> or <quote>libssh2 error [-37]</quote> and each retry used the same session and failed the same way. The session is now reopened and the open is retried once.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2910"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect <proper>SFTP</proper> storage after a failed send during open.</p>
+
+                <p>An <proper>SFTP</proper> server with <code>ClientAliveInterval</code> set drops a session that does not respond to keepalives, e.g. the session of the main process during the copy phase of a backup. The next open on that session failed with <quote>libssh2 error [-7]</quote>. The session is now reopened and the open is retried once.</p>
+            </release-item>
+
             <release-item>
                 <github-issue id="2876"/>
                 <github-pull-request id="2878"/>
@@ -30,4 +196,42 @@
             </release-item>
         </release-improvement-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <commit subject="Add SECURITY.md."/>
+                <commit subject="Add OpenSSF Security Insights file and security CI checks.">
+                    <github-pull-request id="2886"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add a security policy.</p>
+
+                <p><file>SECURITY.md</file> describes how to report vulnerabilities privately using <proper>GitHub</proper> private vulnerability reporting or <id>security@pgbackrest.org</id>. The <proper>OpenSSF Security Insights</proper> file describes the project administrators, the release process, and the security tools run in CI and before release.</p>
+            </release-item>
+        </release-feature-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2904"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Prevent the <proper>SFTP</proper> unit test from modifying <file>~/.ssh/known_hosts</file>.</p>
+
+                <p>The test created and removed <file>~/.ssh/known_hosts</file> so running it outside a container deleted the file of the current user. The test now uses a home directory in the test path.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
 </release>
