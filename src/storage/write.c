@@ -278,9 +278,11 @@ storageWriteChunkBufferResize(const Buffer *const input, const size_t inputOffse
         // buffer size aggressively rather than resizing repeatedly as small amounts of data arrive
         if (bufFull(input) || !bufEmpty(chunk))
         {
-            // Allocate a full chunk on the first full write so the allocation can be reused from the free list
+            // If this is the first write set chunk size equal to double the input buffer size
             if (bufSize(chunk) == 0)
-                chunkSize = chunkSizeMax;
+            {
+                chunkSize = bufSize(input) * 2;
+            }
             // Else double chunk size so as not to resize the chunk buffer too many times since prior data must be copied
             else
                 chunkSize = bufSize(chunk) * 2;
