@@ -189,6 +189,7 @@
 
                 <release-item-contributor-list>
                     <release-item-contributor id="ella.zhang"/>
+                    <release-item-reviewer id="david.steele"/>
                     <release-item-reviewer id="douglas.j.hunley"/>
                 </release-item-contributor-list>
 
