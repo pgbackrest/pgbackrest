@@ -2728,6 +2728,13 @@ testRun(void)
             HRN_LIBSSH2_USERAUTH(),
             HRN_LIBSSH2_SFTP_INIT(),
             HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt"),
+            HRN_LIBSSH2_CLOSE(),
+            // Open fails on send after the server dropped the idle connection
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_SEND),
+            // The session is reopened and the open is retried successfully
+            HRNLIBSSH2_MACRO_RECONNECT(),
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt"),
             HRN_LIBSSH2_CLOSE());
 
         StorageRead *fileStale = NULL;
@@ -2743,6 +2750,10 @@ testRun(void)
             ioRead(storageReadIo(fileStale), outBuffer), FileReadError,
             "unable to read '" TEST_PATH "/readtest.txt': connection was lost");
         TEST_RESULT_VOID(ioReadClose(storageReadIo(fileStale)), "close skipped when connection was lost");
+
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file after reconnect on send error");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read open errors when the open fails again after reconnect (only one retry)");
