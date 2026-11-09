@@ -141,6 +141,21 @@
 
                 <p>A file decrypted with the wrong <br-option>repo-cipher-pass</br-option> was reported with the random bytes it decrypted to, once for the file and again for its copy. A line that is not text is now shown as <code>&lt;binary data&gt;</code> and an error that repeats for the copy is reported once.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2877"/>
+                <github-pull-request id="2908"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="clayton.azzopardi"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect <proper>SFTP</proper> storage after an open times out.</p>
+
+                <p>An <proper>SFTP</proper> server can stop responding on a session while the connection stays up. An open on that session failed with <quote>libssh2 error [-9]</quote> or <quote>libssh2 error [-37]</quote> and each retry used the same session and failed the same way. The session is now reopened and the open is retried once.</p>
+            </release-item>
         </release-improvement-list>
     </release-core-list>
 
