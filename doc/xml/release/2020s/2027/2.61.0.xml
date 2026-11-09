@@ -59,6 +59,26 @@
 
                 <p>A reconnect freed the session while other files could still be open on it and the next read or write of one of those files used freed memory. These now fail with <quote>connection was lost</quote>, which allows the job to be retried.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="705"/>
+                <github-issue id="2893"/>
+                <github-pull-request id="2906"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="loehrson"/>
+                    <release-item-ideator id="pg-fdelac"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix page checksum validation for non-default relation segment sizes.</p>
+
+                <p><postgres/> can be built with a relation segment size other than 1GB, e.g. <code>--with-segsize=2</code>. Page checksums were validated for a 1GB segment so pages in every segment after the first were reported as invalid and corruption past the first 1GB of a larger segment was not reported. The segment size is now read from <file>pg_control</file>.</p>
+
+                <p>Backups of these clusters taken with earlier versions may contain false page checksum errors, which cause the <cmd>restore</cmd> command to fail and the <cmd>expire</cmd> command to refuse to expire. Set <br-option>checksum-page-error=n</br-option> for these backups. Differential and incremental backups keep the errors for unchanged files until the next full backup.</p>
+            </release-item>
         </release-bug-list>
 
         <release-feature-list>
