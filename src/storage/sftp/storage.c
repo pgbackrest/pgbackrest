@@ -1227,8 +1227,9 @@ storageSftpConnId(StorageSftp *const this)
 
 /***********************************************************************************************************************************
 Is the libssh2 error a sign that the connection to the server has been lost? Socket-level errors always mean the connection is gone.
-LIBSSH2_ERROR_SOCKET_SEND is intentionally excluded since a failed send is ambiguous (and is used throughout the unit tests as a
-generic fatal error) -- the definitive "the peer is gone" signal is a failed receive.
+
+LIBSSH2_ERROR_TIMEOUT and LIBSSH2_ERROR_EAGAIN on an open mean the server did not respond before the timeout. The session is no
+longer usable even when the socket is connected and keepalives are arriving.
 
 An sftp protocol error is ambiguous in general (e.g. mkdir returns LIBSSH2_FX_FAILURE when a directory already exists) but on a file
 or directory open a generic failure or explicit connection-lost status means the session is no longer usable, so treat those as a
@@ -1247,9 +1248,12 @@ storageSftpConnLost(StorageSftp *const this, const int rc)
     switch (rc)
     {
         case LIBSSH2_ERROR_SOCKET_RECV:
+        case LIBSSH2_ERROR_SOCKET_SEND:
         case LIBSSH2_ERROR_SOCKET_TIMEOUT:
         case LIBSSH2_ERROR_SOCKET_DISCONNECT:
         case LIBSSH2_ERROR_BAD_USE:
+        case LIBSSH2_ERROR_TIMEOUT:
+        case LIBSSH2_ERROR_EAGAIN:
             FUNCTION_TEST_RETURN(BOOL, true);
             break;
 

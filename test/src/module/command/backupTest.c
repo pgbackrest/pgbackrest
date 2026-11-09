@@ -670,7 +670,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("PageChecksum"))
     {
-        #define PG_SEGMENT_PAGE_DEFAULT                             (PG_SEGMENT_SIZE_DEFAULT / pgPageSize8)
+        #define PG_SEGMENT_PAGE_DEFAULT                             (HRN_PG_SEGMENT_SIZE_DEFAULT / pgPageSize8)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("segment page default");
@@ -2068,8 +2068,8 @@ testRun(void)
             "P00   INFO: new backup label = [FULL-1]\n"
             "P00   INFO: full backup size = 8KB, file total = 2",
             TEST_64BIT() ?
-                (TEST_BIG_ENDIAN() ? "a73da1cfddf849880b4f6f0f4209ce71043f2ac1" : "807d4464138ef085e41844a9f488f067b3d46d46") :
-                "c09a7f1d2ff6131ec467e18b781970a86efd4e5b");
+                (TEST_BIG_ENDIAN() ? "884c00e2f6fcfc2c73364a285175483783a7cace" : "7583cfcf2d4c882b248898162a17a19929ed6f61") :
+                "5cf90a168630adb21cd2352036e2be3af86d7474");
 
         // Make pg no longer appear to be running
         HRN_STORAGE_REMOVE(storagePgWrite(), PG_FILE_POSTMTRPID, .errorOnMissing = true);
@@ -3048,7 +3048,8 @@ testRun(void)
 
         {
             // Update pg_control
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 1, .walSegmentSize = 1024 * 1024);
+            HRN_PG_CONTROL_PUT(
+                storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 1, .segmentPageTotal = 8, .walSegmentSize = 1024 * 1024);
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
@@ -3123,17 +3124,19 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
 
-            // File with bad page checksum
+            // File with bad page checksum in the second relation segment
+            HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/4", .errorOnMissing = true);
+
             relation = bufNew(pgPageSize8 * 3);
             memset(bufPtr(relation), 0, bufSize(relation));
             *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x00)) = (PageHeaderData){.pd_upper = 0x00};
             *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x01)) = (PageHeaderData){.pd_upper = 0x08};
             *(PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x02)) = (PageHeaderData){.pd_upper = 0xFF};
             ((PageHeaderData *)(bufPtr(relation) + (pgPageSize8 * 0x02)))->pd_checksum = pgPageChecksum(
-                bufPtr(relation) + (pgPageSize8 * 0x02), 2, pgPageSize8);
+                bufPtr(relation) + (pgPageSize8 * 0x02), 10, pgPageSize8);
             bufUsedSet(relation, bufSize(relation));
 
-            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/4.1", relation, .timeModified = backupTimeStart);
 
             // Add a tablespace
             HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_PGTBLSPC);
@@ -3166,8 +3169,8 @@ testRun(void)
                 "P00   INFO: check archive for segment 0000000105DB5DE000000000\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (40KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: invalid page checksums found in file " TEST_PATH "/pg1/base/1/3 at pages 0, 2-4\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/4 (24KB, [PCT]) checksum [SHA1]\n"
-                "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/base/1/4 at page 1\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/4.1 (24KB, [PCT]) checksum [SHA1]\n"
+                "P00   WARN: invalid page checksum found in file " TEST_PATH "/pg1/base/1/4.1 at page 9\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/1 (16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (8.5KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: page misalignment in file " TEST_PATH "/pg1/base/1/2: file size 8704 is not divisible by page size"
@@ -3195,7 +3198,7 @@ testRun(void)
                 "pg_data/base/1/1.gz {s=16384, ckp=t}\n"
                 "pg_data/base/1/2.gz {s=8704, ckp=t}\n"
                 "pg_data/base/1/3.gz {s=40960, ckp=[0,[2,4]]}\n"
-                "pg_data/base/1/4.gz {s=24576, ckp=[1]}\n"
+                "pg_data/base/1/4.1.gz {s=24576, ckp=[9]}\n"
                 "pg_data/global/pg_control.gz {s=8192}\n"
                 "pg_data/pg_tblspc/\n"
                 "pg_data/pg_wal/0000000105DB5DE000000000.gz {s=1048576, ts=+2}\n"
@@ -3213,7 +3216,7 @@ testRun(void)
 
             // Remove test files but base/1/3 (with its invalid page checksums) for the following test
             HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/2", .errorOnMissing = true);
-            HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/4", .errorOnMissing = true);
+            HRN_STORAGE_REMOVE(storagePgWrite(), "base/1/4.1", .errorOnMissing = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
