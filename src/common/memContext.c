@@ -513,7 +513,9 @@ static struct MemFreeList
     void *block[MEM_FREE_LIST_BLOCK_MAX];                           // Retained block (header) pointers
 } memFreeList;
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Allocate, reusing a retained block of the same total size when one is available
+***********************************************************************************************************************************/
 static void *
 memAllocReuse(const size_t size)
 {
@@ -534,7 +536,9 @@ memAllocReuse(const size_t size)
     FUNCTION_TEST_RETURN_P(VOID, memAllocInternal(size));
 }
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Free, retaining blocks of the configured size for reuse instead of returning them to the allocator
+***********************************************************************************************************************************/
 static void
 memFreeReuse(MemContextAlloc *const alloc)
 {
