@@ -79,6 +79,19 @@
 
                 <p>Backups of these clusters taken with earlier versions may contain false page checksum errors, which cause the <cmd>restore</cmd> command to fail and the <cmd>expire</cmd> command to refuse to expire. Set <br-option>checksum-page-error=n</br-option> for these backups. Differential and incremental backups keep the errors for unchanged files until the next full backup.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2909"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix <br-option>io-timeout</br-option> for <proper>SFTP</proper> storage while server keepalives are arriving.</p>
+
+                <p>Each wait for the server restarted the timeout and any packet from the server ended the wait. When the server stopped responding but still sent keepalives more often than <br-option>io-timeout</br-option> an operation such as a file write or remove could wait indefinitely. The timeout now limits how long an operation can wait without making progress. A directory read that timed out or failed ended the list without an error and now reports the error.</p>
+            </release-item>
         </release-bug-list>
 
         <release-feature-list>
