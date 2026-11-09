@@ -2490,12 +2490,17 @@ testRun(void)
             HRN_LIBSSH2_READDIR("", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 2),
             HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
             HRN_LIBSSH2_READDIR("file"),
+            HRN_LIBSSH2_STAT(TEST_PATH "/file", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 2),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            HRN_LIBSSH2_STAT(TEST_PATH "/file"),
             HRN_LIBSSH2_READDIR("", .resultInt = LIBSSH2_ERROR_EAGAIN, .sleep = 2),
             HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
             HRN_LIBSSH2_READDIR(""),
             HRN_LIBSSH2_CLOSE());
 
-        TEST_RESULT_STRLST_Z(storageListP(storageTest, NULL), "file\n", "list");
+        TEST_RESULT_UINT(
+            storageLstSize(storageSftpList(storageSftp, STRDEF(TEST_PATH), storageInfoLevelBasic, (StorageInterfaceListParam){0})),
+            1, "list");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("wait ended by completed read open");

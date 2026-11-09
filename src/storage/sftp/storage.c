@@ -824,7 +824,11 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
                 // Read the directory entries
                 do
                 {
-                    len = libssh2_sftp_readdir_ex(sftpHandle, filename, PATH_MAX - 1, NULL, 0, &attr);
+                    do
+                    {
+                        len = libssh2_sftp_readdir_ex(sftpHandle, filename, PATH_MAX - 1, NULL, 0, &attr);
+                    }
+                    while (storageSftpWaitFd(this, len));
 
                     if (len > 0)
                     {
@@ -852,7 +856,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
                         MEM_CONTEXT_TEMP_RESET(1000);
                     }
                 }
-                while (storageSftpWaitFd(this, len) || len > 0);
+                while (len > 0);
             }
             MEM_CONTEXT_TEMP_END();
         }
