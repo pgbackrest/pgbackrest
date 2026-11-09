@@ -156,6 +156,19 @@
 
                 <p>An <proper>SFTP</proper> server can stop responding on a session while the connection stays up. An open on that session failed with <quote>libssh2 error [-9]</quote> or <quote>libssh2 error [-37]</quote> and each retry used the same session and failed the same way. The session is now reopened and the open is retried once.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2910"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect <proper>SFTP</proper> storage after a failed send during open.</p>
+
+                <p>An <proper>SFTP</proper> server with <code>ClientAliveInterval</code> set drops a session that does not respond to keepalives, e.g. the session of the main process during the copy phase of a backup. The next open on that session failed with <quote>libssh2 error [-7]</quote>. The session is now reopened and the open is retried once.</p>
+            </release-item>
         </release-improvement-list>
     </release-core-list>
 
