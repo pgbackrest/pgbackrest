@@ -163,7 +163,7 @@ testRun(void)
         TEST_RESULT_BOOL(logWrite(-999, "message", 7), false, "invalid file descriptor");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error when stdout or stderr cannot be written");
+        TEST_TITLE("stdout and stderr write error");
 
         TEST_RESULT_VOID(logInit(logLevelInfo, logLevelWarn, logLevelOff, false, 0, 1, false), "init");
 
@@ -284,7 +284,7 @@ testRun(void)
         TEST_RESULT_INT(logFdFile, -1, "log file is closed");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("continue without log file when it cannot be written");
+        TEST_TITLE("log file write error");
 
         TEST_RESULT_VOID(logInit(logLevelOff, logLevelWarn, logLevelInfo, false, 0, 99, false), "init");
 
@@ -296,7 +296,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(logAny(logLevelInfo), true, "info is logged to file");
 
-        // Log in a catch block to check that the error being handled is preserved
+        // Log in a catch block
         TRY_BEGIN()
         {
             THROW(FormatError, "error being handled");
