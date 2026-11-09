@@ -498,10 +498,10 @@ memFreeInternal(void *const buffer)
 }
 
 /***********************************************************************************************************************************
-Free list for allocations of exactly the configured I/O buffer size
+Free list for allocations of the configured size
 
-Reusing these buffers avoids faulting their pages back in when processing many files. Returning all other sizes to the allocator
-keeps upload chunks and one-off allocations from filling the cache. Both block count and retained bytes are bounded.
+Freed blocks of the configured size are retained and reused by allocations of the same size. Retained blocks are limited to
+MEM_FREE_LIST_BLOCK_MAX blocks and MEM_FREE_LIST_BYTE_MAX bytes. Blocks of other sizes are returned to the allocator.
 ***********************************************************************************************************************************/
 #define MEM_FREE_LIST_BLOCK_MAX                                     8
 #define MEM_FREE_LIST_BYTE_MAX                                      ((size_t)(64 * 1024 * 1024))

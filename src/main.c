@@ -97,7 +97,7 @@ main(int argListSize, const char *argList[])
         cfgLoad((unsigned int)argListSize, argList);
         const ConfigCommandRole commandRole = cfgCommandRole();
 
-        // Cache allocations of the I/O buffer size, which are repeatedly allocated while processing files
+        // Reserve the free list for allocations of the I/O buffer size
         memContextFreeListReserve(ioBufferSize());
 
         // Main/async commands
