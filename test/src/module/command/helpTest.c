@@ -52,6 +52,86 @@ testHelpBlockLast(const String *const help, const unsigned int blockTotal)
 }
 
 /***********************************************************************************************************************************
+First blocks of help text, where a block is the text between blank lines
+***********************************************************************************************************************************/
+static String *
+testHelpBlockFirst(const String *const help, const unsigned int blockTotal)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRING, help);
+        FUNCTION_HARNESS_PARAM(UINT, blockTotal);
+    FUNCTION_HARNESS_END();
+
+    const StringList *const blockList = strLstNewSplitZ(help, "\n\n");
+    StringList *const result = strLstNew();
+
+    ASSERT(blockTotal > 0 && blockTotal <= strLstSize(blockList));
+
+    for (unsigned int blockIdx = 0; blockIdx < blockTotal; blockIdx++)
+        strLstAdd(result, strLstGet(blockList, blockIdx));
+
+    FUNCTION_HARNESS_RETURN(STRING, strLstJoin(result, "\n\n"));
+}
+
+/***********************************************************************************************************************************
+Section headings of command help
+***********************************************************************************************************************************/
+static String *
+testHelpSectionList(const String *const help)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRING, help);
+    FUNCTION_HARNESS_END();
+
+    const StringList *const lineList = strLstNewSplitZ(help, "\n");
+    String *const result = strNew();
+
+    for (unsigned int lineIdx = 0; lineIdx < strLstSize(lineList); lineIdx++)
+    {
+        if (strEndsWithZ(strLstGet(lineList, lineIdx), " Options:"))
+            strCatFmt(result, "%s\n", strZ(strLstGet(lineList, lineIdx)));
+    }
+
+    FUNCTION_HARNESS_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
+Entry for an option in command help, i.e. the line with the option name and the lines its summary wraps onto. NULL when the option
+is not listed.
+***********************************************************************************************************************************/
+static String *
+testHelpOption(const String *const help, const char *const optionName)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRING, help);
+        FUNCTION_HARNESS_PARAM(STRINGZ, optionName);
+    FUNCTION_HARNESS_END();
+
+    const StringList *const lineList = strLstNewSplitZ(help, "\n");
+    const String *const optionPrefix = strNewFmt("  --%s ", optionName);
+    String *result = NULL;
+
+    for (unsigned int lineIdx = 0; lineIdx < strLstSize(lineList); lineIdx++)
+    {
+        const String *const line = strLstGet(lineList, lineIdx);
+
+        // Line with the option name
+        if (result == NULL)
+        {
+            if (strBeginsWith(line, optionPrefix))
+                result = strCatFmt(strNew(), "%s\n", strZ(line));
+        }
+        // Line the summary wraps onto
+        else if (strBeginsWithZ(line, "    "))
+            strCatFmt(result, "%s\n", strZ(line));
+        else
+            break;
+    }
+
+    FUNCTION_HARNESS_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -207,200 +287,8 @@ testRun(void)
         TEST_RESULT_VOID(testCfgLoad(argList), "help from help option");
         TEST_RESULT_STR_Z(helpRender(), generalHelp, "check text");
 
-        // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("restore command");
-
-        const char *commandHelp = zNewFmt(
-            "%s%s%s",
-            helpVersion,
-            " - 'restore' command help\n"
-            "\n"
-            "Restore a database cluster.\n"
-            "\n"
-            "The restore command automatically defaults to selecting the latest backup from\n"
-            "the first repository where backups exist (see Quick Start - Restore a Backup).\n"
-            "The order in which the repositories are checked is dictated by the\n"
-            "pgbackrest.conf (e.g. repo1 will be checked before repo2). To select from a\n"
-            "specific repository, the --repo option can be passed (e.g. --repo=1). The --set\n"
-            "option can be passed if a backup other than the latest is desired.\n"
-            "\n"
-            "When PITR of --type=time or --type=lsn is specified, then the target time or\n"
-            "target lsn must be specified with the --target option. If a backup is not\n"
-            "specified via the --set option, then the configured repositories will be\n"
-            "checked, in order, for a backup that contains the requested time or lsn. If no\n"
-            "matching backup is found, the latest backup from the first repository\n"
-            "containing backups will be used for --type=time while no backup will be\n"
-            "selected for --type=lsn. For other types of PITR, e.g. xid, the --set option\n"
-            "must be provided if the target is prior to the latest backup. See Point-in-Time\n"
-            "Recovery for more details and examples.\n"
-            "\n"
-            "Replication slots are not included per recommendation of PostgreSQL. See\n"
-            "Backing Up The Data Directory in the PostgreSQL documentation for more\n"
-            "information.\n"
-            "\n"
-            "Command Options:\n"
-            "\n"
-            "  --archive-mode                      preserve or disable archiving on restored\n"
-            "                                      cluster [default=preserve]\n"
-            "  --checksum-page-error               error on invalid page checksums\n"
-            "                                      [default=y]\n"
-            "  --db-exclude                        restore excluding the specified databases\n"
-            "  --db-include                        restore only specified databases\n"
-            "                                      [current=db1, db2]\n"
-            "  --force                             force a restore [default=n]\n"
-            "  --link-all                          restore all symlinks [default=n]\n"
-            "  --link-map                          modify the destination of a symlink\n"
-            "                                      [current=/link1=/dest1, /link2=/dest2]\n"
-            "  --recovery-option                   set an option in postgresql.auto.conf or\n"
-            "                                      recovery.conf\n"
-            "  --set                               backup set to restore [default=latest]\n"
-            "  --tablespace-map                    restore a tablespace into the specified\n"
-            "                                      directory\n"
-            "  --tablespace-map-all                restore all tablespaces into the\n"
-            "                                      specified directory\n"
-            "  --target                            recovery target\n"
-            "  --target-action                     action to take when recovery target is\n"
-            "                                      reached\n"
-            "  --target-exclusive                  stop just before the recovery target is\n"
-            "                                      reached\n"
-            "  --target-timeline                   recover along a timeline\n"
-            "  --type                              recovery type [default=default]\n"
-            "\n"
-            "General Options:\n"
-            "\n"
-            "  --allow-root                        allow the command to run as the root user\n"
-            "                                      [default=y]\n"
-            "  --buffer-size                       buffer size for I/O operations\n"
-            "                                      [current=32768, default=1MiB]\n"
-            "  --cmd                               pgBackRest command\n"
-            "                                      [default=/path/to/pgbackrest]\n"
-            "  --cmd-ssh                           SSH client command [default=ssh]\n"
-            "  --compress-level-network            network compression level [default=1]\n"
-            "  --config                            pgBackRest configuration file\n"
-            "                                      [default=/etc/pgbackrest/pgbackrest.conf]\n"
-            "  --config-include-path               path to additional pgBackRest\n"
-            "                                      configuration files\n"
-            "                                      [default=/etc/pgbackrest/conf.d]\n"
-            "  --config-path                       base path of pgBackRest configuration\n"
-            "                                      files [default=/etc/pgbackrest]\n"
-            "  --delta                             restore or backup using checksums\n"
-            "                                      [default=n]\n"
-            "  --io-timeout                        I/O timeout [default=1m]\n"
-            "  --lock-path                         path where lock files are stored\n"
-            "                                      [default=/tmp/pgbackrest]\n"
-            "  --neutral-umask                     use a neutral umask [default=y]\n"
-            "  --priority                          set process priority\n"
-            "  --process-max                       max processes to use for\n"
-            "                                      compress/transfer [default=1]\n"
-            "  --protocol-timeout                  protocol timeout [default=31m]\n"
-            "  --sck-keep-alive                    keep-alive enable [default=y]\n"
-            "  --stanza                            defines the stanza\n"
-            "  --tcp-keep-alive-count              keep-alive count\n"
-            "  --tcp-keep-alive-idle               keep-alive idle time\n"
-            "  --tcp-keep-alive-interval           keep-alive interval time\n"
-            "  --tls-cipher-12                     allowed TLSv1.2 cipher suites\n"
-            "  --tls-cipher-13                     allowed TLSv1.3 cipher suites\n"
-            "  --tls-min-version                   minimum TLS version [default=1.2]\n"
-            "\n"
-            "Log Options:\n"
-            "\n"
-            "  --log-level-console                 level for console logging [default=warn]\n"
-            "  --log-level-file                    level for file logging [default=info]\n"
-            "  --log-level-stderr                  level for stderr logging [default=off]\n"
-            "  --log-path                          path where log files are stored\n"
-            "                                      [default=/var/log/pgbackrest]\n"
-            "  --log-subprocess                    enable logging in subprocesses [default=n]\n"
-            "  --log-timestamp                     enable timestamp in logging [default=y]\n"
-            "\n",
-            "Maintainer Options:\n"
-            "\n"
-            "  --pg-version-force                  force PostgreSQL version\n"
-            "\n"
-            "Repository Options:\n"
-            "\n"
-            "  --repo                              set repository\n"
-            "  --repo-azure-account                azure repository account\n"
-            "  --repo-azure-container              azure repository container\n"
-            "  --repo-azure-endpoint               azure repository endpoint\n"
-            "  --repo-azure-key                    azure repository key\n"
-            "  --repo-azure-key-type               azure repository key type\n"
-            "  --repo-azure-uri-style              azure URI Style\n"
-            "  --repo-cipher-pass                  repository cipher passphrase\n"
-            "                                      [current=<redacted>]\n"
-            "  --repo-cipher-type                  cipher used to encrypt the repository\n"
-            "                                      [current=<multi>, default=none]\n"
-            "  --repo-gcs-bucket                   GCS repository bucket\n"
-            "  --repo-gcs-endpoint                 GCS repository endpoint\n"
-            "  --repo-gcs-key                      GCS repository key\n"
-            "  --repo-gcs-key-type                 GCS repository key type\n"
-            "  --repo-gcs-user-project             GCS project ID\n"
-            "  --repo-host                         repository host when operating remotely\n"
-            "                                      [current=<multi>]\n"
-            "  --repo-host-ca-file                 repository host certificate authority file\n"
-            "  --repo-host-ca-path                 repository host certificate authority path\n"
-            "  --repo-host-cert-file               repository host certificate file\n"
-            "  --repo-host-cmd                     repository host pgBackRest command\n"
-            "                                      [default=/path/to/pgbackrest]\n"
-            "  --repo-host-config                  pgBackRest repository host configuration\n"
-            "                                      file\n"
-            "                                      [default=/etc/pgbackrest/pgbackrest.conf]\n"
-            "  --repo-host-config-include-path     pgBackRest repository host configuration\n"
-            "                                      include path\n"
-            "                                      [default=/etc/pgbackrest/conf.d]\n"
-            "  --repo-host-config-path             pgBackRest repository host configuration\n"
-            "                                      path [default=/etc/pgbackrest]\n"
-            "  --repo-host-key-file                repository host key file\n"
-            "  --repo-host-port                    repository host port when repo-host is set\n"
-            "  --repo-host-type                    repository host protocol type\n"
-            "                                      [default=ssh]\n"
-            "  --repo-host-user                    repository host user when repo-host is\n"
-            "                                      set [default=pgbackrest]\n"
-            "  --repo-path                         path where backups and archive are stored\n"
-            "                                      [default=/var/lib/pgbackrest]\n"
-            "  --repo-s3-bucket                    S3 repository bucket\n"
-            "  --repo-s3-endpoint                  S3 repository endpoint\n"
-            "  --repo-s3-key                       S3 repository access key\n"
-            "  --repo-s3-key-secret                S3 repository secret access key\n"
-            "  --repo-s3-key-type                  S3 repository key type\n"
-            "  --repo-s3-kms-key-id                S3 repository KMS key\n"
-            "  --repo-s3-process-cmd               S3 authentication process command\n"
-            "  --repo-s3-region                    S3 repository region\n"
-            "  --repo-s3-requester-pays            S3 repository requester pays\n"
-            "  --repo-s3-role                      S3 repository role\n"
-            "  --repo-s3-service                   S3 signing service\n"
-            "  --repo-s3-sse-customer-key          S3 repository SSE customer key\n"
-            "  --repo-s3-sts-host                  S3 repository STS endpoint\n"
-            "  --repo-s3-token                     S3 repository security token\n"
-            "  --repo-s3-uri-style                 S3 URI Style\n"
-            "  --repo-sftp-host                    SFTP repository host\n"
-            "  --repo-sftp-host-fingerprint        SFTP repository host fingerprint\n"
-            "  --repo-sftp-host-key-check-type     SFTP host key check type\n"
-            "  --repo-sftp-host-key-hash-type      SFTP repository host key hash type\n"
-            "  --repo-sftp-host-port               SFTP repository host port\n"
-            "  --repo-sftp-host-user               SFTP repository host user\n"
-            "  --repo-sftp-known-host              SFTP known hosts file\n"
-            "  --repo-sftp-private-key-file        SFTP private key file\n"
-            "  --repo-sftp-private-key-passphrase  SFTP private key passphrase\n"
-            "  --repo-sftp-public-key-file         SFTP public key file\n"
-            "  --repo-storage-ca-file              repository storage CA file\n"
-            "  --repo-storage-ca-path              repository storage CA path\n"
-            "  --repo-storage-host                 repository storage host\n"
-            "  --repo-storage-port                 repository storage port\n"
-            "  --repo-storage-prefetch             repository storage prefetch\n"
-            "  --repo-storage-read-over            repository storage read over\n"
-            "  --repo-storage-tag                  repository storage tag(s)\n"
-            "  --repo-storage-upload-chunk-size    repository storage upload chunk size\n"
-            "  --repo-storage-verify-tls           repository storage TLS verify\n"
-            "  --repo-target-time                  target time for repository\n"
-            "  --repo-type                         type of storage used for the repository\n"
-            "                                      [default=posix]\n"
-            "\n"
-            "Stanza Options:\n"
-            "\n"
-            "  --pg-path                           PostgreSQL data directory\n"
-            "\n"
-            "Use 'pgbackrest help restore [option]' for more information.\n");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -416,8 +304,87 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptDbInclude, "db1");
         hrnCfgArgRawZ(argList, cfgOptDbInclude, "db2");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command");
-        TEST_RESULT_STR_Z(helpRender(), commandHelp, "check text");
         hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
+
+        const String *commandHelp = NULL;
+        TEST_ASSIGN(commandHelp, helpRender(), "render help");
+
+        TEST_RESULT_STR_Z(
+            testHelpBlockFirst(commandHelp, 2), zNewFmt("%s - 'restore' command help\n\nRestore a database cluster.", helpVersion),
+            "header and summary");
+        TEST_RESULT_STR_Z(
+            testHelpBlockLast(commandHelp, 1), "Use 'pgbackrest help restore [option]' for more information.\n", "footer");
+        TEST_RESULT_STR_Z(
+            testHelpSectionList(commandHelp),
+            "Command Options:\n"
+            "General Options:\n"
+            "Log Options:\n"
+            "Maintainer Options:\n"
+            "Repository Options:\n"
+            "Stanza Options:\n",
+            "sections");
+
+        // The column width is set by the longest option name
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "repo-sftp-private-key-passphrase"),
+            "  --repo-sftp-private-key-passphrase  SFTP private key passphrase\n",
+            "longest option name");
+
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "force"),
+            "  --force                             force a restore [default=n]\n",
+            "default on the same line");
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "archive-mode"),
+            "  --archive-mode                      preserve or disable archiving on restored\n"
+            "                                      cluster [default=preserve]\n",
+            "summary wraps with default");
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "repo-host-config"),
+            "  --repo-host-config                  pgBackRest repository host configuration\n"
+            "                                      file\n"
+            "                                      [default=/etc/pgbackrest/pgbackrest.conf]\n",
+            "summary and default wrap");
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "buffer-size"),
+            "  --buffer-size                       buffer size for I/O operations\n"
+            "                                      [current=32768, default=1MiB]\n",
+            "current and default");
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "cmd"),
+            "  --cmd                               pgBackRest command\n"
+            "                                      [default=/path/to/pgbackrest]\n",
+            "dynamic default");
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "db-include"),
+            "  --db-include                        restore only specified databases\n"
+            "                                      [current=db1, db2]\n",
+            "list current");
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "link-map"),
+            "  --link-map                          modify the destination of a symlink\n"
+            "                                      [current=/link1=/dest1, /link2=/dest2]\n",
+            "hash current");
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "repo-cipher-pass"),
+            "  --repo-cipher-pass                  repository cipher passphrase\n"
+            "                                      [current=<redacted>]\n",
+            "secure current");
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "repo-cipher-type"),
+            "  --repo-cipher-type                  cipher used to encrypt the repository\n"
+            "                                      [current=<multi>, default=none]\n",
+            "multiple current with default");
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "repo-host"),
+            "  --repo-host                         repository host when operating remotely\n"
+            "                                      [current=<multi>]\n",
+            "multiple current");
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "pg-version-force"),
+            "  --pg-version-force                  force PostgreSQL version\n",
+            "maintainer option");
+        TEST_RESULT_STR(testHelpOption(commandHelp, "job-retry"), NULL, "internal option not listed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("errors with specified options");
