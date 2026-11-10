@@ -2721,16 +2721,23 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherRotate, 2, "30d");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_RESULT_VOID(cmdExpire(), "expire");
-        TEST_RESULT_LOG(
-            "P00 DETAIL: repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
-            "P00   INFO: repo2: 12-2 no archive to remove\n"
-            "P00   WARN: option 'repo2-cipher-rotate' requires repository format 6 or higher");
+        TEST_ERROR(cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+        TEST_RESULT_LOG("P00  ERROR: [031]: repo2: option 'repo2-cipher-rotate' requires repository format 6 or higher");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive key not due for rotation");
 
         const time_t timeRotate = time(NULL);
+
+        InfoBackup *infoBackupFormat6 = NULL;
+
+        TEST_ASSIGN(
+            infoBackupFormat6, infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, TEST_CIPHER_SPEC),
+            "load backup info");
+        TEST_RESULT_VOID(infoBackupFormatSet(infoBackupFormat6, REPOSITORY_FORMAT_6), "set backup info format 6");
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackupFormat6, storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR, TEST_CIPHER_SPEC),
+            "save backup info");
 
         #define TEST_ARCHIVE_INFO_FORMAT_6(rotateTime)                                                                             \
             zNewFmt(                                                                                                               \
@@ -2753,6 +2760,8 @@ testRun(void)
             storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_FORMAT_6(timeRotate - 29 * SEC_PER_DAY),
             .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC);
         HRN_STORAGE_TIME(storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE, 967746268);
+
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         TEST_RESULT_VOID(cmdExpire(), "expire");
         TEST_RESULT_LOG(

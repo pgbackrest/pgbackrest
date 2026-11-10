@@ -30,6 +30,25 @@ testCfgLoad(const StringList *const argList)
 }
 
 /***********************************************************************************************************************************
+Last block of help text, i.e. the text after the last blank line
+***********************************************************************************************************************************/
+static String *
+testHelpBlockLast(const String *const help)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRING, help);
+    FUNCTION_HARNESS_END();
+
+    const char *result = strZ(help);
+    const char *next;
+
+    while ((next = strstr(result, "\n\n")) != NULL)
+        result = next + 2;
+
+    FUNCTION_HARNESS_RETURN(STRING, strNewZ(result));
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -565,6 +584,28 @@ testRun(void)
         strLstAddZ(argList, "hardlink");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, deprecated hardlink option");
         TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("minimum repository format");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "expire");
+        strLstAddZ(argList, "repo-cipher-rotate");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for expire command, repo-cipher-rotate option");
+        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender()), "minimum repository format: 6\n", "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        strLstAddZ(argList, "expire");
+        strLstAddZ(argList, "repo-cipher-rotate");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for expire command, repo-cipher-rotate option with default");
+        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender()), "default: 90d\nminimum repository format: 6\n", "check text");
+        hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check admonition");
