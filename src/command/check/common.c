@@ -95,6 +95,39 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
+checkStanzaInfoFormat(const unsigned int repoIdx, const InfoPg *const archiveInfoPg, const InfoPg *const backupInfoPg)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+        FUNCTION_TEST_PARAM(INFO_PG, archiveInfoPg);
+        FUNCTION_TEST_PARAM(INFO_PG, backupInfoPg);
+    FUNCTION_TEST_END();
+
+    ASSERT(archiveInfoPg != NULL);
+    ASSERT(backupInfoPg != NULL);
+
+    // Error if the info files are at different repository formats. stanza-upgrade saves archive.info before backup.info. An upgrade
+    // interrupted between the two saves leaves archive.info at the new format and backup.info at the prior format.
+    if (infoPgFormat(archiveInfoPg) != infoPgFormat(backupInfoPg))
+    {
+        const unsigned int formatArchive = infoPgFormat(archiveInfoPg);
+        const unsigned int formatBackup = infoPgFormat(backupInfoPg);
+
+        THROW_FMT(
+            FileInvalidError,
+            "backup info file and archive info file are at different repository formats\n"
+            "archive: format = %u\n"
+            "backup : format = %u\n"
+            "HINT: run " CFGCMD_STANZA_UPGRADE " with --%s=%u to complete an interrupted upgrade.",
+            formatArchive, formatBackup, cfgOptionIdxName(cfgOptRepoFormat, repoIdx),
+            formatArchive > formatBackup ? formatArchive : formatBackup);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
 checkStanzaInfo(const unsigned int repoIdx, const InfoPg *const archiveInfoPg, const InfoPg *const backupInfoPg)
 {
     FUNCTION_TEST_BEGIN();
@@ -122,22 +155,7 @@ checkStanzaInfo(const unsigned int repoIdx, const InfoPg *const archiveInfoPg, c
             strZ(pgVersionToStr(backupInfo.version)), backupInfo.systemId);
     }
 
-    // Error if the info files are at different repository formats. The formats are written together but stored apart, so an
-    // upgrade interrupted between the two saves leaves them mismatched.
-    if (infoPgFormat(archiveInfoPg) != infoPgFormat(backupInfoPg))
-    {
-        const unsigned int formatArchive = infoPgFormat(archiveInfoPg);
-        const unsigned int formatBackup = infoPgFormat(backupInfoPg);
-
-        THROW_FMT(
-            FileInvalidError,
-            "backup info file and archive info file are at different repository formats\n"
-            "archive: format = %u\n"
-            "backup : format = %u\n"
-            "HINT: run " CFGCMD_STANZA_UPGRADE " with --%s=%u to complete an interrupted upgrade.",
-            formatArchive, formatBackup, cfgOptionIdxName(cfgOptRepoFormat, repoIdx),
-            formatArchive > formatBackup ? formatArchive : formatBackup);
-    }
+    checkStanzaInfoFormat(repoIdx, archiveInfoPg, backupInfoPg);
 
     FUNCTION_TEST_RETURN_VOID();
 }

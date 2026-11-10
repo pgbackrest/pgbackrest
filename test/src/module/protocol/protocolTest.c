@@ -469,8 +469,13 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/1");
         hrnCfgArgRawZ(argList, cfgOptPgHost, "pg1-host");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 1, cipherTypeAes256Cbc);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherRotate, 1, "30d");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdBackup, argList, .noStd = true);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
 
+        // repo1-cipher-rotate is set and the repository format is not set
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypePg, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg1-host\n"
