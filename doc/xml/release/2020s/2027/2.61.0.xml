@@ -92,6 +92,20 @@
 
                 <p>Each wait for the server restarted the timeout and any packet from the server ended the wait. When the server stopped responding but still sent keepalives more often than <br-option>io-timeout</br-option> an operation such as a file write or remove could wait indefinitely. The timeout now limits how long an operation can wait without making progress. A directory read that timed out or failed ended the list without an error and now reports the error.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2916"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix <cmd>annotate</cmd> saving <file>backup.info</file> to the default repository.</p>
+
+                <p>When <br-option>repo</br-option> was not specified, the <cmd>annotate</cmd> command searched each repository for the backup set but saved the updated <file>backup.info</file> to the default repository. Annotating a backup set that was not in the default repository replaced the <file>backup.info</file> of the default repository with the <file>backup.info</file> of the repository where the backup set was found. If the default repository was encrypted, the key required to read its backups was lost, so those backups could no longer be restored.</p>
+            </release-item>
         </release-bug-list>
 
         <release-feature-list>
