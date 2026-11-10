@@ -264,34 +264,29 @@ logRange(const LogLevel logLevel, const LogLevel logRangeMin, const LogLevel log
 }
 
 /***********************************************************************************************************************************
-Internal write function that handles errors
+Internal write function. Returns false when the write fails.
 ***********************************************************************************************************************************/
-static void
-logWrite(const int fd, const char *const message, const size_t messageSize, const char *const errorDetail)
+static bool
+logWrite(const int fd, const char *const message, const size_t messageSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, fd);
         FUNCTION_TEST_PARAM(STRINGZ, message);
         FUNCTION_TEST_PARAM(SIZE, messageSize);
-        FUNCTION_TEST_PARAM(STRINGZ, errorDetail);
     FUNCTION_TEST_END();
 
     ASSERT(fd != -1);
     ASSERT(message != NULL);
     ASSERT(messageSize != 0);
-    ASSERT(errorDetail != NULL);
 
-    if ((size_t)write(fd, message, messageSize) != messageSize)
-        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write %s", errorDetail);
-
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_TEST_RETURN(BOOL, (size_t)write(fd, message, messageSize) == messageSize);
 }
 
 /***********************************************************************************************************************************
-Write out log message and indent subsequent lines
+Write out log message and indent subsequent lines. Returns false when a write fails.
 ***********************************************************************************************************************************/
-static void
-logWriteIndent(const int fd, const char *message, const size_t indentSize, const char *const errorDetail)
+static bool
+logWriteIndent(const int fd, const char *message, const size_t indentSize)
 {
     // Indent buffer -- used to write out indent space without having to loop
     static const char indentBuffer[] = "                                                                                          ";
@@ -300,32 +295,31 @@ logWriteIndent(const int fd, const char *message, const size_t indentSize, const
         FUNCTION_TEST_PARAM(INT, fd);
         FUNCTION_TEST_PARAM(STRINGZ, message);
         FUNCTION_TEST_PARAM(SIZE, indentSize);
-        FUNCTION_TEST_PARAM(STRINGZ, errorDetail);
     FUNCTION_TEST_END();
 
     ASSERT(fd != -1);
     ASSERT(message != NULL);
     ASSERT(indentSize > 0 && indentSize < sizeof(indentBuffer));
-    ASSERT(errorDetail != NULL);
 
     // Indent all lines after the first
     const char *linefeedPtr = strchr(message, '\n');
     bool first = true;
+    bool result = true;
 
     while (linefeedPtr != NULL)
     {
         if (!first)
-            logWrite(fd, indentBuffer, indentSize, errorDetail);
+            result &= logWrite(fd, indentBuffer, indentSize);
         else
             first = false;
 
-        logWrite(fd, message, (size_t)(linefeedPtr - message + 1), errorDetail);
+        result &= logWrite(fd, message, (size_t)(linefeedPtr - message + 1));
         message += (size_t)(linefeedPtr - message + 1);
 
         linefeedPtr = strchr(message, '\n');
     }
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_TEST_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -447,32 +441,47 @@ logPost(LogPreResult *const logData, const LogLevel logLevel, const LogLevel log
         if ((logLevelStdErr > logLevelStdOut && logRange(logLevelStdErr, logRangeMin, logRangeMax)) ||
             (logLevelStdErr <= logLevelStdOut && logRange(logLevelStdOut, logRangeMin, logRangeMax)))
         {
-            logWriteIndent(
-                logFdStdErr, logData->logBufferStdErr, logData->indentSize - (size_t)(logData->logBufferStdErr - logBuffer),
-                "log to stderr");
+            THROW_ON_SYS_ERROR(
+                !logWriteIndent(
+                    logFdStdErr, logData->logBufferStdErr, logData->indentSize - (size_t)(logData->logBufferStdErr - logBuffer)),
+                FileWriteError, "unable to write log to stderr");
         }
     }
     else if (logLevel <= logLevelStdOut && logRange(logLevelStdOut, logRangeMin, logRangeMax))
-        logWriteIndent(logFdStdOut, logBuffer, logData->indentSize, "log to stdout");
+    {
+        THROW_ON_SYS_ERROR(
+            !logWriteIndent(logFdStdOut, logBuffer, logData->indentSize), FileWriteError, "unable to write log to stdout");
+    }
 
     // Log to file
     if (logLevel <= logLevelFile && logFdFile != -1 && logRange(logLevelFile, logRangeMin, logRangeMax))
     {
+        bool result = true;
+
         // If the banner has not been written
         if (!logFileBanner)
         {
             // Add a blank line if the file already has content
             if (lseek(logFdFile, 0, SEEK_END) > 0)
-                logWrite(logFdFile, "\n", 1, "banner spacing to file");
+                result = logWrite(logFdFile, "\n", 1);
 
             // Write process start banner
-            logWrite(logFdFile, LOG_BANNER, sizeof(LOG_BANNER) - 1, "banner to file");
+            result &= logWrite(logFdFile, LOG_BANNER, sizeof(LOG_BANNER) - 1);
 
             // Mark banner as written
             logFileBanner = true;
         }
 
-        logWriteIndent(logFdFile, logBuffer, logData->indentSize, "log to file");
+        result &= logWriteIndent(logFdFile, logBuffer, logData->indentSize);
+
+        // Close the log file and continue without it when a write fails
+        if (!result)
+        {
+            const int errNo = errno;
+
+            logFileClose();
+            LOG_WARN_FMT("unable to write log file: %s\nNOTE: process will continue without log file.", strerror(errNo));
+        }
     }
 
     FUNCTION_TEST_RETURN_VOID();

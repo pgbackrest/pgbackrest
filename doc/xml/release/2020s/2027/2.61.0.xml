@@ -182,6 +182,19 @@
 
                 <p>An <proper>SFTP</proper> server with <code>ClientAliveInterval</code> set drops a session that does not respond to keepalives, e.g. the session of the main process during the copy phase of a backup. The next open on that session failed with <quote>libssh2 error [-7]</quote>. The session is now reopened and the open is retried once.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2876"/>
+                <github-pull-request id="2878"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="ella.zhang"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Continue without the log file when a write to it fails.</p>
+            </release-item>
         </release-improvement-list>
     </release-core-list>
 

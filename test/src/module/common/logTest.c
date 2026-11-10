@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test Log Handler
 ***********************************************************************************************************************************/
+#include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
@@ -159,9 +160,25 @@ testRun(void)
     if (testBegin("logWrite()"))
     {
         // Just test the error here -- success is well tested elsewhere
+        TEST_RESULT_BOOL(logWrite(-999, "message", 7), false, "invalid file descriptor");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stdout and stderr write error");
+
+        TEST_RESULT_VOID(logInit(logLevelInfo, logLevelWarn, logLevelOff, false, 0, 1, false), "init");
+
+        logFdStdOut = -999;
+        logFdStdErr = -999;
+
         TEST_ERROR(
-            logWrite(-999, "message", 7, "invalid file descriptor"), FileWriteError,
-            "unable to write invalid file descriptor: [9] Bad file descriptor");
+            logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "message"), FileWriteError,
+            "unable to write log to stdout: [9] Bad file descriptor");
+        TEST_ERROR(
+            logInternal(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 0, "file", "function", 0, "message"), FileWriteError,
+            "unable to write log to stderr: [9] Bad file descriptor");
+
+        logFdStdOut = STDOUT_FILENO;
+        logFdStdErr = STDERR_FILENO;
     }
 
     // *****************************************************************************************************************************
@@ -267,6 +284,35 @@ testRun(void)
         TEST_RESULT_INT(logFdFile, -1, "log file is closed");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("log file write error");
+
+        TEST_RESULT_VOID(logInit(logLevelOff, logLevelWarn, logLevelInfo, false, 0, 99, false), "init");
+
+        // Make every write to the log file fail with a read-only descriptor
+        const char *const fileReadOnly = TEST_PATH "/read-only.log";
+        TEST_RESULT_BOOL(logFileSet(fileReadOnly), true, "open log file");
+        TEST_RESULT_INT(close(logFdFile), 0, "close writable descriptor");
+        logFdFile = testLogOpen(fileReadOnly, O_RDONLY, 0);
+
+        TEST_RESULT_BOOL(logAny(logLevelInfo), true, "info is logged to file");
+
+        // Log in a catch block
+        TRY_BEGIN()
+        {
+            THROW(FormatError, "error being handled");
+        }
+        CATCH(FormatError)
+        {
+            TEST_RESULT_VOID(
+                logInternal(logLevelInfo, LOG_LEVEL_MIN, LOG_LEVEL_MAX, 99, "test.c", "test_func", 0, "info message"), "log info");
+            TEST_RESULT_Z(errorMessage(), "error being handled", "error is preserved");
+        }
+        TRY_END();
+
+        TEST_RESULT_INT(logFdFile, -1, "log file is closed");
+        TEST_RESULT_BOOL(logAny(logLevelInfo), false, "info is no longer logged");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error goes to stderr when stderr is not in range but stdout is");
 
         TEST_RESULT_VOID(logInit(logLevelDebug, logLevelWarn, logLevelOff, false, 0, 99, false), "init");
@@ -324,9 +370,11 @@ testRun(void)
             "INFO: [DRY-RUN] info message 2\n"
             "WARN: [DRY-RUN] unable to open log file '/BOGUS': %s\n"
             "      NOTE: process will continue without log file.\n"
+            "WARN: unable to write log file: %s\n"
+            "      NOTE: process will continue without log file.\n"
             "ERROR: [001]: error to stderr\n"
             "ERROR: [001]: error to stderr 2",
-            testErrorFile);
+            testErrorFile, strerror(EBADF));
 
         testLogResult(stderrFile, buffer);
 
