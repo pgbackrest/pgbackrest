@@ -5,6 +5,7 @@ Expire Command
 
 #include "command/archive/common.h"
 #include "command/backup/common.h"
+#include "command/check/common.h"
 #include "command/control/common.h"
 #include "command/expire/expire.h"
 #include "command/stanza/common.h"
@@ -1196,6 +1197,12 @@ cmdExpire(void)
             {
                 // Load backup.info for this repo
                 infoBackup = infoBackupLoadFileReconstruct(storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+
+                // Set the repository format after checking that archive.info is at the same format as backup.info
+                checkStanzaInfoFormat(
+                    repoIdx,
+                    infoArchivePg(infoArchiveLoadFile(storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx))),
+                    infoBackupPg(infoBackup));
                 cfgRepoFormatSet(repoIdx, infoBackupFormat(infoBackup));
 
                 // When expire oldest requested, expire the oldest full backup by lowering retention for this execution
