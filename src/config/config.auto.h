@@ -279,9 +279,11 @@ Option value constants
 #define CFGOPTVAL_PG_HOST_TYPE_TLS                                  STRID5("tls", 0x4d940)
 #define CFGOPTVAL_PG_HOST_TYPE_TLS_Z                                "tls"
 
-#define CFGOPTVAL_PG_IO_MODE_DEFAULT                                STRID5("default", 0x5195098a40)
+#define CFGOPTVAL_PG_IO_MODE_DEFAULT                                0
+#define CFGOPTVAL_PG_IO_MODE_DEFAULT_STRID                          STRID5S("default", 0, 0x5195098a42)
 #define CFGOPTVAL_PG_IO_MODE_DEFAULT_Z                              "default"
-#define CFGOPTVAL_PG_IO_MODE_DIRECT                                 STRID5("direct", 0x2832c9240)
+#define CFGOPTVAL_PG_IO_MODE_DIRECT                                 1
+#define CFGOPTVAL_PG_IO_MODE_DIRECT_STRID                           STRID5S("direct", 1, 0x2832c9244)
 #define CFGOPTVAL_PG_IO_MODE_DIRECT_Z                               "direct"
 
 #define CFGOPTVAL_REMOTE_TYPE_PG                                    STRID5("pg", 0xf00)
@@ -329,9 +331,11 @@ Option value constants
 #define CFGOPTVAL_REPO_HOST_TYPE_TLS                                STRID5("tls", 0x4d940)
 #define CFGOPTVAL_REPO_HOST_TYPE_TLS_Z                              "tls"
 
-#define CFGOPTVAL_REPO_IO_MODE_DEFAULT                              STRID5("default", 0x5195098a40)
+#define CFGOPTVAL_REPO_IO_MODE_DEFAULT                              0
+#define CFGOPTVAL_REPO_IO_MODE_DEFAULT_STRID                        STRID5S("default", 0, 0x5195098a42)
 #define CFGOPTVAL_REPO_IO_MODE_DEFAULT_Z                            "default"
-#define CFGOPTVAL_REPO_IO_MODE_DIRECT                               STRID5("direct", 0x2832c9240)
+#define CFGOPTVAL_REPO_IO_MODE_DIRECT                               1
+#define CFGOPTVAL_REPO_IO_MODE_DIRECT_STRID                         STRID5S("direct", 1, 0x2832c9244)
 #define CFGOPTVAL_REPO_IO_MODE_DIRECT_Z                             "direct"
 
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF                  STRID5("diff", 0x319240)

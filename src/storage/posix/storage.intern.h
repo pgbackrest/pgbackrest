@@ -16,7 +16,7 @@ Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Storage *storagePosixNewInternal(
     StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, bool pathSync, bool symLink, bool directIo);
+    StoragePathExpressionCallback pathExpressionFunction, bool pathSync, bool symLink, StoragePosixIoMode ioMode);
 
 /***********************************************************************************************************************************
 Macros for function logging

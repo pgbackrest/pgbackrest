@@ -224,7 +224,7 @@ hrnStorageReadTestNew(
         *this = (HrnStorageReadTest)
         {
             .interface = &hrnStorageReadTestInterface,
-            .driver = storageReadPosixNew(storage, name, offset, limit, false),
+            .driver = storageReadPosixNew(storage, name, offset, limit, storagePosixIoModeDefault),
         };
     }
     OBJ_NEW_END();
@@ -349,10 +349,10 @@ hrnStorageWriteTestNew(
             .interface = &hrnStorageWriteTestInterface,
             .base = storageWritePosixNew(
                 storageDriver(storagePosix), name, modeFile, modePath, user, group, timeModified, createPath, false, false,
-                false, truncate, false),
+                false, truncate, storagePosixIoModeDefault),
             .version = storageWritePosixNew(
                 storageDriver(storagePosix), hrnStorageTestVersionFind(storagePosix, name), modeFile, modePath, user, group,
-                timeModified, createPath, false, false, false, truncate, false),
+                timeModified, createPath, false, false, false, truncate, storagePosixIoModeDefault),
         };
     }
     OBJ_NEW_END();

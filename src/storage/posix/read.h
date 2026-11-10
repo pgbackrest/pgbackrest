@@ -16,7 +16,7 @@ typedef struct StorageReadPosix StorageReadPosix;
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageReadPosix *storageReadPosixNew(
-    StoragePosix *storage, const String *name, uint64_t offset, const Variant *limit, bool directIo);
+    StoragePosix *storage, const String *name, uint64_t offset, const Variant *limit, StoragePosixIoMode ioMode);
 
 /***********************************************************************************************************************************
 Macros for function logging

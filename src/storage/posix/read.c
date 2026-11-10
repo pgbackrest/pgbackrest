@@ -30,7 +30,7 @@ struct StorageReadPosix
     uint64_t current;                                               // Current bytes read from file
     bool eof;
 
-    bool directIo;                                                  // Use direct I/O
+    StoragePosixIoMode ioMode;                                      // I/O mode
     StoragePosixDirect dio;                                         // Aligned bounce buffer
     size_t dioSkip;                                                 // Bytes to skip in first block to reach offset
     size_t dioUsed;                                                 // Bytes in bounce buffer
@@ -74,16 +74,16 @@ storageReadPosixOpen(THIS_VOID)
     ASSERT(this->fd == -1);
 
     // Open the file
-    if (this->directIo)
+    if (this->ioMode == storagePosixIoModeDirect)
     {
         this->fd = open(strZ(this->name), O_RDONLY | storagePosixDirectFlag(), 0);
 
         // Fall back to buffered I/O when direct I/O is not supported, e.g. by the file system
         if (this->fd == -1 && errno == EINVAL)
-            this->directIo = false;
+            this->ioMode = storagePosixIoModeDefault;
     }
 
-    if (!this->directIo)
+    if (this->ioMode != storagePosixIoModeDirect)
         this->fd = open(strZ(this->name), O_RDONLY, 0);
 
     // Handle errors except missing, which is reported to the caller via the result
@@ -102,7 +102,7 @@ storageReadPosixOpen(THIS_VOID)
         // and skip the remainder when reading.
         uint64_t seekOffset = this->offset;
 
-        if (this->directIo)
+        if (this->ioMode == storagePosixIoModeDirect)
         {
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
@@ -206,7 +206,7 @@ storageReadPosix(THIS_VOID, Buffer *const buffer, const bool block)
     ASSERT(this != NULL && this->fd != -1);
     ASSERT(buffer != NULL && !bufFull(buffer));
 
-    if (this->directIo)
+    if (this->ioMode == storagePosixIoModeDirect)
     {
         FUNCTION_LOG_RETURN(SIZE, storageReadPosixDirect(this, buffer));
     }
@@ -313,14 +313,15 @@ static const StorageReadInterface storageReadPosixInterface =
 
 FN_EXTERN StorageReadPosix *
 storageReadPosixNew(
-    StoragePosix *const storage, const String *const name, const uint64_t offset, const Variant *const limit, const bool directIo)
+    StoragePosix *const storage, const String *const name, const uint64_t offset, const Variant *const limit,
+    const StoragePosixIoMode ioMode)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
-        FUNCTION_LOG_PARAM(BOOL, directIo);
+        FUNCTION_LOG_PARAM(ENUM, ioMode);
     FUNCTION_LOG_END();
 
     ASSERT(name != NULL);
@@ -335,7 +336,7 @@ storageReadPosixNew(
             .offset = offset,
             .limit = varDup(limit),
             .fd = -1,
-            .directIo = directIo,
+            .ioMode = ioMode,
         };
     }
     OBJ_NEW_END();

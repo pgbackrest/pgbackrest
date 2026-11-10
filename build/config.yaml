@@ -1426,7 +1426,9 @@ option:
     section: stanza
     group: pg
     type: string-id
+    sequence: true
     default: default
+    # Keep synced with StoragePosixIoMode enum
     allow-list:
       - default
       - direct: HAVE_O_DIRECT
@@ -1732,7 +1734,9 @@ option:
     section: global
     group: repo
     type: string-id
+    sequence: true
     default: default
+    # Keep synced with StoragePosixIoMode enum
     allow-list:
       - default
       - direct: HAVE_O_DIRECT

@@ -34,7 +34,7 @@ Object type
 struct StoragePosix
 {
     STORAGE_COMMON_MEMBER;
-    bool directIo;                                                  // Use direct I/O
+    StoragePosixIoMode ioMode;                                      // I/O mode
 };
 
 /**********************************************************************************************************************************/
@@ -360,7 +360,7 @@ storagePosixNewRead(THIS_VOID, const String *const file, const StorageInterfaceN
     ASSERT(file != NULL);
     ASSERT(param.versionId == NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ_POSIX, storageReadPosixNew(this, file, param.offset, param.limit, this->directIo));
+    FUNCTION_LOG_RETURN(STORAGE_READ_POSIX, storageReadPosixNew(this, file, param.offset, param.limit, this->ioMode));
 }
 
 /**********************************************************************************************************************************/
@@ -392,7 +392,7 @@ storagePosixNewWrite(THIS_VOID, const String *const file, const StorageInterface
         storageWritePosixNew(
             this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
             param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate,
-            this->directIo));
+            this->ioMode));
 }
 
 /**********************************************************************************************************************************/
@@ -595,7 +595,7 @@ static const StorageInterface storageInterfacePosix =
 FN_EXTERN Storage *
 storagePosixNewInternal(
     const StringId type, const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
-    StoragePathExpressionCallback pathExpressionFunction, const bool pathSync, const bool symLink, const bool directIo)
+    StoragePathExpressionCallback pathExpressionFunction, const bool pathSync, const bool symLink, const StoragePosixIoMode ioMode)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -606,14 +606,14 @@ storagePosixNewInternal(
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(BOOL, pathSync);
         FUNCTION_LOG_PARAM(BOOL, symLink);
-        FUNCTION_LOG_PARAM(BOOL, directIo);
+        FUNCTION_LOG_PARAM(ENUM, ioMode);
     FUNCTION_LOG_END();
 
     ASSERT(type != 0);
     ASSERT(path != NULL);
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
-    ASSERT(!directIo || storagePosixDirectFlag() != 0);
+    ASSERT(ioMode != storagePosixIoModeDirect || storagePosixDirectFlag() != 0);
 
     // Initialize user module
     userInit();
@@ -624,7 +624,7 @@ storagePosixNewInternal(
         *this = (StoragePosix)
         {
             .interface = storageInterfacePosix,
-            .directIo = directIo,
+            .ioMode = ioMode,
         };
 
         // Disable path sync when not supported
@@ -654,7 +654,7 @@ storagePosixNew(const String *const path, const StoragePosixNewParam param)
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
         FUNCTION_LOG_PARAM(BOOL, param.noSymLink);
-        FUNCTION_LOG_PARAM(BOOL, param.directIo);
+        FUNCTION_LOG_PARAM(ENUM, param.ioMode);
         FUNCTION_LOG_PARAM(FUNCTIONP, param.pathExpressionFunction);
     FUNCTION_LOG_END();
 
@@ -663,5 +663,5 @@ storagePosixNew(const String *const path, const StoragePosixNewParam param)
         storagePosixNewInternal(
             STORAGE_POSIX_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
             param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, true,
-            !param.noSymLink, param.directIo));
+            !param.noSymLink, param.ioMode));
 }

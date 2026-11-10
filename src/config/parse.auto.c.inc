@@ -4342,6 +4342,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                              // opt/pg-io-mode
         PARSE_RULE_OPTION_NAME("pg-io-mode"),                                                                      // opt/pg-io-mode
         PARSE_RULE_OPTION_TYPE(StringId),                                                                          // opt/pg-io-mode
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                          // opt/pg-io-mode
         PARSE_RULE_OPTION_RESET(true),                                                                             // opt/pg-io-mode
         PARSE_RULE_OPTION_REQUIRED(true),                                                                          // opt/pg-io-mode
         PARSE_RULE_OPTION_SECTION(Stanza),                                                                         // opt/pg-io-mode
@@ -7373,6 +7374,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                            // opt/repo-io-mode
         PARSE_RULE_OPTION_NAME("repo-io-mode"),                                                                  // opt/repo-io-mode
         PARSE_RULE_OPTION_TYPE(StringId),                                                                        // opt/repo-io-mode
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                        // opt/repo-io-mode
         PARSE_RULE_OPTION_RESET(true),                                                                           // opt/repo-io-mode
         PARSE_RULE_OPTION_REQUIRED(true),                                                                        // opt/repo-io-mode
         PARSE_RULE_OPTION_SECTION(Global),                                                                       // opt/repo-io-mode

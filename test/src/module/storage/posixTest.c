@@ -1803,7 +1803,7 @@ testRun(void)
             "use default when offset alignment is zero");
 #endif
 
-        const Storage *const storageDirect = storagePosixNewP(TEST_PATH_STR, .write = true, .directIo = true);
+        const Storage *const storageDirect = storagePosixNewP(TEST_PATH_STR, .write = true, .ioMode = storagePosixIoModeDirect);
 
         // Content that is not a multiple of the alignment and spans multiple bounce buffers
         const size_t contentSize = ioBufferSize() * 2 + 10000;

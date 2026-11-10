@@ -41,7 +41,7 @@ struct StorageWritePosix
     const String *path;
     int fd;                                                          // File descriptor
 
-    bool directIo;                                                   // Use direct I/O
+    StoragePosixIoMode ioMode;                                       // I/O mode
     StoragePosixDirect dio;                                          // Aligned bounce buffer
     size_t dioUsed;                                                  // Bytes in bounce buffer
     bool dioPadded;                                                  // Was padding written that needs to be truncated?
@@ -104,7 +104,7 @@ storageWritePosixOpen(THIS_VOID)
 
     // Open the file
     const int flags = O_CREAT | O_WRONLY | (this->truncate ? O_TRUNC : 0);
-    const int flagsOpen = flags | (this->directIo ? storagePosixDirectFlag() : 0);
+    const int flagsOpen = flags | (this->ioMode == storagePosixIoModeDirect ? storagePosixDirectFlag() : 0);
 
     this->fd = open(strZ(this->nameTmp), flagsOpen, this->modeFile);
 
@@ -119,9 +119,9 @@ storageWritePosixOpen(THIS_VOID)
     }
 
     // Fall back to buffered I/O when direct I/O is not supported, e.g. by the file system
-    if (this->fd == -1 && errno == EINVAL && this->directIo)
+    if (this->fd == -1 && errno == EINVAL && this->ioMode == storagePosixIoModeDirect)
     {
-        this->directIo = false;
+        this->ioMode = storagePosixIoModeDefault;
         this->fd = open(strZ(this->nameTmp), flags, this->modeFile);
     }
 
@@ -137,7 +137,7 @@ storageWritePosixOpen(THIS_VOID)
     // Set free callback to ensure the file descriptor is freed
     memContextCallbackSet(objMemContext(this), storageWritePosixFreeResource, this);
 
-    if (this->directIo)
+    if (this->ioMode == storagePosixIoModeDirect)
     {
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
@@ -232,7 +232,7 @@ storageWritePosix(THIS_VOID, const Buffer *const buffer)
     ASSERT(this->fd != -1);
 
     // Stage the data through the bounce buffer when using direct I/O
-    if (this->directIo)
+    if (this->ioMode == storagePosixIoModeDirect)
     {
         const uint8_t *bufferPtr = bufPtrConst(buffer);
         size_t bufferRemains = bufUsed(buffer);
@@ -280,7 +280,7 @@ storageWritePosixSeek(THIS_VOID, const uint64_t position)
     ASSERT(this->fd != -1);
 
     // Direct I/O can only seek to an aligned position
-    if (this->directIo)
+    if (this->ioMode == storagePosixIoModeDirect)
     {
         storageWritePosixDirectFlush(this);
 
@@ -318,7 +318,7 @@ storageWritePosixClose(THIS_VOID)
     if (this->fd != -1)
     {
         // Write remaining data and remove the padding that was added to meet the alignment
-        if (this->directIo)
+        if (this->ioMode == storagePosixIoModeDirect)
         {
             storageWritePosixDirectFlush(this);
 
@@ -395,7 +395,7 @@ FN_EXTERN StorageWritePosix *
 storageWritePosixNew(
     StoragePosix *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
     const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
-    const bool atomic, const bool truncate, const bool directIo)
+    const bool atomic, const bool truncate, const StoragePosixIoMode ioMode)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, storage);
@@ -410,7 +410,7 @@ storageWritePosixNew(
         FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
         FUNCTION_LOG_PARAM(BOOL, truncate);
-        FUNCTION_LOG_PARAM(BOOL, directIo);
+        FUNCTION_LOG_PARAM(ENUM, ioMode);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -438,7 +438,7 @@ storageWritePosixNew(
             .nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : strDup(name),
             .path = strPath(name),
             .fd = -1,
-            .directIo = directIo,
+            .ioMode = ioMode,
         };
     }
     OBJ_NEW_END();
