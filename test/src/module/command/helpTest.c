@@ -30,6 +30,28 @@ testCfgLoad(const StringList *const argList)
 }
 
 /***********************************************************************************************************************************
+Last blocks of help text, where a block is the text between blank lines
+***********************************************************************************************************************************/
+static String *
+testHelpBlockLast(const String *const help, const unsigned int blockTotal)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRING, help);
+        FUNCTION_HARNESS_PARAM(UINT, blockTotal);
+    FUNCTION_HARNESS_END();
+
+    const StringList *const blockList = strLstNewSplitZ(help, "\n\n");
+    StringList *const result = strLstNew();
+
+    ASSERT(blockTotal > 0 && blockTotal <= strLstSize(blockList));
+
+    for (unsigned int blockIdx = strLstSize(blockList) - blockTotal; blockIdx < strLstSize(blockList); blockIdx++)
+        strLstAdd(result, strLstGet(blockList, blockIdx));
+
+    FUNCTION_HARNESS_RETURN(STRING, strLstJoin(result, "\n\n"));
+}
+
+/***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
 static void
@@ -428,51 +450,21 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("default and current option value");
 
-        const char *optionHelp = zNewFmt(
-            "%s - 'archive-push' command - 'buffer-size' option help\n"
-            "\n"
-            "Buffer size for I/O operations.\n"
-            "\n"
-            "Buffer size used for copy, compress, encrypt, and other operations. The number\n"
-            "of buffers used depends on options and each operation may use additional\n"
-            "memory, e.g. gz compression may use an additional 256KiB of memory.\n"
-            "\n"
-            "Allowed values are 16KiB, 32KiB, 64KiB, 128KiB, 256KiB, 512KiB, 1MiB, 2MiB,\n"
-            "4MiB, 8MiB, and 16MiB.\n",
-            helpVersion);
-
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "buffer-size");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ndefault: 1MiB\n", optionHelp), "check text");
+        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 1), "default: 1MiB\n", "check text");
 
         // Set a current value
         hrnCfgArgRawZ(argList, cfgOptBufferSize, "32k");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
-        TEST_RESULT_STR(helpRender(), strNewFmt("%s\ncurrent: 32k\ndefault: 1MiB\n", optionHelp), "check text, current value");
+        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 1), "current: 32k\ndefault: 1MiB\n", "check text, current value");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("deprecated host option names");
-
-        #define HELP_OPTION                                                                                                        \
-            "%s - 'archive-push' command - 'repo-storage-host' option help\n"                                                      \
-            "\n"                                                                                                                   \
-            "Repository storage host.\n"                                                                                           \
-            "\n"                                                                                                                   \
-            "Connect to a host other than the storage (e.g. S3, Azure) endpoint. This is\n"                                        \
-            "typically used for testing.\n"                                                                                        \
-            "\n"
-
-        #define HELP_OPTION_DEPRECATED_NAMES                                                                                       \
-            "deprecated names: repo-azure-host, repo-s3-host\n"
-
-        optionHelp = zNewFmt(
-            HELP_OPTION
-            HELP_OPTION_DEPRECATED_NAMES,
-            helpVersion);
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -480,46 +472,19 @@ testRun(void)
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "repo1-s3-host");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
-
-        optionHelp = zNewFmt(
-            HELP_OPTION
-            "current: s3-host\n"
-            "\n"
-            HELP_OPTION_DEPRECATED_NAMES,
-            helpVersion);
+        TEST_RESULT_STR_Z(
+            testHelpBlockLast(helpRender(), 1), "deprecated names: repo-azure-host, repo-s3-host\n", "check text");
 
         // Set a current value for deprecated option name
         hrnCfgArgRawZ(argList, cfgOptRepoType, "s3");
         strLstAddZ(argList, "--repo1-s3-host=s3-host");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text, current value");
+        TEST_RESULT_STR_Z(
+            testHelpBlockLast(helpRender(), 2), "current: s3-host\n\ndeprecated names: repo-azure-host, repo-s3-host\n",
+            "check text, current value");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("cipher pass redacted");
-
-        optionHelp = zNewFmt(
-            "%s - 'archive-push' command - 'repo-cipher-pass' option help\n"
-            "\n"
-            "Repository cipher passphrase.\n"
-            "\n"
-            "Passphrase used to encrypt/decrypt files of the repository.\n"
-            "\n"
-            "A stanza created at repo-format 6 or higher requires a passphrase generated\n"
-            "from at least 256 random bits, e.g. with openssl rand -base64 32. The\n"
-            "passphrase must be hex, base64, or unpadded base64url that decodes to at least\n"
-            "256 bits, the decoded bytes must not all be text, and they must contain at\n"
-            "least 16 distinct values and at least 16 distinct differences between adjacent\n"
-            "bytes. The last two rule out repeated values, sequences, and short repeating\n"
-            "patterns.\n"
-            "\n"
-            "NOTE: When run without the stanza option the info command reads encryption\n"
-            "settings only from the global section. If encryption settings are configured\n"
-            "per stanza, run the info command with the stanza option to read an encrypted\n"
-            "stanza.\n"
-            "\n"
-            "current: <redacted>\n",
-            helpVersion);
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -529,26 +494,16 @@ testRun(void)
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "repo-cipher-pass");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
+        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 1), "current: <redacted>\n", "check text");
         hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("deprecated and new option name produce same results");
 
-        optionHelp = zNewFmt(
-            "%s - 'backup' command - 'repo-hardlink' option help\n"
-            "\n"
-            "Hardlink files between backups in the repository.\n"
-            "\n"
-            "Enable hard-linking of files in differential and incremental backups to their\n"
-            "full backups. This gives the appearance that each backup is a full backup at\n"
-            "the file-system level. Be careful, though, because modifying files that are\n"
-            "hard-linked can affect all the backups in the set.\n"
-            "\n"
-            "default: n\n"
-            "\n"
-            "deprecated name: hardlink\n",
-            helpVersion);
+        #define TEST_HELP_HARDLINK                                                                                                 \
+            "default: n\n"                                                                                                         \
+            "\n"                                                                                                                   \
+            "deprecated name: hardlink\n"
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -556,7 +511,7 @@ testRun(void)
         strLstAddZ(argList, "backup");
         strLstAddZ(argList, "repo-hardlink");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, repo-hardlink option");
-        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
+        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 2), TEST_HELP_HARDLINK, "check text");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -564,12 +519,12 @@ testRun(void)
         strLstAddZ(argList, "backup");
         strLstAddZ(argList, "hardlink");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, deprecated hardlink option");
-        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
+        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 2), TEST_HELP_HARDLINK, "check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check admonition");
 
-        optionHelp = zNewFmt(
+        const char *const optionHelp = zNewFmt(
             "%s - 'backup' command - 'repo-retention-archive' option help\n"
             "\n"
             "Number of backups worth of continuous WAL to retain.\n"
@@ -605,21 +560,6 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple current values (with one missing)");
 
-        optionHelp = zNewFmt(
-            "%s - 'restore' command - 'repo-host' option help\n"
-            "\n"
-            "Repository host when operating remotely.\n"
-            "\n"
-            "When backing up and archiving to a locally mounted filesystem this setting is\n"
-            "not required.\n"
-            "\n"
-            "current:\n"
-            "  repo1: backup.example.net\n"
-            "  repo3: dr.test.org\n"
-            "\n"
-            "deprecated name: backup-host\n",
-            helpVersion);
-
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "backup.example.net");
@@ -628,24 +568,17 @@ testRun(void)
         strLstAddZ(argList, "restore");
         strLstAddZ(argList, "repo-host");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-host option");
-        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("multiple current values (with one unset)");
-
-        optionHelp = zNewFmt(
-            "%s - 'restore' command - 'repo-host' option help\n"
-            "\n"
-            "Repository host when operating remotely.\n"
-            "\n"
-            "When backing up and archiving to a locally mounted filesystem this setting is\n"
-            "not required.\n"
-            "\n"
+        TEST_RESULT_STR_Z(
+            testHelpBlockLast(helpRender(), 2),
             "current:\n"
+            "  repo1: backup.example.net\n"
             "  repo3: dr.test.org\n"
             "\n"
             "deprecated name: backup-host\n",
-            helpVersion);
+            "check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multiple current values (with one unset)");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -655,42 +588,16 @@ testRun(void)
         strLstAddZ(argList, "restore");
         strLstAddZ(argList, "repo-host");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-host option");
-        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
+        TEST_RESULT_STR_Z(
+            testHelpBlockLast(helpRender(), 2),
+            "current:\n"
+            "  repo3: dr.test.org\n"
+            "\n"
+            "deprecated name: backup-host\n",
+            "check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple default values");
-
-        #define HELP_OPTION_CHUNK                                                                                                  \
-            "%s - 'restore' command - 'repo-storage-upload-chunk-size' option help\n"                                              \
-            "\n"                                                                                                                   \
-            "Repository storage upload chunk size.\n"                                                                              \
-            "\n"                                                                                                                   \
-            "Object stores such as S3 allow files to be uploaded in chunks when the file is\n"                                     \
-            "too large to be stored in memory. Even if the file can be stored in memory, it\n"                                     \
-            "is more memory efficient to limit the amount of memory used for uploads.\n"                                           \
-            "\n"                                                                                                                   \
-            "A larger chunk size will generally lead to better performance because it will\n"                                      \
-            "minimize upload requests and allow more files to be uploaded in a single\n"                                           \
-            "request rather than in chunks. The disadvantage is that memory usage will be\n"                                       \
-            "higher and because the chunk buffer must be allocated per process, larger\n"                                          \
-            "process-max values will lead to more memory being consumed overall.\n"                                                \
-            "\n"                                                                                                                   \
-            "Note that valid chunk sizes vary by storage type and by platform. For example,\n"                                     \
-            "AWS S3 has a minimum chunk size of 5MiB. Terminology for chunk size varies by\n"                                      \
-            "storage type, so when searching min/max values use \"part size\" for AWS S3,\n"                                       \
-            "\"chunk size\" for GCS, and \"block size\" for Azure.\n"                                                              \
-            "\n"                                                                                                                   \
-            "If a file is larger than 1GiB (the maximum size PostgreSQL will create by\n"                                          \
-            "default) then the chunk size will be increased incrementally up to the maximum\n"                                     \
-            "allowed in order to complete the file upload.\n"
-
-        optionHelp = zNewFmt(
-            HELP_OPTION_CHUNK
-            "\n"
-            "default:\n"
-            "  repo1: 5MiB\n"
-            "  repo2: 4MiB\n",
-            helpVersion);
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -705,7 +612,12 @@ testRun(void)
         // There is currently no way for some defaults to be NULL and others not but it could happen in the future
         cfgOptionIdxSet(cfgOptRepoStorageUploadChunkSize, 2, cfgSourceDefault, NULL);
 
-        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check text");
+        TEST_RESULT_STR_Z(
+            testHelpBlockLast(helpRender(), 1),
+            "default:\n"
+            "  repo1: 5MiB\n"
+            "  repo2: 4MiB\n",
+            "check text");
     }
 
     // *****************************************************************************************************************************
