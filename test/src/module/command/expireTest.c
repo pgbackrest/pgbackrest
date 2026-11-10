@@ -7,6 +7,7 @@ NOTE: references to 9.4 are intentionally included in this test to ensure that e
 
 #include "command/backup/common.h"
 #include "common/io/bufferRead.h"
+#include "info/infoBackup.intern.h"
 #include "storage/posix/storage.h"
 
 #include "harness/config.h"

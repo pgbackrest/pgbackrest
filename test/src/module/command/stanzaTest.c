@@ -3,6 +3,8 @@ Test Stanza Commands
 ***********************************************************************************************************************************/
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferWrite.h"
+#include "info/infoArchive.intern.h"
+#include "info/infoBackup.intern.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/posix/storage.h"

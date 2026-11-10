@@ -50,6 +50,7 @@ static struct HarnessTestLocal
 {
     uint64_t logLastBeginTime;                                      // Store the begin time of the last log for deltas
     int logLastLineNo;                                              // Store the line number to be used in debugging
+    unsigned int resultBeginTotal;                                  // Total result tests begun
 
     struct HarnessTestResult
     {
@@ -440,6 +441,15 @@ hrnTestResultBegin(const char *const statement, const bool result)
 
     // Reset line number so it is not used by another test
     harnessTestLocal.logLastLineNo = 0;
+
+    harnessTestLocal.resultBeginTotal++;
+}
+
+/**********************************************************************************************************************************/
+unsigned int
+hrnTestResultBeginTotal(void)
+{
+    return harnessTestLocal.resultBeginTotal;
 }
 
 /**********************************************************************************************************************************/

@@ -6,6 +6,7 @@ Test Backup Command
 #include "common/crypto/hash.h"
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "info/helper.h"
 #include "postgres/interface/static.vendor.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
@@ -1706,9 +1707,8 @@ testRun(void)
         TEST_TITLE("info files that do not agree on repository format");
 
         // Migrate archive.info only, which is the state an upgrade interrupted between the two saves leaves behind
-        InfoArchive *const infoArchive = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
-        infoArchiveFormatSet(infoArchive, REPOSITORY_FORMAT_6);
-        infoArchiveSaveFile(infoArchive, storageRepoWrite(), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecNewNone());
+        infoArchiveFormatSet(infoArchiveRepoIdx(0), REPOSITORY_FORMAT_6);
+        infoArchiveRepoIdxSave(0);
 
         HRN_PQ_SCRIPT_SET(
             // Connect to primary
@@ -2236,9 +2236,8 @@ testRun(void)
         harnessLogLevelSet(logLevelWarn);
 
         // Upgrade the format of the repo, which leaves every backup in it at the prior format
-        InfoBackup *infoBackup = infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
-        infoBackupFormatSet(infoBackup, REPOSITORY_FORMAT_6);
-        infoBackupSaveFile(infoBackup, storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
+        infoBackupFormatSet(infoBackupRepoIdxP(1), REPOSITORY_FORMAT_6);
+        infoBackupRepoIdxSave(1);
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR3");
 
@@ -2247,7 +2246,8 @@ testRun(void)
         TEST_RESULT_LOG("P00   WARN: no prior backup exists, diff backup has been changed to full");
 
         // The new full backup adopts the upgraded format
-        infoBackup = infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
+        const InfoBackup *const infoBackup = infoBackupLoadFile(
+            storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
 
         TEST_RESULT_UINT(
             infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backrestFormat, REPOSITORY_FORMAT_6,

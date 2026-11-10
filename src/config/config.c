@@ -16,6 +16,9 @@ Data for the currently loaded configuration
 ***********************************************************************************************************************************/
 static Config *configLocal = NULL;
 
+// Total times the configuration has been initialized
+static unsigned int configInitTotal = 0;
+
 /**********************************************************************************************************************************/
 FN_EXTERN void
 cfgInit(Config *const config)
@@ -34,6 +37,8 @@ cfgInit(Config *const config)
     configLocal = config;
     memContextMove(configLocal->memContext, memContextTop());
 
+    configInitTotal++;
+
     FUNCTION_TEST_RETURN_VOID();
 }
 
@@ -42,6 +47,13 @@ cfgInited(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(ENUM, configLocal != NULL);
+}
+
+FN_EXTERN unsigned int
+cfgInitTotal(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(UINT, configInitTotal);
 }
 
 /**********************************************************************************************************************************/

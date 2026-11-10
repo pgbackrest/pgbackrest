@@ -93,15 +93,12 @@ restoreBackupSet(void)
         // Search through the repo list for a backup set to use for recovery
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            storageRepoIdx(repoIdx);
-
             const InfoBackup *infoBackup = NULL;
 
             // Attempt to load backup.info
             TRY_BEGIN()
             {
-                infoBackup = infoBackupLoadFile(storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoBackup = infoBackupRepoIdxP(repoIdx);
             }
             CATCH_ANY()
             {

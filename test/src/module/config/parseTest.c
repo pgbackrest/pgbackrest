@@ -88,6 +88,7 @@ testRun(void)
         TEST_TITLE("config command defaults to none before cfgInit()");
 
         TEST_RESULT_BOOL(cfgInited(), false, "config is not inited");
+        TEST_RESULT_UINT(cfgInitTotal(), 0, "config init total");
     }
 
     // config and config-include-path options
@@ -1859,7 +1860,10 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptConfig, configFile);
         strLstAddZ(argList, TEST_COMMAND_BACKUP);
 
+        const unsigned int initTotal = cfgInitTotal();
+
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "parse config");
+        TEST_RESULT_UINT(cfgInitTotal(), initTotal + 1, "config init total incremented");
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/global/stanza", "default pg-path");
         TEST_RESULT_UINT(cipherSpecType(cfgCipherSpecMainIdx(0)), cipherTypeNone, "no cipher spec when repo is not encrypted");
