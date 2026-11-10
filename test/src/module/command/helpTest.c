@@ -515,6 +515,28 @@ testRun(void)
         TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 2), TEST_HELP_HARDLINK, "check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("minimum repository format");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "expire");
+        strLstAddZ(argList, "repo-cipher-rotate");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for expire command, repo-cipher-rotate option");
+        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 1), "minimum repository format: 6\n", "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        strLstAddZ(argList, "expire");
+        strLstAddZ(argList, "repo-cipher-rotate");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for expire command, repo-cipher-rotate option with default");
+        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 1), "default: 90d\nminimum repository format: 6\n", "check text");
+        hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check admonition");
 
         argList = strLstNew();

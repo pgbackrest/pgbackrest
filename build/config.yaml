@@ -263,6 +263,11 @@ optionGroup:
 # internal:
 #   Option is used by the command internally but is not exposed in the documentation. This is useful for commands that need to know
 #   where they are running by looking at other options in the config. Also good for test options.
+#
+# format:
+#   Minimum repository format the option is valid for. Only valid for options in the repo group. The option is parsed as usual but
+#   cannot be accessed until the format of its repo is set. When the repo format is lower the option is an error when set on the
+#   command line, otherwise the option is unset with a warning if the option source is not default.
 ####################################################################################################################################
 option:
   # Command-line only options
@@ -1759,6 +1764,7 @@ option:
     group: repo
     type: time
     internal: true
+    format: 6
     default: 90d
     allow-range: [15d, 9999999d]
     command:

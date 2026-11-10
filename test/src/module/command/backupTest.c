@@ -2239,6 +2239,9 @@ testRun(void)
         infoBackupFormatSet(infoBackupRepoIdxP(1), REPOSITORY_FORMAT_6);
         infoBackupRepoIdxSave(1);
 
+        // Load the configuration again to set the upgraded repository format
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR3");
 
         TEST_RESULT_VOID(hrnCmdBackup(), "backup");

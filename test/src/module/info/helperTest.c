@@ -40,6 +40,7 @@ testRun(void)
 
         TEST_RESULT_VOID(infoArchiveRepoIdxSet(0, infoArchive), "set archive info");
         TEST_RESULT_VOID(infoBackupRepoIdxSet(0, infoBackup), "set backup info");
+        TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptRepoCipherRotate, 0), false, "repo1 format set");
         TEST_RESULT_VOID(infoArchiveRepoIdxSave(0), "save archive info");
         TEST_RESULT_VOID(infoBackupRepoIdxSave(0), "save backup info");
         TEST_RESULT_PTR(infoArchiveRepoIdx(0), infoArchive, "archive info is cached");
@@ -97,7 +98,11 @@ testRun(void)
         TEST_RESULT_PTR(infoArchiveRepoIdx(1), infoArchive, "archive info is cached");
         TEST_RESULT_STR_Z(infoArchiveId(infoArchive), "14-1", "archive id");
 
+        TEST_ERROR(
+            cfgOptionIdxTest(cfgOptRepoCipherRotate, 1), AssertError,
+            "repository format must be set before accessing option 'repo2-cipher-rotate'");
         TEST_ASSIGN(infoBackup, infoBackupRepoIdxP(1), "load backup info");
+        TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptRepoCipherRotate, 1), false, "repo2 format set");
         TEST_RESULT_PTR(infoBackupRepoIdxP(1), infoBackup, "backup info is cached");
         TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 1, "backup set without manifest");
 

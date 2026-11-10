@@ -119,6 +119,9 @@ FN_EXTERN bool cfgParseOptionGroup(ConfigOption optionId);
 // Option group id
 FN_EXTERN unsigned int cfgParseOptionGroupId(ConfigOption optionId);
 
+// Minimum repository format for the option, 0 if none
+FN_EXTERN unsigned int cfgParseOptionFormat(ConfigOption optionId);
+
 // Does the option need to be protected from showing up in logs, command lines, etc?
 FN_EXTERN bool cfgParseOptionSecure(ConfigOption optionId);
 

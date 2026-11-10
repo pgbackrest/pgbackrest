@@ -2,7 +2,7 @@
 Info Helper
 
 Archive and backup info for each repo, loaded on first use and cached until the configuration is loaded again. The cached info is
-saved with this helper.
+saved with this helper. The repository format is set from the backup info when it is cached.
 ***********************************************************************************************************************************/
 #ifndef INFO_HELPER_H
 #define INFO_HELPER_H

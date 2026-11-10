@@ -14,6 +14,9 @@ Functions
 // Check the database path and version are configured correctly
 FN_EXTERN void checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *dbObject, bool isStandby);
 
+// Validate that the archive and backup info files are at the same repository format
+FN_EXTERN void checkStanzaInfoFormat(unsigned int repoIdx, const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg);
+
 // Validate the archive and backup info files
 FN_EXTERN void checkStanzaInfo(unsigned int repoIdx, const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg);
 

@@ -109,12 +109,17 @@ infoHelperBackup(const unsigned int repoIdx)
     {
         // Get the repo storage before the cipher spec. A remote repo sets the cipher options when they are not configured locally.
         const Storage *const storage = storageRepoIdx(repoIdx);
+        InfoBackup *infoBackup;
 
         MEM_CONTEXT_BEGIN(infoHelperLocal.memContext)
         {
-            repo->infoBackup = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+            infoBackup = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
         }
         MEM_CONTEXT_END();
+
+        // Set the repository format before the backup info is cached. An error leaves the backup info uncached.
+        cfgRepoFormatSet(repoIdx, infoBackupFormat(infoBackup));
+        repo->infoBackup = infoBackup;
     }
 
     FUNCTION_TEST_RETURN(INFO_BACKUP, repo->infoBackup);
@@ -197,6 +202,7 @@ infoBackupRepoIdxSet(const unsigned int repoIdx, InfoBackup *const infoBackup)
 
     CHECK(AssertError, repo->infoBackup == NULL, "backup info is already cached");
 
+    cfgRepoFormatSet(repoIdx, infoBackupFormat(infoBackup));
     repo->infoBackup = infoBackupMove(infoBackup, infoHelperLocal.memContext);
 
     FUNCTION_LOG_RETURN_VOID();

@@ -5,11 +5,11 @@ Expire Command
 
 #include "command/archive/common.h"
 #include "command/backup/common.h"
+#include "command/check/common.h"
 #include "command/control/common.h"
 #include "command/expire/expire.h"
 #include "command/stanza/common.h"
 #include "common/debug.h"
-#include "common/format/format.h"
 #include "common/regExp.h"
 #include "common/time.h"
 #include "common/type/list.h"
@@ -1099,36 +1099,22 @@ expireArchiveCipherRotate(const unsigned int repoIdx)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             InfoArchive *const infoArchive = infoArchiveRepoIdx(repoIdx);
+            const time_t timeNow = time(NULL);
 
-            // Format < 6 has a single archive key that cannot be rotated. Warn only when the option is not the default.
-            if (infoArchiveFormat(infoArchive) < REPOSITORY_FORMAT_6)
+            if (infoArchiveCipherRotateTime(infoArchive) <
+                timeNow - (time_t)(cfgOptionIdxUInt64(cfgOptRepoCipherRotate, repoIdx) / MSEC_PER_SEC))
             {
-                if (cfgOptionIdxSource(cfgOptRepoCipherRotate, repoIdx) != cfgSourceDefault)
-                {
-                    LOG_WARN_FMT(
-                        "option '%s' requires repository format %d or higher", cfgOptionIdxName(cfgOptRepoCipherRotate, repoIdx),
-                        REPOSITORY_FORMAT_6);
-                }
-            }
-            else
-            {
-                const time_t timeNow = time(NULL);
+                infoArchiveCipherRotate(
+                    infoArchive, cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), infoArchiveFormat(infoArchive)),
+                    timeNow);
 
-                if (infoArchiveCipherRotateTime(infoArchive) <
-                    timeNow - (time_t)(cfgOptionIdxUInt64(cfgOptRepoCipherRotate, repoIdx) / MSEC_PER_SEC))
-                {
-                    infoArchiveCipherRotate(
-                        infoArchive,
-                        cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), infoArchiveFormat(infoArchive)), timeNow);
+                // Store the new archive info only if the dry-run mode is disabled
+                if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                    infoArchiveRepoIdxSave(repoIdx);
 
-                    // Store the new archive info only if the dry-run mode is disabled
-                    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
-                        infoArchiveRepoIdxSave(repoIdx);
-
-                    LOG_INFO_FMT(
-                        "%s: rotate archive key to id %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
-                        strZ(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive))));
-                }
+                LOG_INFO_FMT(
+                    "%s: rotate archive key to id %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
+                    strZ(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive))));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1205,6 +1191,9 @@ cmdExpire(void)
             {
                 // Load backup.info for this repo
                 infoBackup = infoBackupRepoIdxP(repoIdx, .reconstruct = true);
+
+                // Check that archive.info is at the same format as backup.info
+                checkStanzaInfoFormat(repoIdx, infoArchivePg(infoArchiveRepoIdx(repoIdx)), infoBackupPg(infoBackup));
 
                 // When expire oldest requested, expire the oldest full backup by lowering retention for this execution
                 if (expireOldest)

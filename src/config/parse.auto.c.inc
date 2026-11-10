@@ -6011,6 +6011,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                  // opt/repo-cipher-rotate
         PARSE_RULE_OPTION_SECTION(Global),                                                                 // opt/repo-cipher-rotate
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                  // opt/repo-cipher-rotate
+        PARSE_RULE_OPTION_FORMAT(6),                                                                       // opt/repo-cipher-rotate
                                                                                                            // opt/repo-cipher-rotate
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-cipher-rotate
         (                                                                                                  // opt/repo-cipher-rotate
