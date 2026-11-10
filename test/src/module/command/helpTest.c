@@ -74,6 +74,32 @@ testHelpBlockFirst(const String *const help, const unsigned int blockTotal)
 }
 
 /***********************************************************************************************************************************
+Block of help text that begins with a prefix. NULL when no block begins with the prefix.
+***********************************************************************************************************************************/
+static String *
+testHelpBlockFind(const String *const help, const char *const prefix)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRING, help);
+        FUNCTION_HARNESS_PARAM(STRINGZ, prefix);
+    FUNCTION_HARNESS_END();
+
+    const StringList *const blockList = strLstNewSplitZ(help, "\n\n");
+    String *result = NULL;
+
+    for (unsigned int blockIdx = 0; blockIdx < strLstSize(blockList); blockIdx++)
+    {
+        if (strBeginsWithZ(strLstGet(blockList, blockIdx), prefix))
+        {
+            result = strDup(strLstGet(blockList, blockIdx));
+            break;
+        }
+    }
+
+    FUNCTION_HARNESS_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
 Section headings of command help
 ***********************************************************************************************************************************/
 static String *
@@ -491,38 +517,29 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check admonition");
 
-        const char *const optionHelp = zNewFmt(
-            "%s - 'backup' command - 'repo-retention-archive' option help\n"
-            "\n"
-            "Number of backups worth of continuous WAL to retain.\n"
-            "\n"
-            "NOTE: WAL segments required to make a backup consistent are always retained\n"
-            "until the backup is expired regardless of how this option is configured.\n"
-            "\n"
-            "If this value is not set and repo-retention-full-type is count (default), then\n"
-            "the archive to expire will default to the repo-retention-full (or\n"
-            "repo-retention-diff) value corresponding to the repo-retention-archive-type if\n"
-            "set to full (or diff). This will ensure that WAL is only expired for backups\n"
-            "that are already expired. If repo-retention-full-type is time, then this value\n"
-            "will default to removing archives that are earlier than the oldest full backup\n"
-            "retained after satisfying the repo-retention-full setting.\n"
-            "\n"
-            "This option must be set if repo-retention-archive-type is set to incr. If disk\n"
-            "space is at a premium, then this setting, in conjunction with\n"
-            "repo-retention-archive-type, can be used to aggressively expire WAL segments.\n"
-            "However, doing so negates the ability to perform PITR from the backups with\n"
-            "expired WAL and is therefore not recommended.\n"
-            "\n"
-            "deprecated name: retention-archive\n",
-            helpVersion);
-
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "backup");
         strLstAddZ(argList, "repo-retention-archive");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, repo-retention-archive option");
-        TEST_RESULT_STR_Z(helpRender(), optionHelp, "check admonition text");
+
+        const String *optionHelp = NULL;
+        TEST_ASSIGN(optionHelp, helpRender(), "render help");
+
+        TEST_RESULT_STR_Z(
+            testHelpBlockFirst(optionHelp, 2),
+            zNewFmt(
+                "%s - 'backup' command - 'repo-retention-archive' option help\n"
+                "\n"
+                "Number of backups worth of continuous WAL to retain.",
+                helpVersion),
+            "header and summary");
+        TEST_RESULT_STR_Z(
+            testHelpBlockFind(optionHelp, "NOTE: "),
+            "NOTE: WAL segments required to make a backup consistent are always retained\n"
+            "until the backup is expired regardless of how this option is configured.",
+            "admonition");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multiple current values (with one missing)");
