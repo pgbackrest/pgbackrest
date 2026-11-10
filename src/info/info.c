@@ -457,7 +457,7 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
         // Add cipher keys if defined
         const CipherSpecMap *const cipherSpecMap = infoCipherSpecMap(this);
 
-        if (cipherSpecMapSize(cipherSpecMap) != 0)
+        if (!cipherSpecMapEmpty(cipherSpecMap))
         {
             callbackFunction(callbackData, STRDEF(INFO_SECTION_CIPHER), &data);
 
@@ -596,7 +596,7 @@ infoCipherSpecMapSet(Info *const this, const CipherSpecMap *const cipherSpecMap)
         this->pub.cipherSpecMap = cipherSpecMap == NULL ? cipherSpecMapNew() : cipherSpecMapDup(cipherSpecMap);
 
         // The default key is looked up on demand, so only a caller that asks for one key errors when there is no default
-        this->cipherSpecNone = cipherSpecMapSize(this->pub.cipherSpecMap) == 0 ? cipherSpecNewNone() : NULL;
+        this->cipherSpecNone = cipherSpecMapEmpty(this->pub.cipherSpecMap) ? cipherSpecNewNone() : NULL;
     }
     MEM_CONTEXT_OBJ_END();
 
@@ -706,7 +706,7 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
         volatile bool done = false;                                 // Are all files tried? Must be preserved even on error.
         volatile bool loaded = false;                               // Was a file loaded? Must be preserved even on error.
         const ErrorType *loadErrorType = NULL;
-        String *loadErrorMessage = NULL;
+        StringList *const loadErrorList = strLstNew();
 
         do
         {
@@ -722,10 +722,7 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
             {
                 // Set error type if none has been set
                 if (loadErrorType == NULL)
-                {
                     loadErrorType = errorType();
-                    loadErrorMessage = strCatFmt(strNew(), "%s:", strZ(error));
-                }
                 // Else if the error type is different
                 else if (loadErrorType != errorType())
                 {
@@ -739,8 +736,11 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
                         loadErrorType = &FileOpenError;
                 }
 
-                // Append new error
-                strCatFmt(loadErrorMessage, "\n%s: %s", errorTypeName(errorType()), errorMessage());
+                // Add the error unless the same error has already been added
+                const String *const loadError = strNewFmt("%s: %s", errorTypeName(errorType()), errorMessage());
+
+                if (!strLstExists(loadErrorList, loadError))
+                    strLstAdd(loadErrorList, loadError);
 
                 // Try again
                 try++;
@@ -751,9 +751,98 @@ infoLoad(const String *const error, InfoLoadCallback *const callbackFunction, vo
 
         // Error when no file was loaded
         if (!loaded)
-            THROWP(loadErrorType, strZ(loadErrorMessage));
+            THROWP_FMT(loadErrorType, "%s:\n%s", strZ(error), strZ(strLstJoin(loadErrorList, "\n")));
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+typedef struct InfoLoadFileData
+{
+    MemContext *memContext;                                         // Mem context
+    const Storage *storage;                                         // Storage to load from
+    const String *fileName;                                         // Base filename
+    const CipherSpec *cipherSpec;                                   // Cipher spec
+    InfoLoadFileNewCallback *newLoad;                               // Create the object from a read of the file
+    void *result;                                                   // Loaded object
+} InfoLoadFileData;
+
+static bool
+infoLoadFileCallback(void *const data, const unsigned int try)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(UINT, try);
+    FUNCTION_LOG_END();
+
+    ASSERT(data != NULL);
+
+    InfoLoadFileData *const loadData = data;
+    bool result = false;
+
+    if (try < 2)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Construct filename based on try
+            const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
+
+            // Attempt to load the file
+            IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
+            cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), loadData->cipherSpec);
+
+            MEM_CONTEXT_BEGIN(loadData->memContext)
+            {
+                loadData->result = loadData->newLoad(read, loadData->cipherSpec);
+                result = true;
+            }
+            MEM_CONTEXT_END();
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+FN_EXTERN void *
+infoLoadFile(
+    const Storage *const storage, const String *const fileName, const CipherSpec *const cipherSpec,
+    InfoLoadFileNewCallback *const newLoad)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(STRING, fileName);
+        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_LOG_PARAM(FUNCTIONP, newLoad);
+    FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_CALLBACK();
+
+    ASSERT(storage != NULL);
+    ASSERT(fileName != NULL);
+    ASSERT(cipherSpec != NULL);
+    ASSERT(newLoad != NULL);
+
+    InfoLoadFileData data =
+    {
+        .memContext = memContextCurrent(),
+        .storage = storage,
+        .fileName = fileName,
+        .cipherSpec = cipherSpec,
+        .newLoad = newLoad,
+    };
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const char *const fileNamePath = strZ(storagePathP(storage, fileName));
+
+        infoLoad(
+            strNewFmt("unable to load info file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath), infoLoadFileCallback,
+            &data);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_P(VOID, data.result);
 }

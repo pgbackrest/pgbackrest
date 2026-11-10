@@ -449,7 +449,7 @@ testRun(void)
 
         CipherSpecMap *map = NULL;
         TEST_ASSIGN(map, cipherSpecMapNew(), "new map");
-        TEST_RESULT_UINT(cipherSpecMapSize(map), 0, "no keys");
+        TEST_RESULT_BOOL(cipherSpecMapEmpty(map), true, "no keys");
 
         // Add out of order to check that the map sorts
         TEST_RESULT_VOID(cipherSpecMapAdd(map, STRDEF("2"), cipherSpec2), "add 2");

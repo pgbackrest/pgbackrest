@@ -47,7 +47,7 @@ verifyFile(
         IoFilterGroup *const filterGroup = ioReadFilterGroup(read);
 
         // Add decryption filter
-        if (cipherSpecMapSize(cipherSpecMap) != 0)
+        if (!cipherSpecMapEmpty(cipherSpecMap))
         {
             // WAL contains a format header with the key id. Backup files contain no header so their key is under the default id.
             if (formatHeader)

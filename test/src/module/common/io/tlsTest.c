@@ -4,6 +4,8 @@ Test Tls Client
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <openssl/conf.h>
+
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
@@ -135,6 +137,18 @@ testSignalHandler(const int signalType)
 {
     (void)signalType;
 }
+
+/***********************************************************************************************************************************
+OpenSSL config with a minimum TLS version
+***********************************************************************************************************************************/
+#define TEST_OPENSSL_CONF(minProtocol)                                                                                             \
+    "openssl_conf = openssl_init\n"                                                                                                \
+    "[openssl_init]\n"                                                                                                             \
+    "ssl_conf = ssl_sect\n"                                                                                                        \
+    "[ssl_sect]\n"                                                                                                                 \
+    "system_default = system_default_sect\n"                                                                                       \
+    "[system_default_sect]\n"                                                                                                      \
+    "MinProtocol = " minProtocol "\n"
 
 /***********************************************************************************************************************************
 Test Run
@@ -628,6 +642,57 @@ testRun(void)
     {
         IoClient *client = NULL;
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("minimum TLS version");
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                SSL_CTX *context = NULL;
+
+                cryptoInit();
+
+                HRN_STORAGE_PUT_Z(storageTest, "openssl.cnf", TEST_OPENSSL_CONF("None"));
+                TEST_RESULT_INT(CONF_modules_load_file(TEST_PATH "/openssl.cnf", NULL, 0), 1, "load config");
+
+                TEST_ASSIGN(context, tlsContext(false), "new context without verify");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), 0, "no config minimum");
+                SSL_CTX_free(context);
+
+                TEST_ASSIGN(context, tlsContext(true), "new context");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_2_VERSION, "no config minimum raised to default");
+                SSL_CTX_free(context);
+
+                HRN_STORAGE_PUT_Z(storageTest, "openssl.cnf", TEST_OPENSSL_CONF("TLSv1"));
+                TEST_RESULT_INT(CONF_modules_load_file(TEST_PATH "/openssl.cnf", NULL, 0), 1, "load config");
+
+                TEST_RESULT_VOID(tlsInit(NULL, NULL, STRDEF("1.2")), "minimum 1.2");
+                TEST_ASSIGN(context, tlsContext(true), "new context");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_2_VERSION, "lower config minimum raised to 1.2");
+                SSL_CTX_free(context);
+
+                TEST_RESULT_VOID(tlsInit(NULL, NULL, STRDEF("1.3")), "minimum 1.3");
+                TEST_ASSIGN(context, tlsContext(true), "new context");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_3_VERSION, "lower config minimum raised to 1.3");
+                SSL_CTX_free(context);
+
+                TEST_ASSIGN(context, tlsContext(false), "new context without verify");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_VERSION, "option ignored without verify");
+                SSL_CTX_free(context);
+
+                HRN_STORAGE_PUT_Z(storageTest, "openssl.cnf", TEST_OPENSSL_CONF("TLSv1.3"));
+                TEST_RESULT_INT(CONF_modules_load_file(TEST_PATH "/openssl.cnf", NULL, 0), 1, "load config");
+
+                TEST_RESULT_VOID(tlsInit(NULL, NULL, STRDEF("1.2")), "minimum 1.2");
+                TEST_ASSIGN(context, tlsContext(true), "new context");
+                TEST_RESULT_INT(SSL_CTX_get_min_proto_version(context), TLS1_3_VERSION, "higher config minimum kept");
+                SSL_CTX_free(context);
+            }
+            HRN_FORK_CHILD_END();
+        }
+        HRN_FORK_END();
+
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
@@ -652,6 +717,13 @@ testRun(void)
             "[RETRY DETAIL OMITTED]");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error queue cleared on new context");
+
+        TEST_RESULT_PTR(BIO_new_file("/bogus", "r"), NULL, "queue error");
+        TEST_RESULT_VOID(SSL_CTX_free(tlsContext(true)), "new context");
+        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing ca cert/path");
 
         TEST_ERROR(
@@ -661,7 +733,7 @@ testRun(void)
                     .caFile = STRDEF("bogus.crt"), .caPath = STRDEF("/bogus"))),
             CryptoError, "unable to set user-defined CA certificate location: "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-            "[2147483650] no details available");
+            "[2147483650] No such file or directory");
 #else
             "[33558530] No such file or directory");
 #endif
@@ -676,7 +748,7 @@ testRun(void)
                     .certFile = STRDEF("/bogus"), .keyFile = STRDEF("/bogus"))),
             CryptoError, "unable to load cert file '/bogus': "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-            "[2147483650] no details available");
+            "[2147483650] No such file or directory");
 #else
             "[33558530] No such file or directory");
 #endif
@@ -691,7 +763,7 @@ testRun(void)
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF("/bogus"))),
             CryptoError, "unable to load key file '/bogus': "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-            "[2147483650] no details available");
+            "[2147483650] No such file or directory");
 #else
             "[33558530] No such file or directory");
 #endif
@@ -929,7 +1001,7 @@ testRun(void)
 
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(tlsInit(STRDEF("eNULL"), STRDEF("TLS_AES_256_GCM_SHA384")), "disallow TLS 1.2");
+                TEST_RESULT_VOID(tlsInit(STRDEF("eNULL"), STRDEF("TLS_AES_256_GCM_SHA384"), STRDEF("1.2")), "disallow TLS 1.2");
 
                 // Start server to test various certificate errors
                 TEST_ERROR_MULTI(
@@ -954,7 +1026,8 @@ testRun(void)
                 hrnServerScriptAccept(tls);
                 hrnServerScriptClose(tls);
 
-                TEST_RESULT_VOID(tlsInit(STRDEF("COMPLEMENTOFALL"), STRDEF("TLS_AES_128_GCM_SHA256")), "disallow TLS 1.3");
+                TEST_RESULT_VOID(
+                    tlsInit(STRDEF("COMPLEMENTOFALL"), STRDEF("TLS_AES_128_GCM_SHA256"), STRDEF("1.2")), "disallow TLS 1.3");
 
                 TEST_ERROR_MULTI(
                     ioClientOpen(
@@ -975,7 +1048,7 @@ testRun(void)
         }
         HRN_FORK_END();
 
-        TEST_RESULT_VOID(tlsInit(NULL, NULL), "init null tls ciphers");
+        TEST_RESULT_VOID(tlsInit(NULL, NULL, STRDEF("1.2")), "init null tls ciphers");
 
         // Server on IPv6
         // -------------------------------------------------------------------------------------------------------------------------
