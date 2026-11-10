@@ -29,6 +29,7 @@ storagePosixDirectAlign(const bool statxSuccess, const uint32_t mask, const uint
 
     return STORAGE_POSIX_DIRECT_ALIGN_DEFAULT;
 }
+
 #endif
 
 /**********************************************************************************************************************************/
