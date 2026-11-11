@@ -16,7 +16,6 @@ Posix Storage
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/user.h"
-#include "storage/posix/direct.h"
 #include "storage/posix/read.h"
 #include "storage/posix/storage.intern.h"
 #include "storage/posix/write.h"
@@ -613,7 +612,7 @@ storagePosixNewInternal(
     ASSERT(path != NULL);
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
-    ASSERT(ioMode != storagePosixIoModeDirect || storagePosixDirectFlag() != 0);
+    ASSERT(ioMode != storagePosixIoModeDirect || STORAGE_POSIX_DIRECT_FLAG != 0);
 
     // Initialize user module
     userInit();

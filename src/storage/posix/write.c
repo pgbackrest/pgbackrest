@@ -9,11 +9,11 @@ Posix Storage File write
 #include <utime.h>
 
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/io/write.h"
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/user.h"
-#include "storage/posix/direct.h"
 #include "storage/posix/write.h"
 #include "storage/write.h"
 
@@ -42,8 +42,7 @@ struct StorageWritePosix
     int fd;                                                          // File descriptor
 
     StoragePosixIoMode ioMode;                                       // I/O mode
-    StoragePosixDirect dio;                                          // Aligned bounce buffer
-    size_t dioUsed;                                                  // Bytes in bounce buffer
+    Buffer *dioBuffer;                                               // Aligned bounce buffer
     bool dioPadded;                                                  // Was padding written that needs to be truncated?
     uint64_t position;                                               // Logical write position
     uint64_t size;                                                   // Logical size of the data written
@@ -104,7 +103,7 @@ storageWritePosixOpen(THIS_VOID)
 
     // Open the file
     const int flags = O_CREAT | O_WRONLY | (this->truncate ? O_TRUNC : 0);
-    const int flagsOpen = flags | (this->ioMode == storagePosixIoModeDirect ? storagePosixDirectFlag() : 0);
+    const int flagsOpen = flags | (this->ioMode == storagePosixIoModeDirect ? STORAGE_POSIX_DIRECT_FLAG : 0);
 
     this->fd = open(strZ(this->nameTmp), flagsOpen, this->modeFile);
 
@@ -141,7 +140,7 @@ storageWritePosixOpen(THIS_VOID)
     {
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
-            storagePosixDirectNew(&this->dio);
+            this->dioBuffer = bufNewAlign(STORAGE_POSIX_DIRECT_ALIGN_UP(ioBufferSize()), STORAGE_POSIX_DIRECT_ALIGN);
         }
         MEM_CONTEXT_OBJ_END();
     }
@@ -195,21 +194,20 @@ storageWritePosixDirectFlush(StorageWritePosix *const this)
 
     ASSERT(this != NULL);
 
-    if (this->dioUsed > 0)
+    if (!bufEmpty(this->dioBuffer))
     {
-        const size_t writeSize =
-            (this->dioUsed + STORAGE_POSIX_DIRECT_ALIGN - 1) / STORAGE_POSIX_DIRECT_ALIGN * STORAGE_POSIX_DIRECT_ALIGN;
+        const size_t writeSize = STORAGE_POSIX_DIRECT_ALIGN_UP(bufUsed(this->dioBuffer));
 
-        if (writeSize != this->dioUsed)
+        if (writeSize != bufUsed(this->dioBuffer))
         {
-            memset(this->dio.ptr + this->dioUsed, 0, writeSize - this->dioUsed);
+            memset(bufRemainsPtr(this->dioBuffer), 0, writeSize - bufUsed(this->dioBuffer));
             this->dioPadded = true;
         }
 
-        if (write(this->fd, this->dio.ptr, writeSize) != (ssize_t)writeSize)
+        if (write(this->fd, bufPtr(this->dioBuffer), writeSize) != (ssize_t)writeSize)
             THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
 
-        this->dioUsed = 0;
+        bufUsedZero(this->dioBuffer);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -235,20 +233,17 @@ storageWritePosix(THIS_VOID, const Buffer *const buffer)
     // Stage the data through the bounce buffer when using direct I/O
     if (this->ioMode == storagePosixIoModeDirect)
     {
-        const uint8_t *bufferPtr = bufPtrConst(buffer);
-        size_t bufferRemains = bufUsed(buffer);
+        size_t bufferOffset = 0;
 
-        while (bufferRemains > 0)
+        while (bufferOffset < bufUsed(buffer))
         {
-            const size_t space = this->dio.size - this->dioUsed;
-            const size_t copyBytes = bufferRemains < space ? bufferRemains : space;
+            const size_t bufferRemains = bufUsed(buffer) - bufferOffset;
+            const size_t copyBytes = bufferRemains < bufRemains(this->dioBuffer) ? bufferRemains : bufRemains(this->dioBuffer);
 
-            memcpy(this->dio.ptr + this->dioUsed, bufferPtr, copyBytes);
-            this->dioUsed += copyBytes;
-            bufferPtr += copyBytes;
-            bufferRemains -= copyBytes;
+            bufCatSub(this->dioBuffer, buffer, bufferOffset, copyBytes);
+            bufferOffset += copyBytes;
 
-            if (this->dioUsed == this->dio.size)
+            if (bufFull(this->dioBuffer))
                 storageWritePosixDirectFlush(this);
         }
 

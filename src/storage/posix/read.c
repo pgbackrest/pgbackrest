@@ -7,10 +7,10 @@ Posix Storage Read
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/io/read.h"
 #include "common/log.h"
 #include "common/type/object.h"
-#include "storage/posix/direct.h"
 #include "storage/posix/read.h"
 #include "storage/read.h"
 
@@ -31,9 +31,8 @@ struct StorageReadPosix
     bool eof;
 
     StoragePosixIoMode ioMode;                                      // I/O mode
-    StoragePosixDirect dio;                                         // Aligned bounce buffer
+    Buffer *dioBuffer;                                              // Aligned bounce buffer
     size_t dioSkip;                                                 // Bytes to skip in first block to reach offset
-    size_t dioUsed;                                                 // Bytes in bounce buffer
     size_t dioPos;                                                  // Bytes consumed from bounce buffer
     bool dioEnd;                                                    // Has the end of the file been read?
 };
@@ -76,7 +75,7 @@ storageReadPosixOpen(THIS_VOID)
     // Open the file
     if (this->ioMode == storagePosixIoModeDirect)
     {
-        this->fd = open(strZ(this->name), O_RDONLY | storagePosixDirectFlag(), 0);
+        this->fd = open(strZ(this->name), O_RDONLY | STORAGE_POSIX_DIRECT_FLAG, 0);
 
         // Fall back to buffered I/O when direct I/O is not supported, e.g. by the file system
         if (this->fd == -1 && errno == EINVAL)
@@ -106,7 +105,7 @@ storageReadPosixOpen(THIS_VOID)
         {
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
-                storagePosixDirectNew(&this->dio);
+                this->dioBuffer = bufNewAlign(STORAGE_POSIX_DIRECT_ALIGN_UP(ioBufferSize()), STORAGE_POSIX_DIRECT_ALIGN);
             }
             MEM_CONTEXT_OBJ_END();
 
@@ -148,27 +147,27 @@ storageReadPosixDirect(StorageReadPosix *const this, Buffer *const buffer)
         while (bufRemains(buffer) > 0 && this->current < limit)
         {
             // Fill the bounce buffer when it has been consumed
-            if (this->dioPos == this->dioUsed)
+            if (this->dioPos == bufUsed(this->dioBuffer))
             {
                 if (this->dioEnd)
                     break;
 
-                const ssize_t actualBytes = read(this->fd, this->dio.ptr, this->dio.size);
+                const ssize_t actualBytes = read(this->fd, bufPtr(this->dioBuffer), bufSize(this->dioBuffer));
 
                 if (actualBytes == -1)
                     THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strZ(this->name));
 
-                this->dioUsed = (size_t)actualBytes;
-                this->dioPos = this->dioSkip < this->dioUsed ? this->dioSkip : this->dioUsed;
+                bufUsedSet(this->dioBuffer, (size_t)actualBytes);
+                this->dioPos = this->dioSkip < bufUsed(this->dioBuffer) ? this->dioSkip : bufUsed(this->dioBuffer);
                 this->dioSkip = 0;
 
                 // A short read means the end of the file has been reached
-                if (this->dioUsed < this->dio.size)
+                if (!bufFull(this->dioBuffer))
                     this->dioEnd = true;
             }
 
             // Copy from the bounce buffer without exceeding the limit
-            size_t copyBytes = this->dioUsed - this->dioPos;
+            size_t copyBytes = bufUsed(this->dioBuffer) - this->dioPos;
 
             if (copyBytes > bufRemains(buffer))
                 copyBytes = bufRemains(buffer);
@@ -176,13 +175,12 @@ storageReadPosixDirect(StorageReadPosix *const this, Buffer *const buffer)
             if (this->current + copyBytes > limit)
                 copyBytes = (size_t)(limit - this->current);
 
-            memcpy(bufRemainsPtr(buffer), this->dio.ptr + this->dioPos, copyBytes);
-            bufUsedInc(buffer, copyBytes);
+            bufCatSub(buffer, this->dioBuffer, this->dioPos, copyBytes);
             this->dioPos += copyBytes;
             this->current += copyBytes;
         }
 
-        if (this->current == limit || (this->dioEnd && this->dioPos == this->dioUsed))
+        if (this->current == limit || (this->dioEnd && this->dioPos == bufUsed(this->dioBuffer)))
             this->eof = true;
     }
 

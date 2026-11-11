@@ -18,6 +18,9 @@ Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Buffer *bufNew(size_t size);
 
+// Create a new buffer with the buffer pointer aligned to align bytes. The buffer cannot be resized.
+FN_EXTERN Buffer *bufNewAlign(size_t size, size_t align);
+
 // Create a new buffer from a C buffer
 FN_EXTERN Buffer *bufNewC(const void *buffer, size_t size);
 

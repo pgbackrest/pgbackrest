@@ -225,7 +225,6 @@ src_pgbackrest = [
     'storage/helper.c',
     'storage/iterator.c',
     'storage/list.c',
-    'storage/posix/direct.c',
     'storage/posix/read.c',
     'storage/posix/storage.c',
     'storage/posix/write.c',

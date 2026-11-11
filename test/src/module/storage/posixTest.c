@@ -1778,7 +1778,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("StoragePosixDirect"))
+    if (testBegin("Direct I/O"))
     {
 #ifdef HAVE_O_DIRECT
         const Storage *const storageDirect = storagePosixNewP(TEST_PATH_STR, .write = true, .ioMode = storagePosixIoModeDirect);
@@ -1928,16 +1928,16 @@ testRun(void)
         StorageWritePosix *const directWriteDriver = file->driver;
         TEST_RESULT_INT(close(directWriteDriver->fd), 0, "close file descriptor");
 
-        Buffer *const directWriteBuffer = bufNew(directWriteDriver->dio.size);
-        memset(bufPtr(directWriteBuffer), 'C', directWriteDriver->dio.size);
-        bufUsedSet(directWriteBuffer, directWriteDriver->dio.size);
+        Buffer *const directWriteBuffer = bufNew(bufSize(directWriteDriver->dioBuffer));
+        memset(bufPtr(directWriteBuffer), 'C', bufSize(directWriteBuffer));
+        bufUsedSet(directWriteBuffer, bufSize(directWriteBuffer));
 
         TEST_ERROR_FMT(
             storageWritePosix(directWriteDriver, directWriteBuffer), FileWriteError,
             "unable to write '%s': [9] Bad file descriptor", strZ(directWriteDriver->nameTmp));
 
         directWriteDriver->fd = -1;
-        directWriteDriver->dioUsed = 0;
+        bufUsedZero(directWriteDriver->dioBuffer);
         memContextCallbackClear(objMemContext(directWriteDriver));
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close failed writer");
 
