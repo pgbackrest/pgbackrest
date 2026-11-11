@@ -264,9 +264,11 @@ typedef struct HrnStorageTimeParam
 void hrnStorageTime(const Storage *const storage, const char *const path, const time_t modified, const HrnStorageTimeParam param);
 
 /***********************************************************************************************************************************
-Use storagePosixFileOpenInternal shim for one call - fail with the specified errno
+Use storage Posix shims for one call - fail with the specified errno
 ***********************************************************************************************************************************/
 void hrnStoragePosixFileOpenShimOne(int errNo);
+void hrnStorageReadPosixDirectShimOne(int errNo);
+void hrnStorageWritePosixDirectShimOne(int errNo);
 
 /***********************************************************************************************************************************
 Dummy interface for constructing test storage drivers. All functions and features are pulled from the Posix driver.

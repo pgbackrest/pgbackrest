@@ -175,6 +175,21 @@ storageWritePosixOpen(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
+Wrapper around write()
+***********************************************************************************************************************************/
+static ssize_t
+storageWritePosixDirectInternal(const int fd, const void *const buffer, const size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, fd);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(SSIZE, write(fd, buffer, size));
+}
+
+/***********************************************************************************************************************************
 Write the bounce buffer to the file. A partial block is padded with zeros to the alignment and the padding is truncated on close.
 ***********************************************************************************************************************************/
 static void
@@ -196,7 +211,14 @@ storageWritePosixDirectFlush(StorageWritePosix *const this)
             this->dioPadded = true;
         }
 
-        if (write(this->fd, bufPtr(this->dioBuffer), writeSize) != (ssize_t)writeSize)
+        ssize_t actualBytes = storageWritePosixDirectInternal(this->fd, bufPtr(this->dioBuffer), writeSize);
+
+        // Fall back to buffered I/O when the device requires a larger alignment. Setting status flags to 0 clears O_DIRECT since no
+        // other status flags are set.
+        if (actualBytes == -1 && errno == EINVAL && fcntl(this->fd, F_SETFL, 0) != -1)
+            actualBytes = storageWritePosixDirectInternal(this->fd, bufPtr(this->dioBuffer), writeSize);
+
+        if (actualBytes != (ssize_t)writeSize)
             THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
 
         bufUsedZero(this->dioBuffer);

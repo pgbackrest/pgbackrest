@@ -1823,6 +1823,17 @@ testRun(void)
         TEST_RESULT_BOOL(
             bufEq(storageGetP(storageNewReadP(storageDirect, STRDEF("direct-fallback.file"))), content), true, "check content");
 
+        hrnStorageWritePosixDirectShimOne(EINVAL);
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageDirect, STRDEF("direct-fallback.file")), content), "write after alignment error");
+
+        hrnStorageReadPosixDirectShimOne(EINVAL);
+
+        TEST_RESULT_BOOL(
+            bufEq(storageGetP(storageNewReadP(storageDirect, STRDEF("direct-fallback.file"))), content), true,
+            "read after alignment error");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read empty file and zero limit");
 
@@ -1884,6 +1895,10 @@ testRun(void)
         TEST_TITLE("read error");
 
         TEST_RESULT_INT(close(directReadDriver->fd), 0, "close file descriptor");
+        hrnStorageReadPosixDirectShimOne(EINVAL);
+        TEST_ERROR_FMT(
+            ioRead(storageReadIo(directReadError), bufNew(1)), FileReadError, "unable to read '%s': [9] Bad file descriptor",
+            strZ(directReadDriver->name));
         TEST_ERROR_FMT(
             ioRead(storageReadIo(directReadError), bufNew(1)), FileReadError, "unable to read '%s': [9] Bad file descriptor",
             strZ(directReadDriver->name));
@@ -1963,6 +1978,10 @@ testRun(void)
         memset(bufPtr(directWriteBuffer), 'C', bufSize(directWriteBuffer));
         bufUsedSet(directWriteBuffer, bufSize(directWriteBuffer));
 
+        hrnStorageWritePosixDirectShimOne(EINVAL);
+        TEST_ERROR_FMT(
+            storageWritePosix(directWriteDriver, directWriteBuffer), FileWriteError,
+            "unable to write '%s': [9] Bad file descriptor", strZ(directWriteDriver->nameTmp));
         TEST_ERROR_FMT(
             storageWritePosix(directWriteDriver, directWriteBuffer), FileWriteError,
             "unable to write '%s': [9] Bad file descriptor", strZ(directWriteDriver->nameTmp));

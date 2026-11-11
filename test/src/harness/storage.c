@@ -32,7 +32,9 @@ Shim install state
 ***********************************************************************************************************************************/
 static struct
 {
-    int localShimStoragePosixFileOpenOneErrNo;                      // errno for storagePosixFileOpenInternal shim (0 when not set)
+    int localShimStoragePosixFileOpenOneErrNo;                      // errno for open shim (0 when not set)
+    int localShimStorageReadPosixDirectOneErrNo;                    // errno for read shim (0 when not set)
+    int localShimStorageWritePosixDirectOneErrNo;                   // errno for write shim (0 when not set)
 } hrnStorageStatic;
 
 /***********************************************************************************************************************************
@@ -74,6 +76,92 @@ hrnStoragePosixFileOpenShimOne(const int errNo)
     ASSERT(errNo != 0);
 
     hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo = errNo;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Shim storageReadPosixDirectInternal()
+***********************************************************************************************************************************/
+static ssize_t
+storageReadPosixDirectInternal(const int fd, void *const buffer, const size_t size)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, fd);
+        FUNCTION_HARNESS_PARAM_P(VOID, buffer);
+        FUNCTION_HARNESS_PARAM(SIZE, size);
+    FUNCTION_HARNESS_END();
+
+    ssize_t result;
+
+    // If shim will run once then fail with the requested errno
+    if (hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo != 0)
+    {
+        errno = hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo;
+        hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo = 0;
+        result = -1;
+    }
+    // Else call normal function
+    else
+        result = storageReadPosixDirectInternal_SHIMMED(fd, buffer, size);
+
+    FUNCTION_HARNESS_RETURN(SSIZE, result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStorageReadPosixDirectShimOne(const int errNo)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, errNo);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(errNo != 0);
+
+    hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo = errNo;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Shim storageWritePosixDirectInternal()
+***********************************************************************************************************************************/
+static ssize_t
+storageWritePosixDirectInternal(const int fd, const void *const buffer, const size_t size)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, fd);
+        FUNCTION_HARNESS_PARAM_P(VOID, buffer);
+        FUNCTION_HARNESS_PARAM(SIZE, size);
+    FUNCTION_HARNESS_END();
+
+    ssize_t result;
+
+    // If shim will run once then fail with the requested errno
+    if (hrnStorageStatic.localShimStorageWritePosixDirectOneErrNo != 0)
+    {
+        errno = hrnStorageStatic.localShimStorageWritePosixDirectOneErrNo;
+        hrnStorageStatic.localShimStorageWritePosixDirectOneErrNo = 0;
+        result = -1;
+    }
+    // Else call normal function
+    else
+        result = storageWritePosixDirectInternal_SHIMMED(fd, buffer, size);
+
+    FUNCTION_HARNESS_RETURN(SSIZE, result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStorageWritePosixDirectShimOne(const int errNo)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, errNo);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(errNo != 0);
+
+    hrnStorageStatic.localShimStorageWritePosixDirectOneErrNo = errNo;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

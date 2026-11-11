@@ -115,6 +115,21 @@ storageReadPosixOpen(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
+Wrapper around read()
+***********************************************************************************************************************************/
+static ssize_t
+storageReadPosixDirectInternal(const int fd, void *const buffer, const size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, fd);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(SSIZE, read(fd, buffer, size));
+}
+
+/***********************************************************************************************************************************
 Read from a file using direct I/O. Data is read in aligned blocks into the bounce buffer and then copied to the caller's buffer.
 ***********************************************************************************************************************************/
 static size_t
@@ -142,7 +157,12 @@ storageReadPosixDirect(StorageReadPosix *const this, Buffer *const buffer)
                 if (this->dioEnd)
                     break;
 
-                const ssize_t actualBytes = read(this->fd, bufPtr(this->dioBuffer), bufSize(this->dioBuffer));
+                ssize_t actualBytes = storageReadPosixDirectInternal(this->fd, bufPtr(this->dioBuffer), bufSize(this->dioBuffer));
+
+                // Fall back to buffered I/O when the device requires a larger alignment. Setting status flags to 0 clears O_DIRECT
+                // since no other status flags are set.
+                if (actualBytes == -1 && errno == EINVAL && fcntl(this->fd, F_SETFL, 0) != -1)
+                    actualBytes = storageReadPosixDirectInternal(this->fd, bufPtr(this->dioBuffer), bufSize(this->dioBuffer));
 
                 if (actualBytes == -1)
                     THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strZ(this->name));
