@@ -946,7 +946,7 @@
 
                             <allow-list caption="I/O modes">
                                 <allow-item id="default">use the buffered I/O provided by the operating system</allow-item>
-                                <allow-item id="direct">bypass the operating system page cache using direct I/O (<id>O_DIRECT</id>). This mode is only available on platforms that support direct I/O. When the file system does not support direct I/O, buffered I/O is used instead.</allow-item>
+                                <allow-item id="direct">bypass the operating system page cache using direct I/O (<id>O_DIRECT</id>). This mode is only available on platforms that support direct I/O. When the file system does not support direct I/O, buffered I/O is used instead. Direct I/O avoids filling the page cache but disables readahead and background writeback. This can reduce throughput. Data at the end of a file that does not fill a 4KiB block is written with buffered I/O.</allow-item>
                             </allow-list>
                         </text>
 
