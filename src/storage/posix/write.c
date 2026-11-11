@@ -141,7 +141,7 @@ storageWritePosixOpen(THIS_VOID)
     {
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
-            storagePosixDirectNew(this->fd, &this->dio);
+            storagePosixDirectNew(&this->dio);
         }
         MEM_CONTEXT_OBJ_END();
     }
@@ -197,7 +197,8 @@ storageWritePosixDirectFlush(StorageWritePosix *const this)
 
     if (this->dioUsed > 0)
     {
-        const size_t writeSize = (this->dioUsed + this->dio.align - 1) / this->dio.align * this->dio.align;
+        const size_t writeSize =
+            (this->dioUsed + STORAGE_POSIX_DIRECT_ALIGN - 1) / STORAGE_POSIX_DIRECT_ALIGN * STORAGE_POSIX_DIRECT_ALIGN;
 
         if (writeSize != this->dioUsed)
         {
@@ -284,7 +285,7 @@ storageWritePosixSeek(THIS_VOID, const uint64_t position)
     {
         storageWritePosixDirectFlush(this);
 
-        if (position % this->dio.align != 0)
+        if (position % STORAGE_POSIX_DIRECT_ALIGN != 0)
         {
             THROW_FMT(
                 FileWriteError, "unable to seek to %" PRIu64 " in '%s': position is not aligned for direct I/O", position,

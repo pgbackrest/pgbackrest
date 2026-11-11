@@ -106,11 +106,11 @@ storageReadPosixOpen(THIS_VOID)
         {
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
-                storagePosixDirectNew(this->fd, &this->dio);
+                storagePosixDirectNew(&this->dio);
             }
             MEM_CONTEXT_OBJ_END();
 
-            seekOffset = this->offset / this->dio.align * this->dio.align;
+            seekOffset = this->offset / STORAGE_POSIX_DIRECT_ALIGN * STORAGE_POSIX_DIRECT_ALIGN;
             this->dioSkip = (size_t)(this->offset - seekOffset);
         }
 

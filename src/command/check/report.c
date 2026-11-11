@@ -3,8 +3,6 @@ Support Command
 ***********************************************************************************************************************************/
 #include <build.h>
 
-#include <unistd.h>
-
 #include "command/check/report.h"
 #include "common/debug.h"
 #include "common/log.h"

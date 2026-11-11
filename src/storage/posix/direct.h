@@ -14,17 +14,16 @@ an aligned bounce buffer.
 #endif
 
 /***********************************************************************************************************************************
-Alignment used when the device does not report one
+Alignment of address, size, and offset
 ***********************************************************************************************************************************/
-#define STORAGE_POSIX_DIRECT_ALIGN_DEFAULT                          4096
+#define STORAGE_POSIX_DIRECT_ALIGN                                  4096
 
 /***********************************************************************************************************************************
 Aligned bounce buffer
 ***********************************************************************************************************************************/
 typedef struct StoragePosixDirect
 {
-    size_t align;                                                   // Required alignment of address, size, and offset
-    size_t size;                                                    // Usable size of the buffer (multiple of align)
+    size_t size;                                                    // Usable size of the buffer (multiple of the alignment)
     Buffer *buffer;                                                 // Buffer that owns the memory
     uint8_t *ptr;                                                   // Aligned pointer into buffer
 } StoragePosixDirect;
@@ -35,8 +34,7 @@ Functions
 // Open flag for direct I/O (0 when not supported by the platform)
 FN_EXTERN int storagePosixDirectFlag(void);
 
-// New aligned bounce buffer for an open file using device alignment when available. The buffer is allocated in the current
-// mem context.
-FN_EXTERN Buffer *storagePosixDirectNew(int fd, StoragePosixDirect *result);
+// New aligned bounce buffer. The buffer is allocated in the current mem context.
+FN_EXTERN Buffer *storagePosixDirectNew(StoragePosixDirect *result);
 
 #endif

@@ -269,15 +269,6 @@ else
     configuration.set('STORAGE_POSIX_DIRECT_FLAG', '0', description: 'O_DIRECT flag value')
 endif
 
-# Check for direct I/O alignment support. statx() is Linux-specific and requires GNU feature declarations with glibc.
-if host_machine.system() == 'linux' and cc.compiles(
-    '#include <fcntl.h>\n#include <sys/stat.h>\n' +
-    'int main(void) {struct statx s; return statx(AT_FDCWD, ".", 0, STATX_DIOALIGN, &s) + (int)s.stx_dio_mem_align;}',
-    args: '-D_GNU_SOURCE', name: 'statx() STATX_DIOALIGN')
-    configuration.set('HAVE_STATX_DIOALIGN', true, description: 'Does statx() report direct I/O alignment?')
-    add_global_arguments('-D_GNU_SOURCE', language: 'c')
-endif
-
 # Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros
 if not cc.compiles(
         '''#include <sys/select.h>

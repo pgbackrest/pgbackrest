@@ -1781,28 +1781,6 @@ testRun(void)
     if (testBegin("StoragePosixDirect"))
     {
 #ifdef HAVE_O_DIRECT
-#ifdef HAVE_STATX_DIOALIGN
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("statx alignment selection");
-
-        TEST_RESULT_UINT(
-            storagePosixDirectAlign(true, STATX_DIOALIGN, 512, 4096), 4096, "use larger offset alignment");
-        TEST_RESULT_UINT(
-            storagePosixDirectAlign(true, STATX_DIOALIGN, 4096, 512), 4096, "use larger memory alignment");
-        TEST_RESULT_UINT(
-            storagePosixDirectAlign(false, STATX_DIOALIGN, 4096, 4096), STORAGE_POSIX_DIRECT_ALIGN_DEFAULT,
-            "use default when statx fails");
-        TEST_RESULT_UINT(
-            storagePosixDirectAlign(true, 0, 4096, 4096), STORAGE_POSIX_DIRECT_ALIGN_DEFAULT,
-            "use default when alignment is not reported");
-        TEST_RESULT_UINT(
-            storagePosixDirectAlign(true, STATX_DIOALIGN, 0, 4096), STORAGE_POSIX_DIRECT_ALIGN_DEFAULT,
-            "use default when memory alignment is zero");
-        TEST_RESULT_UINT(
-            storagePosixDirectAlign(true, STATX_DIOALIGN, 4096, 0), STORAGE_POSIX_DIRECT_ALIGN_DEFAULT,
-            "use default when offset alignment is zero");
-#endif
-
         const Storage *const storageDirect = storagePosixNewP(TEST_PATH_STR, .write = true, .ioMode = storagePosixIoModeDirect);
 
         // Content that is not a multiple of the alignment and spans multiple bounce buffers
@@ -1858,7 +1836,7 @@ testRun(void)
         TEST_TITLE("read seek error");
 
         const uint64_t invalidOffset = UINT64_MAX;
-        const uint64_t alignedOffset = invalidOffset / directReadDriver->dio.align * directReadDriver->dio.align;
+        const uint64_t alignedOffset = invalidOffset / STORAGE_POSIX_DIRECT_ALIGN * STORAGE_POSIX_DIRECT_ALIGN;
         const String *const directFileName = STRDEF(TEST_PATH "/direct.file");
         StorageRead *const directReadSeekError =
             storageNewReadP(storageDirect, STRDEF("direct.file"), .offset = invalidOffset);
