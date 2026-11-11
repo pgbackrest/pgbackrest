@@ -5522,6 +5522,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_STRID(shared),                                                         // opt/repo-azure-key-type
                     PARSE_RULE_VAL_STRID(sas),                                                            // opt/repo-azure-key-type
                     PARSE_RULE_VAL_STRID(auto),                                                           // opt/repo-azure-key-type
+                    PARSE_RULE_VAL_STRID(web_DS_id),                                                      // opt/repo-azure-key-type
                 ),                                                                                        // opt/repo-azure-key-type
                                                                                                           // opt/repo-azure-key-type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                               // opt/repo-azure-key-type
