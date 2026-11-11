@@ -182,6 +182,27 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
+#define HRN_PQ_SCRIPT_CURRENT_LSN(sessionParam, walNameParam, lsnNameParam, lsnParam)                                              \
+    {.session = sessionParam,                                                                                                      \
+        .function = HRN_PQ_SENDQUERY,                                                                                              \
+        .param = "[\"select pg_catalog.pg_current_" walNameParam "_" lsnNameParam "()::text\"]", .resultInt = 1},                  \
+    {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
+    {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
+    {.session = sessionParam, .function = HRN_PQ_GETRESULT},                                                                       \
+    {.session = sessionParam, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                      \
+    {.session = sessionParam, .function = HRN_PQ_NTUPLES, .resultInt = 1},                                                         \
+    {.session = sessionParam, .function = HRN_PQ_NFIELDS, .resultInt = 1},                                                         \
+    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
+    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = lsnParam},                                 \
+    {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
+    {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
+
+#define HRN_PQ_SCRIPT_CURRENT_LSN_LE_96(sessionParam, lsnParam)                                                                    \
+    HRN_PQ_SCRIPT_CURRENT_LSN(sessionParam, "xlog", "location", lsnParam)
+
+#define HRN_PQ_SCRIPT_CURRENT_LSN_GE_10(sessionParam, lsnParam)                                                                    \
+    HRN_PQ_SCRIPT_CURRENT_LSN(sessionParam, "wal", "lsn", lsnParam)
+
 #define HRN_PQ_SCRIPT_WAL_SWITCH(sessionParam, walNameParam, walFileNameParam)                                                     \
     {.session = sessionParam, .function = HRN_PQ_SENDQUERY,                                                                        \
         .param = "[\"select pg_catalog.pg_" walNameParam "file_name(pg_catalog.pg_switch_" walNameParam "())::text\"]",            \
@@ -454,6 +475,31 @@ Macros for defining groups of functions that implement various queries and comma
 
 #define HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(sessionParam, targetLsnParam, targetReachedParam, reachedLsnParam)               \
     HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED(sessionParam, "wal", "lsn", targetLsnParam, targetReachedParam, reachedLsnParam)
+
+#define HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP(sessionParam, walNameParam, lsnNameParam, lsnParam, sleepParam)                             \
+    {.session = sessionParam,                                                                                                      \
+        .function = HRN_PQ_SENDQUERY,                                                                                              \
+        .param = "[\"select pg_catalog.pg_last_" walNameParam "_replay_" lsnNameParam "()::text\"]", .resultInt = 1,               \
+        .sleep = sleepParam},                                                                                                      \
+    {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
+    {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
+    {.session = sessionParam, .function = HRN_PQ_GETRESULT},                                                                       \
+    {.session = sessionParam, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                      \
+    {.session = sessionParam, .function = HRN_PQ_NTUPLES, .resultInt = 1},                                                         \
+    {.session = sessionParam, .function = HRN_PQ_NFIELDS, .resultInt = 1},                                                         \
+    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
+    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = lsnParam},                                 \
+    {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
+    {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
+
+#define HRN_PQ_SCRIPT_REPLAY_LSN_LE_96(sessionParam, lsnParam)                                                                     \
+    HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP(sessionParam, "xlog", "location", lsnParam, 0)
+
+#define HRN_PQ_SCRIPT_REPLAY_LSN_GE_10(sessionParam, lsnParam)                                                                     \
+    HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP(sessionParam, "wal", "lsn", lsnParam, 0)
+
+#define HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP_GE_10(sessionParam, lsnParam, sleepParam)                                                   \
+    HRN_PQ_SCRIPT_REPLAY_LSN_SLEEP(sessionParam, "wal", "lsn", lsnParam, sleepParam)
 
 #define                                                                                                                            \
     HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED(                                                                                       \
