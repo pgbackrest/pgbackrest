@@ -2004,7 +2004,7 @@
                         <summary>I/O mode for the <postgres/> data directory.</summary>
 
                         <text>
-                            <p>Determines how files in the <postgres/> data directory are read (backup) and written (restore).</p>
+                            <p>Determines how files in the <postgres/> data directory are read and written.</p>
 
                             <allow-list caption="I/O modes">
                                 <allow-item id="default">use the buffered I/O provided by the operating system</allow-item>

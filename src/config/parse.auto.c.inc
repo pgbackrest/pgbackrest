@@ -4350,24 +4350,98 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                    // opt/pg-io-mode
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/pg-io-mode
         (                                                                                                          // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/pg-io-mode
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                       // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                    // opt/pg-io-mode
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/pg-io-mode
+        ),                                                                                                         // opt/pg-io-mode
+                                                                                                                   // opt/pg-io-mode
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                            // opt/pg-io-mode
+        (                                                                                                          // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/pg-io-mode
         ),                                                                                                         // opt/pg-io-mode
                                                                                                                    // opt/pg-io-mode
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                            // opt/pg-io-mode
         (                                                                                                          // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/pg-io-mode
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/pg-io-mode
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/pg-io-mode
         ),                                                                                                         // opt/pg-io-mode
                                                                                                                    // opt/pg-io-mode
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                           // opt/pg-io-mode
         (                                                                                                          // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/pg-io-mode
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                       // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                    // opt/pg-io-mode
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/pg-io-mode
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/pg-io-mode
         ),                                                                                                         // opt/pg-io-mode
                                                                                                                    // opt/pg-io-mode
         PARSE_RULE_OPTIONAL                                                                                        // opt/pg-io-mode
         (                                                                                                          // opt/pg-io-mode
+            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/pg-io-mode
+            (                                                                                                      // opt/pg-io-mode
+                PARSE_RULE_FILTER_CMD                                                                              // opt/pg-io-mode
+                (                                                                                                  // opt/pg-io-mode
+                    PARSE_RULE_VAL_CMD(ArchivePush),                                                               // opt/pg-io-mode
+                    PARSE_RULE_VAL_CMD(Manifest),                                                                  // opt/pg-io-mode
+                ),                                                                                                 // opt/pg-io-mode
+                                                                                                                   // opt/pg-io-mode
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                     // opt/pg-io-mode
+                (                                                                                                  // opt/pg-io-mode
+                    PARSE_RULE_VAL_STRID(default),                                                                 // opt/pg-io-mode
+                    PARSE_RULE_VAL_STRID(direct),                                                                  // opt/pg-io-mode
+#ifndef HAVE_O_DIRECT                                                                                              // opt/pg-io-mode
+                        PARSE_RULE_BOOL_FALSE,                                                                     // opt/pg-io-mode
+#endif                                                                                                             // opt/pg-io-mode
+                ),                                                                                                 // opt/pg-io-mode
+                                                                                                                   // opt/pg-io-mode
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/pg-io-mode
+                (                                                                                                  // opt/pg-io-mode
+                    PARSE_RULE_VAL_STRID(default),                                                                 // opt/pg-io-mode
+                ),                                                                                                 // opt/pg-io-mode
+                                                                                                                   // opt/pg-io-mode
+                PARSE_RULE_OPTIONAL_NOT_REQUIRED(),                                                                // opt/pg-io-mode
+            ),                                                                                                     // opt/pg-io-mode
+                                                                                                                   // opt/pg-io-mode
+            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/pg-io-mode
+            (                                                                                                      // opt/pg-io-mode
+                PARSE_RULE_FILTER_CMD                                                                              // opt/pg-io-mode
+                (                                                                                                  // opt/pg-io-mode
+                    PARSE_RULE_VAL_CMD(Check),                                                                     // opt/pg-io-mode
+                ),                                                                                                 // opt/pg-io-mode
+                                                                                                                   // opt/pg-io-mode
+                PARSE_RULE_OPTIONAL_DEPEND                                                                         // opt/pg-io-mode
+                (                                                                                                  // opt/pg-io-mode
+                    PARSE_RULE_VAL_OPT(Stanza),                                                                    // opt/pg-io-mode
+                ),                                                                                                 // opt/pg-io-mode
+                                                                                                                   // opt/pg-io-mode
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                     // opt/pg-io-mode
+                (                                                                                                  // opt/pg-io-mode
+                    PARSE_RULE_VAL_STRID(default),                                                                 // opt/pg-io-mode
+                    PARSE_RULE_VAL_STRID(direct),                                                                  // opt/pg-io-mode
+#ifndef HAVE_O_DIRECT                                                                                              // opt/pg-io-mode
+                        PARSE_RULE_BOOL_FALSE,                                                                     // opt/pg-io-mode
+#endif                                                                                                             // opt/pg-io-mode
+                ),                                                                                                 // opt/pg-io-mode
+                                                                                                                   // opt/pg-io-mode
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/pg-io-mode
+                (                                                                                                  // opt/pg-io-mode
+                    PARSE_RULE_VAL_STRID(default),                                                                 // opt/pg-io-mode
+                ),                                                                                                 // opt/pg-io-mode
+            ),                                                                                                     // opt/pg-io-mode
+                                                                                                                   // opt/pg-io-mode
             PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/pg-io-mode
             (                                                                                                      // opt/pg-io-mode
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                     // opt/pg-io-mode

@@ -200,8 +200,7 @@ storagePgGet(const unsigned int pgIdx, const bool write)
     else
         result = storagePosixNewP(
             cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write,
-            .ioMode = cfgOptionValid(cfgOptPgIoMode) ?
-                (StoragePosixIoMode)cfgOptionIdxSeq(cfgOptPgIoMode, pgIdx) : storagePosixIoModeDefault);
+            .ioMode = (StoragePosixIoMode)cfgOptionIdxSeq(cfgOptPgIoMode, pgIdx));
 
     FUNCTION_TEST_RETURN(STORAGE, result);
 }

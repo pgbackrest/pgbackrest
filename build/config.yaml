@@ -1432,9 +1432,7 @@ option:
     allow-list:
       - default
       - direct: HAVE_O_DIRECT
-    command:
-      backup: {}
-      restore: {}
+    command: pg-path
 
   # PostgreSQL host options
   #---------------------------------------------------------------------------------------------------------------------------------
