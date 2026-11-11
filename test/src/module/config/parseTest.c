@@ -1239,6 +1239,111 @@ testRun(void)
         TEST_RESULT_VOID(parseOptionBeta(cfgOptRepoPath, 0, true, &betaOption), "beta option set");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restore synchronization method defaults and beta opt-in");
+
+        StringList *const restoreArgList = strLstNew();
+        strLstAddZ(restoreArgList, TEST_BACKREST_EXE);
+        hrnCfgArgRawNegate(restoreArgList, cfgOptConfig);
+        hrnCfgArgRawZ(restoreArgList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(restoreArgList, cfgOptStanza, "db");
+        strLstAddZ(restoreArgList, TEST_COMMAND_RESTORE);
+
+        TEST_RESULT_VOID(
+            cfgParseP(storageTest, strLstSize(restoreArgList), strLstPtr(restoreArgList), .noResetLogLevel = true),
+            "default restore does not require beta");
+        TEST_RESULT_UINT(
+            cfgOptionStrId(cfgOptRestoreSyncMethod), CFGOPTVAL_RESTORE_SYNC_METHOD_FSYNC, "default is fsync");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptRestoreSyncMethod), cfgSourceDefault, "method is default");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBeta), false, "beta is disabled");
+        TEST_RESULT_BOOL(cfgParseOptionP(STRDEF("restore-sync-method")).beta, true, "method is a beta option");
+        TEST_RESULT_BOOL(
+            cfgParseOptionValid(cfgCmdRestore, cfgCmdRoleLocal, cfgOptRestoreSyncMethod), true, "method is valid for workers");
+        TEST_RESULT_BOOL(
+            cfgParseOptionValid(cfgCmdRestore, cfgCmdRoleRemote, cfgOptRestoreSyncMethod), false,
+            "method is not sent to repository");
+        TEST_RESULT_BOOL(
+            cfgParseOptionValid(cfgCmdBackup, cfgCmdRoleMain, cfgOptRestoreSyncMethod), false, "method is restore only");
+
+        argList = strLstDup(restoreArgList);
+        hrnCfgArgRawZ(argList, cfgOptRestoreSyncMethod, "syncfs");
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
+            "option 'restore-sync-method' is not valid without option 'beta'\n"
+            "HINT: beta features require the --beta option to prevent accidental usage.");
+
+        hrnCfgArgRawBool(argList, cfgOptBeta, true);
+        TEST_RESULT_VOID(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "explicit syncfs with beta");
+        TEST_RESULT_UINT(
+            cfgOptionStrId(cfgOptRestoreSyncMethod), CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS, "syncfs is selected");
+
+        argList = strLstDup(restoreArgList);
+        hrnCfgArgRawZ(argList, cfgOptRestoreSyncMethod, "fsync");
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
+            "option 'restore-sync-method' is not valid without option 'beta'\n"
+            "HINT: beta features require the --beta option to prevent accidental usage.");
+
+        hrnCfgArgRawBool(argList, cfgOptBeta, true);
+        TEST_RESULT_VOID(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "explicit fsync with beta");
+        TEST_RESULT_UINT(
+            cfgOptionStrId(cfgOptRestoreSyncMethod), CFGOPTVAL_RESTORE_SYNC_METHOD_FSYNC, "fsync is selected");
+
+        argList = strLstDup(restoreArgList);
+        hrnCfgArgRawZ(argList, cfgOptRestoreSyncMethod, "invalid");
+        hrnCfgArgRawBool(argList, cfgOptBeta, true);
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
+            "'invalid' is not allowed for 'restore-sync-method' option\n"
+            "HINT: allowed values are 'fsync', 'syncfs'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restore synchronization method configuration and command-line precedence");
+
+        const String *const syncConfigFile = STRDEF(TEST_PATH "/restore-sync.conf");
+        storagePutP(
+            storageNewWriteP(storageTestWrite, syncConfigFile),
+            BUFSTRDEF("[global:restore]\nbeta=y\nrestore-sync-method=syncfs\n"));
+
+        StringList *const restoreConfigArgList = strLstNew();
+        strLstAddZ(restoreConfigArgList, TEST_BACKREST_EXE);
+        hrnCfgArgRaw(restoreConfigArgList, cfgOptConfig, syncConfigFile);
+        hrnCfgArgRawZ(restoreConfigArgList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(restoreConfigArgList, cfgOptStanza, "db");
+        strLstAddZ(restoreConfigArgList, TEST_COMMAND_RESTORE);
+
+        TEST_RESULT_VOID(
+            cfgParseP(storageTest, strLstSize(restoreConfigArgList), strLstPtr(restoreConfigArgList), .noResetLogLevel = true),
+            "method from config");
+        TEST_RESULT_UINT(
+            cfgOptionStrId(cfgOptRestoreSyncMethod), CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS, "config selects syncfs");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptRestoreSyncMethod), cfgSourceConfig, "method is from config");
+
+        argList = strLstDup(restoreConfigArgList);
+        hrnCfgArgRawZ(argList, cfgOptRestoreSyncMethod, "fsync");
+        TEST_RESULT_VOID(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
+            "command line overrides config");
+        TEST_RESULT_UINT(
+            cfgOptionStrId(cfgOptRestoreSyncMethod), CFGOPTVAL_RESTORE_SYNC_METHOD_FSYNC, "command line selects fsync");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptRestoreSyncMethod), cfgSourceParam, "method is from command line");
+
+        argList = strLstDup(restoreConfigArgList);
+        hrnCfgArgRawReset(argList, cfgOptRestoreSyncMethod);
+        TEST_RESULT_VOID(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "command line resets method");
+        TEST_RESULT_UINT(
+            cfgOptionStrId(cfgOptRestoreSyncMethod), CFGOPTVAL_RESTORE_SYNC_METHOD_FSYNC, "reset restores default fsync");
+
+        argList = strLstDup(restoreConfigArgList);
+        hrnCfgArgRawBool(argList, cfgOptBeta, false);
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
+            "option 'restore-sync-method' is not valid without option 'beta'\n"
+            "HINT: beta features require the --beta option to prevent accidental usage.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("dependent option missing");
 
         argList = strLstNew();

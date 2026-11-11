@@ -410,6 +410,11 @@ testRun(void)
             testHelpOption(commandHelp, "pg-version-force"),
             "  --pg-version-force                  force PostgreSQL version\n",
             "maintainer option");
+        TEST_RESULT_STR_Z(
+            testHelpOption(commandHelp, "restore-sync-method"),
+            "  --restore-sync-method               method used to synchronize restored files\n"
+            "                                      [default=fsync]\n",
+            "restore synchronization method default");
         TEST_RESULT_STR(testHelpOption(commandHelp, "job-retry"), NULL, "internal option not listed");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -624,6 +629,22 @@ testRun(void)
             "  repo1: 5MiB\n"
             "  repo2: 4MiB\n",
             "check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restore synchronization method help exposes its default and beta status");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "restore");
+        strLstAddZ(argList, "restore-sync-method");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help is available without beta opt-in");
+
+        const String *const syncHelp = helpRender();
+        TEST_RESULT_BOOL(strstr(strZ(syncHelp), "default: fsync") != NULL, true, "help retains fsync as default");
+        TEST_RESULT_BOOL(
+            strstr(strZ(syncHelp), "FOR BETA TESTING ONLY. DO NOT USE IN PRODUCTION.") != NULL, true,
+            "help warns about beta status");
     }
 
     // *****************************************************************************************************************************

@@ -2631,6 +2631,31 @@
                 </text>
 
                 <option-list>
+                    <option id="restore-sync-method" name="Restore Synchronization Method">
+                        <summary>Method used to synchronize restored files.</summary>
+
+                        <text>
+                            <allow-list caption="synchronization methods">
+                                <allow-item id="fsync">synchronize each restored file individually.</allow-item>
+                                <allow-item id="syncfs">synchronize each destination filesystem after restoring files.</allow-item>
+                            </allow-list>
+
+                            <p>The <id>syncfs</id> method is available only on Linux and may reduce restore time for clusters containing many small files. It synchronizes all destination filesystems, including those containing tablespaces or linked files and directories, before completing the restore. Delta restores are supported.</p>
+
+                            <p>When using <id>syncfs</id>, delta and force restores require read access to <file>/proc/self/mountinfo</file> to identify files mounted separately within destination directories. Destination mounts and links must remain unchanged during the restore.</p>
+
+                            <p><id>syncfs</id> also synchronizes unrelated writes on the same filesystems. Errors writing that data to disk may therefore cause the restore to fail.</p>
+
+                            <admonition type="warning">On Linux kernels before 5.8, <id>syncfs</id> does not report writeback errors. Distribution kernels may backport this support, so the kernel version is not checked. Use a kernel that reports these errors before selecting <id>syncfs</id>.</admonition>
+
+                            <admonition type="important">The <id>syncfs</id> method is in beta release and should not be used in production. The <br-option>beta</br-option> option must be enabled when explicitly setting this option to prevent accidental usage of beta features.</admonition>
+
+                            <p>Omitting this option retains the default <id>fsync</id> behavior without requiring <br-option>beta</br-option>.</p>
+                        </text>
+
+                        <example>syncfs</example>
+                    </option>
+
                     <option id="checksum-page-error" name="Error on Invalid Page Checksums">
                         <summary>Error on invalid page checksums.</summary>
 

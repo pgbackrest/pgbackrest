@@ -116,6 +116,7 @@ Option constants
 #define CFGOPT_REPO                                                 "repo"
 #define CFGOPT_REPO_TARGET_TIME                                     "repo-target-time"
 #define CFGOPT_REPORT                                               "report"
+#define CFGOPT_RESTORE_SYNC_METHOD                                  "restore-sync-method"
 #define CFGOPT_RESUME                                               "resume"
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
 #define CFGOPT_SCK_KEEP_ALIVE                                       "sck-keep-alive"
@@ -147,7 +148,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            203
+#define CFG_OPTION_TOTAL                                            204
 
 /***********************************************************************************************************************************
 Option value constants
@@ -389,6 +390,11 @@ Option value constants
 #define CFGOPTVAL_REPO_TYPE_S3_Z                                    "s3"
 #define CFGOPTVAL_REPO_TYPE_SFTP                                    STRID5("sftp", 0x850d30)
 #define CFGOPTVAL_REPO_TYPE_SFTP_Z                                  "sftp"
+
+#define CFGOPTVAL_RESTORE_SYNC_METHOD_FSYNC                         STRID5("fsync", 0x3766660)
+#define CFGOPTVAL_RESTORE_SYNC_METHOD_FSYNC_Z                       "fsync"
+#define CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS                        STRID5("syncfs", 0x2661bb330)
+#define CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS_Z                      "syncfs"
 
 #define CFGOPTVAL_SORT_NONE                                         0
 #define CFGOPTVAL_SORT_NONE_STRID                                   STRID5S("none", 0, 0x2b9ee2)
@@ -658,6 +664,7 @@ typedef enum
     cfgOptRepoTargetTime,
     cfgOptRepoType,
     cfgOptReport,
+    cfgOptRestoreSyncMethod,
     cfgOptResume,
     cfgOptSckBlock,
     cfgOptSckKeepAlive,

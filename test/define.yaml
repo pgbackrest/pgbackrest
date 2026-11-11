@@ -891,9 +891,13 @@ unit:
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: command/restore
-    total: 16
+    total: 17
 
-    harness: restore
+    harness:
+      name: restore
+      shim:
+        - command/restore/restore
+        - command/restore/protocol
 
     coverage:
       - command/restore/blockChecksum
@@ -906,6 +910,7 @@ unit:
       - command/restore/remap.inc: included
       - command/restore/restore
       - command/restore/select.inc: included
+      - command/restore/sync.inc: included
       - command/restore/timeline
       - command/restore/validate.inc: included
 
