@@ -2006,10 +2006,7 @@
                         <text>
                             <p>Determines how files in the <postgres/> data directory are read and written.</p>
 
-                            <allow-list caption="I/O modes">
-                                <allow-item id="default">use the buffered I/O provided by the operating system</allow-item>
-                                <allow-item id="direct">bypass the operating system page cache using direct I/O (<id>O_DIRECT</id>). This mode is only available on platforms that support direct I/O. When the file system does not support direct I/O, buffered I/O is used instead.</allow-item>
-                            </allow-list>
+                            <allow-list inherit="repo-io-mode"/>
                         </text>
 
                         <example>direct</example>
