@@ -128,6 +128,20 @@ FN_EXTERN Pack *dbList(Db *this);
 // Waits for replay on the standby to equal the target LSN
 FN_EXTERN void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
 
+// Application names of the standbys connected to the primary, split by sync_state into synchronous (sync or quorum) and
+// asynchronous (async or potential). Errors when sync_state cannot be read.
+typedef struct DbStandbyNameResult
+{
+    StringList *syncList;                                           // Names with sync_state sync or quorum
+    StringList *asyncList;                                          // Names with sync_state async or potential
+} DbStandbyNameResult;
+
+FN_EXTERN DbStandbyNameResult dbStandbyNameList(Db *this);
+
+// Application name of the standby WAL receiver as the primary reports it in pg_stat_replication, derived from the WAL receiver
+// conninfo. Errors when the WAL receiver is not running or its conninfo cannot be read.
+FN_EXTERN String *dbWalReceiverAppName(Db *this);
+
 // Check that the cluster is alive and correctly configured during the backup
 FN_EXTERN void dbPing(Db *this, bool force);
 
