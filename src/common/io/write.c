@@ -245,9 +245,9 @@ ioWriteSeek(IoWrite *const this, const uint64_t position)
     ASSERT(!this->filterGroupSet);
     ASSERT(ioWriteInterface(this)->write != NULL);
 
-    // If the requested position is not the current position then flush writes and seek. Writes must be flushed first so they will
-    // not later end up in the wrong location.
-    if (position != this->position || !bufEmpty(this->output))
+    // If the requested position is not the current position (including buffered output) then flush writes and seek. Writes must be
+    // flushed first so they will not later end up in the wrong location.
+    if (position != this->position + bufUsed(this->output))
     {
         ioWriteFlush(this);
         ioWriteInterface(this)->seek(ioWriteDriver(this), position);
