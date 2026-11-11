@@ -258,8 +258,8 @@ if lib_zstd.found()
     configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
 endif
 
-# Check for direct I/O support. glibc only exposes O_DIRECT with _GNU_SOURCE, so capture its value without changing feature macros
-# for all source files.
+# Check for direct I/O support. glibc only exposes O_DIRECT with _GNU_SOURCE. Capture its value without changing feature macros for
+# all source files.
 direct_io_flag = cc.get_define('O_DIRECT', prefix: '#include <fcntl.h>', args: '-D_GNU_SOURCE')
 
 if direct_io_flag != ''

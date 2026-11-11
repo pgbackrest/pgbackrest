@@ -187,7 +187,7 @@ storageWritePosixInternal(const int fd, const void *const buffer, const size_t s
 }
 
 /***********************************************************************************************************************************
-Disable direct I/O. Setting status flags to 0 clears O_DIRECT since no other status flags are set.
+Disable direct I/O. Setting status flags to 0 clears O_DIRECT. No other status flags are set.
 ***********************************************************************************************************************************/
 static void
 storageWritePosixDirectDisable(StorageWritePosix *const this)
@@ -237,8 +237,8 @@ storageWritePosixData(StorageWritePosix *const this, const uint8_t *const data, 
 }
 
 /***********************************************************************************************************************************
-Write the bounce buffer to the file. Data after the last aligned block is written with buffered I/O, which only happens at the end
-of the file or before a seek.
+Write the bounce buffer to the file. Data after the last aligned block is written with buffered I/O. This only happens at the end of
+the file or before a seek.
 ***********************************************************************************************************************************/
 static void
 storageWritePosixDirectFlush(StorageWritePosix *const this)

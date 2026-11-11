@@ -87,8 +87,7 @@ storageReadPosixOpen(THIS_VOID)
         // Set free callback to ensure the file descriptor is freed
         memContextCallbackSet(objMemContext(this), storageReadPosixFreeResource, this);
 
-        // Seek to offset. Direct I/O can only seek to an aligned offset so seek below the offset
-        // and skip the remainder when reading.
+        // Seek to offset. With direct I/O seek to the aligned offset below it and skip the remainder when reading.
         uint64_t seekOffset = this->offset;
 
         if (this->ioMode == storagePosixIoModeDirect)
@@ -130,7 +129,7 @@ storageReadPosixDirectInternal(const int fd, void *const buffer, const size_t si
 }
 
 /***********************************************************************************************************************************
-Read from a file using direct I/O. Data is read in aligned blocks into the bounce buffer and then copied to the caller's buffer.
+Read from a file using direct I/O. Data is read in aligned blocks into the bounce buffer and then copied to the output buffer.
 ***********************************************************************************************************************************/
 static size_t
 storageReadPosixDirect(StorageReadPosix *const this, Buffer *const buffer)
