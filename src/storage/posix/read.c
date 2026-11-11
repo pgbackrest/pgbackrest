@@ -157,12 +157,18 @@ storageReadPosixDirect(StorageReadPosix *const this, Buffer *const buffer)
                 if (this->dioEnd)
                     break;
 
-                ssize_t actualBytes = storageReadPosixDirectInternal(this->fd, bufPtr(this->dioBuffer), bufSize(this->dioBuffer));
+                // Read no more than the aligned size needed to reach the limit
+                size_t readSize = bufSize(this->dioBuffer);
 
-                // Fall back to buffered I/O when the device requires a larger alignment. Setting status flags to 0 clears O_DIRECT
-                // since no other status flags are set.
+                if (limit - this->current < readSize - this->dioSkip)
+                    readSize = STORAGE_POSIX_DIRECT_ALIGN_UP(this->dioSkip + (size_t)(limit - this->current));
+
+                ssize_t actualBytes = storageReadPosixDirectInternal(this->fd, bufPtr(this->dioBuffer), readSize);
+
+                // Fall back to buffered I/O when the device requires a larger alignment. Setting status flags to 0 clears O_DIRECT.
+                // No other status flags are set.
                 if (actualBytes == -1 && errno == EINVAL && fcntl(this->fd, F_SETFL, 0) != -1)
-                    actualBytes = storageReadPosixDirectInternal(this->fd, bufPtr(this->dioBuffer), bufSize(this->dioBuffer));
+                    actualBytes = storageReadPosixDirectInternal(this->fd, bufPtr(this->dioBuffer), readSize);
 
                 if (actualBytes == -1)
                     THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strZ(this->name));
@@ -172,7 +178,7 @@ storageReadPosixDirect(StorageReadPosix *const this, Buffer *const buffer)
                 this->dioSkip = 0;
 
                 // A short read means the end of the file has been reached
-                if (!bufFull(this->dioBuffer))
+                if ((size_t)actualBytes < readSize)
                     this->dioEnd = true;
             }
 

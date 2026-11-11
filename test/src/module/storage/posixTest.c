@@ -1872,6 +1872,14 @@ testRun(void)
         TEST_RESULT_INT(memcmp(bufPtr(directReadSmallBuffer), bufPtr(content), 17), 0, "check content");
         TEST_RESULT_VOID(ioReadClose(storageReadIo(directReadSmall)), "close");
 
+        StorageRead *const directReadSmallEof = storageNewReadP(storageDirect, STRDEF("direct-fallback-small.file"));
+        bufUsedZero(directReadSmallBuffer);
+
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(directReadSmallEof)), true, "open file smaller than bounce buffer");
+        TEST_RESULT_UINT(storageReadPosix(directReadSmallEof->driver, directReadSmallBuffer, false), 17, "read from driver");
+        TEST_RESULT_INT(memcmp(bufPtr(directReadSmallBuffer), bufPtr(content), 17), 0, "check content");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(directReadSmallEof)), "close");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read missing file");
 
@@ -1926,6 +1934,16 @@ testRun(void)
             "read");
         TEST_RESULT_UINT(bufUsed(part), contentSize - 7000, "check size");
         TEST_RESULT_INT(memcmp(bufPtr(part), bufPtr(content) + 5000, bufUsed(part)), 0, "check content");
+
+        StorageRead *const directReadLimit = storageNewReadP(
+            storageDirect, STRDEF("direct.file"), .offset = 5000, .limit = VARUINT64(10));
+        Buffer *const directReadLimitBuffer = bufNew(10);
+
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(directReadLimit)), true, "open with small limit");
+        TEST_RESULT_UINT(ioRead(storageReadIo(directReadLimit), directReadLimitBuffer), 10, "read with small limit");
+        TEST_RESULT_INT(memcmp(bufPtr(directReadLimitBuffer), bufPtr(content) + 5000, 10), 0, "check content");
+        TEST_RESULT_UINT(
+            bufUsed(((StorageReadPosix *)directReadLimit->driver)->dioBuffer), STORAGE_POSIX_DIRECT_ALIGN, "check one block read");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read with offset past end of file");
