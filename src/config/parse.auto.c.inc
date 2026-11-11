@@ -7439,6 +7439,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                                        // opt/repo-io-mode
             PARSE_RULE_OPTIONAL_GROUP                                                                            // opt/repo-io-mode
             (                                                                                                    // opt/repo-io-mode
+                PARSE_RULE_OPTIONAL_DEPEND                                                                       // opt/repo-io-mode
+                (                                                                                                // opt/repo-io-mode
+                    PARSE_RULE_VAL_OPT(RepoType),                                                                // opt/repo-io-mode
+                    PARSE_RULE_VAL_STRID(cifs),                                                                  // opt/repo-io-mode
+                    PARSE_RULE_VAL_STRID(posix),                                                                 // opt/repo-io-mode
+                ),                                                                                               // opt/repo-io-mode
+                                                                                                                 // opt/repo-io-mode
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                   // opt/repo-io-mode
                 (                                                                                                // opt/repo-io-mode
                     PARSE_RULE_VAL_STRID(default),                                                               // opt/repo-io-mode
@@ -12442,7 +12449,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoFormat,                                                                                           // opt-resolve-order
     cfgOptRepoGcsUserProject,                                                                                   // opt-resolve-order
     cfgOptRepoHardlink,                                                                                         // opt-resolve-order
-    cfgOptRepoIoMode,                                                                                           // opt-resolve-order
     cfgOptRepoLocal,                                                                                            // opt-resolve-order
     cfgOptRepoPath,                                                                                             // opt-resolve-order
     cfgOptRepoRetentionArchive,                                                                                 // opt-resolve-order
@@ -12512,6 +12518,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoHostConfigPath,                                                                                   // opt-resolve-order
     cfgOptRepoHostType,                                                                                         // opt-resolve-order
     cfgOptRepoHostUser,                                                                                         // opt-resolve-order
+    cfgOptRepoIoMode,                                                                                           // opt-resolve-order
     cfgOptRepoS3Bucket,                                                                                         // opt-resolve-order
     cfgOptRepoS3Endpoint,                                                                                       // opt-resolve-order
     cfgOptRepoS3KeyType,                                                                                        // opt-resolve-order

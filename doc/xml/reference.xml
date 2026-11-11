@@ -942,7 +942,7 @@
                         <summary>I/O mode for a local repository.</summary>
 
                         <text>
-                            <p>Determines how files in the repository are read and written. This option is only used when <setting>repo-type</setting> is <id>posix</id> or <id>cifs</id>.</p>
+                            <p>Determines how files in the repository are read and written. This option is only valid when <setting>repo-type</setting> is <id>posix</id> or <id>cifs</id>.</p>
 
                             <allow-list caption="I/O modes">
                                 <allow-item id="default">use the buffered I/O provided by the operating system</allow-item>
