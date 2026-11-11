@@ -1823,7 +1823,7 @@ testRun(void)
         TEST_RESULT_BOOL(
             bufEq(storageGetP(storageNewReadP(storageDirect, STRDEF("direct-fallback.file"))), content), true, "check content");
 
-        hrnStorageWritePosixDirectShimOne(EINVAL);
+        hrnStorageWritePosixShimOne(EINVAL);
 
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageDirect, STRDEF("direct-fallback.file")), content), "write after alignment error");
@@ -1833,6 +1833,15 @@ testRun(void)
         TEST_RESULT_BOOL(
             bufEq(storageGetP(storageNewReadP(storageDirect, STRDEF("direct-fallback.file"))), content), true,
             "read after alignment error");
+
+        hrnStorageWritePosixShimOne(EINVAL);
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageDirect, STRDEF("direct-fallback-small.file")), BUF(bufPtr(content), 5000)),
+            "write small after alignment error");
+        TEST_RESULT_BOOL(
+            bufEq(storageGetP(storageNewReadP(storageDirect, STRDEF("direct-fallback-small.file"))), BUF(bufPtr(content), 5000)),
+            true, "check small content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read empty file and zero limit");
@@ -1955,9 +1964,10 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open");
         TEST_RESULT_VOID(ioWriteSeek(storageWriteIo(file), 4096), "seek");
         TEST_RESULT_VOID(ioWrite(storageWriteIo(file), partialWrite), "write");
+        TEST_RESULT_VOID(ioWriteSeek(storageWriteIo(file), 8192), "seek after partial block");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close");
 
-        TEST_RESULT_UINT(storageInfoP(storageDirect, STRDEF("direct-partial.file")).size, 4103, "check truncated size");
+        TEST_RESULT_UINT(storageInfoP(storageDirect, STRDEF("direct-partial.file")).size, 4103, "check size");
         TEST_RESULT_BOOL(
             bufEq(
                 storageGetP(storageNewReadP(storageDirect, STRDEF("direct-partial.file"), .offset = 4096)), partialWrite),
@@ -1978,10 +1988,10 @@ testRun(void)
         memset(bufPtr(directWriteBuffer), 'C', bufSize(directWriteBuffer));
         bufUsedSet(directWriteBuffer, bufSize(directWriteBuffer));
 
-        hrnStorageWritePosixDirectShimOne(EINVAL);
+        hrnStorageWritePosixShimOne(EINVAL);
         TEST_ERROR_FMT(
             storageWritePosix(directWriteDriver, directWriteBuffer), FileWriteError,
-            "unable to write '%s': [9] Bad file descriptor", strZ(directWriteDriver->nameTmp));
+            "unable to disable direct I/O for '%s': [9] Bad file descriptor", strZ(directWriteDriver->nameTmp));
         TEST_ERROR_FMT(
             storageWritePosix(directWriteDriver, directWriteBuffer), FileWriteError,
             "unable to write '%s': [9] Bad file descriptor", strZ(directWriteDriver->nameTmp));
@@ -1991,14 +2001,27 @@ testRun(void)
         memContextCallbackClear(objMemContext(directWriteDriver));
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close failed writer");
 
+        hrnStorageWritePosixShimOne(EINVAL);
+        TEST_ERROR_FMT(
+            storagePutP(storageNewWriteP(storageTest, STRDEF("buffered-error.file"), .noAtomic = true), BUFSTRDEF("X")),
+            FileWriteError, "unable to write '%s/buffered-error.file': [22] Invalid argument", TEST_PATH);
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write with unaligned seek");
 
         TEST_ASSIGN(file, storageNewWriteP(storageDirect, STRDEF("direct-seek.file"), .noAtomic = true), "new write");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open");
-        TEST_ERROR_FMT(
-            ioWriteSeek(storageWriteIo(file), 1), FileWriteError,
-            "unable to seek to 1 in '%s/direct-seek.file': position is not aligned for direct I/O", TEST_PATH);
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), blockA), "write A");
+        TEST_RESULT_VOID(ioWriteSeek(storageWriteIo(file), 1), "seek to unaligned position");
+        TEST_RESULT_UINT(((StorageWritePosix *)file->driver)->ioMode, storagePosixIoModeDefault, "check buffered I/O");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), BUFSTRDEF("B")), "write B");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close");
+
+        Buffer *const seekExpected = bufDup(blockA);
+        bufPtr(seekExpected)[1] = 'B';
+
+        TEST_RESULT_BOOL(
+            bufEq(storageGetP(storageNewReadP(storageDirect, STRDEF("direct-seek.file"))), seekExpected), true, "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo and pg storage use direct I/O when configured");

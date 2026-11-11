@@ -34,7 +34,7 @@ static struct
 {
     int localShimStoragePosixFileOpenOneErrNo;                      // errno for open shim (0 when not set)
     int localShimStorageReadPosixDirectOneErrNo;                    // errno for read shim (0 when not set)
-    int localShimStorageWritePosixDirectOneErrNo;                   // errno for write shim (0 when not set)
+    int localShimStorageWritePosixOneErrNo;                         // errno for write shim (0 when not set)
 } hrnStorageStatic;
 
 /***********************************************************************************************************************************
@@ -124,10 +124,10 @@ hrnStorageReadPosixDirectShimOne(const int errNo)
 }
 
 /***********************************************************************************************************************************
-Shim storageWritePosixDirectInternal()
+Shim storageWritePosixInternal()
 ***********************************************************************************************************************************/
 static ssize_t
-storageWritePosixDirectInternal(const int fd, const void *const buffer, const size_t size)
+storageWritePosixInternal(const int fd, const void *const buffer, const size_t size)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(INT, fd);
@@ -138,22 +138,22 @@ storageWritePosixDirectInternal(const int fd, const void *const buffer, const si
     ssize_t result;
 
     // If shim will run once then fail with the requested errno
-    if (hrnStorageStatic.localShimStorageWritePosixDirectOneErrNo != 0)
+    if (hrnStorageStatic.localShimStorageWritePosixOneErrNo != 0)
     {
-        errno = hrnStorageStatic.localShimStorageWritePosixDirectOneErrNo;
-        hrnStorageStatic.localShimStorageWritePosixDirectOneErrNo = 0;
+        errno = hrnStorageStatic.localShimStorageWritePosixOneErrNo;
+        hrnStorageStatic.localShimStorageWritePosixOneErrNo = 0;
         result = -1;
     }
     // Else call normal function
     else
-        result = storageWritePosixDirectInternal_SHIMMED(fd, buffer, size);
+        result = storageWritePosixInternal_SHIMMED(fd, buffer, size);
 
     FUNCTION_HARNESS_RETURN(SSIZE, result);
 }
 
 /**********************************************************************************************************************************/
 void
-hrnStorageWritePosixDirectShimOne(const int errNo)
+hrnStorageWritePosixShimOne(const int errNo)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(INT, errNo);
@@ -161,7 +161,7 @@ hrnStorageWritePosixDirectShimOne(const int errNo)
 
     ASSERT(errNo != 0);
 
-    hrnStorageStatic.localShimStorageWritePosixDirectOneErrNo = errNo;
+    hrnStorageStatic.localShimStorageWritePosixOneErrNo = errNo;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

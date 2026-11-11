@@ -268,7 +268,7 @@ Use storage Posix shims for one call - fail with the specified errno
 ***********************************************************************************************************************************/
 void hrnStoragePosixFileOpenShimOne(int errNo);
 void hrnStorageReadPosixDirectShimOne(int errNo);
-void hrnStorageWritePosixDirectShimOne(int errNo);
+void hrnStorageWritePosixShimOne(int errNo);
 
 /***********************************************************************************************************************************
 Dummy interface for constructing test storage drivers. All functions and features are pulled from the Posix driver.

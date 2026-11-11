@@ -373,7 +373,7 @@ unit:
             - storagePosixFileOpenInternal
         - name: storage/posix/write
           function:
-            - storageWritePosixDirectInternal
+            - storageWritePosixInternal
 
     coverage:
       - common/crypto/cipherBlock
