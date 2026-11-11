@@ -1800,6 +1800,30 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storageDirect, STRDEF("direct.file"))), content), true, "read");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("fall back to buffered I/O when direct I/O is not supported");
+
+        hrnStoragePosixFileOpenShimOne(EINVAL);
+
+        StorageWrite *const directWriteFallback = storageNewWriteP(storageDirect, STRDEF("direct-fallback.file"));
+
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(directWriteFallback)), "open write");
+        TEST_RESULT_UINT(
+            ((StorageWritePosix *)directWriteFallback->driver)->ioMode, storagePosixIoModeDefault, "check buffered I/O");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(directWriteFallback), content), "write");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(directWriteFallback)), "close write");
+
+        StorageRead *const directReadFallback = storageNewReadP(storageDirect, STRDEF("direct-fallback.file"));
+
+        hrnStoragePosixFileOpenShimOne(EINVAL);
+
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(directReadFallback)), true, "open read");
+        TEST_RESULT_UINT(
+            ((StorageReadPosix *)directReadFallback->driver)->ioMode, storagePosixIoModeDefault, "check buffered I/O");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(directReadFallback)), "close read");
+        TEST_RESULT_BOOL(
+            bufEq(storageGetP(storageNewReadP(storageDirect, STRDEF("direct-fallback.file"))), content), true, "check content");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read empty file and zero limit");
 
         TEST_RESULT_VOID(
@@ -1809,6 +1833,13 @@ testRun(void)
         TEST_RESULT_BOOL(
             bufEmpty(storageGetP(storageNewReadP(storageDirect, STRDEF("direct.file"), .limit = VARUINT64(0)))), true,
             "read with zero limit");
+
+        StorageRead *const directReadEof = storageNewReadP(storageDirect, STRDEF("direct-empty.file"));
+        Buffer *const directReadEofBuffer = bufNew(16);
+
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(directReadEof)), true, "open empty file");
+        TEST_RESULT_UINT(ioRead(storageReadIo(directReadEof), directReadEofBuffer), 0, "read to eof");
+        TEST_RESULT_UINT(storageReadPosix(directReadEof->driver, directReadEofBuffer, true), 0, "read from driver after eof");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read into small buffer");

@@ -21,6 +21,12 @@ Object type
 typedef struct StoragePosix StoragePosix;
 
 /***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Open a file with the I/O mode. The I/O mode is set to storagePosixIoModeDefault when direct I/O is not supported.
+FN_EXTERN int storagePosixFileOpen(const String *file, int flags, mode_t mode, StoragePosixIoMode *ioMode);
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Storage *storagePosixNewInternal(

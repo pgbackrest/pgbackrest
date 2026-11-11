@@ -3,6 +3,7 @@ Storage Test Harness
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,6 +18,7 @@ Storage Test Harness
 #include "storage/storage.h"
 
 #include "harness/config.h"
+#include "harness/debug.h"
 #include "harness/storage.h"
 #include "harness/test.h"
 
@@ -24,6 +26,57 @@ Storage Test Harness
 Include shimmed C modules
 ***********************************************************************************************************************************/
 {[SHIM_MODULE]}
+
+/***********************************************************************************************************************************
+Shim install state
+***********************************************************************************************************************************/
+static struct
+{
+    int localShimStoragePosixFileOpenOneErrNo;                      // errno for storagePosixFileOpenInternal shim (0 when not set)
+} hrnStorageStatic;
+
+/***********************************************************************************************************************************
+Shim storagePosixFileOpenInternal()
+***********************************************************************************************************************************/
+static int
+storagePosixFileOpenInternal(const char *const file, const int flags, const mode_t mode)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, file);
+        FUNCTION_HARNESS_PARAM(INT, flags);
+        FUNCTION_HARNESS_PARAM(MODE, mode);
+    FUNCTION_HARNESS_END();
+
+    int result;
+
+    // If shim will run once then fail with the requested errno
+    if (hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo != 0)
+    {
+        errno = hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo;
+        hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo = 0;
+        result = -1;
+    }
+    // Else call normal function
+    else
+        result = storagePosixFileOpenInternal_SHIMMED(file, flags, mode);
+
+    FUNCTION_HARNESS_RETURN(INT, result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStoragePosixFileOpenShimOne(const int errNo)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, errNo);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(errNo != 0);
+
+    hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo = errNo;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Dummy interface for constructing test storage drivers

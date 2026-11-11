@@ -365,7 +365,9 @@ unit:
     harness:
       name: storage
       shim:
-        - storage/posix/storage
+        - name: storage/posix/storage
+          function:
+            - storagePosixFileOpenInternal
 
     coverage:
       - common/crypto/cipherBlock

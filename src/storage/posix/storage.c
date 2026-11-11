@@ -37,6 +37,52 @@ struct StoragePosix
 };
 
 /**********************************************************************************************************************************/
+// Wrapper around open()
+static int
+storagePosixFileOpenInternal(const char *const file, const int flags, const mode_t mode)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, file);
+        FUNCTION_TEST_PARAM(INT, flags);
+        FUNCTION_TEST_PARAM(MODE, mode);
+    FUNCTION_TEST_END();
+
+    ASSERT(file != NULL);
+
+    FUNCTION_TEST_RETURN(INT, open(file, flags, mode));
+}
+
+FN_EXTERN int
+storagePosixFileOpen(const String *const file, const int flags, const mode_t mode, StoragePosixIoMode *const ioMode)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, file);
+        FUNCTION_TEST_PARAM(INT, flags);
+        FUNCTION_TEST_PARAM(MODE, mode);
+        FUNCTION_TEST_PARAM_P(VOID, ioMode);
+    FUNCTION_TEST_END();
+
+    ASSERT(file != NULL);
+    ASSERT(ioMode != NULL);
+
+    int result = -1;
+
+    if (*ioMode == storagePosixIoModeDirect)
+    {
+        result = storagePosixFileOpenInternal(strZ(file), flags | STORAGE_POSIX_DIRECT_FLAG, mode);
+
+        // Fall back to buffered I/O when direct I/O is not supported, e.g. by the file system
+        if (result == -1 && errno == EINVAL)
+            *ioMode = storagePosixIoModeDefault;
+    }
+
+    if (*ioMode != storagePosixIoModeDirect)
+        result = storagePosixFileOpenInternal(strZ(file), flags, mode);
+
+    FUNCTION_TEST_RETURN(INT, result);
+}
+
+/**********************************************************************************************************************************/
 static StorageInfo
 storagePosixInfo(THIS_VOID, const String *const file, const StorageInfoLevel level, const StorageInterfaceInfoParam param)
 {

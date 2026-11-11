@@ -73,17 +73,7 @@ storageReadPosixOpen(THIS_VOID)
     ASSERT(this->fd == -1);
 
     // Open the file
-    if (this->ioMode == storagePosixIoModeDirect)
-    {
-        this->fd = open(strZ(this->name), O_RDONLY | STORAGE_POSIX_DIRECT_FLAG, 0);
-
-        // Fall back to buffered I/O when direct I/O is not supported, e.g. by the file system
-        if (this->fd == -1 && errno == EINVAL)
-            this->ioMode = storagePosixIoModeDefault;
-    }
-
-    if (this->ioMode != storagePosixIoModeDirect)
-        this->fd = open(strZ(this->name), O_RDONLY, 0);
+    this->fd = storagePosixFileOpen(this->name, O_RDONLY, 0, &this->ioMode);
 
     // Handle errors except missing, which is reported to the caller via the result
     if (this->fd == -1)

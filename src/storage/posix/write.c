@@ -103,9 +103,8 @@ storageWritePosixOpen(THIS_VOID)
 
     // Open the file
     const int flags = O_CREAT | O_WRONLY | (this->truncate ? O_TRUNC : 0);
-    const int flagsOpen = flags | (this->ioMode == storagePosixIoModeDirect ? STORAGE_POSIX_DIRECT_FLAG : 0);
 
-    this->fd = open(strZ(this->nameTmp), flagsOpen, this->modeFile);
+    this->fd = storagePosixFileOpen(this->nameTmp, flags, this->modeFile, &this->ioMode);
 
     // Attempt to create the path if it is missing
     if (this->fd == -1 && errno == ENOENT && this->createPath)                                                      // {vm_covered}
@@ -114,14 +113,7 @@ storageWritePosixOpen(THIS_VOID)
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->modePath);
 
         // Open file again
-        this->fd = open(strZ(this->nameTmp), flagsOpen, this->modeFile);
-    }
-
-    // Fall back to buffered I/O when direct I/O is not supported, e.g. by the file system
-    if (this->fd == -1 && errno == EINVAL && this->ioMode == storagePosixIoModeDirect)
-    {
-        this->ioMode = storagePosixIoModeDefault;
-        this->fd = open(strZ(this->nameTmp), flags, this->modeFile);
+        this->fd = storagePosixFileOpen(this->nameTmp, flags, this->modeFile, &this->ioMode);
     }
 
     // Handle errors
