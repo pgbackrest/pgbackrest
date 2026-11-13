@@ -2,6 +2,21 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
+                <github-issue id="2884"/>
+                <github-pull-request id="2902"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="fineline19"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix possible block incremental restore failure on <proper>SFTP</proper> storage.</p>
+
+                <p>Each super block read left a file open on the server until the session ended. A restore could reach the open file limit of the server and fail with an error such as <quote>sftp errno [4]</quote> or <quote>client state is 'response' but expected 'idle'</quote>. Super block reads are now closed before they are freed.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2889"/>
                 <github-pull-request id="2899"/>
 
