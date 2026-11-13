@@ -123,10 +123,6 @@ Helper functions
 // Load archive info
 FN_EXTERN InfoArchive *infoArchiveLoadFile(const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
-// Save archive info
-FN_EXTERN void infoArchiveSaveFile(
-    InfoArchive *infoArchive, const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
-
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/

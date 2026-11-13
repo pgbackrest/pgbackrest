@@ -3,6 +3,8 @@ Test Stanza Commands
 ***********************************************************************************************************************************/
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferWrite.h"
+#include "info/infoArchive.intern.h"
+#include "info/infoBackup.intern.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
@@ -1189,6 +1191,8 @@ testRun(void)
             REPOSITORY_FORMAT_6, "backup info at format 6");
 
         // Requesting the format the repository is already at does nothing
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format 6 again");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"

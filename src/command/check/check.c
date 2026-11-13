@@ -17,7 +17,7 @@ Check Command
 #include "config/load.h"
 #include "config/parse.h"
 #include "db/helper.h"
-#include "info/infoArchive.h"
+#include "info/helper.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
 #include "storage/helper.h"
@@ -86,13 +86,8 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
         {
             LOG_INFO_FMT(CFGCMD_CHECK " %s (standby)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
-            const Storage *const storageRepo = storageRepoIdx(repoIdx);
-
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
-            checkStanzaInfoPg(
-                repoIdx, storageRepo, dbPgControl(dbGroup.standby).version, dbPgControl(dbGroup.standby).systemId,
-                cfgCipherSpecMainIdx(repoIdx));
+            checkStanzaInfoPg(repoIdx, dbPgControl(dbGroup.standby).version, dbPgControl(dbGroup.standby).systemId);
         }
 
         LOG_INFO("switch wal not performed because this is a standby");
@@ -131,19 +126,11 @@ checkPrimary(const DbGetResult dbGroup)
         {
             LOG_INFO_FMT(CFGCMD_CHECK " %s configuration (primary)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
-            const Storage *const storageRepo = storageRepoIdx(repoIdx);
-
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
-            checkStanzaInfoPg(
-                repoIdx, storageRepo, dbPgControl(dbGroup.primary).version, dbPgControl(dbGroup.primary).systemId,
-                cfgCipherSpecMainIdx(repoIdx));
+            checkStanzaInfoPg(repoIdx, dbPgControl(dbGroup.primary).version, dbPgControl(dbGroup.primary).systemId);
 
-            // Attempt to load the archive info file and retrieve the archiveId
-            const InfoArchive *const archiveInfo = infoArchiveLoadFile(
-                storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
-
-            repoArchiveId[repoIdx] = infoArchiveId(archiveInfo);
+            // Retrieve the archiveId
+            repoArchiveId[repoIdx] = infoArchiveId(infoArchiveRepoIdx(repoIdx));
         }
 
         // Perform a WAL switch

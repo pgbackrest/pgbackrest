@@ -19,7 +19,7 @@ Backup Info Handler
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
-#include "info/infoBackup.h"
+#include "info/infoBackup.intern.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
@@ -813,21 +813,16 @@ infoBackupSetExists(const InfoBackup *const this, const String *const backupSet)
     FUNCTION_TEST_RETURN(BOOL, false);
 }
 
-FN_EXTERN InfoBackup *
-infoBackupLoadFileReconstruct(
-    const Storage *const storage, const String *const fileName, const CipherSpec *const cipherSpec)
+FN_EXTERN void
+infoBackupReconstruct(InfoBackup *const infoBackup, const Storage *const storage)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(STRING, fileName);
-        FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
     FUNCTION_LOG_END();
 
+    ASSERT(infoBackup != NULL);
     ASSERT(storage != NULL);
-    ASSERT(fileName != NULL);
-    ASSERT(cipherSpec != NULL);
-
-    InfoBackup *const infoBackup = infoBackupLoadFile(storage, fileName, cipherSpec);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -924,7 +919,7 @@ infoBackupLoadFileReconstruct(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(INFO_BACKUP, infoBackup);
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

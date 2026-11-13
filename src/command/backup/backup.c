@@ -31,6 +31,7 @@ Backup Command
 #include "config/config.h"
 #include "config/parse.h"
 #include "db/helper.h"
+#include "info/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/manifest/manifest.h"
@@ -169,7 +170,7 @@ backupInit(const InfoBackup *const infoBackup)
     // Get archive info
     if (cfgOptionBool(cfgOptArchiveCheck))
     {
-        result->archiveInfo = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMain());
+        result->archiveInfo = infoArchiveRepoIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo));
         result->archiveId = infoArchiveId(result->archiveInfo);
 
         // Error if the info files do not agree with each other. A stanza left half migrated by an interrupted upgrade should be
@@ -209,11 +210,8 @@ cmdBackup(void)
                 cfgOptionGroupName(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
         }
 
-        // Get the repo storage in case it is remote and encryption settings need to be pulled down
-        storageRepo();
-
         // Load backup.info
-        InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
+        InfoBackup *const infoBackup = infoBackupRepoIdxP(cfgOptionGroupIdxDefault(cfgOptGrpRepo), .reconstruct = true);
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
         // Get pg storage and database objects
@@ -265,7 +263,7 @@ cmdBackup(void)
                 infoBackupCipherSpecAdd(
                     infoBackup, manifestData(manifest)->backupLabel,
                     cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType), manifestFormat(manifest)));
-                infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
+                infoBackupRepoIdxSave(cfgOptionGroupIdxDefault(cfgOptGrpRepo));
             }
         }
 

@@ -55,6 +55,12 @@ typedef enum
 } LockType;
 
 /***********************************************************************************************************************************
+Init Functions
+***********************************************************************************************************************************/
+// Total times the configuration has been initialized. The total changes each time the configuration is loaded.
+FN_EXTERN unsigned int cfgInitTotal(void);
+
+/***********************************************************************************************************************************
 Command Functions
 
 Access the current command and command parameters.

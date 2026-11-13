@@ -8,6 +8,7 @@ Test Restore Command
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferRead.h"
+#include "info/infoArchive.intern.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"

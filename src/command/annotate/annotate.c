@@ -16,7 +16,7 @@ Annotate Command
 #include "common/memContext.h"
 #include "common/regExp.h"
 #include "config/config.h"
-#include "info/infoBackup.h"
+#include "info/helper.h"
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
@@ -52,12 +52,8 @@ cmdAnnotate(void)
         {
             TRY_BEGIN()
             {
-                // Get the repo storage in case it is remote and encryption settings need to be pulled down
-                storageRepoIdx(repoIdx);
-
                 // Attempt to load the backup info file
-                InfoBackup *infoBackup = infoBackupLoadFileReconstruct(
-                    storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                InfoBackup *const infoBackup = infoBackupRepoIdxP(repoIdx, .reconstruct = true);
 
                 if (infoBackupLabelExists(infoBackup, backupLabel))
                 {
@@ -72,8 +68,7 @@ cmdAnnotate(void)
                     infoBackupDataAnnotationSet(infoBackup, backupLabel, cfgOptionKv(cfgOptAnnotation));
 
                     // Write the updated backup info
-                    infoBackupSaveFile(
-                        infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                    infoBackupRepoIdxSave(repoIdx);
                 }
             }
             CATCH_ANY()

@@ -725,6 +725,22 @@ unit:
       - info/infoBackup
 
   # --------------------------------------------------------------------------------------------------------------------------------
+  - name: info/helper
+    total: 1
+    harness:
+      name: infoHelper
+      shim:
+        - info/infoArchive
+        - info/infoBackup
+        - name: info/helper
+          function:
+            - infoArchiveRepoIdx
+            - infoBackupRepoIdx
+
+    coverage:
+      - info/helper
+
+  # --------------------------------------------------------------------------------------------------------------------------------
   - name: db/db
     total: 3
     containerReq: true

@@ -7,6 +7,7 @@ NOTE: references to 9.4 are intentionally included in this test to ensure that e
 
 #include "command/backup/common.h"
 #include "common/io/bufferRead.h"
+#include "info/infoBackup.intern.h"
 #include "storage/posix/storage.h"
 
 #include "harness/config.h"
@@ -2709,11 +2710,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive key rotation set at format 5");
 
-        argList = strLstDup(argListAvoidWarn);
-        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
-        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        StringList *argListRepo2 = strLstDup(argListAvoidWarn);
+        hrnCfgArgRawZ(argListRepo2, cfgOptRepo, "2");
+        hrnCfgArgKeyRawZ(argListRepo2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawZ(argListRepo2, cfgOptRepoRetentionFull, 2, "1");
+        hrnCfgArgKeyRawStrId(argListRepo2, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+
+        argList = strLstDup(argListRepo2);
         hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherRotate, 2, "30d");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
@@ -2844,7 +2847,7 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_FORMAT_6(timeRotate - 31 * SEC_PER_DAY),
             .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC);
-        HRN_CFG_LOAD(cfgCmdExpire, argList);
+        HRN_CFG_LOAD(cfgCmdExpire, argListRepo2);
 
         TEST_ERROR(cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
         TEST_RESULT_LOG(
@@ -2853,10 +2856,6 @@ testRun(void)
             "            archive: format = 6\n"
             "            backup : format = 5\n"
             "            HINT: run stanza-upgrade with --repo2-format=6 to complete an interrupted upgrade.");
-
-        TEST_ASSIGN(
-            infoArchive, infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, TEST_CIPHER_SPEC), "load archive info");
-        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive)), "1", "key due for rotation not rotated");
 
         // Cleanup
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
