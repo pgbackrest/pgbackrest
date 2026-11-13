@@ -527,7 +527,7 @@ testRun(void)
                 infoBackup, STRDEF("20190818-084502F_20190820-084502I"), annotationKV), "add annotations");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("infoBackupLoadFileReconstruct - skip/add backups");
+        TEST_TITLE("infoBackupReconstruct() - skip/add backups");
 
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
@@ -777,10 +777,8 @@ testRun(void)
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 2, "backup list contains backups to be removed");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 2, "multiple DB history");
 
-        TEST_ASSIGN(
-            infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
-            "reconstruct");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()), "load");
+        TEST_RESULT_VOID(infoBackupReconstruct(infoBackup, storageRepo()), "reconstruct");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 1, "backup list contains 1 backup");
         TEST_ASSIGN(backupData, infoBackupData(infoBackup, 0), "get the backup");
         TEST_RESULT_STR_Z(
@@ -795,15 +793,14 @@ testRun(void)
             "P00   WARN: backup '20190923-164324F' found in repository added to backup.info");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("infoBackupLoadFileReconstruct() - missing dependent not added");
+        TEST_TITLE("infoBackupReconstruct() - missing dependent not added");
 
         HRN_STORAGE_PATH_REMOVE(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I", .recurse = true,
             .comment = "remove dependent backup from disk");
-        TEST_ASSIGN(
-            infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
-            "reconstruct does not attempt to add back dependent backup");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()), "load");
+        TEST_RESULT_VOID(
+            infoBackupReconstruct(infoBackup, storageRepo()), "reconstruct does not attempt to add back dependent backup");
         TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
             "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
@@ -813,7 +810,7 @@ testRun(void)
             "P00   WARN: backup '20190923-164324F' found in repository added to backup.info");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("infoBackupLoadFileReconstruct() - valid dependent added");
+        TEST_TITLE("infoBackupReconstruct() - valid dependent added");
 
         HRN_STORAGE_COPY(
             storageRepo(), STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
@@ -906,10 +903,8 @@ testRun(void)
             "save updated backup info");
 
         infoBackup = NULL;
-        TEST_ASSIGN(
-            infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
-            "reconstruct");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()), "load");
+        TEST_RESULT_VOID(infoBackupReconstruct(infoBackup, storageRepo()), "reconstruct");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL),
             "20190818-084444F\n20190818-084444F_20190924-084502D\n20190923-164324F\n",
@@ -956,6 +951,35 @@ testRun(void)
             infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()),
             "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("save backup info file with the old and new passphrases");
+
+        const CipherSpec *const cipherSpecOld = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"));
+        const CipherSpec *const cipherSpecRekey = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("new"), .prior = cipherSpecOld);
+
+        TEST_RESULT_BOOL(infoBackup->pub.updated, false, "not updated after load");
+        TEST_RESULT_VOID(infoBackupCipherPriorClear(infoBackup), "clear prior");
+        TEST_RESULT_BOOL(infoBackup->pub.updated, true, "updated");
+        TEST_RESULT_VOID(infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecOld), "save backup info");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, STRDEF(INFO_BACKUP_FILE)), true, "main saved");
+
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey), "load old passphrase");
+        TEST_RESULT_BOOL(infoBackupCipherPrior(infoBackup), true, "decrypted with old passphrase");
+
+        infoBackupFormatSet(infoBackup, infoBackupFormat(infoBackup));
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey), "save backup info");
+        TEST_RESULT_BOOL(
+            infoBackupCipherPrior(infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey)), true,
+            "encrypted with old passphrase");
+
+        TEST_RESULT_VOID(infoBackupCipherPriorClear(infoBackup), "clear prior");
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey), "save backup info");
+        TEST_RESULT_BOOL(
+            infoBackupCipherPrior(infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey)), false,
+            "encrypted with new passphrase");
     }
 
     // *****************************************************************************************************************************

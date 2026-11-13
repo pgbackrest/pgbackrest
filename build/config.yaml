@@ -145,6 +145,14 @@ command:
     lock-required: true
     lock-type: all
 
+  stanza-rekey:
+    command-role:
+      remote: {}
+    internal: true
+    lock-remote-required: true
+    lock-required: true
+    lock-type: all
+
   stanza-upgrade:
     command-role:
       remote: {}
@@ -263,6 +271,11 @@ optionGroup:
 # internal:
 #   Option is used by the command internally but is not exposed in the documentation. This is useful for commands that need to know
 #   where they are running by looking at other options in the config. Also good for test options.
+#
+# format:
+#   Minimum repository format the option is valid for. Only valid for options in the repo group. The option is parsed as usual but
+#   cannot be accessed until the format of its repo is set. When the repo format is lower the option is an error when set on the
+#   command line, otherwise the option is unset with a warning if the option source is not default.
 ####################################################################################################################################
 option:
   # Command-line only options
@@ -444,6 +457,7 @@ option:
       restore: {}
       stanza-create: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade: {}
       start:
         required: false
@@ -590,6 +604,7 @@ option:
       expire: {}
       stanza-create: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade: {}
     command-role:
       remote: {}
@@ -849,6 +864,7 @@ option:
       restore: {}
       stanza-create: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade: {}
       start: {}
       stop: {}
@@ -1680,6 +1696,7 @@ option:
         command-role:
           remote: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade:
         command-role:
           remote: {}
@@ -1754,11 +1771,25 @@ option:
     deprecate:
       repo-cipher-pass: {}
 
+  repo-cipher-pass-old:
+    section: global
+    type: string
+    secure: true
+    internal: true
+    required: false
+    command: repo-type
+    depend:
+      option: repo-cipher-type
+      list:
+        - aes-256-cbc
+    group: repo
+
   repo-cipher-rotate:
     section: global
     group: repo
     type: time
     internal: true
+    format: 6
     default: 90d
     allow-range: [15d, 9999999d]
     command:

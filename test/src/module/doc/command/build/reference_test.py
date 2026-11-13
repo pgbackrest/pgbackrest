@@ -97,6 +97,7 @@ option:
     group: repo
     type: string
     secure: true
+    format: 6
     deprecate:
       repo-cipher-pass: {}
 
@@ -382,6 +383,10 @@ def test_reference_option_detail():
     # A range, and a range per value of the option it depends on
     assert_in("allowed: [1, 999]", configuration)
     assert_in("allow range (depending on compress-type):\n    none - [0, 0]\n    gz - [0, 9]", configuration)
+
+    # The minimum repository format, which is only rendered for an option that has one
+    assert_in("<code-block>minimum repository format: 6</code-block>", configuration)
+    assert_equal(configuration.count("minimum repository format:"), 1)
 
     # An option that is not ready to be relied on says so
     assert_in("<p>FOR BETA TESTING ONLY. DO NOT USE IN PRODUCTION.</p>", command)

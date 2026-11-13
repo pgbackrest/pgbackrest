@@ -469,8 +469,13 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/1");
         hrnCfgArgRawZ(argList, cfgOptPgHost, "pg1-host");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 1, cipherTypeAes256Cbc);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherRotate, 1, "30d");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdBackup, argList, .noStd = true);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
 
+        // repo1-cipher-rotate is set and the repository format is not set
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypePg, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg1-host\n"
@@ -1387,6 +1392,7 @@ testRun(void)
                 "[global]\n"
                 "repo1-cipher-type=aes-256-cbc\n"
                 "repo1-cipher-pass=dcba\n"
+                "repo1-cipher-pass-old=abcd\n"
                 "repo2-cipher-type=aes-256-cbc\n"
                 "repo2-cipher-pass=xxxx\n"));
 
@@ -1407,10 +1413,13 @@ testRun(void)
         TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 0), NULL, "check repo1 cipher pass before");
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get repo1 remote protocol");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 0), "dcba", "check repo1 cipher pass after");
+        TEST_RESULT_STR_Z(
+            strNewBuf(cipherSpecPass(cipherSpecPrior(cfgCipherSpecMainIdx(0)))), "abcd", "check repo1 cipher pass old after");
 
         TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 1), NULL, "check repo2 cipher pass before");
         TEST_RESULT_VOID(protocolRemoteGet(protocolStorageTypeRepo, 1, true), "get repo2 remote protocol");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 1), "xxxx", "check repo2 cipher pass after");
+        TEST_RESULT_PTR(cipherSpecPrior(cfgCipherSpecMainIdx(1)), NULL, "check repo2 has no cipher pass old");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
 

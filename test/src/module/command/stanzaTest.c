@@ -3,6 +3,8 @@ Test Stanza Commands
 ***********************************************************************************************************************************/
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferWrite.h"
+#include "info/infoArchive.intern.h"
+#include "info/infoBackup.intern.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
@@ -1189,6 +1191,8 @@ testRun(void)
             REPOSITORY_FORMAT_6, "backup info at format 6");
 
         // Requesting the format the repository is already at does nothing
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format 6 again");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
@@ -1557,6 +1561,222 @@ testRun(void)
             "backup/otherstanza/backup.info\n"
             "backup/otherstanza/backup.info.copy\n",
             .comment = "otherstanza exists");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cmdStanzaRekey()"))
+    {
+        #define TEST_CIPHER_PASS_NEW                                "U3wR+u+uplH37Lo863u+aJ74uVMPqCAevLGzu2sajYE="
+
+        const CipherSpec *const cipherSpecRekey = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_NEW));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unencrypted repo");
+
+        StringList *argListRekey = strLstNew();
+        hrnCfgArgRawZ(argListRekey, cfgOptStanza, TEST_STANZA);
+        hrnCfgArgKeyRawZ(argListRekey, cfgOptRepoPath, 1, TEST_PATH "/repo");
+
+        StringList *argList = strLstDup(argListRekey);
+        HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
+
+        TEST_ERROR(cmdStanzaRekey(), RepoInvalidError, "stanza-rekey requires an encrypted repository");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("encrypted stanzas at format 6 and format 5");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoFormat, 2, "6");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 3, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS_FMT6);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 3, "12345678");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
+
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-create for stanza 'db' on repo1\n"
+            "P00   INFO: stanza-create for stanza 'db' on repo2\n"
+            "P00   INFO: stanza-create for stanza 'db' on repo3");
+
+        hrnCfgArgKeyRawZ(argListRekey, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawStrId(argListRekey, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        hrnCfgArgKeyRawZ(argListRekey, cfgOptRepoPath, 3, TEST_PATH "/repo3");
+        hrnCfgArgKeyRawStrId(argListRekey, cfgOptRepoCipherType, 3, cipherTypeAes256Cbc);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive key rotation without a rekey");
+
+        argList = strLstDup(argListRekey);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
+        HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
+
+        TEST_RESULT_VOID(cmdStanzaRekey(), "stanza rekey");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-rekey for stanza 'db' on repo2\n"
+            "P00   INFO: rotate archive key to id 2");
+        TEST_RESULT_STR_Z(
+            cipherSpecMapIdCurrent(
+                infoArchiveCipherSpecMap(
+                    infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(1)))),
+            "2", "archive key rotated");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new passphrase equal to the old passphrase");
+
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 2, TEST_CIPHER_PASS_FMT6);
+        HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
+
+        TEST_ERROR(
+            cmdStanzaRekey(), OptionInvalidValueError,
+            "option 'repo2-cipher-pass' must not be the same as option 'repo2-cipher-pass-old'");
+        TEST_RESULT_LOG("P00   INFO: stanza-rekey for stanza 'db' on repo2");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new passphrase that is not generated");
+
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "12345678");
+        HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
+
+        TEST_ERROR(
+            cmdStanzaRekey(), OptionInvalidValueError,
+            "option 'repo2-cipher-pass' must be at least 256 random bits encoded as hex, base64, or base64url to rekey a stanza at"
+            " repository format 6 or higher\n"
+            "HINT: generate a passphrase with 'openssl rand -base64 32'.");
+        TEST_RESULT_LOG("P00   INFO: stanza-rekey for stanza 'db' on repo2");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("rekey");
+
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS_NEW);
+        HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
+
+        TEST_RESULT_VOID(cmdStanzaRekey(), "stanza rekey");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-rekey for stanza 'db' on repo2\n"
+            "P00   INFO: rotate archive key to id 3\n"
+            "P00   INFO: rekey info files with the new passphrase");
+
+        TEST_RESULT_STR_Z(
+            cipherSpecMapIdCurrent(
+                infoArchiveCipherSpecMap(infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecRekey))),
+            "3", "archive info rekeyed and rotated");
+        TEST_RESULT_UINT(
+            infoBackupFormat(infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherSpecRekey)),
+            REPOSITORY_FORMAT_6, "backup info rekeyed");
+
+        HRN_STORAGE_REMOVE(storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE, .comment = "remove archive.info");
+        HRN_STORAGE_REMOVE(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, .comment = "remove backup.info");
+
+        TEST_RESULT_VOID(
+            infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecRekey), "archive info copy rekeyed");
+        TEST_RESULT_VOID(
+            infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherSpecRekey), "backup info copy rekeyed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("rekey again on every repo");
+
+        argList = strLstDup(argListRekey);
+        HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
+
+        TEST_RESULT_VOID(cmdStanzaRekey(), "stanza rekey");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-rekey for stanza 'db' on repo2\n"
+            "P00   INFO: rotate archive key to id 4\n"
+            "P00   INFO: rekey info files with the new passphrase\n"
+            "P00   INFO: stanza-rekey for stanza 'db' on repo3\n"
+            "P00   WARN: archive key rotation requires repository format 6 or higher");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("rekey at format 5");
+
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 3, "87654321");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 3, "12345678");
+        argList = strLstDup(argListRekey);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "3");
+        HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
+
+        // Save archive.info with the old passphrase before the rekey
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(
+                infoArchiveLoadFile(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2)), storageRepoIdxWrite(2),
+                INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2)),
+            "save archive info");
+        TEST_RESULT_BOOL(
+            infoArchiveCipherPrior(infoArchiveLoadFile(storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2))),
+            true, "archive info has old passphrase");
+
+        // Save archive.info with the new passphrase and leave backup.info with the old passphrase
+        InfoArchive *const infoArchiveRekey = infoArchiveLoadFile(
+            storageRepoIdx(2), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2));
+
+        infoArchiveCipherPriorClear(infoArchiveRekey);
+
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(infoArchiveRekey, storageRepoIdxWrite(2), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(2)),
+            "save archive info with new passphrase");
+
+        TEST_RESULT_VOID(cmdStanzaRekey(), "stanza rekey");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-rekey for stanza 'db' on repo3\n"
+            "P00   INFO: rekey info files with the new passphrase");
+        TEST_RESULT_UINT(
+            infoBackupFormat(
+                infoBackupLoadFile(
+                    storageRepoIdx(2), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("87654321")))),
+            REPOSITORY_FORMAT_DEFAULT, "backup info rekeyed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("missing stanza");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPassOld, 3);
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, TEST_STANZA_OTHER);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 3, TEST_PATH "/repo3");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 3, cipherTypeAes256Cbc);
+        HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
+
+        TEST_ERROR(
+            cmdStanzaRekey(), FileMissingError,
+            "unable to load info file '" TEST_PATH "/repo3/archive/otherstanza/archive.info' or"
+            " '" TEST_PATH "/repo3/archive/otherstanza/archive.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/repo3/archive/otherstanza/archive.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/repo3/archive/otherstanza/archive.info.copy' for read\n"
+            "HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "HINT: has a stanza-create been performed?\n"
+            "HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving scheme.");
+        TEST_RESULT_LOG("P00   INFO: stanza-rekey for stanza 'otherstanza' on repo3");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("missing backup info");
+
+        argList = strLstDup(argListRekey);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "3");
+        HRN_CFG_LOAD(cfgCmdStanzaRekey, argList);
+
+        HRN_STORAGE_REMOVE(storageRepoIdxWrite(2), INFO_BACKUP_PATH_FILE, .comment = "remove backup.info");
+        HRN_STORAGE_REMOVE(storageRepoIdxWrite(2), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, .comment = "remove backup.info.copy");
+
+        TEST_ERROR(
+            cmdStanzaRekey(), FileMissingError,
+            "unable to load info file '" TEST_PATH "/repo3/backup/db/backup.info' or"
+            " '" TEST_PATH "/repo3/backup/db/backup.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/repo3/backup/db/backup.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/repo3/backup/db/backup.info.copy' for read\n"
+            "HINT: backup.info cannot be opened and is required to perform a backup.\n"
+            "HINT: has a stanza-create been performed?");
+        TEST_RESULT_LOG("P00   INFO: stanza-rekey for stanza 'db' on repo3");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPassOld, 2);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 3);
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

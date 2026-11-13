@@ -23,7 +23,7 @@ Archive Get Command
 #include "config/config.h"
 #include "config/exec.h"
 #include "config/load.h"
-#include "info/infoArchive.h"
+#include "info/helper.h"
 #include "postgres/interface.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
@@ -399,9 +399,6 @@ archiveGetCheck(const StringList *const archiveRequestList)
 
             TRY_BEGIN()
             {
-                // Get the repo storage in case it is remote and encryption settings need to be pulled down
-                storageRepoIdx(repoIdx);
-
                 ArchiveGetFindCacheRepo cacheRepo =
                 {
                     .repoIdx = repoIdx,
@@ -410,8 +407,7 @@ archiveGetCheck(const StringList *const archiveRequestList)
                 };
 
                 // Attempt to load the archive info file
-                const InfoArchive *const info = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                const InfoArchive *const info = infoArchiveRepoIdx(repoIdx);
 
                 // Build cipher spec in the result list context once rather than rebuilding it per candidate file later
                 MEM_CONTEXT_BEGIN(lstMemContext(result.archiveFileMapList))

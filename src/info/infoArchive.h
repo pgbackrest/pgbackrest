@@ -90,6 +90,16 @@ infoArchiveFormat(const InfoArchive *const this)
 
 FN_EXTERN void infoArchiveFormatSet(InfoArchive *this, unsigned int format);
 
+// Was the file decrypted with the prior cipher spec?
+FN_INLINE_ALWAYS bool
+infoArchiveCipherPrior(const InfoArchive *const this)
+{
+    return infoCipherPrior(infoPgInfo(infoArchivePg(this)));
+}
+
+// Encrypt with the cipher spec on the next save
+FN_EXTERN void infoArchiveCipherPriorClear(InfoArchive *this);
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
@@ -122,10 +132,6 @@ Helper functions
 ***********************************************************************************************************************************/
 // Load archive info
 FN_EXTERN InfoArchive *infoArchiveLoadFile(const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
-
-// Save archive info
-FN_EXTERN void infoArchiveSaveFile(
-    InfoArchive *infoArchive, const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
 /***********************************************************************************************************************************
 Macros for function logging

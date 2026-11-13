@@ -125,6 +125,16 @@ infoBackupFormat(const InfoBackup *const this)
 
 FN_EXTERN void infoBackupFormatSet(InfoBackup *this, unsigned int format);
 
+// Was the file decrypted with the prior cipher spec?
+FN_INLINE_ALWAYS bool
+infoBackupCipherPrior(const InfoBackup *const this)
+{
+    return infoCipherPrior(infoPgInfo(infoBackupPg(this)));
+}
+
+// Encrypt with the cipher spec on the next save and mark as updated
+FN_EXTERN void infoBackupCipherPriorClear(InfoBackup *this);
+
 // Return a structure of the backup data from a specific index
 FN_EXTERN InfoBackupData infoBackupData(const InfoBackup *this, unsigned int backupDataIdx);
 
@@ -194,13 +204,8 @@ Helper functions
 // Load backup info
 FN_EXTERN InfoBackup *infoBackupLoadFile(const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
-// Load backup info and update it by adding valid backups from the repo or removing backups no longer in the repo
-FN_EXTERN InfoBackup *infoBackupLoadFileReconstruct(
-    const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
-
-// Save backup info
-FN_EXTERN void infoBackupSaveFile(
-    InfoBackup *infoBackup, const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
+// Update backup info by adding valid backups from the repo and removing backups no longer in the repo
+FN_EXTERN void infoBackupReconstruct(InfoBackup *infoBackup, const Storage *storage);
 
 /***********************************************************************************************************************************
 Macros for function logging

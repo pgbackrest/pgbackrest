@@ -34,8 +34,8 @@ Function types for loading and saving
 typedef bool InfoLoadCallback(void *data, unsigned int try);
 // {uncrustify_on}
 
-// Create an object from a read of an info file
-typedef void *InfoLoadFileNewCallback(IoRead *read, const CipherSpec *cipherSpec);
+// Create an object from a read of an info file. The prior parameter is true when the cipher spec is the prior cipher spec.
+typedef void *InfoLoadFileNewCallback(IoRead *read, const CipherSpec *cipherSpec, bool prior);
 
 typedef void InfoLoadNewCallback(void *data, const String *section, const String *key, JsonRead *value);
 typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
@@ -60,6 +60,7 @@ typedef struct InfoPub
     const String *backrestVersion;                                  // pgBackRest version
     CipherSpecMap *cipherSpecMap;                                   // Cipher keys for dependent files
     time_t cipherRotateTime;                                        // Time of the last cipher key rotation
+    bool cipherPrior;                                               // Was the file decrypted with the prior cipher spec?
 } InfoPub;
 
 // Repository format
@@ -98,6 +99,15 @@ infoCipherRotateTime(const Info *const this)
 }
 
 FN_EXTERN void infoCipherRotateTimeSet(Info *this, time_t cipherRotateTime);
+
+// Was the file decrypted with the prior cipher spec?
+FN_INLINE_ALWAYS bool
+infoCipherPrior(const Info *const this)
+{
+    return THIS_PUB(Info)->cipherPrior;
+}
+
+FN_EXTERN void infoCipherPriorSet(Info *this, bool cipherPrior);
 
 // pgBackRest version
 FN_INLINE_ALWAYS const String *

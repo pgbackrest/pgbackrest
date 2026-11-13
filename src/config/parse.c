@@ -10,6 +10,7 @@ Command and Option Parse
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/format/format.h"
 #include "common/io/bufferRead.h"
 #include "common/log.h"
 #include "common/macro.h"
@@ -142,6 +143,7 @@ typedef struct ParseRuleOption
     bool group : 1;                                                 // In a group?
     unsigned int groupId : 1;                                       // Id if in a group
     bool deprecateMatch : 1;                                        // Does a deprecated name exactly match the option name?
+    unsigned int format : 2;                                        // Minimum repository format - REPOSITORY_FORMAT_5
     unsigned int packSize : 7;                                      // Size of optional data in pack format
     uint32_t commandRoleValid[CFG_COMMAND_ROLE_TOTAL];              // Valid for the command role?
 
@@ -215,6 +217,9 @@ typedef enum
 
 #define PARSE_RULE_OPTION_DEPRECATE_MATCH(deprecateMatchParam)                                                                     \
     .deprecateMatch = deprecateMatchParam
+
+#define PARSE_RULE_OPTION_FORMAT(formatParam)                                                                                      \
+    .format = formatParam - REPOSITORY_FORMAT_5
 
 #define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST(...)                                                                        \
     .commandRoleValid[cfgCmdRoleMain] = 0 __VA_ARGS__
@@ -1415,6 +1420,21 @@ cfgParseOptionGroupId(const ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN unsigned int
+cfgParseOptionFormat(const ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    const unsigned int format = parseRuleOption[optionId].format;
+
+    FUNCTION_TEST_RETURN(UINT, format == 0 ? 0 : format + REPOSITORY_FORMAT_5);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN bool
 cfgParseOptionSecure(const ConfigOption optionId)
 {
@@ -2282,6 +2302,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 config->option[optionId].dataType = cfgParseOptionDataType(optionId);
                 config->option[optionId].group = ruleOption->group;
                 config->option[optionId].groupId = ruleOption->groupId;
+                config->option[optionId].format = cfgParseOptionFormat(optionId);
             }
             else
             {
