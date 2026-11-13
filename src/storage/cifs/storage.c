@@ -13,7 +13,7 @@ CIFS Storage
 FN_EXTERN Storage *
 storageCifsNew(
     const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
-    StoragePathExpressionCallback pathExpressionFunction)
+    StoragePathExpressionCallback pathExpressionFunction, const StoragePosixIoMode ioMode)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -21,8 +21,11 @@ storageCifsNew(
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
+        FUNCTION_LOG_PARAM(ENUM, ioMode);
     FUNCTION_LOG_END();
 
     FUNCTION_LOG_RETURN(
-        STORAGE, storagePosixNewInternal(STORAGE_CIFS_TYPE, path, modeFile, modePath, write, pathExpressionFunction, false, false));
+        STORAGE,
+        storagePosixNewInternal(
+            STORAGE_CIFS_TYPE, path, modeFile, modePath, write, pathExpressionFunction, false, false, ioMode));
 }

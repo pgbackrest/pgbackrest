@@ -9,6 +9,7 @@ Posix Storage File write
 #include <utime.h>
 
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/io/write.h"
 #include "common/log.h"
 #include "common/type/object.h"
@@ -39,6 +40,9 @@ struct StorageWritePosix
     const String *nameTmp;
     const String *path;
     int fd;                                                          // File descriptor
+
+    StoragePosixIoMode ioMode;                                       // I/O mode
+    Buffer *dioBuffer;                                               // Aligned bounce buffer
 };
 
 /***********************************************************************************************************************************
@@ -97,7 +101,7 @@ storageWritePosixOpen(THIS_VOID)
     // Open the file
     const int flags = O_CREAT | O_WRONLY | (this->truncate ? O_TRUNC : 0);
 
-    this->fd = open(strZ(this->nameTmp), flags, this->modeFile);
+    this->fd = storagePosixFileOpen(this->nameTmp, flags, this->modeFile, &this->ioMode);
 
     // Attempt to create the path if it is missing
     if (this->fd == -1 && errno == ENOENT && this->createPath)                                                      // {vm_covered}
@@ -106,7 +110,7 @@ storageWritePosixOpen(THIS_VOID)
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->modePath);
 
         // Open file again
-        this->fd = open(strZ(this->nameTmp), flags, this->modeFile);
+        this->fd = storagePosixFileOpen(this->nameTmp, flags, this->modeFile, &this->ioMode);
     }
 
     // Handle errors
@@ -120,6 +124,15 @@ storageWritePosixOpen(THIS_VOID)
 
     // Set free callback to ensure the file descriptor is freed
     memContextCallbackSet(objMemContext(this), storageWritePosixFreeResource, this);
+
+    if (this->ioMode == storagePosixIoModeDirect)
+    {
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            this->dioBuffer = bufNewAlign(STORAGE_POSIX_DIRECT_ALIGN_UP(ioBufferSize()), STORAGE_POSIX_DIRECT_ALIGN);
+        }
+        MEM_CONTEXT_OBJ_END();
+    }
 
     // Update user/group owner
     if (this->user != NULL || this->group != NULL)
@@ -159,6 +172,107 @@ storageWritePosixOpen(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
+Wrapper around write()
+***********************************************************************************************************************************/
+static ssize_t
+storageWritePosixInternal(const int fd, const void *const buffer, const size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, fd);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(SSIZE, write(fd, buffer, size));
+}
+
+/***********************************************************************************************************************************
+Disable direct I/O. Setting status flags to 0 clears O_DIRECT. No other status flags are set.
+***********************************************************************************************************************************/
+static void
+storageWritePosixDirectDisable(StorageWritePosix *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_POSIX, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    THROW_ON_SYS_ERROR_FMT(
+        fcntl(this->fd, F_SETFL, 0) == -1, FileWriteError, "unable to disable direct I/O for '%s'", strZ(this->nameTmp));
+
+    this->ioMode = storagePosixIoModeDefault;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Write data to the file
+***********************************************************************************************************************************/
+static void
+storageWritePosixData(StorageWritePosix *const this, const uint8_t *const data, const size_t size)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_POSIX, this);
+        FUNCTION_LOG_PARAM_P(VOID, data);
+        FUNCTION_LOG_PARAM(SIZE, size);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(data != NULL);
+
+    ssize_t actualBytes = storageWritePosixInternal(this->fd, data, size);
+
+    // Fall back to buffered I/O when the device requires a larger alignment
+    if (actualBytes == -1 && errno == EINVAL && this->ioMode == storagePosixIoModeDirect)
+    {
+        storageWritePosixDirectDisable(this);
+        actualBytes = storageWritePosixInternal(this->fd, data, size);
+    }
+
+    if (actualBytes != (ssize_t)size)
+        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Write the bounce buffer to the file. Data after the last aligned block is written with buffered I/O. This only happens at the end of
+the file or before a seek.
+***********************************************************************************************************************************/
+static void
+storageWritePosixDirectFlush(StorageWritePosix *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_POSIX, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    if (!bufEmpty(this->dioBuffer))
+    {
+        const size_t alignSize = bufUsed(this->dioBuffer) / STORAGE_POSIX_DIRECT_ALIGN * STORAGE_POSIX_DIRECT_ALIGN;
+
+        // Write aligned blocks
+        if (alignSize > 0)
+            storageWritePosixData(this, bufPtr(this->dioBuffer), alignSize);
+
+        // Write the remainder with buffered I/O
+        if (alignSize != bufUsed(this->dioBuffer))
+        {
+            if (this->ioMode == storagePosixIoModeDirect)
+                storageWritePosixDirectDisable(this);
+
+            storageWritePosixData(this, bufPtr(this->dioBuffer) + alignSize, bufUsed(this->dioBuffer) - alignSize);
+        }
+
+        bufUsedZero(this->dioBuffer);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Write to the file
 ***********************************************************************************************************************************/
 static void
@@ -175,9 +289,24 @@ storageWritePosix(THIS_VOID, const Buffer *const buffer)
     ASSERT(buffer != NULL);
     ASSERT(this->fd != -1);
 
-    // Write the data
-    if (write(this->fd, bufPtrConst(buffer), bufUsed(buffer)) != (ssize_t)bufUsed(buffer))
-        THROW_SYS_ERROR_FMT(FileWriteError, "unable to write '%s'", strZ(this->nameTmp));
+    // Stage data through the bounce buffer while using direct I/O
+    size_t bufferOffset = 0;
+
+    while (this->ioMode == storagePosixIoModeDirect && bufferOffset < bufUsed(buffer))
+    {
+        const size_t bufferRemains = bufUsed(buffer) - bufferOffset;
+        const size_t copyBytes = bufferRemains < bufRemains(this->dioBuffer) ? bufferRemains : bufRemains(this->dioBuffer);
+
+        bufCatSub(this->dioBuffer, buffer, bufferOffset, copyBytes);
+        bufferOffset += copyBytes;
+
+        if (bufFull(this->dioBuffer))
+            storageWritePosixDirectFlush(this);
+    }
+
+    // Write data that was not staged
+    if (bufferOffset < bufUsed(buffer))
+        storageWritePosixData(this, bufPtrConst(buffer) + bufferOffset, bufUsed(buffer) - bufferOffset);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -197,6 +326,15 @@ storageWritePosixSeek(THIS_VOID, const uint64_t position)
 
     ASSERT(this != NULL);
     ASSERT(this->fd != -1);
+
+    // Write staged data and disable direct I/O when the position is not aligned
+    if (this->ioMode == storagePosixIoModeDirect)
+    {
+        storageWritePosixDirectFlush(this);
+
+        if (this->ioMode == storagePosixIoModeDirect && position % STORAGE_POSIX_DIRECT_ALIGN != 0)
+            storageWritePosixDirectDisable(this);
+    }
 
     THROW_ON_SYS_ERROR_FMT(
         lseek(this->fd, (off_t)position, SEEK_SET) == -1, FileWriteError, STORAGE_ERROR_WRITE_SEEK, position, strZ(this->nameTmp));
@@ -221,6 +359,10 @@ storageWritePosixClose(THIS_VOID)
     // Close if the file has not already been closed
     if (this->fd != -1)
     {
+        // Write staged data
+        if (this->ioMode == storagePosixIoModeDirect)
+            storageWritePosixDirectFlush(this);
+
         // Sync the file
         if (this->syncFile)
             THROW_ON_SYS_ERROR_FMT(fsync(this->fd) == -1, FileSyncError, STORAGE_ERROR_WRITE_SYNC, strZ(this->nameTmp));
@@ -286,7 +428,7 @@ FN_EXTERN StorageWritePosix *
 storageWritePosixNew(
     StoragePosix *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
     const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
-    const bool atomic, const bool truncate)
+    const bool atomic, const bool truncate, const StoragePosixIoMode ioMode)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, storage);
@@ -301,6 +443,7 @@ storageWritePosixNew(
         FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
         FUNCTION_LOG_PARAM(BOOL, truncate);
+        FUNCTION_LOG_PARAM(ENUM, ioMode);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -328,6 +471,7 @@ storageWritePosixNew(
             .nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : strDup(name),
             .path = strPath(name),
             .fd = -1,
+            .ioMode = ioMode,
         };
     }
     OBJ_NEW_END();

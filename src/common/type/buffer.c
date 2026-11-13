@@ -28,6 +28,10 @@ Contains information about the buffer
 struct Buffer
 {
     BufferPub pub;                                                  // Publicly accessible variables
+
+#ifdef DEBUG
+    bool aligned;                                                   // Is the buffer pointer aligned?
+#endif
 };
 
 /**********************************************************************************************************************************/
@@ -52,6 +56,43 @@ bufNew(const size_t size)
         // Allocate buffer
         if (size > 0)
             this->pub.buffer = memNew(this->pub.sizeAlloc);
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_TEST_RETURN(BUFFER, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN Buffer *
+bufNewAlign(const size_t size, const size_t align)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, size);
+        FUNCTION_TEST_PARAM(SIZE, align);
+    FUNCTION_TEST_END();
+
+    ASSERT(size > 0);
+    ASSERT(align > 0);
+
+    OBJ_NEW_BEGIN(Buffer, .allocQty = 1)
+    {
+        *this = (Buffer)
+        {
+            .pub =
+            {
+                .sizeAlloc = size,
+                .size = size,
+            },
+        };
+
+#ifdef DEBUG
+        this->aligned = true;
+#endif
+
+        // Allocate extra space to align the buffer pointer
+        const uintptr_t alloc = (uintptr_t)memNew(size + align - 1);
+
+        this->pub.buffer = (uint8_t *)((alloc + align - 1) / align * align);
     }
     OBJ_NEW_END();
 
@@ -249,6 +290,7 @@ bufResize(Buffer *const this, const size_t size)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
+    ASSERT(!this->aligned);
 
     // Only resize if it the new size is different
     if (bufSizeAlloc(this) != size)

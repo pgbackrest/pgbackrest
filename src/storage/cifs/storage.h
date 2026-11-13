@@ -4,7 +4,7 @@ CIFS Storage
 #ifndef STORAGE_CIFS_STORAGE_H
 #define STORAGE_CIFS_STORAGE_H
 
-#include "storage/storage.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Storage type
@@ -15,6 +15,7 @@ Storage type
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Storage *storageCifsNew(
-    const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction);
+    const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction,
+    StoragePosixIoMode ioMode);
 
 #endif

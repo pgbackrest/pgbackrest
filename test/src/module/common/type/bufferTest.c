@@ -43,6 +43,15 @@ testRun(void)
         TEST_RESULT_BOOL(memcmp(bufPtr(buffer), cBuffer, sizeof(cBuffer)) == 0, true, "check buffer");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bufNewAlign()");
+
+        TEST_ASSIGN(buffer, bufNewAlign(256, 4096), "new aligned buffer");
+        TEST_RESULT_UINT((uintptr_t)bufPtr(buffer) % 4096, 0, "check alignment");
+        TEST_RESULT_UINT(bufSize(buffer), 256, "check size");
+        TEST_RESULT_UINT(bufSizeAlloc(buffer), 256, "check allocation size");
+        TEST_ERROR(bufResize(buffer, 256), AssertError, "assertion '!this->aligned' failed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bufNewDecode()");
 
         TEST_RESULT_STR_Z(strNewBuf(bufNewDecode(encodingBase64, STRDEF("eno="))), "zz", "decode base64");

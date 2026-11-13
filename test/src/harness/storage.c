@@ -3,6 +3,7 @@ Storage Test Harness
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,6 +18,7 @@ Storage Test Harness
 #include "storage/storage.h"
 
 #include "harness/config.h"
+#include "harness/debug.h"
 #include "harness/storage.h"
 #include "harness/test.h"
 
@@ -24,6 +26,145 @@ Storage Test Harness
 Include shimmed C modules
 ***********************************************************************************************************************************/
 {[SHIM_MODULE]}
+
+/***********************************************************************************************************************************
+Shim install state
+***********************************************************************************************************************************/
+static struct
+{
+    int localShimStoragePosixFileOpenOneErrNo;                      // errno for open shim (0 when not set)
+    int localShimStorageReadPosixDirectOneErrNo;                    // errno for read shim (0 when not set)
+    int localShimStorageWritePosixOneErrNo;                         // errno for write shim (0 when not set)
+} hrnStorageStatic;
+
+/***********************************************************************************************************************************
+Shim storagePosixFileOpenInternal()
+***********************************************************************************************************************************/
+static int
+storagePosixFileOpenInternal(const char *const file, const int flags, const mode_t mode)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, file);
+        FUNCTION_HARNESS_PARAM(INT, flags);
+        FUNCTION_HARNESS_PARAM(MODE, mode);
+    FUNCTION_HARNESS_END();
+
+    int result;
+
+    // If shim will run once then fail with the requested errno
+    if (hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo != 0)
+    {
+        errno = hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo;
+        hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo = 0;
+        result = -1;
+    }
+    // Else call normal function
+    else
+        result = storagePosixFileOpenInternal_SHIMMED(file, flags, mode);
+
+    FUNCTION_HARNESS_RETURN(INT, result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStoragePosixFileOpenShimOne(const int errNo)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, errNo);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(errNo != 0);
+
+    hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo = errNo;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Shim storageReadPosixDirectInternal()
+***********************************************************************************************************************************/
+static ssize_t
+storageReadPosixDirectInternal(const int fd, void *const buffer, const size_t size)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, fd);
+        FUNCTION_HARNESS_PARAM_P(VOID, buffer);
+        FUNCTION_HARNESS_PARAM(SIZE, size);
+    FUNCTION_HARNESS_END();
+
+    ssize_t result;
+
+    // If shim will run once then fail with the requested errno
+    if (hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo != 0)
+    {
+        errno = hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo;
+        hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo = 0;
+        result = -1;
+    }
+    // Else call normal function
+    else
+        result = storageReadPosixDirectInternal_SHIMMED(fd, buffer, size);
+
+    FUNCTION_HARNESS_RETURN(SSIZE, result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStorageReadPosixDirectShimOne(const int errNo)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, errNo);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(errNo != 0);
+
+    hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo = errNo;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Shim storageWritePosixInternal()
+***********************************************************************************************************************************/
+static ssize_t
+storageWritePosixInternal(const int fd, const void *const buffer, const size_t size)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, fd);
+        FUNCTION_HARNESS_PARAM_P(VOID, buffer);
+        FUNCTION_HARNESS_PARAM(SIZE, size);
+    FUNCTION_HARNESS_END();
+
+    ssize_t result;
+
+    // If shim will run once then fail with the requested errno
+    if (hrnStorageStatic.localShimStorageWritePosixOneErrNo != 0)
+    {
+        errno = hrnStorageStatic.localShimStorageWritePosixOneErrNo;
+        hrnStorageStatic.localShimStorageWritePosixOneErrNo = 0;
+        result = -1;
+    }
+    // Else call normal function
+    else
+        result = storageWritePosixInternal_SHIMMED(fd, buffer, size);
+
+    FUNCTION_HARNESS_RETURN(SSIZE, result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStorageWritePosixShimOne(const int errNo)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, errNo);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(errNo != 0);
+
+    hrnStorageStatic.localShimStorageWritePosixOneErrNo = errNo;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Dummy interface for constructing test storage drivers
