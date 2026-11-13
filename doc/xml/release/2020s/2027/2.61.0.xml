@@ -106,6 +106,21 @@
 
                 <p>When <br-option>repo</br-option> was not specified, the <cmd>annotate</cmd> command searched each repository for the backup set but saved the updated <file>backup.info</file> to the default repository. Annotating a backup set that was not in the default repository replaced the <file>backup.info</file> of the default repository with the <file>backup.info</file> of the repository where the backup set was found. If the default repository was encrypted, the key required to read its backups was lost, so those backups could no longer be restored.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2911"/>
+                <github-pull-request id="2912"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="vasiliy.koshkin"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix excessive memory use by the memory context free list.</p>
+
+                <p>The free list retained freed allocations of 64KiB or more for reuse. Buffers that grow as data is written, e.g. object store upload buffers, and allocations that did not repeat filled the list without being reused. Each process could retain up to 64MiB so memory use increased significantly with a high <br-option>process-max</br-option>. Only allocations of <br-option>buffer-size</br-option> are now retained.</p>
+            </release-item>
         </release-bug-list>
 
         <release-feature-list>
