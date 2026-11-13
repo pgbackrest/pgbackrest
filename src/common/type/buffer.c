@@ -90,9 +90,9 @@ bufNewAlign(const size_t size, const size_t align)
 #endif
 
         // Allocate extra space to align the buffer pointer
-        const uintptr_t alloc = (uintptr_t)memNew(size + align - 1);
+        uint8_t *const alloc = memNew(size + align - 1);
 
-        this->pub.buffer = (uint8_t *)((alloc + align - 1) / align * align);
+        this->pub.buffer = alloc + (align - (uintptr_t)alloc % align) % align;
     }
     OBJ_NEW_END();
 
