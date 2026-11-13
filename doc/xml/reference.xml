@@ -453,7 +453,7 @@
                         <text>
                             <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
 
-                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
+                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2 unless <br-option>repo-storage-verify-tls=n</br-option>.</admonition>
 
                             <p>The accepted cipher suites can be adjusted if need arises. The example is reasonable choice unless you have specific security requirements. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
                         </text>
@@ -467,7 +467,7 @@
                         <text>
                             <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
 
-                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
+                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2 unless <br-option>repo-storage-verify-tls=n</br-option>.</admonition>
 
                             <p>The accepted cipher suites can be adjusted if need arises. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
                         </text>
@@ -1377,11 +1377,13 @@
                         <example>16MiB</example>
                     </config-key>
 
-                    <config-key id="repo-storage-verify-tls" name="Repository Storage Certificate Verify">
-                        <summary>Repository storage certificate verify.</summary>
+                    <config-key id="repo-storage-verify-tls" name="Repository Storage TLS Verify">
+                        <summary>Repository storage TLS verify.</summary>
 
                         <text>
                             <p>This option provides the ability to enable/disable verification of the storage (e.g. S3, Azure) server TLS certificate. Disabling should only be used for testing or other scenarios where a certificate has been self-signed.</p>
+
+                            <p>Disabling also removes the TLSv1.2 minimum and ignores the <br-option>tls-cipher-12</br-option> and <br-option>tls-cipher-13</br-option> options for repository storage connections.</p>
                         </text>
 
                         <example>n</example>

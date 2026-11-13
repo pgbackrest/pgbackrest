@@ -368,7 +368,7 @@ testRun(void)
             "  --repo-storage-read-over            repository storage read over\n"
             "  --repo-storage-tag                  repository storage tag(s)\n"
             "  --repo-storage-upload-chunk-size    repository storage upload chunk size\n"
-            "  --repo-storage-verify-tls           repository storage certificate verify\n"
+            "  --repo-storage-verify-tls           repository storage TLS verify\n"
             "  --repo-target-time                  target time for repository\n"
             "  --repo-type                         type of storage used for the repository\n"
             "                                      [default=posix]\n"
