@@ -199,6 +199,7 @@ src_pgbackrest = [
     'db/db.c',
     'db/helper.c',
     'db/protocol.c',
+    'info/helper.c',
     'info/info.c',
     'info/infoArchive.c',
     'info/infoBackup.c',

@@ -550,11 +550,8 @@ testRun(void)
             "            HINT: run stanza-rekey and then remove the option.");
 
         // Save archive.info with the new passphrase and leave backup.info with the old passphrase
-        InfoArchive *const infoArchiveRekey = infoArchiveLoadFile(
-            storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
-
-        infoArchiveCipherPriorClear(infoArchiveRekey);
-        infoArchiveSaveFile(infoArchiveRekey, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
+        infoArchiveCipherPriorClear(infoArchiveRepoIdx(1));
+        infoArchiveRepoIdxSave(1);
 
         TEST_RESULT_VOID(checkCipherPassOld(), "backup info has old passphrase");
         TEST_RESULT_LOG(
@@ -562,11 +559,8 @@ testRun(void)
             "            HINT: run stanza-rekey and then remove the option.");
 
         // Save backup.info with the new passphrase
-        InfoBackup *const infoBackupRekey = infoBackupLoadFile(
-            storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
-
-        infoBackupCipherPriorClear(infoBackupRekey);
-        infoBackupSaveFile(infoBackupRekey, storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(1));
+        infoBackupCipherPriorClear(infoBackupRepoIdxP(1));
+        infoBackupRepoIdxSave(1);
 
         TEST_RESULT_VOID(checkCipherPassOld(), "info files have new passphrase");
         TEST_RESULT_LOG(
@@ -820,7 +814,7 @@ testRun(void)
 
         // Version mismatch
         TEST_ERROR(
-            checkStanzaInfoPg(0, storageRepoIdx(0), PG_VERSION_18, HRN_PG_SYSTEMID_18, cfgCipherSpecMainIdx(0)), FileInvalidError,
+            checkStanzaInfoPg(0, PG_VERSION_18, HRN_PG_SYSTEMID_18), FileInvalidError,
             "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
@@ -830,7 +824,7 @@ testRun(void)
 
         // SystemId mismatch
         TEST_ERROR(
-            checkStanzaInfoPg(0, storageRepoIdx(0), PG_VERSION_96, 6569239123849665699, cfgCipherSpecMainIdx(0)), FileInvalidError,
+            checkStanzaInfoPg(0, PG_VERSION_96, 6569239123849665699), FileInvalidError,
             "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");

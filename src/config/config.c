@@ -16,6 +16,9 @@ Data for the currently loaded configuration
 ***********************************************************************************************************************************/
 static Config *configLocal = NULL;
 
+// Total times the configuration has been initialized
+static unsigned int configInitTotal = 0;
+
 /**********************************************************************************************************************************/
 FN_EXTERN void
 cfgInit(Config *const config)
@@ -34,6 +37,8 @@ cfgInit(Config *const config)
     configLocal = config;
     memContextMove(configLocal->memContext, memContextTop());
 
+    configInitTotal++;
+
     FUNCTION_TEST_RETURN_VOID();
 }
 
@@ -42,6 +47,13 @@ cfgInited(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN(ENUM, configLocal != NULL);
+}
+
+FN_EXTERN unsigned int
+cfgInitTotal(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(UINT, configInitTotal);
 }
 
 /**********************************************************************************************************************************/
@@ -623,6 +635,26 @@ cfgOptionIdxReset(const ConfigOption optionId, const unsigned int optionIdx)
 }
 
 /**********************************************************************************************************************************/
+// Error when an option with a minimum repository format is accessed before the format of its repo is set
+static void
+cfgOptionIdxFormatCheck(const ConfigOption optionId, const unsigned int optionIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionIdx);
+    FUNCTION_TEST_END();
+
+    if (configLocal->option[optionId].format != 0 &&
+        (configLocal->repoFormat == NULL || configLocal->repoFormat[optionIdx] == 0))
+    {
+        THROW_FMT(
+            AssertError, "repository format must be set before accessing option '%s'", cfgOptionIdxName(optionId, optionIdx));
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 // Helper to enforce constraints when getting options
 static ConfigOptionValue *
 cfgOptionIdxInternal(
@@ -644,6 +676,8 @@ cfgOptionIdxInternal(
     // Check that the option is valid for the current command
     if (!cfgOptionValid(optionId))
         THROW_FMT(AssertError, "option '%s' is not valid for the current command", cfgOptionIdxName(optionId, optionIdx));
+
+    cfgOptionIdxFormatCheck(optionId, optionIdx);
 
     // If the option is not NULL then check it is the requested type
     const ConfigOptionData *const option = &configLocal->option[optionId];
@@ -1058,7 +1092,12 @@ cfgOptionIdxTest(const ConfigOption optionId, const unsigned int optionIdx)
     ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
     ASSERT(!cfgOptionValid(optionId) || ((!group && optionIdx == 0) || (group && optionIdx < indexTotal)));
 
-    FUNCTION_TEST_RETURN(BOOL, cfgOptionValid(optionId) && configLocal->option[optionId].index[optionIdx].set);
+    if (!cfgOptionValid(optionId))
+        FUNCTION_TEST_RETURN(BOOL, false);
+
+    cfgOptionIdxFormatCheck(optionId, optionIdx);
+
+    FUNCTION_TEST_RETURN(BOOL, configLocal->option[optionId].index[optionIdx].set);
 }
 
 /**********************************************************************************************************************************/
@@ -1133,4 +1172,76 @@ cfgCipherSpecMainIdx(const unsigned int repoIdx)
     }
 
     FUNCTION_TEST_RETURN_CONST(CIPHER_SPEC, configLocal->cipherSpecMain[repoIdx]);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+cfgRepoFormatSet(const unsigned int repoIdx, const unsigned int format)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+        FUNCTION_TEST_PARAM(UINT, format);
+    FUNCTION_TEST_END();
+
+    ASSERT(cfgInited());
+    ASSERT(repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo));
+    ASSERT(format != 0);
+
+    // Allocate a format per repo, initialized to not set
+    if (configLocal->repoFormat == NULL)
+    {
+        const unsigned int repoTotal = cfgOptionGroupIdxTotal(cfgOptGrpRepo);
+
+        MEM_CONTEXT_BEGIN(configLocal->memContext)
+        {
+            configLocal->repoFormat = memNew(sizeof(unsigned int) * repoTotal);
+        }
+        MEM_CONTEXT_END();
+
+        memset(configLocal->repoFormat, 0, sizeof(unsigned int) * repoTotal);
+    }
+
+    CHECK(
+        AssertError, configLocal->repoFormat[repoIdx] == 0 || configLocal->repoFormat[repoIdx] == format,
+        "repository format cannot be changed");
+
+    if (configLocal->repoFormat[repoIdx] == 0)
+    {
+        // Unset options with a minimum format > format
+        for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
+        {
+            ConfigOptionData *const option = &configLocal->option[optionId];
+
+            if (option->valid && option->format > format)
+            {
+                ASSERT(option->group && option->groupId == cfgOptGrpRepo);
+
+                ConfigOptionValue *const optionValue = &option->index[repoIdx];
+
+                // Error when the option is from the command line
+                if (optionValue->source == cfgSourceParam)
+                {
+                    THROW_FMT(
+                        OptionInvalidError, "option '%s' requires repository format %u or higher",
+                        cfgOptionIdxName(optionId, repoIdx), option->format);
+                }
+
+                // Warn when the option is from the config file or environment
+                if (optionValue->source == cfgSourceConfig)
+                {
+                    LOG_WARN_FMT(
+                        "option '%s' requires repository format %u or higher", cfgOptionIdxName(optionId, repoIdx),
+                        option->format);
+                }
+
+                // Unset the option
+                *optionValue = (ConfigOptionValue){0};
+            }
+        }
+
+        // Set the format after the options. An error above leaves the format unset.
+        configLocal->repoFormat[repoIdx] = format;
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
 }

@@ -17,8 +17,7 @@ Stanza Create Command
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
-#include "info/infoArchive.h"
-#include "info/infoBackup.h"
+#include "info/helper.intern.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -96,7 +95,8 @@ cmdStanzaCreate(void)
                 if (cipherSpecType(cipherSpecArchive) != cipherTypeNone && format >= REPOSITORY_FORMAT_6)
                     infoArchiveCipherRotate(infoArchive, cipherSpecArchive, time(NULL));
 
-                infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoArchiveRepoIdxSet(repoIdx, infoArchive);
+                infoArchiveRepoIdxSave(repoIdx);
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent manifests. Format >= 6 adds a
                 // key for each backup set when the full backup is created.
@@ -107,15 +107,15 @@ cmdStanzaCreate(void)
                 infoBackup = infoBackupNew(
                     pgControl.version, pgControl.systemId, pgControl.catalogVersion, format, cipherSpecManifest);
 
-                infoBackupSaveFile(infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoBackupRepoIdxSet(repoIdx, infoBackup);
+                infoBackupRepoIdxSave(repoIdx);
             }
             // Else if at least one archive and one backup info file exists, then ensure both are valid
             else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
             {
                 // Error if there is a mismatch between the archive and backup info files or the database version/system Id matches
                 // current database
-                checkStanzaInfoPg(
-                    repoIdx, storageRepoReadStanza, pgControl.version, pgControl.systemId, cfgCipherSpecMainIdx(repoIdx));
+                checkStanzaInfoPg(repoIdx, pgControl.version, pgControl.systemId);
 
                 // The files are valid - upgrade
                 const String *sourceFile = NULL;

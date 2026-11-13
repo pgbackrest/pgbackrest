@@ -204,13 +204,8 @@ Helper functions
 // Load backup info
 FN_EXTERN InfoBackup *infoBackupLoadFile(const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
-// Load backup info and update it by adding valid backups from the repo or removing backups no longer in the repo
-FN_EXTERN InfoBackup *infoBackupLoadFileReconstruct(
-    const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
-
-// Save backup info. The file is encrypted with the prior cipher spec when it was decrypted with the prior cipher spec.
-FN_EXTERN void infoBackupSaveFile(
-    InfoBackup *infoBackup, const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
+// Update backup info by adding valid backups from the repo and removing backups no longer in the repo
+FN_EXTERN void infoBackupReconstruct(InfoBackup *infoBackup, const Storage *storage);
 
 /***********************************************************************************************************************************
 Macros for function logging

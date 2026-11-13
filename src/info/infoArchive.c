@@ -16,7 +16,7 @@ Archive Info Handler
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/type/convert.h"
-#include "info/infoArchive.h"
+#include "info/infoArchive.intern.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"

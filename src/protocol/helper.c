@@ -496,8 +496,8 @@ protocolRemoteParam(const ProtocolStorageType protocolStorageType, const unsigne
         // Update/remove repo/pg options that are sent to the remote
         for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
         {
-            // Skip options that are not part of a group
-            if (!cfgOptionGroup(optionId))
+            // Skip options that are not part of a group or not passed to the remote
+            if (!cfgOptionGroup(optionId) || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleRemote, optionId))
                 continue;
 
             bool remove = false;

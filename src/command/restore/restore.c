@@ -13,8 +13,7 @@ Restore Command
 #include "common/user.h"
 #include "config/config.h"
 #include "config/exec.h"
-#include "info/infoArchive.h"
-#include "info/infoBackup.h"
+#include "info/helper.h"
 #include "info/manifest/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -65,8 +64,7 @@ cmdRestore(void)
         if (manifestData(jobData.manifest)->backupOptionOnline)
         {
             const ManifestData *const data = manifestData(jobData.manifest);
-            const InfoArchive *const archiveInfo = infoArchiveLoadFile(
-                storageRepoIdx(backupData.repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(backupData.repoIdx));
+            const InfoArchive *const archiveInfo = infoArchiveRepoIdx(backupData.repoIdx);
 
             timelineVerify(
                 storageRepoIdx(backupData.repoIdx),

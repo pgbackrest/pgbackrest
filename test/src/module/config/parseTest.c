@@ -88,6 +88,7 @@ testRun(void)
         TEST_TITLE("config command defaults to none before cfgInit()");
 
         TEST_RESULT_BOOL(cfgInited(), false, "config is not inited");
+        TEST_RESULT_UINT(cfgInitTotal(), 0, "config init total");
     }
 
     // config and config-include-path options
@@ -1866,10 +1867,68 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptConfig, configFile);
         strLstAddZ(argList, TEST_COMMAND_BACKUP);
 
+        const unsigned int initTotal = cfgInitTotal();
+
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "parse config");
+        TEST_RESULT_UINT(cfgInitTotal(), initTotal + 1, "config init total incremented");
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/global/stanza", "default pg-path");
         TEST_RESULT_UINT(cipherSpecType(cfgCipherSpecMainIdx(0)), cipherTypeNone, "no cipher spec when repo is not encrypted");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("option with a minimum repository format");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawNegate(argList, cfgOptConfig);
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 1, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherRotate, 1, "30d");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherRotate, 2, "30d");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 3, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, "xxx-cipher");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "xxx-cipher");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 3, "xxx-cipher");
+        strLstAddZ(argList, CFGCMD_EXPIRE);
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "parse config");
+
+        TEST_RESULT_UINT(cfgParseOptionFormat(cfgOptRepoCipherRotate), 6, "repo-cipher-rotate minimum format");
+        TEST_RESULT_UINT(cfgParseOptionFormat(cfgOptRepoPath), 0, "repo-path minimum format");
+
+        TEST_ERROR(
+            cfgOptionIdxTest(cfgOptRepoCipherRotate, 0), AssertError,
+            "repository format must be set before accessing option 'repo1-cipher-rotate'");
+        TEST_ERROR(
+            cfgOptionIdxUInt64(cfgOptRepoCipherRotate, 0), AssertError,
+            "repository format must be set before accessing option 'repo1-cipher-rotate'");
+        TEST_RESULT_STR_Z(cfgOptionIdxDisplay(cfgOptRepoCipherRotate, 0), "30d", "repo1-cipher-rotate display");
+        TEST_RESULT_UINT(cfgOptionIdxSource(cfgOptRepoCipherRotate, 0), cfgSourceConfig, "repo1-cipher-rotate source");
+        TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptRepoPath, 0), true, "repo1-path does not require format");
+
+        TEST_RESULT_VOID(cfgRepoFormatSet(0, 5), "repo1 format 5");
+        TEST_RESULT_LOG("P00   WARN: option 'repo1-cipher-rotate' requires repository format 6 or higher");
+        TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptRepoCipherRotate, 0), false, "repo1-cipher-rotate is not set");
+        TEST_RESULT_UINT(cfgOptionIdxSource(cfgOptRepoCipherRotate, 0), cfgSourceDefault, "repo1-cipher-rotate source");
+        TEST_RESULT_VOID(cfgRepoFormatSet(0, 5), "repo1 format 5 again");
+        TEST_ERROR(cfgRepoFormatSet(0, 6), AssertError, "repository format cannot be changed");
+
+        TEST_ERROR(
+            cfgRepoFormatSet(1, 5), OptionInvalidError, "option 'repo2-cipher-rotate' requires repository format 6 or higher");
+        TEST_ERROR(
+            cfgOptionIdxTest(cfgOptRepoCipherRotate, 1), AssertError,
+            "repository format must be set before accessing option 'repo2-cipher-rotate'");
+        TEST_RESULT_VOID(cfgRepoFormatSet(1, 6), "repo2 format 6");
+        TEST_RESULT_UINT(cfgOptionIdxUInt64(cfgOptRepoCipherRotate, 1), 30 * 86400000ULL, "repo2-cipher-rotate is set");
+
+        TEST_RESULT_VOID(cfgRepoFormatSet(2, 5), "repo3 format 5");
+        TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptRepoCipherRotate, 2), false, "repo3-cipher-rotate default is not set");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherRotate, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 3);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warnings for environment variables, command-line and config file options");

@@ -34,7 +34,7 @@ from command.render.release import release_last  # noqa: E402
 from common.error import EXIT_ERROR, EXIT_TERM, ToolError, error_trace  # noqa: E402
 from common.exec import exec_result  # noqa: E402
 from common.log import *  # noqa: E402
-from common.storage import file_read, file_remove, path_list_recurse  # noqa: E402
+from common.storage import file_read, file_remove, path_list, path_list_recurse  # noqa: E402
 from common.xml import xml_document_parse, xml_node_attribute, xml_node_normalize  # noqa: E402
 from config.project import PROJECT_NAME, project_version  # noqa: E402
 
@@ -196,6 +196,15 @@ def site_file_copy(source, target):
 
 
 ####################################################################################################################################
+def site_path_clean(path_site, path_html):
+    """Remove the files in a path of the site that the build did not write."""
+
+    for name in path_list_recurse(path_site):
+        if not os.path.isfile(os.path.join(path_html, name)):
+            file_remove(os.path.join(path_site, name))
+
+
+####################################################################################################################################
 def cmd_deploy(config, dev):
     """Deploy the documentation to the website."""
 
@@ -218,10 +227,7 @@ def cmd_deploy(config, dev):
 
     path_prior = os.path.join(path_site, "prior", version)
 
-    # Remove files the build did not write
-    for name in path_list_recurse(path_prior):
-        if not os.path.isfile(os.path.join(path_html, name)):
-            file_remove(os.path.join(path_prior, name))
+    site_path_clean(path_prior, path_html)
 
     shutil.copytree(path_html, path_prior, dirs_exist_ok=True, copy_function=site_file_copy)
 
@@ -250,6 +256,11 @@ def cmd_deploy(config, dev):
                 and not os.path.isfile(os.path.join(path_html, name))
             ):
                 os.remove(path)
+
+        # Remove files the build did not write from the paths the build writes, e.g. sponsor
+        for name in path_list(path_html):
+            if os.path.isdir(os.path.join(path_html, name)):
+                site_path_clean(os.path.join(path_site, name), os.path.join(path_html, name))
 
         shutil.copytree(path_html, path_site, dirs_exist_ok=True, copy_function=site_file_copy)
 

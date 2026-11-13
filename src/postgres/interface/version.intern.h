@@ -84,6 +84,7 @@ Read the version specific pg_control into a general data structure
             .checkpoint = ((const ControlFileData *)controlFile)->checkPoint,                                                      \
             .timeline = ((const ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                     \
             .pageSize = ((const ControlFileData *)controlFile)->blcksz,                                                            \
+            .segmentPageTotal = ((const ControlFileData *)controlFile)->relseg_size,                                               \
             .walSegmentSize = ((const ControlFileData *)controlFile)->xlog_seg_size,                                               \
             .pageChecksumVersion = ((const ControlFileData *)controlFile)->data_checksum_version,                                  \
         };                                                                                                                         \

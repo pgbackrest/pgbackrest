@@ -59,6 +59,53 @@
 
                 <p>A reconnect freed the session while other files could still be open on it and the next read or write of one of those files used freed memory. These now fail with <quote>connection was lost</quote>, which allows the job to be retried.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="705"/>
+                <github-issue id="2893"/>
+                <github-pull-request id="2906"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="loehrson"/>
+                    <release-item-ideator id="pg-fdelac"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix page checksum validation for non-default relation segment sizes.</p>
+
+                <p><postgres/> can be built with a relation segment size other than 1GB, e.g. <code>--with-segsize=2</code>. Page checksums were validated for a 1GB segment so pages in every segment after the first were reported as invalid and corruption past the first 1GB of a larger segment was not reported. The segment size is now read from <file>pg_control</file>.</p>
+
+                <p>Backups of these clusters taken with earlier versions may contain false page checksum errors, which cause the <cmd>restore</cmd> command to fail and the <cmd>expire</cmd> command to refuse to expire. Set <br-option>checksum-page-error=n</br-option> for these backups. Differential and incremental backups keep the errors for unchanged files until the next full backup.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2909"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix <br-option>io-timeout</br-option> for <proper>SFTP</proper> storage while server keepalives are arriving.</p>
+
+                <p>Each wait for the server restarted the timeout and any packet from the server ended the wait. When the server stopped responding but still sent keepalives more often than <br-option>io-timeout</br-option> an operation such as a file write or remove could wait indefinitely. The timeout now limits how long an operation can wait without making progress. A directory read that timed out or failed ended the list without an error and now reports the error.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2916"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix <cmd>annotate</cmd> saving <file>backup.info</file> to the default repository.</p>
+
+                <p>When <br-option>repo</br-option> was not specified, the <cmd>annotate</cmd> command searched each repository for the backup set but saved the updated <file>backup.info</file> to the default repository. Annotating a backup set that was not in the default repository replaced the <file>backup.info</file> of the default repository with the <file>backup.info</file> of the repository where the backup set was found. If the default repository was encrypted, the key required to read its backups was lost, so those backups could no longer be restored.</p>
+            </release-item>
         </release-bug-list>
 
         <release-feature-list>
@@ -79,6 +126,12 @@
                 <commit subject="Add cipherSpecMapEmpty()."/>
                 <commit subject="Move stanza passphrase checks to stanzaCipherPassCheck()."/>
                 <commit subject="Load archive.info and backup.info through infoLoadFile()."/>
+                <commit subject="Add a minimum repository format for options.">
+                    <github-pull-request id="2915"/>
+                </commit>
+                <commit subject="Add an info helper to load, cache, and save info files.">
+                    <github-pull-request id="2917"/>
+                </commit>
                 <commit subject="Add stanza-rekey command to change the repository passphrase.">
                     <github-pull-request id="2898"/>
                 </commit>
@@ -123,6 +176,49 @@
                 <p>Improve errors for an info file or manifest that cannot be loaded.</p>
 
                 <p>A file decrypted with the wrong <br-option>repo-cipher-pass</br-option> was reported with the random bytes it decrypted to, once for the file and again for its copy. A line that is not text is now shown as <code>&lt;binary data&gt;</code> and an error that repeats for the copy is reported once.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2877"/>
+                <github-pull-request id="2908"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="clayton.azzopardi"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect <proper>SFTP</proper> storage after an open times out.</p>
+
+                <p>An <proper>SFTP</proper> server can stop responding on a session while the connection stays up. An open on that session failed with <quote>libssh2 error [-9]</quote> or <quote>libssh2 error [-37]</quote> and each retry used the same session and failed the same way. The session is now reopened and the open is retried once.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2910"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect <proper>SFTP</proper> storage after a failed send during open.</p>
+
+                <p>An <proper>SFTP</proper> server with <code>ClientAliveInterval</code> set drops a session that does not respond to keepalives, e.g. the session of the main process during the copy phase of a backup. The next open on that session failed with <quote>libssh2 error [-7]</quote>. The session is now reopened and the open is retried once.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Avoid flush and seek between contiguous writes in ioWriteSeek().">
+                    <github-pull-request id="2887"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="francisco.miguel.biete"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve performance of block incremental delta restore.</p>
+
+                <p>Each changed block was written and followed by a seek even when the next changed block was contiguous, which defeated the seek optimization added in v2.59.0. Contiguous blocks are now written without a seek in between.</p>
             </release-item>
         </release-improvement-list>
     </release-core-list>

@@ -133,10 +133,6 @@ Helper functions
 // Load archive info
 FN_EXTERN InfoArchive *infoArchiveLoadFile(const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
 
-// Save archive info. The file is encrypted with the prior cipher spec when it was decrypted with the prior cipher spec.
-FN_EXTERN void infoArchiveSaveFile(
-    InfoArchive *infoArchive, const Storage *storage, const String *fileName, const CipherSpec *cipherSpec);
-
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/

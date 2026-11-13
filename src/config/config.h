@@ -55,6 +55,12 @@ typedef enum
 } LockType;
 
 /***********************************************************************************************************************************
+Init Functions
+***********************************************************************************************************************************/
+// Total times the configuration has been initialized. The total changes each time the configuration is loaded.
+FN_EXTERN unsigned int cfgInitTotal(void);
+
+/***********************************************************************************************************************************
 Command Functions
 
 Access the current command and command parameters.
@@ -253,6 +259,15 @@ cfgCipherSpecMain(void)
 {
     return cfgCipherSpecMainIdx(cfgOptionIdxDefault(cfgOptRepoCipherType));
 }
+
+/***********************************************************************************************************************************
+Repository Format Functions
+
+An option with a minimum repository format cannot be accessed until the format of its repo is set. An option with a minimum format
+higher than the repo format is an error when set on the command line, otherwise the option is unset.
+***********************************************************************************************************************************/
+// Set the format of a repo. The format can be set more than once but cannot be changed.
+FN_EXTERN void cfgRepoFormatSet(unsigned int repoIdx, unsigned int format);
 
 /***********************************************************************************************************************************
 Option Source Enum

@@ -13,8 +13,7 @@ Stanza Rekey Command
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
-#include "info/infoArchive.h"
-#include "info/infoBackup.h"
+#include "info/helper.h"
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
@@ -42,7 +41,8 @@ cmdStanzaRekey(void)
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            const Storage *const storageRepoReadStanza = storageRepoIdx(repoIdx);
+            storageRepoIdx(repoIdx);
+
             const CipherType cipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
 
             // Skip a repo that is not encrypted
@@ -66,10 +66,8 @@ cmdStanzaRekey(void)
             }
 
             // Load the info files (errors if missing)
-            const CipherSpec *const cipherSpecMain = cfgCipherSpecMainIdx(repoIdx);
-
-            InfoArchive *const infoArchive = infoArchiveLoadFile(storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain);
-            InfoBackup *const infoBackup = infoBackupLoadFile(storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cipherSpecMain);
+            InfoArchive *const infoArchive = infoArchiveRepoIdx(repoIdx);
+            InfoBackup *const infoBackup = infoBackupRepoIdxP(repoIdx);
 
             // Format of the repository
             const unsigned int format = infoArchiveFormat(infoArchive);
@@ -95,12 +93,12 @@ cmdStanzaRekey(void)
 
             // Save the info files with the passphrase
             infoArchiveCipherPriorClear(infoArchive);
-            infoArchiveSaveFile(infoArchive, storageRepoIdxWrite(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain);
+            infoArchiveRepoIdxSave(repoIdx);
 
             if (rekey)
             {
                 infoBackupCipherPriorClear(infoBackup);
-                infoBackupSaveFile(infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cipherSpecMain);
+                infoBackupRepoIdxSave(repoIdx);
 
                 LOG_INFO("rekey info files with the new passphrase");
             }
