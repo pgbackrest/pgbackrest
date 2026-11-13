@@ -129,6 +129,9 @@
                 <commit subject="Add a minimum repository format for options.">
                     <github-pull-request id="2915"/>
                 </commit>
+                <commit subject="Add an info helper to load, cache, and save info files.">
+                    <github-pull-request id="2917"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
