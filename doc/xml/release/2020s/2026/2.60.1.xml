@@ -114,6 +114,14 @@
 
                 <p>Remove stale files from site paths written by the documentation build.</p>
             </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>End patch release note history at the integration-x.y.z-ci branch.</p>
+            </release-item>
         </release-development-list>
     </release-doc-list>
 
