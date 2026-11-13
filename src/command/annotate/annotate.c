@@ -72,7 +72,8 @@ cmdAnnotate(void)
                     infoBackupDataAnnotationSet(infoBackup, backupLabel, cfgOptionKv(cfgOptAnnotation));
 
                     // Write the updated backup info
-                    infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                    infoBackupSaveFile(
+                        infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
                 }
             }
             CATCH_ANY()
