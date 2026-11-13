@@ -160,6 +160,36 @@ checkPrimary(const DbGetResult dbGroup)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+// Warn when the old passphrase is set
+static void
+checkCipherPassOld(void)
+{
+    FUNCTION_LOG_VOID(logLevelDebug);
+
+    for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+    {
+        if (cfgOptionIdxTest(cfgOptRepoCipherPassOld, repoIdx))
+        {
+            if (infoArchiveCipherPrior(infoArchiveRepoIdx(repoIdx)) || infoBackupCipherPrior(infoBackupRepoIdxP(repoIdx)))
+            {
+                LOG_WARN_FMT(
+                    "option '%s' is set and the stanza has not been rekeyed\n"
+                    "HINT: run " CFGCMD_STANZA_REKEY " and then remove the option.",
+                    cfgOptionIdxName(cfgOptRepoCipherPassOld, repoIdx));
+            }
+            else
+            {
+                LOG_WARN_FMT(
+                    "option '%s' is set and the stanza has been rekeyed\n"
+                    "HINT: remove the option.",
+                    cfgOptionIdxName(cfgOptRepoCipherPassOld, repoIdx));
+            }
+        }
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN void
 cmdCheck(void)
@@ -219,6 +249,7 @@ cmdCheck(void)
                 const unsigned int pgPathDefinedTotal = checkManifest();
                 checkStandby(dbGroup, pgPathDefinedTotal);
                 checkPrimary(dbGroup);
+                checkCipherPassOld();
             }
         }
     }

@@ -213,5 +213,31 @@ testRun(void)
             infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecNewNone()),
             "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("save archive info file with the old and new passphrases");
+
+        const CipherSpec *const cipherSpecOld = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"));
+        const CipherSpec *const cipherSpecRekey = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("new"), .prior = cipherSpecOld);
+
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecOld), "save archive info");
+
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecRekey), "load old passphrase");
+        TEST_RESULT_BOOL(infoArchiveCipherPrior(infoArchive), true, "decrypted with old passphrase");
+
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecRekey), "save archive info");
+        TEST_RESULT_BOOL(
+            infoArchiveCipherPrior(infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecRekey)), true,
+            "encrypted with old passphrase");
+
+        TEST_RESULT_VOID(infoArchiveCipherPriorClear(infoArchive), "clear prior");
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecRekey), "save archive info");
+        TEST_RESULT_BOOL(
+            infoArchiveCipherPrior(infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecRekey)), false,
+            "encrypted with new passphrase");
     }
 }

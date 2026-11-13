@@ -442,10 +442,13 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "new");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 2, TEST_CIPHER_PASS);
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
-        // Create stanza files on repo2
+        // Create stanza files on repo2 with the old passphrase
         HRN_INFO_PUT(
             storageTest, "repo2/archive/test1/" INFO_ARCHIVE_FILE,
             "[db]\n"
@@ -454,7 +457,8 @@ testRun(void)
             "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":" HRN_PG_SYSTEMID_15_Z ",\"db-version\":\"15\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_15_Z ",\"db-version\":\"15\"}\n",
+            .cipherSpec = TEST_CIPHER_SPEC);
         HRN_INFO_PUT(
             storageTest, "repo2/backup/test1/" INFO_BACKUP_FILE,
             "[db]\n"
@@ -466,7 +470,8 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":202209061,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
-            ",\"db-version\":\"15\"}\n");
+            ",\"db-version\":\"15\"}\n",
+            .cipherSpec = TEST_CIPHER_SPEC);
 
         // Error when WAL segment not found
         HRN_PQ_SCRIPT_SET(
@@ -508,6 +513,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
@@ -539,7 +545,30 @@ testRun(void)
             "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1\n"
             "P00   INFO: check repo2 archive for WAL (primary)\n"
             "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo2/archive/test1/15-1"
-            "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2");
+            "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2\n"
+            "P00   WARN: option 'repo2-cipher-pass-old' is set and the stanza has not been rekeyed\n"
+            "            HINT: run stanza-rekey and then remove the option.");
+
+        // Save archive.info with the new passphrase and leave backup.info with the old passphrase
+        infoArchiveCipherPriorClear(infoArchiveRepoIdx(1));
+        infoArchiveRepoIdxSave(1);
+
+        TEST_RESULT_VOID(checkCipherPassOld(), "backup info has old passphrase");
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'repo2-cipher-pass-old' is set and the stanza has not been rekeyed\n"
+            "            HINT: run stanza-rekey and then remove the option.");
+
+        // Save backup.info with the new passphrase
+        infoBackupCipherPriorClear(infoBackupRepoIdxP(1));
+        infoBackupRepoIdxSave(1);
+
+        TEST_RESULT_VOID(checkCipherPassOld(), "info files have new passphrase");
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'repo2-cipher-pass-old' is set and the stanza has been rekeyed\n"
+            "            HINT: remove the option.");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPassOld, 2);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Primary == NULL (for test coverage)");

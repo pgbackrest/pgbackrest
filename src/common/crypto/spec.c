@@ -23,10 +23,12 @@ cipherSpecNew(const CipherType type, const Buffer *const pass, const CipherSpecN
         FUNCTION_TEST_PARAM(STRING_ID, type);
         FUNCTION_TEST_PARAM(BUFFER, pass);
         FUNCTION_TEST_PARAM(STRING_ID, param.digest);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, param.prior);
     FUNCTION_TEST_END();
 
     ASSERT((type == cipherTypeNone) == (pass == NULL));
     ASSERT(pass == NULL || !bufEmpty(pass));
+    ASSERT(param.prior == NULL || (type != cipherTypeNone && cipherSpecType(param.prior) == type));
 
     OBJ_NEW_BEGIN(CipherSpec, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -36,6 +38,9 @@ cipherSpecNew(const CipherType type, const Buffer *const pass, const CipherSpecN
         {
             this->pub.digest = param.digest;
             this->pub.pass = bufDup(pass);
+
+            if (param.prior != NULL)
+                this->pub.prior = cipherSpecDupP(param.prior);
         }
     }
     OBJ_NEW_END();
@@ -85,7 +90,7 @@ cipherSpecDup(const CipherSpec *const this, const CipherSpecDupParam param)
         CIPHER_SPEC,
         cipherSpecNewP(
             cipherSpecType(this), cipherSpecPass(this),
-            .digest = cipherSpecDigest(this) == 0 ? param.digestDefault : cipherSpecDigest(this)));
+            .digest = cipherSpecDigest(this) == 0 ? param.digestDefault : cipherSpecDigest(this), .prior = cipherSpecPrior(this)));
 }
 
 /**********************************************************************************************************************************/

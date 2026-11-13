@@ -810,13 +810,14 @@ unit:
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: command/stanza
-    total: 4
+    total: 5
 
     coverage:
       - command/stanza/common
       - command/stanza/create
       - command/stanza/upgrade
       - command/stanza/delete
+      - command/stanza/rekey
 
     depend:
       - command/check/common

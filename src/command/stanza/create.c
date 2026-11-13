@@ -79,7 +79,7 @@ cmdStanzaCreate(void)
                 const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
 
                 // Check the passphrase of a new encrypted stanza
-                stanzaCipherPassCheck(repoIdx, format);
+                stanzaCipherPassCheck(repoIdx, format, "create a stanza");
 
                 // If the repo is encrypted, generate a cipher passphrase for encrypting archive files. Format >= 6 adds it by
                 // rotating to the first key id and earlier formats store it as the default key with no id.

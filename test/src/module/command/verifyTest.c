@@ -955,6 +955,25 @@ testRun(void)
         TEST_RESULT_VOID(cmdVerify(), "encrypted archive.info.copy that cannot be decrypted");
         TEST_RESULT_LOG("P00 DETAIL: unable to flush");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info files decrypted with the old passphrase");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "unencrypted archive.info.copy");
+
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, "U3wR+u+uplH37Lo863u+aJ74uVMPqCAevLGzu2sajYE=");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 1, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        TEST_RESULT_VOID(cmdVerify(), "info files encrypted with the old passphrase");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: <REPO:BACKUP>/backup.info was decrypted with the old passphrase\n"
+            "P00 DETAIL: <REPO:BACKUP>/backup.info.copy was decrypted with the old passphrase\n"
+            "P00 DETAIL: <REPO:ARCHIVE>/archive.info was decrypted with the old passphrase\n"
+            "P00 DETAIL: cipher header invalid");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPassOld, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
         harnessLogLevelReset();
     }
