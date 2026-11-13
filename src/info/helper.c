@@ -67,6 +67,23 @@ infoHelperRepo(const unsigned int repoIdx)
 }
 
 /***********************************************************************************************************************************
+Main cipher spec for a repo. The repo storage is fetched before the cipher spec is created. A remote repo sets the cipher options
+when they are not configured locally and the cipher spec does not change once it is created. The order in which arguments are
+evaluated is unspecified so fetching the storage in another argument of the same call is not enough.
+***********************************************************************************************************************************/
+static const CipherSpec *
+infoHelperCipherSpec(const unsigned int repoIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, repoIdx);
+    FUNCTION_TEST_END();
+
+    storageRepoIdx(repoIdx);
+
+    FUNCTION_TEST_RETURN_CONST(CIPHER_SPEC, cfgCipherSpecMainIdx(repoIdx));
+}
+
+/***********************************************************************************************************************************
 Archive info for a repo, loaded when it is not cached
 ***********************************************************************************************************************************/
 static InfoArchive *
@@ -80,12 +97,10 @@ infoHelperArchive(const unsigned int repoIdx)
 
     if (repo->infoArchive == NULL)
     {
-        // Get the repo storage before the cipher spec. A remote repo sets the cipher options when they are not configured locally.
-        const Storage *const storage = storageRepoIdx(repoIdx);
-
         MEM_CONTEXT_BEGIN(infoHelperLocal.memContext)
         {
-            repo->infoArchive = infoArchiveLoadFile(storage, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+            repo->infoArchive = infoArchiveLoadFile(
+                storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, infoHelperCipherSpec(repoIdx));
         }
         MEM_CONTEXT_END();
     }
@@ -107,13 +122,11 @@ infoHelperBackup(const unsigned int repoIdx)
 
     if (repo->infoBackup == NULL)
     {
-        // Get the repo storage before the cipher spec. A remote repo sets the cipher options when they are not configured locally.
-        const Storage *const storage = storageRepoIdx(repoIdx);
         InfoBackup *infoBackup;
 
         MEM_CONTEXT_BEGIN(infoHelperLocal.memContext)
         {
-            infoBackup = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+            infoBackup = infoBackupLoadFile(storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, infoHelperCipherSpec(repoIdx));
         }
         MEM_CONTEXT_END();
 
@@ -164,10 +177,8 @@ infoArchiveRepoIdxSave(const unsigned int repoIdx)
         FUNCTION_LOG_PARAM(UINT, repoIdx);
     FUNCTION_LOG_END();
 
-    // Get the repo storage before the cipher spec. A remote repo sets the cipher options when they are not configured locally.
-    const Storage *const storage = storageRepoIdxWrite(repoIdx);
-
-    infoArchiveSaveFile(infoHelperArchive(repoIdx), storage, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+    infoArchiveSaveFile(
+        infoHelperArchive(repoIdx), storageRepoIdxWrite(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, infoHelperCipherSpec(repoIdx));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -218,10 +229,8 @@ infoBackupRepoIdxSave(const unsigned int repoIdx)
         FUNCTION_LOG_PARAM(UINT, repoIdx);
     FUNCTION_LOG_END();
 
-    // Get the repo storage before the cipher spec. A remote repo sets the cipher options when they are not configured locally.
-    const Storage *const storage = storageRepoIdxWrite(repoIdx);
-
-    infoBackupSaveFile(infoHelperBackup(repoIdx), storage, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+    infoBackupSaveFile(
+        infoHelperBackup(repoIdx), storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, infoHelperCipherSpec(repoIdx));
 
     FUNCTION_LOG_RETURN_VOID();
 }

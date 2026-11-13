@@ -1,13 +1,20 @@
 /***********************************************************************************************************************************
 Test Info Helper
 ***********************************************************************************************************************************/
+#include "common/crypto/cipherBlock.h"
 #include "common/format/format.h"
+#include "config/protocol.h"
+#include "protocol/helper.h"
 #include "storage/helper.h"
+#include "storage/posix/storage.h"
+#include "storage/remote/protocol.h"
 
 #include "harness/config.h"
 #include "harness/info.h"
 #include "harness/infoHelper.h"
 #include "harness/postgres.h"
+#include "harness/protocol.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -161,6 +168,56 @@ testRun(void)
             "1={\"db-id\":6569239123849665679,\"db-version\":\"14\"}\n");
 
         TEST_RESULT_STR_Z(infoArchiveId(infoArchiveRepoIdx(1)), "14-1", "archive info loaded from file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("save with cipher options only on the repo host");
+
+        // Repo host shim with the cipher options in the repo host configuration
+        static const ProtocolServerHandler testRemoteHandlerList[] =
+        {
+            PROTOCOL_SERVER_HANDLER_OPTION_LIST
+            PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
+        };
+
+        hrnProtocolRemoteShimInstall(LSTDEF(testRemoteHandlerList));
+
+        static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
+        {
+            {.type = CIPHER_BLOCK_FILTER_TYPE, .handlerParam = cipherBlockNewPack},
+        };
+
+        storageRemoteFilterHandlerSet(LSTDEF(storageRemoteFilterHandlerList));
+
+        HRN_STORAGE_PUT_Z(
+            storagePosixNewP(TEST_PATH_STR, .write = true), "repo-host.conf",
+            "[global]\n"
+            "repo1-cipher-type=aes-256-cbc\n"
+            "repo1-cipher-pass=" TEST_CIPHER_PASS "\n");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "localhost");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostUser, 1, TEST_USER);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHostConfig, 1, TEST_PATH "/repo-host.conf");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo-host");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        // Keep cached info between test statements
+        hrnInfoHelperStatementClearSet(false);
+
+        TEST_RESULT_VOID(
+            infoArchiveRepoIdxSet(0, infoArchiveNew(PG_VERSION_14, 6569239123849665679, REPOSITORY_FORMAT_5, cipherSpecMapNew())),
+            "set archive info");
+        TEST_RESULT_VOID(infoArchiveRepoIdxSave(0), "save archive info as first repo access");
+        TEST_RESULT_STR_Z(
+            infoArchiveId(
+                infoArchiveLoadFile(
+                    storagePosixNewP(STRDEF(TEST_PATH "/repo-host/archive/test")), STRDEF(INFO_ARCHIVE_FILE), TEST_CIPHER_SPEC)),
+            "14-1", "archive info encrypted");
+
+        protocolFree();
+        hrnProtocolRemoteShimUninstall();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
