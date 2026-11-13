@@ -164,8 +164,10 @@ infoArchiveRepoIdxSave(const unsigned int repoIdx)
         FUNCTION_LOG_PARAM(UINT, repoIdx);
     FUNCTION_LOG_END();
 
-    infoArchiveSaveFile(
-        infoHelperArchive(repoIdx), storageRepoIdxWrite(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+    // Get the repo storage before the cipher spec. A remote repo sets the cipher options when they are not configured locally.
+    const Storage *const storage = storageRepoIdxWrite(repoIdx);
+
+    infoArchiveSaveFile(infoHelperArchive(repoIdx), storage, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -216,8 +218,10 @@ infoBackupRepoIdxSave(const unsigned int repoIdx)
         FUNCTION_LOG_PARAM(UINT, repoIdx);
     FUNCTION_LOG_END();
 
-    infoBackupSaveFile(
-        infoHelperBackup(repoIdx), storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+    // Get the repo storage before the cipher spec. A remote repo sets the cipher options when they are not configured locally.
+    const Storage *const storage = storageRepoIdxWrite(repoIdx);
+
+    infoBackupSaveFile(infoHelperBackup(repoIdx), storage, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
 
     FUNCTION_LOG_RETURN_VOID();
 }
