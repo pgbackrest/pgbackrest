@@ -76,5 +76,15 @@
                 <p>With <br-option>repo-storage-verify-tls=n</br-option> the TLSv1.2 minimum is not set and the <br-option>tls-cipher-12</br-option> and <br-option>tls-cipher-13</br-option> options are ignored for repository storage connections.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Remove stale files from site paths written by the documentation build.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
 </release>
