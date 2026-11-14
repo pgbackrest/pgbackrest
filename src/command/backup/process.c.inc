@@ -175,6 +175,14 @@ backupJobResult(
                 // If the file is in a prior backup and nothing changed, just log it
                 if (copyResult == backupCopyResultNoOp)
                 {
+                    // If the file was not copied then no block map was written so block incremental values must be cleared
+                    if (file.blockIncrSize != 0 && file.blockIncrMapSize == 0)
+                    {
+                        file.blockIncrSize = 0;
+                        file.blockIncrChecksumSize = 0;
+                        manifestFileUpdate(manifest, &file);
+                    }
+
                     LOG_DETAIL_PID_FMT(
                         processId, "match file from prior backup %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
                 }
