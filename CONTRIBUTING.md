@@ -518,7 +518,7 @@ pgbackrest/test/test.py --dry-run
 
 --- output ---
 
-    P00   INFO: test command begin 2.60.0: --dry-run --no-log-timestamp
+    P00   INFO: test command begin 2.60.1: --dry-run --no-log-timestamp
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: autogenerate code
 --> P00   INFO: 131 tests selected
@@ -537,7 +537,7 @@ pgbackrest/test/test.py --vm-out --module=common/wait
 
 --- output ---
 
-    P00   INFO: test command begin 2.60.0: --vm-out --module=common/wait --no-log-timestamp
+    P00   INFO: test command begin 2.60.1: --vm-out --module=common/wait --no-log-timestamp
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: cleanup old data
     P00   INFO: autogenerate code
@@ -546,7 +546,7 @@ pgbackrest/test/test.py --vm-out --module=common/wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common/wait
                 
-        P00   INFO: unit command begin 2.60.0: unit --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --log-level=info --log-level-test=off --vm=none --vm-id=0 --no-log-timestamp --scale=1 common/wait
+        P00   INFO: unit command begin 2.60.1: unit --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --log-level=info --log-level-test=off --vm=none --vm-id=0 --no-log-timestamp --scale=1 common/wait
         P00   INFO: unit command end: completed successfully
         test 1 - waitNew(), waitMore, and waitFree()
                       L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
@@ -612,7 +612,7 @@ pgbackrest/test/test.py --module=postgres
 
 --- output ---
 
-    P00   INFO: test command begin 2.60.0: --module=postgres --no-log-timestamp
+    P00   INFO: test command begin 2.60.1: --module=postgres --no-log-timestamp
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: cleanup old data
     P00   INFO: autogenerate code
@@ -636,9 +636,9 @@ pgbackrest/test/test.py vm-build --vm=u24
 
 --- output ---
 
-    P00   INFO: vm-build command begin 2.60.0: vm-build --vm=u24 --no-log-timestamp
-    P00   INFO: Checking cache ghcr.io/pgbackrest/test:u24-base-x86_64-20260927A-e888ce131a65 ...
-    P00   INFO: Using cached ghcr.io/pgbackrest/test:u24-base-x86_64-20260927A-e888ce131a65 image
+    P00   INFO: vm-build command begin 2.60.1: vm-build --vm=u24 --no-log-timestamp
+    P00   INFO: Checking cache ghcr.io/pgbackrest/test:u24-base-x86_64-20261113A-d14543cc40f4 ...
+    P00   INFO: Using cached ghcr.io/pgbackrest/test:u24-base-x86_64-20261113A-d14543cc40f4 image
     P00   INFO: Building ghcr.io/pgbackrest/test:u24-test-x86_64 image ...
     P00   INFO: Build Complete
     P00   INFO: vm-build command end: completed successfully
@@ -651,7 +651,7 @@ pgbackrest/test/test.py --vm=u24 --module=postgres/interface --test=2
 
 --- output ---
 
-    P00   INFO: test command begin 2.60.0: --vm=u24 --module=postgres/interface --test=2 --no-log-timestamp
+    P00   INFO: test command begin 2.60.1: --vm=u24 --module=postgres/interface --test=2 --no-log-timestamp
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: cleanup old data and containers
     P00   INFO: autogenerate code

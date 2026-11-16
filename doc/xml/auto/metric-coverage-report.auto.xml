@@ -100,7 +100,7 @@
     <table-cell>command/restore</table-cell>
     <table-cell>37/37 (100.00%)</table-cell>
     <table-cell>720/720 (100.00%)</table-cell>
-    <table-cell>1337/1337 (100.00%)</table-cell>
+    <table-cell>1338/1338 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -127,8 +127,8 @@
 <table-row>
     <table-cell>common</table-cell>
     <table-cell>160/160 (100.00%)</table-cell>
-    <table-cell>690/690 (100.00%)</table-cell>
-    <table-cell>1521/1521 (100.00%)</table-cell>
+    <table-cell>664/664 (100.00%)</table-cell>
+    <table-cell>1492/1492 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -169,8 +169,8 @@
 <table-row>
     <table-cell>common/crypto</table-cell>
     <table-cell>38/38 (100.00%)</table-cell>
-    <table-cell>94/94 (100.00%)</table-cell>
-    <table-cell>458/458 (100.00%)</table-cell>
+    <table-cell>96/96 (100.00%)</table-cell>
+    <table-cell>463/463 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -218,8 +218,8 @@
 <table-row>
     <table-cell>common/io/tls</table-cell>
     <table-cell>35/35 (100.00%)</table-cell>
-    <table-cell>122/122 (100.00%)</table-cell>
-    <table-cell>385/385 (100.00%)</table-cell>
+    <table-cell>124/124 (100.00%)</table-cell>
+    <table-cell>387/387 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -329,14 +329,14 @@
 
 <table-row>
     <table-cell>storage/sftp</table-cell>
-    <table-cell>39/39 (100.00%)</table-cell>
-    <table-cell>408/408 (100.00%)</table-cell>
-    <table-cell>763/763 (100.00%)</table-cell>
+    <table-cell>40/40 (100.00%)</table-cell>
+    <table-cell>416/416 (100.00%)</table-cell>
+    <table-cell>775/775 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>TOTAL</table-cell>
-    <table-cell>1733/1733 (100.00%)</table-cell>
-    <table-cell>10784/10786 (99.98%)</table-cell>
-    <table-cell>25462/25462 (100.00%)</table-cell>
+    <table-cell>1734/1734 (100.00%)</table-cell>
+    <table-cell>10770/10772 (99.98%)</table-cell>
+    <table-cell>25453/25453 (100.00%)</table-cell>
 </table-row>
