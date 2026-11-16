@@ -126,7 +126,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
                         // Copy the file
                         const String *const manifestName = strNewFmt(
-                            MANIFEST_TARGET_PGDATA "/%s/%s", strZ(pgWalPath(manifestData(manifest)->pgVersion)), strZ(walSegment));
+                            MANIFEST_TARGET_PGDATA "/" PG_PATH_PGWAL "/%s", strZ(walSegment));
 
                         storageCopyP(
                             read,

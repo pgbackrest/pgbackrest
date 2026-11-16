@@ -1018,7 +1018,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is not root and all ownership is good");
 
-        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
         const String *rootReplaceUser = NULL;
         const String *rootReplaceGroup = NULL;
 
@@ -1027,7 +1027,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is not root but has no user name");
 
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275I"), PG_VERSION_96, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275I"), PG_VERSION_10, pgPath);
 
         userLocalData.groupName = NULL;
         userLocalData.userName = NULL;
@@ -1046,7 +1046,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is not root and some ownership is bad");
 
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
 
         ManifestPath path = {.name = STRDEF("pg_data/bogus_path"), .user = STRDEF("path-user-bogus")};
         manifestPathAdd(manifest, &path);
@@ -1076,7 +1076,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
         userLocalData.userRoot = true;
 
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
@@ -1101,7 +1101,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is root and group is bad");
 
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
 
         manifestFileAdd(manifest, &file);
         manifestLinkAdd(manifest, &link);
@@ -1119,7 +1119,7 @@ testRun(void)
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_TITLE("owner is root and ownership of pg_data is bad");
 
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
 
         manifestPathAdd(manifest, &path);
         manifestFileAdd(manifest, &file);
@@ -1179,7 +1179,7 @@ testRun(void)
 
         const String *pgPath = STRDEF(TEST_PATH "/pg");
         const String *repoPath = STRDEF(TEST_PATH "/repo");
-        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
 
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -2717,7 +2717,7 @@ testRun(void)
             // PG_VERSION
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA PG_FILE_PGVERSION, .size = 3, .sizeRepo = 3, .timestamp = 1482182860,
-                .bundleId = 1, .checksumSha1 = "f5b7e6d36dc0113f61b36c700817d42b96f7b037");
+                .bundleId = 1, .checksumSha1 = "4143d3a341877154d6e95211464e1df1015b74bd");
 
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "yyy", .size = 3, .sizeRepo = 3, .timestamp = 1482182860, .bundleId = 1,
@@ -2734,7 +2734,7 @@ testRun(void)
                 .bundleId = 1, .bundleOffset = 17, .checksumSha1 = "d7dacae2c968388960bf8970080a980ed5c5dcb7");
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1",
-                PG_VERSION_96_Z "\n" PG_VERSION_96_Z "\nyyyxxxxxAzzA");
+                PG_VERSION_10_Z "\n\n" PG_VERSION_10_Z "\n\nyyyxxxxxAzzA");
 
             // base directory
             HRN_MANIFEST_PATH_ADD(manifest, .name = TEST_PGDATA PG_PATH_BASE);
@@ -2746,7 +2746,7 @@ testRun(void)
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/1/" PG_FILE_PGVERSION, .size = 3, .sizeRepo = 3,
                 .timestamp = 1482182860, .bundleId = 1, .bundleOffset = 4,
-                .checksumSha1 = "f5b7e6d36dc0113f61b36c700817d42b96f7b037");
+                .checksumSha1 = "4143d3a341877154d6e95211464e1df1015b74bd");
 
             // base/1/2
             fileBuffer = bufNew(8192);
@@ -3022,9 +3022,9 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 (bundle 20161219-212741F/1/1, 8KB, [PCT])"
             " checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (bundle 1/0, 3B, [PCT]) checksum"
-            " f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
+            " 4143d3a341877154d6e95211464e1df1015b74bd\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (bundle 1/4, 3B, [PCT]) checksum"
-            " f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
+            " 4143d3a341877154d6e95211464e1df1015b74bd\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
             " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx (bundle 1/11, 5B, [PCT]) checksum"
@@ -3216,9 +3216,9 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 - exists and matches backup (bundle 20161219-212741F/1/1, 8KB,"
             " [PCT]) checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (bundle 1/0, 3B, [PCT])"
-            " checksum f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
+            " checksum 4143d3a341877154d6e95211464e1df1015b74bd\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (bundle 1/4, 3B, [PCT])"
-            " checksum f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
+            " checksum 4143d3a341877154d6e95211464e1df1015b74bd\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
             " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx - exists and matches backup (bundle 1/11, 5B, [PCT]) checksum"

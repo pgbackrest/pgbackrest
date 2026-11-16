@@ -344,19 +344,15 @@ hrnHostPgConf(HrnHost *const this)
         strCatZ(config, "log_rotation_size = 0\n");
         strCatZ(config, "log_error_verbosity = verbose\n");
 
-        // Force parallel mode on to make sure we are disabling it and there are no issues. This is important for testing that 9.6
-        // works since pg_stop_backup() is marked parallel safe and will error if run in a worker.
-        if (hrnHostPgVersion() >= PG_VERSION_96)
-        {
-            strCatZ(config, "\n");
+        // Force parallel mode on to make sure we are disabling it and there are no issues
+        strCatZ(config, "\n");
 
-            if (hrnHostPgVersion() >= PG_VERSION_16)
-                strCatZ(config, "debug_parallel_query = on\n");
-            else
-                strCatZ(config, "force_parallel_mode = on\n");
+        if (hrnHostPgVersion() >= PG_VERSION_16)
+            strCatZ(config, "debug_parallel_query = on\n");
+        else
+            strCatZ(config, "force_parallel_mode = on\n");
 
-            strCatZ(config, "max_parallel_workers_per_gather = 2\n");
-        }
+        strCatZ(config, "max_parallel_workers_per_gather = 2\n");
 
         // Write postgresql.conf
         storagePutP(
