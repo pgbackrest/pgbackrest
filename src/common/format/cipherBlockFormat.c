@@ -26,7 +26,7 @@ reader that could not see the format in advance would have to decrypt to learn w
 The header takes the place of the salted magic, which is why the content behind it is encrypted raw. Both are eight bytes followed
 by the salt, so the eight bytes are consumed either way and what follows begins with the salt no matter which was there. It also
 means a file of either kind is opened with the openssl command-line tool the same way: replace the first eight bytes with the magic
-that tool expects.
+that tool expects. A file with a key check has it between the header and the salt, so the first twelve bytes are replaced instead.
 
 A file that begins with the magic rather than the header was written at format 5, the only format there was before the header, so
 that is not an error when a header was expected.
@@ -36,6 +36,8 @@ comes first so it is always in the same place, which is how a version decides wh
 checked once the format turns out to be readable, and it must be valid for this version.
 
 If a key id is indicated by the marker, there is first a byte to indicate the length of the key id and then the key id as a string.
+Otherwise the block cipher stores a key check before the salt. A key id selects a key from a map and is never user-supplied, so only
+a file encrypted with the user passphrase has a key check.
 ***********************************************************************************************************************************/
 #define CIPHER_BLOCK_FORMAT_MAGIC                                   "PGBR"
 #define CIPHER_BLOCK_FORMAT_MAGIC_SIZE                              (sizeof(CIPHER_BLOCK_FORMAT_MAGIC) - 1)
@@ -171,12 +173,15 @@ cipherBlockFormatCipherNew(CipherBlockFormat *const this)
     }
     MEM_CONTEXT_TEMP_END();
 
-    // Decrypt raw since the format header has already been parsed
+    // Decrypt raw since the format header has already been parsed. Format >= 6 without a key id has a key check.
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->cipherBlock = cipherBlockNewP(
             cipherModeDecrypt, cipherSpecDupP(cipherSpec, .digestDefault = repoFormatDigest(this->format)),
-            .header = cipherBlockHeaderNone);
+            .header = cipherBlockHeaderNone,
+            .keyCheck =
+                this->format >= REPOSITORY_FORMAT_6 &&
+                this->header[CIPHER_BLOCK_FORMAT_HEADER_SIZE - 1] == CIPHER_BLOCK_FORMAT_MARKER_NONE);
     }
     MEM_CONTEXT_OBJ_END();
 
@@ -567,14 +572,15 @@ cipherBlockFormatFilterGroupWriteAdd(
 
     if (cipherSpecType(cipherSpec) != cipherTypeNone)
     {
-        // Format >= 6 writes the header in place of the magic and the content behind it is encrypted raw
+        // Format >= 6 writes the header in place of the magic and the content behind it is encrypted raw. Without a key id there is
+        // a key check.
         const bool header = format >= REPOSITORY_FORMAT_6;
 
         ioFilterGroupAdd(
             filterGroup,
             cipherBlockNewP(
                 cipherModeEncrypt, cipherSpecDupP(cipherSpec, .digestDefault = repoFormatDigest(format)),
-                .header = header ? cipherBlockHeaderNone : cipherBlockHeaderMagic));
+                .header = header ? cipherBlockHeaderNone : cipherBlockHeaderMagic, .keyCheck = header && param.keyId == NULL));
 
         // The filter is added after the block cipher so the plaintext header is placed before the cipher output
         if (header)
