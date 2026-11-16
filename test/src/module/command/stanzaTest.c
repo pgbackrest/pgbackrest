@@ -1362,7 +1362,10 @@ testRun(void)
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - format 6 on encrypted repo");
         TEST_RESULT_LOG(
             "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
-            "P00   INFO: upgrade repository format from 5 to 6");
+            "P00   INFO: upgrade repository format from 5 to 6\n"
+            "P00   WARN: option 'repo1-cipher-pass' should be at least 256 random bits encoded as hex, base64, or base64url at"
+            " repository format 6 or higher\n"
+            "            HINT: generate a passphrase with 'openssl rand -base64 32' and change it with stanza-rekey.");
 
         // The pass is unchanged by the migration, so a file it encrypted before the migration must still be readable. The digest
         // the pass derives with cannot follow the format of the info file storing it or this read would fail.
@@ -1395,6 +1398,43 @@ testRun(void)
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(walRead)), "WAL BEFORE MIGRATION", "wal from before the migration is still readable");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-upgrade - example passphrase");
+
+        // Save the info files with the example passphrase
+        const CipherSpec *const cipherSpecExample = cipherSpecNewP(
+            cipherTypeAes256Cbc, BUFSTRDEF("zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi="));
+
+        infoArchiveSaveFile(
+            infoArchiveLoadFile(storageRepoIdx(0), INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain), storageRepoIdxWrite(0),
+            INFO_ARCHIVE_PATH_FILE_STR, cipherSpecExample);
+
+        InfoBackup *const infoBackupExample = infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecMain);
+        infoBackupFormatSet(infoBackupExample, REPOSITORY_FORMAT_6);
+        infoBackupSaveFile(infoBackupExample, storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecExample);
+
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, "zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: stanza 'db' on repo1 is already up to date\n"
+            "P00   WARN: option 'repo1-cipher-pass' should not be the example passphrase from the documentation\n"
+            "            HINT: generate a passphrase with 'openssl rand -base64 32' and change it with stanza-rekey.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stanza-upgrade - no passphrase warning with the old passphrase set");
+
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 1, "12345678");
+        HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
+
+        TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade");
+        TEST_RESULT_LOG(
+            "P00   INFO: stanza-upgrade for stanza 'db' on repo1\n"
+            "P00   INFO: stanza 'db' on repo1 is already up to date");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPassOld, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
 
         // -------------------------------------------------------------------------------------------------------------------------
