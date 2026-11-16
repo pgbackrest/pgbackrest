@@ -802,7 +802,7 @@ option:
       - bz2
       - gz
       - lz4
-      - zst: HAVE_LIBZST
+      - zst
     command: compress
     command-role:
       async: {}

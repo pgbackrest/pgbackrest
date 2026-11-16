@@ -3,8 +3,6 @@ ZST Compress
 ***********************************************************************************************************************************/
 #include <build.h>
 
-#ifdef HAVE_LIBZST
-
 #include <zstd.h>
 
 #include "common/compress/common.h"
@@ -195,5 +193,3 @@ zstCompressNew(const int level, const bool raw)
             ZST_COMPRESS_FILTER_TYPE, this, compressParamList(level, raw), .done = zstCompressDone, .inOut = zstCompressProcess,
             .inputSame = zstCompressInputSame));
 }
-
-#endif // HAVE_LIBZST
