@@ -8,19 +8,3 @@
     fun:aligned_alloc
     obj:*libz.so*zlib-ng*
 }
-# libgcc's stack unwinder reads uninitialized memory (a false positive) while generating backtraces. rh10 runs valgrind
-# with back-trace enabled, so suppress it here as well as in valgrind.suppress.none.
-{
-    libgcc_unwind_uninit_cond
-    Memcheck:Cond
-    ...
-    fun:_Unwind_Backtrace
-    fun:backtrace_full
-}
-{
-    libgcc_unwind_uninit_value
-    Memcheck:Value8
-    ...
-    fun:_Unwind_Backtrace
-    fun:backtrace_full
-}
