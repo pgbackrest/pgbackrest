@@ -1,4 +1,4 @@
-<release date="XXXX-XX-XX" version="2.60.1dev" title="UNDER DEVELOPMENT">
+<release date="2026-11-16" version="2.60.1" title="Annotate and SFTP Fixes">
     <release-core-list>
         <release-bug-list>
             <release-item>
@@ -16,8 +16,10 @@
             </release-item>
 
             <release-item>
-                <github-issue id="2884"/>
-                <github-pull-request id="2902"/>
+                <commit subject="Close block incremental super block reads during restore.">
+                    <github-issue id="2884"/>
+                    <github-pull-request id="2902"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-ideator id="fineline19"/>
@@ -31,8 +33,10 @@
             </release-item>
 
             <release-item>
-                <github-issue id="2884"/>
-                <github-pull-request id="2903"/>
+                <commit subject="Prevent use of SFTP handles after a reconnect.">
+                    <github-issue id="2884"/>
+                    <github-pull-request id="2903"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -94,8 +98,6 @@
     <release-doc-list>
         <release-improvement-list>
             <release-item>
-                <commit subject="Document TLS settings skipped when repo-storage-verify-tls=n."/>
-
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
                 </release-item-contributor-list>
