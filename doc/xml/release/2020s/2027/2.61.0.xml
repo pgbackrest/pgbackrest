@@ -1,5 +1,9 @@
 <release date="XXXX-XX-XX" version="2.61.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: The <proper>zstd</proper> library is now required by the meson build and the <id>libzstd</id> build option has been removed.</p>
+        </text>
+
         <release-bug-list>
             <release-item>
                 <github-issue id="705"/>
@@ -93,6 +97,17 @@
 
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2921"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Remove support for <proper>PostgreSQL</proper> <id>9.6</id>.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2895"/>
 
                 <release-item-contributor-list>
@@ -146,6 +161,19 @@
                 <p>Improve performance of block incremental delta restore.</p>
 
                 <p>Each changed block was written and followed by a seek even when the next changed block was contiguous, which defeated the seek optimization added in v2.59.0. Contiguous blocks are now written without a seek in between.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2922"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Require the <proper>zstd</proper> library.</p>
+
+                <p><br-option>compress-type=zst</br-option> was not available when <backrest/> was built without <proper>zstd</proper>. <proper>zstd</proper> is now required by the build so <br-option>compress-type=zst</br-option> is available in every build.</p>
             </release-item>
         </release-improvement-list>
     </release-core-list>

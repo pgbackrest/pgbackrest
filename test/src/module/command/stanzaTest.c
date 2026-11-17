@@ -72,7 +72,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - one repo, no files exist");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
@@ -81,11 +81,11 @@ testRun(void)
             storageHrn, "test.info",
             "[db]\n"
             "db-id=1\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n",
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n",
             .comment = "put archive info to test file");
 
         TEST_RESULT_BOOL(
@@ -100,15 +100,15 @@ testRun(void)
         HRN_INFO_PUT(
             storageHrn, "test.info",
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=1\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
-            ",\"db-version\":\"9.6\"}\n",
+            "1={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":" HRN_PG_SYSTEMID_10_Z
+            ",\"db-version\":\"10\"}\n",
             .comment = "put backup info to test file");
 
         TEST_RESULT_BOOL(
@@ -429,7 +429,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaDelete, argListDelete);
 
         HRN_STORAGE_PATH_CREATE(
-            storageRepoIdxWrite(2), STORAGE_REPO_ARCHIVE "/9.6-1/1234567812345678", .comment = "create archive sub directory");
+            storageRepoIdxWrite(2), STORAGE_REPO_ARCHIVE "/10-1/1234567812345678", .comment = "create archive sub directory");
         HRN_STORAGE_PATH_CREATE(
             storageRepoIdxWrite(2), STORAGE_REPO_BACKUP "/20190708-154306F", .comment = "create backup sub directory");
         HRN_STORAGE_PUT_EMPTY(storageHrn, strZ(lockStopFileName(cfgOptionStr(cfgOptStanza))), .comment = "create stop file");
@@ -514,11 +514,11 @@ testRun(void)
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n",
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n",
             .comment = "put archive info to file repo1");
         TEST_STORAGE_EXISTS(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, .remove = true,
@@ -544,22 +544,22 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=2\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
-            ",\"db-version\":\"9.6\"}\n",
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":" HRN_PG_SYSTEMID_10_Z
+            ",\"db-version\":\"10\"}\n",
             .comment = "put backup info to file - bad db-id");
 
         TEST_ERROR(
             cmdStanzaCreate(), FileInvalidError,
             "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = " HRN_PG_SYSTEMID_96_Z "\n"
-            "backup : id = 2, version = 9.6, system-id = " HRN_PG_SYSTEMID_96_Z "\n"
+            "archive: id = 1, version = 10, system-id = " HRN_PG_SYSTEMID_10_Z "\n"
+            "backup : id = 2, version = 10, system-id = " HRN_PG_SYSTEMID_10_Z "\n"
             "HINT: this may be a symptom of repository corruption!");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
 
@@ -610,23 +610,23 @@ testRun(void)
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n");
+            "1={\"db-id\":6569239123849665999,\"db-version\":\"10\"}\n");
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=1\n"
             "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
-            ",\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"10\"}\n");
 
         TEST_ERROR(
             cmdStanzaCreate(), FileInvalidError,
@@ -825,7 +825,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         // Create pg_control for the rest of the tests
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza-upgrade - info file mismatch: db-id");
@@ -834,32 +834,32 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=1\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
-            ",\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":" HRN_PG_SYSTEMID_10_Z
+            ",\"db-version\":\"10\"}\n");
 
         // backup info up to date but archive info db-id mismatch
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=2\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "2={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n");
+            "2={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
 
         TEST_ERROR(
             cmdStanzaUpgrade(), FileInvalidError,
             "backup info file and archive info file do not match\n"
-            "archive: id = 2, version = 9.6, system-id = " HRN_PG_SYSTEMID_96_Z "\n"
-            "backup : id = 1, version = 9.6, system-id = " HRN_PG_SYSTEMID_96_Z "\n"
+            "archive: id = 2, version = 10, system-id = " HRN_PG_SYSTEMID_10_Z "\n"
+            "backup : id = 1, version = 10, system-id = " HRN_PG_SYSTEMID_10_Z "\n"
             "HINT: this may be a symptom of repository corruption!");
         TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
 
@@ -870,17 +870,17 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=2\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":202506291,\"db-control-version\":1800,\"db-system-id\":6569239123849665999"
             ",\"db-version\":\"18\"}\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
-            ",\"db-version\":\"9.6\"}\n");
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":" HRN_PG_SYSTEMID_10_Z
+            ",\"db-version\":\"10\"}\n");
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
@@ -898,12 +898,12 @@ testRun(void)
             storageHrn, "test.info",
             "[db]\n"
             "db-id=2\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-id\":" HRN_PG_SYSTEMID_17_Z ",\"db-version\":\"18\"}\n"
-            "2={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n",
+            "2={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n",
             .comment = "put archive info to test file");
 
         TEST_RESULT_BOOL(
@@ -938,17 +938,17 @@ testRun(void)
         HRN_INFO_PUT(
             storageHrn, "test.info",
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=2\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":202506291,\"db-control-version\":1800,\"db-system-id\":" HRN_PG_SYSTEMID_17_Z
             ",\"db-version\":\"18\"}\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
-            ",\"db-version\":\"9.6\"}\n",
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":" HRN_PG_SYSTEMID_10_Z
+            ",\"db-version\":\"10\"}\n",
             .comment = "put backup info to test file");
 
         TEST_RESULT_BOOL(
@@ -967,26 +967,26 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=2\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":202506291,\"db-control-version\":1800,\"db-system-id\":6569239123849665999"
             ",\"db-version\":\"18\"}\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
-            ",\"db-version\":\"9.6\"}\n");
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":" HRN_PG_SYSTEMID_10_Z
+            ",\"db-version\":\"10\"}\n");
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n");
+            "1={\"db-id\":6569239123849665999,\"db-version\":\"10\"}\n");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - archive.info file upgraded - system-id");
         TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
@@ -995,12 +995,12 @@ testRun(void)
             storageHrn, "test.info",
             "[db]\n"
             "db-id=2\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
-            "2={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n",
+            "1={\"db-id\":6569239123849665999,\"db-version\":\"10\"}\n"
+            "2={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n",
             .comment = "put archive info to test file");
 
         TEST_RESULT_BOOL(
@@ -1019,15 +1019,15 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=1\n"
             "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
-            ",\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"10\"}\n");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - backup.info file upgraded - system-id");
         TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
@@ -1035,17 +1035,17 @@ testRun(void)
         HRN_INFO_PUT(
             storageHrn, "test.info",
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=2\n"
-            "db-system-id=" HRN_PG_SYSTEMID_96_Z "\n"
-            "db-version=\"9.6\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_10_Z "\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
-            ",\"db-version\":\"9.6\"}\n"
-            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":" HRN_PG_SYSTEMID_96_Z
-            ",\"db-version\":\"9.6\"}\n",
+            "1={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"10\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":" HRN_PG_SYSTEMID_10_Z
+            ",\"db-version\":\"10\"}\n",
             .comment = "put backup info to test file");
         TEST_RESULT_BOOL(
             bufEq(
@@ -1068,25 +1068,25 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=1\n"
             "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
-            ",\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"10\"}\n");
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE,
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665999\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n");
+            "1={\"db-id\":6569239123849665999,\"db-version\":\"10\"}\n");
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - forcing another PG version");
         TEST_RESULT_LOG("P00   INFO: stanza-upgrade for stanza 'db' on repo1");
@@ -1099,7 +1099,7 @@ testRun(void)
             "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665999,\"db-version\":\"9.6\"}\n"
+            "1={\"db-id\":6569239123849665999,\"db-version\":\"10\"}\n"
             "2={\"db-id\":" HRN_PG_SYSTEMID_15_Z ",\"db-version\":\"15\"}\n",
             .comment = "put archive info to test file");
 
@@ -1119,8 +1119,8 @@ testRun(void)
             "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
-            ",\"db-version\":\"9.6\"}\n"
+            "1={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"10\"}\n"
             "2={\"db-catalog-version\":202211111,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
             ",\"db-version\":\"15\"}\n",
             .comment = "put backup info to test file, control version for PG 15, catalog version forced from pg_control");
@@ -1210,8 +1210,8 @@ testRun(void)
             "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665999"
-            ",\"db-version\":\"9.6\"}\n"
+            "1={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6569239123849665999"
+            ",\"db-version\":\"10\"}\n"
             "2={\"db-catalog-version\":202211111,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
             ",\"db-version\":\"15\"}\n",
             .comment = "put backup info at prior format to simulate an interrupted upgrade");
@@ -1477,7 +1477,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control for stanza-create
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "create a stanza that will not be deleted");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'otherstanza' on repo1");
@@ -1635,7 +1635,7 @@ testRun(void)
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 3, "12345678");
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
         TEST_RESULT_LOG(

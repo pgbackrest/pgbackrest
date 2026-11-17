@@ -437,7 +437,7 @@ cmdArchivePush(void)
 /**********************************************************************************************************************************/
 typedef struct ArchivePushAsyncData
 {
-    const String *walPath;                                          // Path to pg_wal/pg_xlog
+    const String *walPath;                                          // Path to pg_wal
     StringList *walFileList;                                        // List of wal files to process
     unsigned int walFileIdx;                                        // Current index in the list to be processed
     CompressType compressType;                                      // Type of compression for WAL segments

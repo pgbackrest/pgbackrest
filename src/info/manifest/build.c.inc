@@ -8,7 +8,6 @@ typedef struct ManifestBuildData
     const String *tablespaceId;                                     // Tablespace id if PostgreSQL version has one
     bool online;                                                    // Is this an online backup?
     bool checksumPage;                                              // Are page checksums being checked?
-    const String *manifestWalName;                                  // Wal manifest name for this version of PostgreSQL
     RegExp *dbPathExp;                                              // Identify paths containing relations
     RegExp *tempRelationExp;                                        // Identify temp relations
     const Pack *tablespaceList;                                     // List of tablespaces in the database
@@ -207,7 +206,7 @@ manifestBuildInfo(
             }
 
             // Skip the contents of archive_status when online
-            if (buildData->online && strEq(manifestParentName, buildData->manifestWalName) &&
+            if (buildData->online && strEq(manifestParentName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_PGWAL)) &&
                 strEqZ(info->name, PG_PATH_ARCHIVE_STATUS))
             {
                 FUNCTION_TEST_RETURN_VOID();
@@ -284,7 +283,7 @@ manifestBuildInfo(
 
             // Skip the contents of the wal path when online. WAL will be restored from the archive or stored in the wal directory
             // at the end of the backup if the archive-copy option is set.
-            if (buildData->online && strEq(manifestParentName, buildData->manifestWalName))
+            if (buildData->online && strEq(manifestParentName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_PGWAL)))
                 FUNCTION_TEST_RETURN_VOID();
 
             // Skip temp relations in db paths

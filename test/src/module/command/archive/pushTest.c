@@ -121,7 +121,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("mismatched pg_control and archive.info - pg version");
 
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         // Create incorrect archive info
         HRN_INFO_PUT(
@@ -135,7 +135,7 @@ testRun(void)
         TEST_ERROR(
             archivePushCheck(true), RepoInvalidError,
             "unable to find a valid repository:\n"
-            "repo1: [ArchiveMismatchError] PostgreSQL version 9.6, system-id " HRN_PG_SYSTEMID_96_Z " do not match repo1 stanza"
+            "repo1: [ArchiveMismatchError] PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match repo1 stanza"
             " version 15, system-id 5555555555555555555\n"
             "HINT: are you archiving to the correct stanza?");
 
@@ -149,13 +149,13 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":5555555555555555555,\"db-version\":\"9.6\"}\n");
+            "1={\"db-id\":5555555555555555555,\"db-version\":\"10\"}\n");
 
         TEST_ERROR(
             archivePushCheck(true), RepoInvalidError,
             "unable to find a valid repository:\n"
-            "repo1: [ArchiveMismatchError] PostgreSQL version 9.6, system-id " HRN_PG_SYSTEMID_96_Z " do not match repo1 stanza"
-            " version 9.6, system-id 5555555555555555555\n"
+            "repo1: [ArchiveMismatchError] PostgreSQL version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match repo1 stanza"
+            " version 10, system-id 5555555555555555555\n"
             "HINT: are you archiving to the correct stanza?");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -168,17 +168,17 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
 
         ArchivePushCheckResult result = {0};
         TEST_ASSIGN(result, archivePushCheck(true), "get archive check result");
 
-        TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
-        TEST_RESULT_UINT(result.pgSystemId, HRN_PG_SYSTEMID_96, "check pg system id");
+        TEST_RESULT_UINT(result.pgVersion, PG_VERSION_10, "check pg version");
+        TEST_RESULT_UINT(result.pgSystemId, HRN_PG_SYSTEMID_10, "check pg system id");
 
         ArchivePushFileRepoData *repoData = lstGet(result.repoList, 0);
         TEST_RESULT_UINT(repoData->repoIdx, 0, "check repo idx");
-        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-1", "check archive id");
+        TEST_RESULT_STR_Z(repoData->archiveId, "10-1", "check archive id");
         TEST_RESULT_UINT(cipherSpecType(repoData->cipherSpecArchive), cipherTypeNone, "check cipher type");
         TEST_RESULT_PTR(cipherSpecPass(repoData->cipherSpecArchive), NULL, "check cipher pass (not set in this test)");
 
@@ -198,7 +198,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
 
         // repo4 has incorrect info
         HRN_INFO_PUT(
@@ -211,18 +211,18 @@ testRun(void)
 
         TEST_ASSIGN(result, archivePushCheck(false), "get archive check result");
 
-        TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
-        TEST_RESULT_UINT(result.pgSystemId, HRN_PG_SYSTEMID_96, "check pg system id");
+        TEST_RESULT_UINT(result.pgVersion, PG_VERSION_10, "check pg version");
+        TEST_RESULT_UINT(result.pgSystemId, HRN_PG_SYSTEMID_10, "check pg system id");
         TEST_RESULT_STRLST_Z(
             result.errorList,
-            "repo4: [ArchiveMismatchError] repo2 stanza version 9.6, system-id " HRN_PG_SYSTEMID_96_Z " do not match repo4 stanza"
+            "repo4: [ArchiveMismatchError] repo2 stanza version 10, system-id " HRN_PG_SYSTEMID_10_Z " do not match repo4 stanza"
             " version 15, system-id 5555555555555555555\n"
             "HINT: are you archiving to the correct stanza?\n",
             "check error list");
 
         repoData = lstGet(result.repoList, 0);
         TEST_RESULT_UINT(repoData->repoIdx, 0, "check repo idx");
-        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-1", "check archive id");
+        TEST_RESULT_STR_Z(repoData->archiveId, "10-1", "check archive id");
         TEST_RESULT_UINT(cipherSpecType(repoData->cipherSpecArchive), cipherTypeNone, "check cipher type");
         TEST_RESULT_PTR(cipherSpecPass(repoData->cipherSpecArchive), NULL, "check cipher pass (not set in this test)");
 
@@ -237,22 +237,22 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-id\":5555555555555555555,\"db-version\":\"16\"}\n"
-            "2={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n");
+            "2={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
 
         TEST_ASSIGN(result, archivePushCheck(false), "get archive check result");
 
-        TEST_RESULT_UINT(result.pgVersion, PG_VERSION_96, "check pg version");
-        TEST_RESULT_UINT(result.pgSystemId, HRN_PG_SYSTEMID_96, "check pg system id");
+        TEST_RESULT_UINT(result.pgVersion, PG_VERSION_10, "check pg version");
+        TEST_RESULT_UINT(result.pgSystemId, HRN_PG_SYSTEMID_10, "check pg system id");
 
         repoData = lstGet(result.repoList, 0);
         TEST_RESULT_UINT(repoData->repoIdx, 0, "check repo idx");
-        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-1", "check repo2 archive id");
+        TEST_RESULT_STR_Z(repoData->archiveId, "10-1", "check repo2 archive id");
         TEST_RESULT_UINT(cipherSpecType(repoData->cipherSpecArchive), cipherTypeNone, "check repo2 cipher pass");
         TEST_RESULT_PTR(cipherSpecPass(repoData->cipherSpecArchive), NULL, "check repo2 cipher pass (not set in this test)");
 
         repoData = lstGet(result.repoList, 1);
         TEST_RESULT_UINT(repoData->repoIdx, 1, "check repo idx");
-        TEST_RESULT_STR_Z(repoData->archiveId, "9.6-2", "check repo4 archive id");
+        TEST_RESULT_STR_Z(repoData->archiveId, "10-2", "check repo4 archive id");
         TEST_RESULT_UINT(cipherSpecType(repoData->cipherSpecArchive), cipherTypeNone, "check repo4 cipher type");
         TEST_RESULT_PTR(cipherSpecPass(repoData->cipherSpecArchive), NULL, "check repo4 cipher pass (not set in this test)");
     }
@@ -736,7 +736,7 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        strLstAddZ(argList, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal/000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         // Make the spool path read-only so the foreground fails to create the spool out path and reports the error directly instead
@@ -799,10 +799,10 @@ testRun(void)
 
         // Write out an error file that will be ignored on the first pass, then the async process will write a new one
         StringList *argListTemp = strLstDup(argList);
-        strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
+        strLstAddZ(argListTemp, TEST_PATH "/pg/pg_wal/000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal/archive_status");
 
         HRN_STORAGE_PUT_Z(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT "/000000010000000100000001.error", "25\nbogus error");
 
@@ -815,7 +815,7 @@ testRun(void)
 
         // Acquire a lock so the async process will not be able to run -- this will result in a timeout
         argListTemp = strLstDup(argList);
-        strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
+        strLstAddZ(argListTemp, TEST_PATH "/pg/pg_wal/000000010000000100000001");
         hrnCfgArgRawZ(argListTemp, cfgOptArchiveTimeout, "1");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
@@ -860,10 +860,10 @@ testRun(void)
 
         // Actually push a WAL file
         argListTemp = strLstDup(argList);
-        strLstAddZ(argListTemp, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
+        strLstAddZ(argListTemp, TEST_PATH "/pg/pg_wal/000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp);
 
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000001.ready");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/archive_status/000000010000000100000001.ready");
 
         Buffer *walBuffer1 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer1, bufSize(walBuffer1));
@@ -871,7 +871,7 @@ testRun(void)
         HRN_PG_WAL_TO_BUFFER(walBuffer1, PG_VERSION_18);
         const char *walBuffer1Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer1)));
 
-        HRN_STORAGE_PUT(storagePgWrite(),"pg_xlog/000000010000000100000001", walBuffer1);
+        HRN_STORAGE_PUT(storagePgWrite(),"pg_wal/000000010000000100000001", walBuffer1);
 
         TEST_RESULT_VOID(cmdArchivePush(), "push the WAL segment");
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000001' to the archive asynchronously");
@@ -902,10 +902,10 @@ testRun(void)
         HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
 
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_wal/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal/archive_status");
 
-        strLstAddZ(argList, TEST_PATH "/pg/pg_xlog");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
         TEST_ERROR(cmdArchivePushAsync(), AssertError, "no WAL files to process");
@@ -932,14 +932,14 @@ testRun(void)
             "1={\"db-id\":" HRN_PG_SYSTEMID_18_Z ",\"db-version\":\"18\"}\n");
 
         // Recreate ready file for WAL 1
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000001.ready");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/archive_status/000000010000000100000001.ready");
 
         TEST_STORAGE_EXISTS(
             storageTest, zNewFmt("repo/archive/test/18-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
             .comment = "check repo1 for WAL 1 file");
 
         // Create a ready file for WAL 2 but don't create the segment yet -- this will test the file error
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000002.ready");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/archive_status/000000010000000100000002.ready");
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         TEST_RESULT_LOG_FMT(
@@ -951,7 +951,7 @@ testRun(void)
             "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING "\n"
             "            [RETRY DETAIL OMITTED]\n"
             "P00   WARN: stopped archive-push after an error, remaining WAL will be processed on the next run",
-            TEST_PATH "/pg/pg_xlog/000000010000000100000002");
+            TEST_PATH "/pg/pg_wal/000000010000000100000002");
 
         TEST_STORAGE_EXISTS(
             storageTest, zNewFmt("repo/archive/test/18-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
@@ -977,7 +977,7 @@ testRun(void)
         HRN_PG_WAL_TO_BUFFER(walBuffer2, PG_VERSION_18);
         const char *walBuffer2Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer2)));
 
-        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000002", walBuffer2);
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000002", walBuffer2);
 
         argListTemp = strLstDup(argList);
         hrnCfgArgRawZ(argListTemp, cfgOptArchivePushQueueMax, "1gb");
@@ -1026,10 +1026,10 @@ testRun(void)
         HRN_PG_WAL_TO_BUFFER(walBuffer3, PG_VERSION_18);
         const char *walBuffer3Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer3)));
 
-        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000003", walBuffer3);
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000003", walBuffer3);
 
         // Create ready file
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000003.ready");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/archive_status/000000010000000100000003.ready");
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segment");
         TEST_RESULT_LOG(
@@ -1044,7 +1044,7 @@ testRun(void)
             .comment = "check repo3 for WAL 3 file");
 
         // Remove the ready file to prevent WAL 3 from being considered for the next test
-        HRN_STORAGE_REMOVE(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000003.ready", .errorOnMissing = true);
+        HRN_STORAGE_REMOVE(storagePgWrite(), "pg_wal/archive_status/000000010000000100000003.ready", .errorOnMissing = true);
 
         // Check that drop functionality works
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1082,8 +1082,8 @@ testRun(void)
         // Remove status and ready files to get a clean state
         HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_wal/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal/archive_status");
 
         // Create two valid WAL segments and ready files for four segments. With the batch size set to two segments (32MiB) only the
         // first two are pushed and the last two are left for the next run.
@@ -1093,11 +1093,11 @@ testRun(void)
         HRN_PG_WAL_TO_BUFFER(walBufferBatch, PG_VERSION_18);
         const char *walBufferBatchSha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBufferBatch)));
 
-        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000010", walBufferBatch);
-        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000011", walBufferBatch);
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000010", walBufferBatch);
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000011", walBufferBatch);
 
         for (unsigned int walIdx = 16; walIdx <= 19; walIdx++)
-            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/0000000100000001%08X.ready", walIdx));
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_wal/archive_status/0000000100000001%08X.ready", walIdx));
 
         argListTemp = strLstDup(argList);
         hrnCfgArgRawZ(argListTemp, cfgOptArchivePushBatchSize, "32MiB");
@@ -1122,15 +1122,15 @@ testRun(void)
         // Remove status and ready files to get a clean state
         HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_wal/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal/archive_status");
 
         // Create one valid WAL segment and ready files for two segments. A batch size smaller than a single segment still pushes
         // one segment so that progress is always made.
-        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000014", walBufferBatch);
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000014", walBufferBatch);
 
         for (unsigned int walIdx = 20; walIdx <= 21; walIdx++)
-            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/0000000100000001%08X.ready", walIdx));
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_wal/archive_status/0000000100000001%08X.ready", walIdx));
 
         argListTemp = strLstDup(argList);
         hrnCfgArgRawZ(argListTemp, cfgOptArchivePushBatchSize, "1MiB");
@@ -1151,15 +1151,15 @@ testRun(void)
         // Remove status and ready files to get a clean state
         HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_wal/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal/archive_status");
 
         // Create ready files for two segments with a zero-size first segment. A ready WAL segment should never be zero size, so the
         // command errors immediately instead of applying the batch size.
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/000000010000000100000016");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/000000010000000100000016");
 
         for (unsigned int walIdx = 22; walIdx <= 23; walIdx++)
-            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/0000000100000001%08X.ready", walIdx));
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_wal/archive_status/0000000100000001%08X.ready", walIdx));
 
         argListTemp = strLstDup(argList);
         hrnCfgArgRawZ(argListTemp, cfgOptArchivePushBatchSize, "1MiB");
@@ -1173,13 +1173,13 @@ testRun(void)
 
         HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_wal/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal/archive_status");
 
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/000000010000000100000018.00000028.backup");
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000018.00000028.backup.ready");
-        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000019", walBufferBatch);
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000019.ready");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/000000010000000100000018.00000028.backup");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/archive_status/000000010000000100000018.00000028.backup.ready");
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000019", walBufferBatch);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/archive_status/000000010000000100000019.ready");
 
         HRN_CFG_LOAD(cfgCmdArchivePush, argList, .role = cfgCmdRoleAsync);
 
@@ -1200,11 +1200,11 @@ testRun(void)
 
         HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_wal/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal/archive_status");
 
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/00000002.history");
-        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/00000002.history.ready");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/00000002.history");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_wal/archive_status/00000002.history.ready");
 
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push history file");
         TEST_RESULT_LOG(
@@ -1219,14 +1219,14 @@ testRun(void)
         // Remove status and ready files to get a clean state
         HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_wal/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal/archive_status");
 
         // Create the first segment (used to size the queue) and ready files for four segments
-        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000010", walBufferBatch);
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_wal/000000010000000100000010", walBufferBatch);
 
         for (unsigned int walIdx = 16; walIdx <= 19; walIdx++)
-            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/0000000100000001%08X.ready", walIdx));
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_wal/archive_status/0000000100000001%08X.ready", walIdx));
 
         // The batch size (two segments = 32MiB) is under the queue-max but the full queue (four segments = 64MiB) exceeds it, so
         // the entire queue is dropped rather than truncated to the batch
@@ -1257,15 +1257,15 @@ testRun(void)
         // Remove status and ready files to get a clean state
         HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_wal/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal/archive_status");
 
         // Create WAL segments and ready files for six segments. There are more segments than will be processed to prove that
         // processing stops after an error and leaves the remaining WAL for the next run.
         for (unsigned int walIdx = 4; walIdx <= 9; walIdx++)
         {
-            HRN_STORAGE_PUT(storagePgWrite(), zNewFmt("pg_xlog/00000001000000010000000%u", walIdx), walBufferBatch);
-            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/00000001000000010000000%u.ready", walIdx));
+            HRN_STORAGE_PUT(storagePgWrite(), zNewFmt("pg_wal/00000001000000010000000%u", walIdx), walBufferBatch);
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_wal/archive_status/00000001000000010000000%u.ready", walIdx));
         }
 
         // Make the repo archive path read-only so each push errors when it writes, simulating an unavailable repository

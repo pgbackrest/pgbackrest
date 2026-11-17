@@ -3,8 +3,6 @@ ZST Decompress
 
 Decompress IO from the zst format.
 ***********************************************************************************************************************************/
-#ifdef HAVE_LIBZST
-
 #ifndef COMMON_COMPRESS_ZST_DECOMPRESS_H
 #define COMMON_COMPRESS_ZST_DECOMPRESS_H
 
@@ -21,5 +19,3 @@ Constructors
 FN_EXTERN IoFilter *zstDecompressNew(bool raw);
 
 #endif
-
-#endif // HAVE_LIBZST
