@@ -233,8 +233,8 @@
                                 <allow-item id="none">no compression</allow-item>
                                 <allow-item id="bz2">bzip2 compression format</allow-item>
                                 <allow-item id="gz">gzip compression format</allow-item>
-                                <allow-item id="lz4">lz4 compression format (not available on all platforms)</allow-item>
-                                <allow-item id="zst">Zstandard compression format (not available on all platforms)</allow-item>
+                                <allow-item id="lz4">lz4 compression format</allow-item>
+                                <allow-item id="zst">Zstandard compression format</allow-item>
                             </allow-list>
                         </text>
 
