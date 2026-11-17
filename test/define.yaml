@@ -392,6 +392,9 @@ unit:
       - common/format/cipherSpecMap
       - common/format/format
 
+    include:
+      - common/crypto/cipherBlock
+
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: common/io/tls
     total: 6

@@ -711,6 +711,17 @@ testRun(void)
             restoreManifestValidate(manifest, STRDEF("20161219-212741F_20161219-212918I")), FormatError,
             "requested backup '20161219-212741F_20161219-212918I' and manifest label '20161219-212741F' do not match\n"
             "HINT: this indicates some sort of corruption (at the very least paths have been renamed).");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on unsupported version");
+
+        manifest = testManifestMinimal(STRDEF("20161219-212741F"), 90600, STRDEF("/pg"));
+
+        TEST_ERROR(
+            restoreManifestValidate(manifest, STRDEF("20161219-212741F")), VersionNotSupportedError,
+            "invalid PostgreSQL version 9.6\n"
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
     }
 
     // *****************************************************************************************************************************

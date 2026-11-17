@@ -14,7 +14,7 @@ Functions
 FN_EXTERN CipherSpec *cipherSpecGen(CipherType cipherType, unsigned int format);
 
 // Error when the passphrase of an encrypted repository is a documentation example or, at Format >= 6, does not look generated. The
-// action completes the error message, e.g. "create a stanza".
+// action completes the error message, e.g. "create a stanza". When the action is NULL warn instead of error.
 FN_EXTERN void stanzaCipherPassCheck(unsigned int repoIdx, unsigned int format, const char *action);
 
 // Validate and return database information

@@ -132,6 +132,9 @@ FN_EXTERN void pgControlCheckpointInvalidate(Buffer *buffer, const String *pgVer
 // Get the control version for a PostgreSQL version
 FN_EXTERN uint32_t pgControlVersion(unsigned int pgVersion);
 
+// Throws an error if version is not supported
+FN_EXTERN void pgVersionCheck(unsigned int pgVersion);
+
 // Convert version string to version number and vice versa
 FN_EXTERN unsigned int pgVersionFromStr(const String *version);
 FN_EXTERN String *pgVersionToStr(unsigned int version);

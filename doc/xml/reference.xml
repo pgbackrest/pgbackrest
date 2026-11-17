@@ -2396,6 +2396,8 @@
 
                     <p>Note that <code>pg_create_restore_point('pgBackRest Archive Check')</code> and <code>pg_switch_xlog()</code>/<code>pg_switch_wal()</code> are called to force <postgres/> to archive a WAL segment.</p>
 
+                    <p>The <cmd>check</cmd> command warns while <br-option>repo-cipher-pass-old</br-option> is set and reports whether the stanza has been rekeyed. Otherwise it warns when <br-option>repo-cipher-pass</br-option> is the example passphrase from the documentation or, at <br-option>repo-format</br-option> 6 or higher, is not a generated passphrase, with a hint to change it with the <cmd>stanza-rekey</cmd> command.</p>
+
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>
 
@@ -3056,6 +3058,8 @@
 
                 <text>
                     <p>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> command run. If there is more than one repository configured on the host, the stanza will be upgraded on each. If the database is offline use the <br-option>--no-online</br-option> option.</p>
+
+                    <p>A warning is logged when <br-option>repo-cipher-pass</br-option> is the example passphrase from the documentation or, at <br-option>repo-format</br-option> 6 or higher, is not a generated passphrase, with a hint to change it with the <cmd>stanza-rekey</cmd> command. There is no warning while <br-option>repo-cipher-pass-old</br-option> is set.</p>
 
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>
