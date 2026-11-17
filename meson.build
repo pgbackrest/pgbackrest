@@ -230,6 +230,9 @@ lib_z = dependency('zlib')
 
 configuration.set('ZLIB_CONST', true, description: 'Require zlib const input buffer')
 
+# Find required zstd library
+lib_zstd = dependency('libzstd', version: '>=1.0')
+
 # Find socket library on illumos/Solaris, where sockets are not in libc
 lib_socket = dependency('', required: false)
 
@@ -249,13 +252,6 @@ lib_ssh2 = dependency('libssh2', required: get_option('libssh2'))
 
 if lib_ssh2.found()
     configuration.set('HAVE_LIBSSH2', true, description: 'Is libssh2 present?')
-endif
-
-# Find optional zstd library
-lib_zstd = dependency('libzstd', version: '>=1.0', required: get_option('libzstd'))
-
-if lib_zstd.found()
-    configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
 endif
 
 # Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros
