@@ -1062,8 +1062,7 @@ testRun(void)
 
                 testRequestP(
                     service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1", .kmsContext = S3_TEST_KMS_CONTEXT,
-                    .sseC = "rA1P",
-                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
+                    .sseC = "rA1P", .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(
                     service,
                     .content =
