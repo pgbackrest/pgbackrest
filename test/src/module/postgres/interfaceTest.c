@@ -53,7 +53,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pgControlVersion()"))
+    if (testBegin("pgControlVersion() and pgVersionCheck()"))
     {
         TEST_ERROR(
             pgControlVersion(70300), VersionNotSupportedError,
@@ -63,6 +63,13 @@ testRun(void)
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_10), 1002, "10 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_17), 1700, "17 control version");
+
+        TEST_ERROR(
+            pgVersionCheck(90600), VersionNotSupportedError,
+            "invalid PostgreSQL version 9.6\n"
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
+        TEST_RESULT_VOID(pgVersionCheck(PG_VERSION_10), "10 supported");
     }
 
     // *****************************************************************************************************************************

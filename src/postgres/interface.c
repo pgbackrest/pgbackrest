@@ -452,6 +452,19 @@ pgControlVersion(const unsigned int pgVersion)
     FUNCTION_TEST_RETURN(UINT32, pgInterfaceVersion(pgVersion)->controlVersion);
 }
 
+/**********************************************************************************************************************************/
+FN_EXTERN void
+pgVersionCheck(const unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    pgInterfaceVersion(pgVersion);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 These WAL header fields are common to all versions of PostgreSQL, so we can use them to generate error messages when the WAL magic
 cannot be found.

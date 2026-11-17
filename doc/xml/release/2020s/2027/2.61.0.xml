@@ -114,6 +114,20 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2925"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="stefan.fercot"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Check the <postgres/> version before <cmd>restore</cmd> modifies the data directory.</p>
+
+                <p>A <cmd>restore</cmd> of a backup from an unsupported <postgres/> version, e.g. <id>9.6</id>, failed after the data directory had been modified. With <br-option>--delta</br-option> <file>pg_control</file> and files not in the backup had already been removed. The version is now checked before the data directory is modified.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2895"/>
 
                 <release-item-contributor-list>
