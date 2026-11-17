@@ -518,7 +518,8 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
         if (cfgOptionValid(cfgOptTlsCipher12))
         {
             ASSERT(cfgOptionValid(cfgOptTlsCipher13));
-            tlsInit(cfgOptionStrNull(cfgOptTlsCipher12), cfgOptionStrNull(cfgOptTlsCipher13));
+            ASSERT(cfgOptionValid(cfgOptTlsMinVersion));
+            tlsInit(cfgOptionStrNull(cfgOptTlsCipher12), cfgOptionStrNull(cfgOptTlsCipher13), cfgOptionStr(cfgOptTlsMinVersion));
         }
 
         // Set IO buffer size (use the default for help to lower memory usage)

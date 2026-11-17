@@ -161,8 +161,10 @@ def test_config_parse_option():
 
   repo-cipher-type:
     section: global
+    group: repo
     type: string-id
     sequence: true
+    format: 6
 
   start-fast:
     section: global
@@ -212,8 +214,14 @@ def test_config_parse_option():
     assert_true(opt.negate)
     assert_equal(opt.default_type, "literal")
 
-    # An option whose values are numbered
-    assert_true(_find(cfg.opt_list, "repo-cipher-type").sequence)
+    # An option whose values are numbered and that has a minimum repository format
+    opt = _find(cfg.opt_list, "repo-cipher-type")
+
+    assert_true(opt.sequence)
+    assert_equal(opt.format, 6)
+
+    # An option with no minimum repository format
+    assert_equal(_find(cfg.opt_list, "pg-path").format, None)
 
     # An option that does not say where it can be configured can only be given on the command line, so it cannot be reset
     opt = _find(cfg.opt_list, "force")
@@ -246,6 +254,22 @@ def test_config_parse_option_error():
     )
     assert_equal(
         _error(OPTION_STANZA + "  bogus:\n    type: string\n    group: bogus\n"), "option 'bogus' has invalid group 'bogus'"
+    )
+    assert_equal(
+        _error(OPTION_STANZA + "  bogus:\n    type: string\n    group: repo\n    format: 5\n"),
+        "option 'bogus' has invalid format '5'",
+    )
+    assert_equal(
+        _error(OPTION_STANZA + "  bogus:\n    type: string\n    group: repo\n    format: x\n"),
+        "option 'bogus' has invalid format 'x'",
+    )
+    assert_equal(
+        _error(OPTION_STANZA + "  bogus:\n    type: string\n    group: pg\n    format: 6\n"),
+        "option 'bogus' with a format must be in group 'repo'",
+    )
+    assert_equal(
+        _error(OPTION_STANZA + "  bogus:\n    type: string\n    format: 6\n"),
+        "option 'bogus' with a format must be in group 'repo'",
     )
     assert_equal(
         _error(OPTION_STANZA + "  bogus:\n    type: string\n    command:\n      bogus: {}\n"),

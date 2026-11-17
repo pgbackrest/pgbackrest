@@ -60,6 +60,7 @@ testRun(void)
         TEST_RESULT_VOID(cryptoError(false, "no error here"), "no error");
 
         EVP_MD_CTX *context = EVP_MD_CTX_new();
+        TEST_RESULT_INT(EVP_DigestInit_ex(context, NULL, NULL), 0, "queue error");
         TEST_ERROR(
             cryptoError(EVP_DigestInit_ex(context, NULL, NULL) != 1, "unable to initialize hash context"), CryptoError,
             "unable to initialize hash context: "
@@ -72,6 +73,32 @@ testRun(void)
         EVP_MD_CTX_free(context);
 
         TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error queue cleared on init");
+
+        context = EVP_MD_CTX_new();
+        TEST_RESULT_INT(EVP_DigestInit_ex(context, NULL, NULL), 0, "queue error");
+        EVP_MD_CTX_free(context);
+
+        cryptoInitDone = false;
+
+        TEST_RESULT_VOID(cryptoInit(), "initialize crypto");
+        TEST_ERROR(cryptoError(true, "no error"), CryptoError, "no error: [0] no details available");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("system error");
+
+        TEST_RESULT_PTR(BIO_new_file("/bogus", "r"), NULL, "queue system error");
+        TEST_ERROR(
+            cryptoError(true, "unable to open file"), CryptoError,
+            "unable to open file: "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+            "[2147483650]"
+#else
+            "[33558530]"
+#endif
+            " No such file or directory");
 
         // Test if the buffer was overrun
         // -------------------------------------------------------------------------------------------------------------------------
@@ -135,6 +162,13 @@ testRun(void)
         TEST_RESULT_UINT(
             cipherSpecDigest(cipherSpecDupP(cipherSpec, .digestDefault = hashTypeSha1)), hashTypeSha256, "dup keeps digest");
 
+        // The prior spec is copied by dup
+        const CipherSpec *const cipherSpecWithPrior = cipherSpecDupP(
+            cipherSpecNewP(cipherTypeAes256Cbc, testPass, .prior = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"))));
+
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecPrior(cipherSpecWithPrior))), "old", "dup prior");
+        TEST_RESULT_PTR(cipherSpecPrior(cipherSpec), NULL, "no prior");
+
         // A pack contains nothing but the type when there is no cipher
         PackWrite *packWrite = pckWriteNewP();
 
@@ -144,10 +178,14 @@ testRun(void)
         TEST_RESULT_UINT(
             cipherSpecType(cipherSpecNewPack(pckReadNew(pckWriteResult(packWrite)))), cipherTypeNone, "unpack none");
 
-        // Else it contains the type, digest, and pass
+        // Else it contains the type, digest, and pass but not the prior spec
         packWrite = pckWriteNewP();
 
-        cipherSpecPack(packWrite, cipherSpecNewP(cipherTypeAes256Cbc, testPass, .digest = hashTypeSha1));
+        cipherSpecPack(
+            packWrite,
+            cipherSpecNewP(
+                cipherTypeAes256Cbc, testPass, .digest = hashTypeSha1,
+                .prior = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"))));
         pckWriteEndP(packWrite);
 
         const CipherSpec *const cipherSpecUnpack = cipherSpecNewPack(pckReadNew(pckWriteResult(packWrite)));
@@ -155,6 +193,7 @@ testRun(void)
         TEST_RESULT_UINT(cipherSpecType(cipherSpecUnpack), cipherTypeAes256Cbc, "unpack type");
         TEST_RESULT_UINT(cipherSpecDigest(cipherSpecUnpack), hashTypeSha1, "unpack digest");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecUnpack)), TEST_PASS, "unpack pass");
+        TEST_RESULT_PTR(cipherSpecPrior(cipherSpecUnpack), NULL, "unpack no prior");
 
         CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(cipherBlockNewP(cipherModeEncrypt, cipherSpec));
         TEST_RESULT_UINT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");

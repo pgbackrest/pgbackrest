@@ -944,17 +944,36 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("a copy that cannot be decrypted is reported as such rather than as a checksum that does not match");
 
-        // Damage the content of the copy, which nothing but the drain reads, so that it no longer decrypts
+        // Truncate the copy to a length that is not a multiple of the cipher block size
         Buffer *const archiveInfoCopy = bufDup(
             storageGetP(storageNewReadP(storageRepo(), STRDEF(INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT))));
 
-        bufPtr(archiveInfoCopy)[bufUsed(archiveInfoCopy) - 1] ^= 0xff;
+        bufUsedSet(archiveInfoCopy, bufUsed(archiveInfoCopy) - 1);
         HRN_STORAGE_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, archiveInfoCopy, .comment = "damaged archive.info.copy");
 
         TEST_RESULT_VOID(cmdVerify(), "encrypted archive.info.copy that cannot be decrypted");
         TEST_RESULT_LOG("P00 DETAIL: unable to flush");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("info files decrypted with the old passphrase");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "unencrypted archive.info.copy");
+
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, "U3wR+u+uplH37Lo863u+aJ74uVMPqCAevLGzu2sajYE=");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 1, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        TEST_RESULT_VOID(cmdVerify(), "info files encrypted with the old passphrase");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: <REPO:BACKUP>/backup.info was decrypted with the old passphrase\n"
+            "P00 DETAIL: <REPO:BACKUP>/backup.info.copy was decrypted with the old passphrase\n"
+            "P00 DETAIL: <REPO:ARCHIVE>/archive.info was decrypted with the old passphrase\n"
+            "P00 DETAIL: cipher header invalid");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPassOld, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
         harnessLogLevelReset();
     }

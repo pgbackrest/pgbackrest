@@ -493,6 +493,9 @@ def _render_option(opt, bld_cfg, rule_val_map, dynamic_default_list):
     if opt.group is not None:
         result += "        PARSE_RULE_OPTION_GROUP_ID(%s),\n" % bld_enum("", opt.group)
 
+    if opt.format is not None:
+        result += "        PARSE_RULE_OPTION_FORMAT(%u),\n" % opt.format
+
     # An option in a group can be given without an index when a deprecation says so, e.g. repo-path for repo1-path
     for deprecate in opt.deprecate_list or []:
         if deprecate.name == opt.name and deprecate.unindexed:

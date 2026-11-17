@@ -16,7 +16,7 @@ Archive Info Handler
 #include "common/io/io.h"
 #include "common/log.h"
 #include "common/type/convert.h"
-#include "info/infoArchive.h"
+#include "info/infoArchive.intern.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -254,16 +254,35 @@ infoArchiveFormatSet(InfoArchive *const this, const unsigned int format)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN void
+infoArchiveCipherPriorClear(InfoArchive *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO_ARCHIVE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    infoCipherPriorSet(infoPgInfo(infoArchivePg(this)), false);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 // Create from a read of the file
 static void *
-infoArchiveLoadFileNew(IoRead *const read, const CipherSpec *const cipherSpec)
+infoArchiveLoadFileNew(IoRead *const read, const CipherSpec *const cipherSpec, const bool prior)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_READ, read);
         FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpec);
+        FUNCTION_TEST_PARAM(BOOL, prior);
     FUNCTION_TEST_END();
 
-    FUNCTION_TEST_RETURN(INFO_ARCHIVE, infoArchiveNewLoad(read, cipherSpec));
+    InfoArchive *const result = infoArchiveNewLoad(read, cipherSpec);
+    infoCipherPriorSet(infoPgInfo(infoArchivePg(result)), prior);
+
+    FUNCTION_TEST_RETURN(INFO_ARCHIVE, result);
 }
 
 FN_EXTERN InfoArchive *
@@ -318,13 +337,16 @@ infoArchiveSaveFile(
     ASSERT(storage != NULL);
     ASSERT(fileName != NULL);
     ASSERT(cipherSpec != NULL);
+    ASSERT(!infoArchiveCipherPrior(infoArchive) || cipherSpecPrior(cipherSpec) != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write output into a buffer since it needs to be saved to storage twice
         Buffer *const buffer = bufNew(ioBufferSize());
         IoWrite *const write = ioBufferWriteNew(buffer);
-        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, infoArchiveFormat(infoArchive));
+        cipherBlockFormatFilterGroupWriteAddP(
+            ioWriteFilterGroup(write), infoArchiveCipherPrior(infoArchive) ? cipherSpecPrior(cipherSpec) : cipherSpec,
+            infoArchiveFormat(infoArchive));
         infoArchiveSave(infoArchive, write);
 
         // Save the file and make a copy

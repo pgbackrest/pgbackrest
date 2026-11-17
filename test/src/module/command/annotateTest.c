@@ -3,6 +3,8 @@ Test Annotate Command
 ***********************************************************************************************************************************/
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
+#include "common/type/json.h"
+#include "info/infoBackup.h"
 #include "storage/posix/storage.h"
 
 #include "harness/config.h"
@@ -47,15 +49,36 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("annotate backup success");
 
-        // Add backup info
-        HRN_INFO_PUT(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE,
-            "[db]\n"
-            "db-catalog-version=202506291\n"
-            "db-control-version=1800\n"
-            "db-id=1\n"
-            "db-system-id=6626363367545678089\n"
+        // The backup set is only in repo2 and no repo is specified, so every repo is searched
+        argListAnnotation = strLstDup(argList);
+        hrnCfgArgKeyRawZ(argListAnnotation, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgRawZ(argListAnnotation, cfgOptAnnotation, "key1=value1");
+        hrnCfgArgRawZ(argListAnnotation, cfgOptSet, "20201116-200000F");
+        HRN_CFG_LOAD(cfgCmdAnnotate, argListAnnotation);
+
+        #define TEST_BACKUP_INFO_DB                                                                                                \
+            "[db]\n"                                                                                                               \
+            "db-catalog-version=202506291\n"                                                                                       \
+            "db-control-version=1800\n"                                                                                            \
+            "db-id=1\n"                                                                                                            \
+            "db-system-id=6626363367545678089\n"                                                                                   \
             "db-version=\"18\"\n"
+
+        #define TEST_BACKUP_INFO_DB_HISTORY                                                                                        \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            "1={\"db-catalog-version\":202506291,\"db-control-version\":1800,\"db-system-id\":6626363367545678089"                 \
+            ",\"db-version\":\"18\"}\n"
+
+        // Add backup info without the backup set
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO_DB TEST_BACKUP_INFO_DB_HISTORY,
+            .comment = "write backup info - stanza1, repo1");
+
+        // Add backup info with the backup set
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE,
+            TEST_BACKUP_INFO_DB
             "\n"
             "[backup:current]\n"
             "20201116-200000F={\"backrest-format\":5,\"backrest-version\":\"2.30\","
@@ -66,11 +89,8 @@ testRun(void)
             "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,"
             "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":true,"
             "\"option-online\":true}\n"
-            "\n"
-            "[db:history]\n"
-            "1={\"db-catalog-version\":202506291,\"db-control-version\":1800,\"db-system-id\":6626363367545678089"
-            ",\"db-version\":\"18\"}\n",
-            .comment = "write backup info - stanza1, repo1");
+            TEST_BACKUP_INFO_DB_HISTORY,
+            .comment = "write backup info - stanza1, repo2");
 
         // Add backup manifest
         #define TEST_MANIFEST_HEADER                                                                                               \
@@ -175,7 +195,7 @@ testRun(void)
 
         // Create manifest file
         HRN_INFO_PUT(
-            storageRepoWrite(), STORAGE_REPO_BACKUP "/20201116-200000F/" BACKUP_MANIFEST_FILE,
+            storageRepoIdxWrite(1), STORAGE_REPO_BACKUP "/20201116-200000F/" BACKUP_MANIFEST_FILE,
             TEST_MANIFEST_HEADER
             TEST_MANIFEST_TARGET
             TEST_MANIFEST_DB
@@ -185,10 +205,23 @@ testRun(void)
             TEST_MANIFEST_LINK_DEFAULT
             TEST_MANIFEST_PATH
             TEST_MANIFEST_PATH_DEFAULT,
-            .comment = "write backup manifest - stanza1, repo1");
+            .comment = "write backup manifest - stanza1, repo2");
 
         TEST_RESULT_VOID(cmdAnnotate(), "annotate 20201116-200000F backup set");
-        TEST_RESULT_LOG("P00   INFO: backup set '20201116-200000F' to annotate found in repo1");
+        TEST_RESULT_LOG("P00   INFO: backup set '20201116-200000F' to annotate found in repo2");
+
+        const InfoBackup *infoBackup = NULL;
+
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepoIdx(0), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
+            "load repo1 backup info");
+        TEST_RESULT_UINT(infoBackupDataTotal(infoBackup), 0, "repo1 backup info has no backup sets");
+
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
+            "load repo2 backup info");
+        TEST_RESULT_STR_Z(
+            jsonFromVar(infoBackupData(infoBackup, 0).backupAnnotation), "{\"key1\":\"value1\"}", "repo2 backup set annotated");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("wrong backup label format");

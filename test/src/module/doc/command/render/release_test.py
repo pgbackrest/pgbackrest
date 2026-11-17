@@ -231,6 +231,13 @@ DETAIL_RELEASE_LIST = """
 # Html of the details up to the first paragraph or line of links
 DETAIL_HTML = '\n<details class="list-detail"><summary class="list-detail-toggle" title="Details" aria-label="Details"></summary>'
 
+# Version header with the patch part given
+VERSION_H = """#define PROJECT_VERSION_MAJOR                                       2
+#define PROJECT_VERSION_MINOR                                       60
+#define PROJECT_VERSION_PATCH                                       %d
+#define PROJECT_VERSION_SUFFIX                                      ""
+"""
+
 
 ####################################################################################################################################
 def _doc(release_list=RELEASE_LIST, contributor=CONTRIBUTOR):
@@ -1197,6 +1204,7 @@ def test_release_history_update():
         path_history = os.path.join(path_doc, "resource/git-history.cache")
 
         exec_one("git -C %s init -q" % path)
+        file_write(os.path.join(path, "src/version.h"), VERSION_H % 0)
         _commit(path, "Add a feature.", "What the feature does.")
         _commit(path, "v2.01: First.", "The release notes.")
 
@@ -1292,4 +1300,18 @@ def test_release_history_update():
         exec_one("git -C %s update-ref refs/remotes/upstream/integration HEAD~1" % path)
 
         assert_false(release_history_update(path, path_doc))
+        assert_equal(json.loads(file_read(path_history))["head"][0]["subject"], "Fix a bug.")
+
+        # With PROJECT_VERSION_PATCH != 0 the integration branches are not tried and the history ends at HEAD
+        file_write(os.path.join(path, "src/version.h"), VERSION_H % 1)
+        exec_one("git -C %s update-ref refs/heads/integration HEAD~1" % path)
+
+        assert_false(release_history_update(path, path_doc))
+        assert_equal(json.loads(file_read(path_history))["head"][0]["subject"], "RELEASE: Add release notes.")
+
+        # With PROJECT_VERSION_PATCH != 0 and an integration-x.y.z-ci branch related to HEAD the history ends at the newest commit
+        # of HEAD that is also in that branch, and the result is true
+        exec_one("git -C %s branch integration-2.60.1-ci HEAD~1" % path)
+
+        assert_true(release_history_update(path, path_doc))
         assert_equal(json.loads(file_read(path_history))["head"][0]["subject"], "Fix a bug.")

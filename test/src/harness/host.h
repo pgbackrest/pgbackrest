@@ -475,6 +475,7 @@ typedef struct HrnHostConfigUpdateParam
 {
     VAR_PARAM_HEADER;
     const Variant *archiveAsync;                                    // Update async archiving?
+    const CipherSpec *cipherSpec;                                   // Update cipher spec the repo is configured with
 } HrnHostConfigUpdateParam;
 
 #define hrnHostConfigUpdateP(...)                                                                                                  \

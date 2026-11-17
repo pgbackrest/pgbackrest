@@ -238,7 +238,7 @@ pageChecksumNew(
     FUNCTION_LOG_END();
 
     ASSERT(pgPageSizeValid(pageSize));
-    ASSERT(segmentPageTotal > 0 && segmentPageTotal % pageSize == 0);
+    ASSERT(segmentPageTotal > 0);
 
     OBJ_NEW_BEGIN(PageChecksum, .childQty = MEM_CONTEXT_QTY_MAX)
     {

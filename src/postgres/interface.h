@@ -74,13 +74,6 @@ typedef enum
 } PgPageSize;
 
 /***********************************************************************************************************************************
-Define default segment size and pages per segment
-
-Segment size can only be changed at compile time and is not known to be well-tested, so only the default segment size is supported.
-***********************************************************************************************************************************/
-#define PG_SEGMENT_SIZE_DEFAULT                                     ((unsigned int)(1 * 1024 * 1024 * 1024))
-
-/***********************************************************************************************************************************
 WAL header size. It doesn't seem worth tracking the exact size of the WAL header across versions of PostgreSQL so just set it to
 something far larger needed but <= the minimum read size on just about any system.
 ***********************************************************************************************************************************/
@@ -104,6 +97,7 @@ typedef struct PgControl
     uint32_t timeline;                                              // Current timeline
 
     PgPageSize pageSize;
+    unsigned int segmentPageTotal;                                  // Total pages in a relation segment
     unsigned int walSegmentSize;
 
     unsigned int pageChecksumVersion;                               // Page checksum version (0 if no checksum, 1 if checksum)

@@ -658,11 +658,12 @@ helpRender(void)
                             optionData[option.id].description, optionData[option.id].internal, option.beta, 0, true,
                             CONSOLE_WIDTH)));
 
-                // Output current and default values if they exist
+                // Output current and default values and minimum repository format if they exist
                 const String *const defaultValue = helpRenderDefault(option.id);
                 const String *const value = helpRenderValue(option.id);
+                const unsigned int format = cfgParseOptionFormat(option.id);
 
-                if (value != NULL || defaultValue != NULL)
+                if (value != NULL || defaultValue != NULL || format != 0)
                 {
                     strCat(result, LF_STR);
 
@@ -711,6 +712,9 @@ helpRender(void)
                             }
                         }
                     }
+
+                    if (format != 0)
+                        strCatFmt(result, "minimum repository format: %u\n", format);
                 }
 
                 // Output alternate name (call it deprecated so the user will know not to use it)

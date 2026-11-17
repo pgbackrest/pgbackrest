@@ -152,6 +152,9 @@ def _option_render(xml_section, opt_cmd_cfg, opt_cfg, opt_hlp, command):
     if opt_cfg.allow_range is not None:
         _allow_range_block(block_list, opt_cfg)
 
+    if opt_cfg.format is not None:
+        block_list.append("minimum repository format: %u" % opt_cfg.format)
+
     if opt_hlp.example_list is not None:
         _example_block(block_list, opt_cfg, opt_hlp, command)
 

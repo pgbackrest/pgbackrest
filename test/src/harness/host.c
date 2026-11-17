@@ -708,6 +708,13 @@ hrnHostConfig(HrnHost *const this)
             {
                 strCatFmt(config, "repo1-cipher-type=%s\n", zNewStrId(cipherSpecType(hrnHostLocal.cipherSpecMain)));
                 strCatFmt(config, "repo1-cipher-pass=%s\n", strZ(strNewBuf(cipherSpecPass(hrnHostLocal.cipherSpecMain))));
+
+                if (cipherSpecPrior(hrnHostLocal.cipherSpecMain) != NULL)
+                {
+                    strCatFmt(
+                        config, "repo1-cipher-pass-old=%s\n",
+                        strZ(strNewBuf(cipherSpecPass(cipherSpecPrior(hrnHostLocal.cipherSpecMain)))));
+                }
             }
 
             if (hrnHostLocal.bundle)
@@ -1102,11 +1109,21 @@ hrnHostConfigUpdate(const HrnHostConfigUpdateParam param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(VARIANT, param.archiveAsync);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, param.cipherSpec);
     FUNCTION_HARNESS_END();
 
     // Update config
     if (param.archiveAsync != NULL)
         hrnHostLocal.archiveAsync = varBool(param.archiveAsync);
+
+    if (param.cipherSpec != NULL)
+    {
+        MEM_CONTEXT_BEGIN(hrnHostLocal.memContext)
+        {
+            hrnHostLocal.cipherSpecMain = cipherSpecDupP(param.cipherSpec);
+        }
+        MEM_CONTEXT_END();
+    }
 
     // Write pgBackRest configuration for hosts
     hrnHostConfig(hrnHostPg1());

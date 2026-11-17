@@ -58,6 +58,7 @@ typedef struct ConfigOptionData
     bool group;                                                     // In a group?
     bool sequence;                                                  // Is there a sequence?
     unsigned int groupId;                                           // Id if in a group
+    unsigned int format;                                            // Minimum repository format, 0 if none
     ConfigOptionDataType dataType;                                  // Underlying data type
     ConfigOptionValue *index;                                       // List of indexed values (only 1 unless the option is indexed)
     const String **indexName;                                       // Index names (e.g. repo1-path, repo2-path)
@@ -84,6 +85,7 @@ typedef struct Config
     ConfigOptionData option[CFG_OPTION_TOTAL];                      // Option data
 
     CipherSpec **cipherSpecMain;                                    // Main cipher spec for the cipher options by repo index
+    unsigned int *repoFormat;                                       // Repository format by repo index, 0 if not set
 } Config;
 
 /***********************************************************************************************************************************
