@@ -97,6 +97,17 @@
 
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2921"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Remove support for <proper>PostgreSQL</proper> <id>9.6</id>.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2895"/>
 
                 <release-item-contributor-list>
