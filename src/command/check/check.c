@@ -9,6 +9,7 @@ Check Command
 #include "command/check/check.h"
 #include "command/check/common.h"
 #include "command/check/report.h"
+#include "command/stanza/common.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/log.h"
@@ -160,9 +161,9 @@ checkPrimary(const DbGetResult dbGroup)
     FUNCTION_LOG_RETURN_VOID();
 }
 
-// Warn when the old passphrase is set
+// Warn about the old passphrase when it is set and otherwise about the passphrase
 static void
-checkCipherPassOld(void)
+checkCipherPass(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
@@ -185,6 +186,8 @@ checkCipherPassOld(void)
                     cfgOptionIdxName(cfgOptRepoCipherPassOld, repoIdx));
             }
         }
+        else
+            stanzaCipherPassCheck(repoIdx, infoBackupFormat(infoBackupRepoIdxP(repoIdx)), NULL);
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -249,7 +252,7 @@ cmdCheck(void)
                 const unsigned int pgPathDefinedTotal = checkManifest();
                 checkStandby(dbGroup, pgPathDefinedTotal);
                 checkPrimary(dbGroup);
-                checkCipherPassOld();
+                checkCipherPass();
             }
         }
     }
