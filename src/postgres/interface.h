@@ -52,13 +52,10 @@ STRING_DECLARE(PG_PATH_GLOBAL_STR);
 #define PG_PATH_PGSTATTMP                                           "pg_stat_tmp"
 #define PG_PATH_PGSUBTRANS                                          "pg_subtrans"
 #define PG_PATH_PGTBLSPC                                            "pg_tblspc"
+#define PG_PATH_PGWAL                                               "pg_wal"
+#define PG_PATH_PGXACT                                              "pg_xact"
 
 #define PG_PREFIX_PGSQLTMP                                          "pgsql_tmp"
-
-#define PG_NAME_WAL                                                 "wal"
-STRING_DECLARE(PG_NAME_WAL_STR);
-#define PG_NAME_XLOG                                                "xlog"
-STRING_DECLARE(PG_NAME_XLOG_STR);
 
 /***********************************************************************************************************************************
 Define allowed page sizes
@@ -160,9 +157,6 @@ FN_EXTERN uint32_t pgTimelineFromWalSegment(const String *walSegment);
 FN_EXTERN StringList *pgLsnRangeToWalSegmentList(
     uint32_t timeline, uint64_t lsnStart, uint64_t lsnStop, unsigned int walSegmentSize);
 
-// Get name used for lsn in functions (this was changed in PostgreSQL 10 for consistency since lots of names were changing)
-FN_EXTERN const String *pgLsnName(unsigned int pgVersion);
-
 // Calculate the checksum for a page. Page cannot be const because the page header is temporarily modified during processing.
 FN_EXTERN uint16_t pgPageChecksum(uint8_t *page, uint32_t blockNo, PgPageSize pageSize);
 
@@ -171,14 +165,6 @@ FN_EXTERN bool pgPageSizeValid(PgPageSize pageSize);
 
 // Throws an error if page size is not valid
 FN_EXTERN void pgPageSizeCheck(PgPageSize pageSize);
-
-FN_EXTERN const String *pgWalName(unsigned int pgVersion);
-
-// Get wal path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
-FN_EXTERN const String *pgWalPath(unsigned int pgVersion);
-
-// Get transaction commit log path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
-FN_EXTERN const String *pgXactPath(unsigned int pgVersion);
 
 /***********************************************************************************************************************************
 Macros for function logging

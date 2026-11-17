@@ -131,14 +131,12 @@ vm:
     os-base: debian
     image: ubuntu:22.04
     db:
-      - 9.6
       - 10
       - 11
       - 12
       - 13
       - 14
     db-test:
-      - 9.6
       - 11
     coverage-c: true
     ssh-rsa: true
@@ -149,7 +147,6 @@ vm:
     os-base: debian
     image: ubuntu:24.04
     db:
-      - 9.6
       - 10
       - 11
       - 12
