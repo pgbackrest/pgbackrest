@@ -1404,10 +1404,20 @@ storageS3New(
             .signingKeyDate = YYYYMMDD_STR,
         };
 
-        if (kmsEncryptionContext != NULL)
+        // Create KMS encryption context header
+        if (write && kmsEncryptionContext != NULL)
         {
-            const String *const context = jsonFromVar(varNewKv(kvDup(kmsEncryptionContext)));
-            this->kmsEncryptionContext = strNewEncode(encodingBase64, BUFSTR(context));
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                const String *const context = jsonFromVar(varNewKv(kvDup(kmsEncryptionContext)));
+
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    this->kmsEncryptionContext = strNewEncode(encodingBase64, BUFSTR(context));
+                }
+                MEM_CONTEXT_PRIOR_END();
+            }
+            MEM_CONTEXT_TEMP_END();
         }
 
         // Set prefetch and read over

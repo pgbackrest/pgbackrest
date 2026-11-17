@@ -566,7 +566,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoS3KmsEncryptionContext, "cluster_id=pg-prod-01");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
-        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
+        driver = (StorageS3 *)storageDriver(storageRepoGet(0, true));
 
         TEST_RESULT_STR_Z(
             strNewBuf(bufNewDecode(encodingBase64, driver->kmsEncryptionContext)),
