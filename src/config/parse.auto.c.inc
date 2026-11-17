@@ -2023,9 +2023,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_STRID(gz),                                                                   // opt/compress-type
                     PARSE_RULE_VAL_STRID(lz4),                                                                  // opt/compress-type
                     PARSE_RULE_VAL_STRID(zst),                                                                  // opt/compress-type
-#ifndef HAVE_LIBZST                                                                                             // opt/compress-type
-                        PARSE_RULE_BOOL_FALSE,                                                                  // opt/compress-type
-#endif                                                                                                          // opt/compress-type
                 ),                                                                                              // opt/compress-type
                                                                                                                 // opt/compress-type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                     // opt/compress-type
