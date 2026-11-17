@@ -2474,7 +2474,7 @@ option:
     deprecate:
       repo-s3-key-secret: {}
 
-  repo-s3-kms-encryption-context:
+  repo-s3-kms-context:
     inherit: repo-s3-bucket
     type: hash
     required: false

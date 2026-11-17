@@ -380,7 +380,7 @@ testRun(void)
         TEST_RESULT_STR(driver->accessKey, accessKey, "check access key");
         TEST_RESULT_STR(driver->secretAccessKey, secretAccessKey, "check secret access key");
         TEST_RESULT_STR(driver->securityToken, NULL, "check security token");
-        TEST_RESULT_STR(driver->kmsEncryptionContext, NULL, "check encryption context is unset");
+        TEST_RESULT_STR(driver->kmsContext, NULL, "check encryption context is unset");
 
         TEST_RESULT_VOID(
             FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
@@ -788,8 +788,8 @@ testRun(void)
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, "auto");
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KmsKeyId, "kmskey1");
-                hrnCfgArgRawZ(argList, cfgOptRepoS3KmsEncryptionContext, "tenant_id=tenant-01");
-                hrnCfgArgRawZ(argList, cfgOptRepoS3KmsEncryptionContext, "cluster_id=pg-prod-01");
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KmsContext, "tenant_id=tenant-01");
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KmsContext, "cluster_id=pg-prod-01");
                 hrnCfgEnvRawZ(cfgOptRepoS3SseCustomerKey, "rA1P");
                 hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, "Key1=Value1");
                 hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, " Key 2= Value 2");
@@ -1103,7 +1103,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error in success response of multipart upload");
 
-                driver->kmsEncryptionContext = NULL;
+                driver->kmsContext = NULL;
 
                 // Stop writing tags
                 driver->tag = NULL;
