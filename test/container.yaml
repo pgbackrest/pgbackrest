@@ -131,14 +131,12 @@ vm:
     os-base: debian
     image: ubuntu:22.04
     db:
-      - 9.6
       - 10
       - 11
       - 12
       - 13
       - 14
     db-test:
-      - 9.6
       - 11
     coverage-c: true
     ssh-rsa: true
@@ -149,7 +147,6 @@ vm:
     os-base: debian
     image: ubuntu:24.04
     db:
-      - 9.6
       - 10
       - 11
       - 12
@@ -197,8 +194,4 @@ vm:
 #   rh10-x86_64: 20260710A   # rebuild rh10 on x86_64 only (independent of "all" and "rh10")
 # **********************************************************************************************************************************
 revision:
-  all: 20260710A
-
-  # Bump for PostgreSQL 19rc1
-  u24-x86_64: 20261015A
-  u24-aarch64: 20261015A
+  all: 20261113A

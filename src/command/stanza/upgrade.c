@@ -17,8 +17,7 @@ Stanza Upgrade Command
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
-#include "info/infoArchive.h"
-#include "info/infoBackup.h"
+#include "info/helper.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -46,18 +45,14 @@ cmdStanzaUpgrade(void)
                 CFGCMD_STANZA_UPGRADE " for stanza '%s' on %s", strZ(cfgOptionDisplay(cfgOptStanza)),
                 cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
-            const Storage *const storageRepoReadStanza = storageRepoIdx(repoIdx);
-            const Storage *const storageRepoWriteStanza = storageRepoIdxWrite(repoIdx);
             bool infoArchiveUpgrade = false;
             bool infoBackupUpgrade = false;
 
             // Load the info files (errors if missing)
-            InfoArchive *const infoArchive = infoArchiveLoadFile(
-                storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+            InfoArchive *const infoArchive = infoArchiveRepoIdx(repoIdx);
             InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
-            InfoBackup *const infoBackup = infoBackupLoadFile(
-                storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+            InfoBackup *const infoBackup = infoBackupRepoIdxP(repoIdx);
             InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
             // Determine the format to write. An upgrade interrupted between the two info file saves leaves them at different
@@ -137,11 +132,11 @@ cmdStanzaUpgrade(void)
 
             // Save archive info
             if (infoArchiveUpgrade)
-                infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoArchiveRepoIdxSave(repoIdx);
 
             // Save backup info
             if (infoBackupUpgrade)
-                infoBackupSaveFile(infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoBackupRepoIdxSave(repoIdx);
 
             if (!(infoArchiveUpgrade || infoBackupUpgrade))
             {

@@ -26,13 +26,14 @@ Command constants
 #define CFGCMD_SERVER_PING                                          "server-ping"
 #define CFGCMD_STANZA_CREATE                                        "stanza-create"
 #define CFGCMD_STANZA_DELETE                                        "stanza-delete"
+#define CFGCMD_STANZA_REKEY                                         "stanza-rekey"
 #define CFGCMD_STANZA_UPGRADE                                       "stanza-upgrade"
 #define CFGCMD_START                                                "start"
 #define CFGCMD_STOP                                                 "stop"
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           22
+#define CFG_COMMAND_TOTAL                                           23
 
 /***********************************************************************************************************************************
 Option group constants
@@ -147,7 +148,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            205
+#define CFG_OPTION_TOTAL                                            206
 
 /***********************************************************************************************************************************
 Option value constants
@@ -478,6 +479,7 @@ typedef enum
     cfgCmdServerPing,
     cfgCmdStanzaCreate,
     cfgCmdStanzaDelete,
+    cfgCmdStanzaRekey,
     cfgCmdStanzaUpgrade,
     cfgCmdStart,
     cfgCmdStop,
@@ -606,6 +608,7 @@ typedef enum
     cfgOptRepoBundleLimit,
     cfgOptRepoBundleSize,
     cfgOptRepoCipherPass,
+    cfgOptRepoCipherPassOld,
     cfgOptRepoCipherRotate,
     cfgOptRepoCipherType,
     cfgOptRepoFormat,

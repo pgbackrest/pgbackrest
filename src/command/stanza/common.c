@@ -161,12 +161,15 @@ cipherPassGenerated(const CipherSpec *const cipherSpec)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-stanzaCipherPassCheck(const unsigned int repoIdx, const unsigned int format)
+stanzaCipherPassCheck(const unsigned int repoIdx, const unsigned int format, const char *const action)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, repoIdx);
         FUNCTION_TEST_PARAM(UINT, format);
+        FUNCTION_TEST_PARAM(STRINGZ, action);
     FUNCTION_TEST_END();
+
+    ASSERT(action != NULL);
 
     if (cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx) != cipherTypeNone)
     {
@@ -185,10 +188,10 @@ stanzaCipherPassCheck(const unsigned int repoIdx, const unsigned int format)
         {
             THROW_FMT(
                 OptionInvalidValueError,
-                "option '%s' must be at least 256 random bits encoded as hex, base64, or base64url to create a stanza at repository"
-                " format " STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
+                "option '%s' must be at least 256 random bits encoded as hex, base64, or base64url to %s at repository format "
+                STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
                 "HINT: generate a passphrase with 'openssl rand -base64 32'.",
-                cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
+                cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx), action);
         }
     }
 

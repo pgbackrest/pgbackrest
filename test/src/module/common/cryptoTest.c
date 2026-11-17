@@ -162,6 +162,13 @@ testRun(void)
         TEST_RESULT_UINT(
             cipherSpecDigest(cipherSpecDupP(cipherSpec, .digestDefault = hashTypeSha1)), hashTypeSha256, "dup keeps digest");
 
+        // The prior spec is copied by dup
+        const CipherSpec *const cipherSpecWithPrior = cipherSpecDupP(
+            cipherSpecNewP(cipherTypeAes256Cbc, testPass, .prior = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"))));
+
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecPrior(cipherSpecWithPrior))), "old", "dup prior");
+        TEST_RESULT_PTR(cipherSpecPrior(cipherSpec), NULL, "no prior");
+
         // A pack contains nothing but the type when there is no cipher
         PackWrite *packWrite = pckWriteNewP();
 
@@ -171,10 +178,14 @@ testRun(void)
         TEST_RESULT_UINT(
             cipherSpecType(cipherSpecNewPack(pckReadNew(pckWriteResult(packWrite)))), cipherTypeNone, "unpack none");
 
-        // Else it contains the type, digest, and pass
+        // Else it contains the type, digest, and pass but not the prior spec
         packWrite = pckWriteNewP();
 
-        cipherSpecPack(packWrite, cipherSpecNewP(cipherTypeAes256Cbc, testPass, .digest = hashTypeSha1));
+        cipherSpecPack(
+            packWrite,
+            cipherSpecNewP(
+                cipherTypeAes256Cbc, testPass, .digest = hashTypeSha1,
+                .prior = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"))));
         pckWriteEndP(packWrite);
 
         const CipherSpec *const cipherSpecUnpack = cipherSpecNewPack(pckReadNew(pckWriteResult(packWrite)));
@@ -182,6 +193,7 @@ testRun(void)
         TEST_RESULT_UINT(cipherSpecType(cipherSpecUnpack), cipherTypeAes256Cbc, "unpack type");
         TEST_RESULT_UINT(cipherSpecDigest(cipherSpecUnpack), hashTypeSha1, "unpack digest");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecUnpack)), TEST_PASS, "unpack pass");
+        TEST_RESULT_PTR(cipherSpecPrior(cipherSpecUnpack), NULL, "unpack no prior");
 
         CipherBlock *cipherBlock = (CipherBlock *)ioFilterDriver(cipherBlockNewP(cipherModeEncrypt, cipherSpec));
         TEST_RESULT_UINT(cipherBlock->mode, cipherModeEncrypt, "mode is valid");

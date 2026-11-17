@@ -652,6 +652,22 @@ infoCipherRotateTimeSet(Info *const this, const time_t cipherRotateTime)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
+infoCipherPriorSet(Info *const this, const bool cipherPrior)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INFO, this);
+        FUNCTION_TEST_PARAM(BOOL, cipherPrior);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    this->pub.cipherPrior = cipherPrior;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
 infoCipherSpecSet(Info *const this, const CipherSpec *const cipherSpec)
 {
     FUNCTION_TEST_BEGIN();
@@ -782,23 +798,31 @@ infoLoadFileCallback(void *const data, const unsigned int try)
     InfoLoadFileData *const loadData = data;
     bool result = false;
 
-    if (try < 2)
+    // Tries 0 and 1 load the file and the copy with the cipher spec. Tries 2 and 3 load them with the prior cipher spec.
+    if (try < (cipherSpecPrior(loadData->cipherSpec) == NULL ? 2 : 4))
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Construct filename based on try
-            const String *const fileName = try == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
+            // Construct filename and cipher spec based on try
+            const String *const fileName =
+                try % 2 == 0 ? loadData->fileName : strNewFmt("%s" INFO_COPY_EXT, strZ(loadData->fileName));
+            const CipherSpec *const cipherSpec = try < 2 ? loadData->cipherSpec : cipherSpecPrior(loadData->cipherSpec);
 
             // Attempt to load the file
             IoRead *const read = storageReadIo(storageNewReadP(loadData->storage, fileName));
-            cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), loadData->cipherSpec);
+            cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(read), cipherSpec);
 
             MEM_CONTEXT_BEGIN(loadData->memContext)
             {
-                loadData->result = loadData->newLoad(read, loadData->cipherSpec);
+                // Try >= 2 decrypts with the prior cipher spec. The object records this and a save encrypts with the same spec.
+                loadData->result = loadData->newLoad(read, cipherSpec, try >= 2);
                 result = true;
             }
             MEM_CONTEXT_END();
+
+            // Log when the file was decrypted with the prior cipher spec
+            if (try >= 2)
+                LOG_DEBUG_FMT("'%s' was decrypted with the old passphrase", strZ(storagePathP(loadData->storage, fileName)));
         }
         MEM_CONTEXT_TEMP_END();
     }

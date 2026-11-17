@@ -58,8 +58,8 @@ SCRIPT_BASE_U24 = """ && \\
     sed -i 's/^\\#create\\_main\\_cluster.*$/create\\_main\\_cluster \\= false/' /etc/postgresql-common/createcluster.conf && \\
 
 # Install PostgreSQL
-    apt-get install -y --no-install-recommends postgresql-9.6 postgresql-10 postgresql-11 postgresql-12 postgresql-13 \
-postgresql-14 postgresql-15 postgresql-16 postgresql-17 postgresql-18 postgresql-19 && \\
+    apt-get install -y --no-install-recommends postgresql-10 postgresql-11 postgresql-12 postgresql-13 postgresql-14 \
+postgresql-15 postgresql-16 postgresql-17 postgresql-18 postgresql-19 && \\
 
 # Cleanup
     apt-get autoremove -y && \\

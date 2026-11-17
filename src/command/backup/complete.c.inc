@@ -126,7 +126,7 @@ backupArchiveCheckCopy(const BackupData *const backupData, Manifest *const manif
 
                         // Copy the file
                         const String *const manifestName = strNewFmt(
-                            MANIFEST_TARGET_PGDATA "/%s/%s", strZ(pgWalPath(manifestData(manifest)->pgVersion)), strZ(walSegment));
+                            MANIFEST_TARGET_PGDATA "/" PG_PATH_PGWAL "/%s", strZ(walSegment));
 
                         storageCopyP(
                             read,
@@ -223,14 +223,14 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         // Add manifest and save backup.info (infoBackupSaveFile() is responsible for proper syncing)
         // -------------------------------------------------------------------------------------------------------------------------
+        const unsigned int repoIdx = cfgOptionGroupIdxDefault(cfgOptGrpRepo);
+
         infoBackupDataAdd(infoBackup, manifest);
-        infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
+        infoBackupRepoIdxSave(repoIdx);
 
         // Save archive.info/copy so the timestamps will be updated to prevent lifecycle settings from removing the files early
         // -------------------------------------------------------------------------------------------------------------------------
-        infoArchiveSaveFile(
-            infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMain()), storageRepoWrite(),
-            INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMain());
+        infoArchiveRepoIdxSave(repoIdx);
     }
     MEM_CONTEXT_TEMP_END();
 

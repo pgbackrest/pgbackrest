@@ -129,7 +129,6 @@ manifestNewBuild(
                 .checksumPage = checksumPage,
                 .tablespaceList = tablespaceList,
                 .linkCheck = &linkCheck,
-                .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(pgWalPath(pgVersion))),
                 .blockIncrMap = blockIncrMap,
             };
 

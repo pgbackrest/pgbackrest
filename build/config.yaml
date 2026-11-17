@@ -145,6 +145,14 @@ command:
     lock-required: true
     lock-type: all
 
+  stanza-rekey:
+    command-role:
+      remote: {}
+    internal: true
+    lock-remote-required: true
+    lock-required: true
+    lock-type: all
+
   stanza-upgrade:
     command-role:
       remote: {}
@@ -449,6 +457,7 @@ option:
       restore: {}
       stanza-create: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade: {}
       start:
         required: false
@@ -595,6 +604,7 @@ option:
       expire: {}
       stanza-create: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade: {}
     command-role:
       remote: {}
@@ -792,7 +802,7 @@ option:
       - bz2
       - gz
       - lz4
-      - zst: HAVE_LIBZST
+      - zst
     command: compress
     command-role:
       async: {}
@@ -854,6 +864,7 @@ option:
       restore: {}
       stanza-create: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade: {}
       start: {}
       stop: {}
@@ -1697,6 +1708,7 @@ option:
         command-role:
           remote: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade:
         command-role:
           remote: {}
@@ -1787,6 +1799,19 @@ option:
     group: repo
     deprecate:
       repo-cipher-pass: {}
+
+  repo-cipher-pass-old:
+    section: global
+    type: string
+    secure: true
+    internal: true
+    required: false
+    command: repo-type
+    depend:
+      option: repo-cipher-type
+      list:
+        - aes-256-cbc
+    group: repo
 
   repo-cipher-rotate:
     section: global

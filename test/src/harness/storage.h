@@ -19,7 +19,7 @@ typedef struct TestStorageGetParam
     VAR_PARAM_HEADER;
     bool remove;                                                    // Remove file after testing?
     bool nullOnMissing;                                             // NULL when file is missing
-    CompressType compressType;                                      // Compression extension added to file name (limited gz and bz2)
+    CompressType compressType;                                      // Compression extension added to file name
     const CipherSpec *cipherSpec;                                   // Cipher spec the file is encrypted with
     const char *comment;                                            // Comment
 } TestStorageGetParam;
@@ -201,7 +201,7 @@ typedef struct HrnStoragePutParam
     VAR_PARAM_HEADER;
     mode_t modeFile;                                                // File mode if not the default
     time_t timeModified;                                            // Time file was last modified
-    CompressType compressType;                                      // Limited to gz and bz2 (lz4 and zstd are not always available)
+    CompressType compressType;                                      // Compression type
     const CipherSpec *cipherSpec;                                   // Cipher spec to encrypt the file with
     const char *comment;                                            // Comment
 } HrnStoragePutParam;
