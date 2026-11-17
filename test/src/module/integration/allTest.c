@@ -20,17 +20,16 @@ Test definition
 static HrnHostTestDefine testMatrix[] =
 {
     // {uncrustify_off - struct alignment}
-    {.pg = "9.6", .repo = "repo", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
-    {.pg =  "10", .repo =  "pg2", .tls = 0, .stg =  "sftp", .enc = 1, .cmp =   "gz", .rt = 1, .bnd = 1, .bi = 0},
-    {.pg =  "11", .repo = "repo", .tls = 1, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 2, .bnd = 0, .bi = 0},
-    {.pg =  "12", .repo = "repo", .tls = 0, .stg =    "s3", .enc = 1, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1},
-    {.pg =  "13", .repo =  "pg2", .tls = 1, .stg = "azure", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
-    {.pg =  "14", .repo = "repo", .tls = 0, .stg =   "gcs", .enc = 0, .cmp =  "bz2", .rt = 1, .bnd = 1, .bi = 0},
-    {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "posix", .enc = 1, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
-    {.pg =  "16", .repo = "repo", .tls = 0, .stg =  "sftp", .enc = 0, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1},
-    {.pg =  "17", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
-    {.pg =  "18", .repo =  "pg2", .tls = 1, .stg =    "s3", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 1},
-    {.pg =  "19", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
+    {.pg = "10", .repo =  "pg2", .tls = 0, .stg =  "sftp", .enc = 1, .cmp =   "gz", .rt = 2, .bnd = 1, .bi = 0},
+    {.pg = "11", .repo = "repo", .tls = 1, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 2, .bnd = 0, .bi = 0},
+    {.pg = "12", .repo = "repo", .tls = 0, .stg =    "s3", .enc = 0, .cmp =  "zst", .rt = 2, .bnd = 1, .bi = 0},
+    {.pg = "13", .repo =  "pg2", .tls = 1, .stg = "azure", .enc = 0, .cmp =   "gz", .rt = 1, .bnd = 0, .bi = 0},
+    {.pg = "14", .repo =  "pg2", .tls = 0, .stg =   "gcs", .enc = 1, .cmp =  "bz2", .rt = 1, .bnd = 1, .bi = 0},
+    {.pg = "15", .repo =  "pg2", .tls = 1, .stg = "posix", .enc = 1, .cmp =  "zst", .rt = 2, .bnd = 1, .bi = 1},
+    {.pg = "16", .repo = "repo", .tls = 1, .stg =  "sftp", .enc = 0, .cmp =  "bz2", .rt = 1, .bnd = 1, .bi = 1},
+    {.pg = "17", .repo = "repo", .tls = 0, .stg = "azure", .enc = 1, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
+    {.pg = "18", .repo =  "pg2", .tls = 1, .stg =    "s3", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 1},
+    {.pg = "19", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
     // {uncrustify_on}
 };
 
@@ -440,11 +439,7 @@ testRun(void)
         // Store the timeline so it can be used in a later test
         const char *const xidTimeline = strZ(
             pckReadStrP(
-                hrnHostSqlValue(
-                    pg1,
-                    zNewFmt(
-                        "select trim(leading '0' from substring(pg_%sfile_name('1/1'), 1, 8))",
-                        strZ(pgWalName(hrnHostPgVersion()))))));
+                hrnHostSqlValue(pg1, "select trim(leading '0' from substring(pg_walfile_name('1/1'), 1, 8))")));
         TEST_LOG_FMT("xid timeline = %s", xidTimeline);
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -28,10 +28,10 @@ testRun(void)
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n");
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"10\"}\n");
 
         InfoArchive *info = NULL;
 
@@ -43,7 +43,7 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR_Z(infoArchiveId(info), "9.6-1", "archiveId set");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
         TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(info)), cipherTypeNone, "no cipher sub");
 
@@ -62,8 +62,8 @@ testRun(void)
         // Create the same content by creating a new object
         TEST_ASSIGN(
             info, infoArchiveNew(
-                PG_VERSION_96, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, NULL), "infoArchiveNew() - no sub cipher");
-        TEST_RESULT_STR_Z(infoArchiveId(info), "9.6-1", "archiveId set");
+                PG_VERSION_10, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, NULL), "infoArchiveNew() - no sub cipher");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
         TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(info)), cipherTypeNone, "no cipher sub");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "history set");
@@ -121,10 +121,10 @@ testRun(void)
         TEST_TITLE("increment history");
 
         InfoPgData infoPgData = {0};
-        TEST_RESULT_VOID(infoArchivePgSet(info, PG_VERSION_96, 6569239123849665679), "add another infoPg");
+        TEST_RESULT_VOID(infoArchivePgSet(info, PG_VERSION_11, 6569239123849665679), "add another infoPg");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 2, "history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoArchivePg(info)), "get current infoPgData");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_96, "version set");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_11, "version set");
         TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "systemId set");
 
         // -------------------------------------------------------------------------------------------------------------------------

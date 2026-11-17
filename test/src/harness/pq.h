@@ -152,22 +152,7 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
-#define HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(sessionParam, walSegmentParam)                                                             \
-    {.session = sessionParam,                                                                                                      \
-        .function = HRN_PQ_SENDQUERY,                                                                                              \
-        .param = "[\"select pg_catalog.pg_xlogfile_name(pg_catalog.pg_current_xlog_insert_location())::text\"]", .resultInt = 1},  \
-    {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
-    {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT},                                                                       \
-    {.session = sessionParam, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                      \
-    {.session = sessionParam, .function = HRN_PQ_NTUPLES, .resultInt = 1},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_NFIELDS, .resultInt = 1},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = walSegmentParam},                          \
-    {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
-
-#define HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(sessionParam, walSegmentParam)                                                             \
+#define HRN_PQ_SCRIPT_CURRENT_WAL(sessionParam, walSegmentParam)                                                                   \
     {.session = sessionParam,                                                                                                      \
         .function = HRN_PQ_SENDQUERY,                                                                                              \
         .param = "[\"select pg_catalog.pg_walfile_name(pg_catalog.pg_current_wal_insert_lsn())::text\"]", .resultInt = 1},         \
@@ -182,9 +167,9 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
-#define HRN_PQ_SCRIPT_WAL_SWITCH(sessionParam, walNameParam, walFileNameParam)                                                     \
+#define HRN_PQ_SCRIPT_WAL_SWITCH(sessionParam, walFileNameParam)                                                                   \
     {.session = sessionParam, .function = HRN_PQ_SENDQUERY,                                                                        \
-        .param = "[\"select pg_catalog.pg_" walNameParam "file_name(pg_catalog.pg_switch_" walNameParam "())::text\"]",            \
+        .param = "[\"select pg_catalog.pg_walfile_name(pg_catalog.pg_switch_wal())::text\"]",                                      \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
     {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
@@ -210,28 +195,6 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_INT8},                            \
     {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]",                                                       \
         .resultZ = zNewFmt("%" PRId64, (int64_t)(timeParam))},                                                                     \
-    {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
-
-#define HRN_PQ_SCRIPT_START_BACKUP_96(sessionParam, startFastParam, lsnParam, walSegmentNameParam)                                 \
-    {.session = sessionParam,                                                                                                      \
-        .function = HRN_PQ_SENDQUERY,                                                                                              \
-        .param = zNewFmt(                                                                                                          \
-            "[\"select lsn::text as lsn,\\n"                                                                                       \
-            "       pg_catalog.pg_xlogfile_name(lsn)::text as wal_segment_name\\n"                                                 \
-            "  from pg_catalog.pg_start_backup('pgBackRest backup started at ' || current_timestamp::text, %s, false) as lsn\"]",  \
-            cvtBoolToConstZ(startFastParam)),                                                                                      \
-        .resultInt = 1},                                                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
-    {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT},                                                                       \
-    {.session = sessionParam, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                      \
-    {.session = sessionParam, .function = HRN_PQ_NTUPLES, .resultInt = 1},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_NFIELDS, .resultInt = 2},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[1]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = lsnParam},                                 \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,1]", .resultZ = walSegmentNameParam},                      \
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
@@ -276,34 +239,6 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[1]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
     {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = lsnParam},                                 \
     {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,1]", .resultZ = walSegmentNameParam},                      \
-    {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
-
-#define HRN_PQ_SCRIPT_STOP_BACKUP_96(sessionParam, lsnParam, walSegmentNameParam, tablespaceMapParam)                              \
-    {.session = sessionParam,                                                                                                      \
-        .function = HRN_PQ_SENDQUERY,                                                                                              \
-        .param =                                                                                                                   \
-            "[\"select lsn::text as lsn,\\n"                                                                                       \
-            "       pg_catalog.pg_xlogfile_name(lsn)::text as wal_segment_name,\\n"                                                \
-            "       labelfile::text as backuplabel_file,\\n"                                                                       \
-            "       spcmapfile::text as tablespacemap_file\\n"                                                                     \
-            "  from pg_catalog.pg_stop_backup(false)\"]",                                                                          \
-        .resultInt = 1},                                                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
-    {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT},                                                                       \
-    {.session = sessionParam, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                      \
-    {.session = sessionParam, .function = HRN_PQ_NTUPLES, .resultInt = 1},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_NFIELDS, .resultInt = 4},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[1]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[2]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[3]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = lsnParam},                                 \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,1]", .resultZ = walSegmentNameParam},                      \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,2]", .resultZ = "BACKUP_LABEL_DATA"},                      \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,3]",                                                       \
-        .resultZ = tablespaceMapParam ? "TABLESPACE_MAP_DATA" : "\n"},                                                             \
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
@@ -426,15 +361,13 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
-#define                                                                                                                            \
-    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED(                                                                                           \
-        sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam)                              \
+#define HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED(sessionParam, targetLsnParam, targetReachedParam, replayLsnParam)                      \
     {.session = sessionParam,                                                                                                      \
         .function = HRN_PQ_SENDQUERY,                                                                                              \
         .param = zNewFmt(                                                                                                          \
             "[\"select replayLsn::text,\\n"                                                                                        \
             "       (replayLsn > '%s')::bool as targetReached\\n"                                                                  \
-            "  from pg_catalog.pg_last_" walNameParam "_replay_" lsnNameParam "() as replayLsn\"]", targetLsnParam),               \
+            "  from pg_catalog.pg_last_wal_replay_lsn() as replayLsn\"]", targetLsnParam),                                         \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
     {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
@@ -449,20 +382,14 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
-#define HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_LE_96(sessionParam, targetLsnParam, targetReachedParam, reachedLsnParam)               \
-    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED(sessionParam, "xlog", "location", targetLsnParam, targetReachedParam, reachedLsnParam)
-
-#define HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(sessionParam, targetLsnParam, targetReachedParam, reachedLsnParam)               \
-    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED(sessionParam, "wal", "lsn", targetLsnParam, targetReachedParam, reachedLsnParam)
-
 #define                                                                                                                            \
     HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED(                                                                                       \
-        sessionParam, lsnNameParam, targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)                            \
+        sessionParam, targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)                                          \
     {.session = sessionParam,                                                                                                      \
         .function = HRN_PQ_SENDQUERY,                                                                                              \
         .param = zNewFmt(                                                                                                          \
-            "[\"select (checkpoint_" lsnNameParam " >= '%s')::bool as targetReached,\\n"                                           \
-            "       checkpoint_" lsnNameParam "::text as checkpointLsn\\n"                                                         \
+            "[\"select (checkpoint_lsn >= '%s')::bool as targetReached,\\n"                                                        \
+            "       checkpoint_lsn::text as checkpointLsn\\n"                                                                      \
             "  from pg_catalog.pg_control_checkpoint()\"]", targetLsnParam),                                                       \
         .resultInt = 1, .sleep = sleepParam},                                                                                      \
     {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
@@ -478,27 +405,10 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
-#define                                                                                                                            \
-    HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_96(                                                                                    \
-        sessionParam, targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)                                          \
-    HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED(                                                                                       \
-        sessionParam, "location", targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)
-
-#define                                                                                                                            \
-    HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(                                                                                 \
-        sessionParam, targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)                                          \
-    HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED(                                                                                       \
-        sessionParam, "lsn", targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)
-
-#define HRN_PQ_SCRIPT_REPLAY_WAIT_96(sessionParam, targetLsnParam)                                                                 \
-    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_LE_96(sessionParam, targetLsnParam, true, "X/X"),                                          \
+#define HRN_PQ_SCRIPT_REPLAY_WAIT(sessionParam, targetLsnParam)                                                                    \
+    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED(sessionParam, targetLsnParam, true, "X/X"),                                                \
     HRN_PQ_SCRIPT_CHECKPOINT(sessionParam),                                                                                        \
-    HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_96(sessionParam, targetLsnParam, true, "X/X", 0)
-
-#define HRN_PQ_SCRIPT_REPLAY_WAIT_GE_10(sessionParam, targetLsnParam)                                                              \
-    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(sessionParam, targetLsnParam, true, "X/X"),                                          \
-    HRN_PQ_SCRIPT_CHECKPOINT(sessionParam),                                                                                        \
-    HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(sessionParam, targetLsnParam, true, "X/X", 0)
+    HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED(sessionParam, targetLsnParam, true, "X/X", 0)
 
 #define HRN_PQ_SCRIPT_CLOSE(sessionParam)                                                                                          \
     {.session = sessionParam, .function = HRN_PQ_FINISH}

@@ -334,7 +334,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("zst"))
     {
-#ifdef HAVE_LIBZST
         // Run standard test suite
         testSuite(compressTypeZst, "zstd -dc", 0);
 
@@ -366,9 +365,6 @@ testRun(void)
 
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, zstDecompressToLog, buffer, sizeof(buffer)), "zstDecompressToLog");
         TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
-#else
-        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not built with zst support");
-#endif // HAVE_LIBZST
     }
 
     // Test everything in the helper that is not tested in the individual compression type tests
