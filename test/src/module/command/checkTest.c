@@ -583,7 +583,8 @@ testRun(void)
         TEST_RESULT_VOID(checkCipherPass(), "example passphrase");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo2-cipher-pass' should not be the example passphrase from the documentation\n"
-            "            HINT: generate a passphrase with 'openssl rand -base64 32' and change it with stanza-rekey.");
+            "            HINT: generate a passphrase from at least 256 random bits, e.g. with 'openssl rand -base64 32', and"
+            " change it with stanza-rekey.");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 

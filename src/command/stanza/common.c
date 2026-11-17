@@ -179,13 +179,14 @@ stanzaCipherPassCheck(const unsigned int repoIdx, const unsigned int format, con
                 THROW_FMT(
                     OptionInvalidValueError,
                     "option '%s' must not be the example passphrase from the documentation\n"
-                    "HINT: generate a passphrase with 'openssl rand -base64 32'.",
+                    "HINT: generate a passphrase from at least 256 random bits, e.g. with 'openssl rand -base64 32'.",
                     cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
             }
 
             LOG_WARN_FMT(
                 "option '%s' should not be the example passphrase from the documentation\n"
-                "HINT: generate a passphrase with 'openssl rand -base64 32' and change it with " CFGCMD_STANZA_REKEY ".",
+                "HINT: generate a passphrase from at least 256 random bits, e.g. with 'openssl rand -base64 32', and change it"
+                " with " CFGCMD_STANZA_REKEY ".",
                 cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
         }
         // Format >= 6 requires the passphrase to look generated
@@ -197,14 +198,15 @@ stanzaCipherPassCheck(const unsigned int repoIdx, const unsigned int format, con
                     OptionInvalidValueError,
                     "option '%s' must be at least 256 random bits encoded as hex, base64, or base64url to %s at repository format "
                     STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
-                    "HINT: generate a passphrase with 'openssl rand -base64 32'.",
+                    "HINT: generate a passphrase from at least 256 random bits, e.g. with 'openssl rand -base64 32'.",
                     cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx), action);
             }
 
             LOG_WARN_FMT(
                 "option '%s' should be at least 256 random bits encoded as hex, base64, or base64url at repository format "
                 STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
-                "HINT: generate a passphrase with 'openssl rand -base64 32' and change it with " CFGCMD_STANZA_REKEY ".",
+                "HINT: generate a passphrase from at least 256 random bits, e.g. with 'openssl rand -base64 32', and change it"
+                " with " CFGCMD_STANZA_REKEY ".",
                 cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
         }
     }
