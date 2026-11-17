@@ -1085,7 +1085,7 @@
                         <text>
                             <p>This option adds an encryption context for S3 server-side encryption with AWS KMS. It requires <br-option>repo-s3-kms-key-id</br-option>.</p>
 
-                            <p>Each entry is a key/value pair, for example <setting>repo1-s3-kms-encryption-context=cluster_id=pg-prod-01</setting>. Multiple entries require a separate option for each entry.</p>
+                            <p>Each entry is a key/value pair, for example <setting>repo1-s3-kms-encryption-context=cluster_id=pg-prod-01</setting>. The option can be repeated to add multiple entries.</p>
 
                             <p><backrest/> sends the context when it creates objects, including multipart uploads. S3 stores the context with each object and uses it to decrypt the object.</p>
 
