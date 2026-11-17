@@ -66,6 +66,9 @@
                 <commit subject="Add stanza-rekey command to change the repository passphrase.">
                     <github-pull-request id="2898"/>
                 </commit>
+                <commit subject="Warn about a weak repository passphrase in stanza-upgrade and check.">
+                    <github-pull-request id="2923"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>

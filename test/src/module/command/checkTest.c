@@ -553,7 +553,7 @@ testRun(void)
         infoArchiveCipherPriorClear(infoArchiveRepoIdx(1));
         infoArchiveRepoIdxSave(1);
 
-        TEST_RESULT_VOID(checkCipherPassOld(), "backup info has old passphrase");
+        TEST_RESULT_VOID(checkCipherPass(), "backup info has old passphrase");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo2-cipher-pass-old' is set and the stanza has not been rekeyed\n"
             "            HINT: run stanza-rekey and then remove the option.");
@@ -562,13 +562,31 @@ testRun(void)
         infoBackupCipherPriorClear(infoBackupRepoIdxP(1));
         infoBackupRepoIdxSave(1);
 
-        TEST_RESULT_VOID(checkCipherPassOld(), "info files have new passphrase");
+        TEST_RESULT_VOID(checkCipherPass(), "info files have new passphrase");
         TEST_RESULT_LOG(
             "P00   WARN: option 'repo2-cipher-pass-old' is set and the stanza has been rekeyed\n"
             "            HINT: remove the option.");
 
-        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+        // Save the info files with the example passphrase
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 2, "new");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        infoArchiveCipherPriorClear(infoArchiveRepoIdx(1));
+        infoArchiveRepoIdxSave(1);
+        infoBackupCipherPriorClear(infoBackupRepoIdxP(1));
+        infoBackupRepoIdxSave(1);
+
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPassOld, 2);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        TEST_RESULT_VOID(checkCipherPass(), "example passphrase");
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'repo2-cipher-pass' should not be the example passphrase from the documentation\n"
+            "            HINT: generate a passphrase from at least 256 random bits, e.g. with 'openssl rand -base64 32', and"
+            " change it with stanza-rekey.");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Primary == NULL (for test coverage)");

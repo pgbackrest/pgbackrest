@@ -144,6 +144,10 @@ cmdStanzaUpgrade(void)
                     "stanza '%s' on %s is already up to date", strZ(cfgOptionDisplay(cfgOptStanza)),
                     cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
             }
+
+            // Warn about the passphrase unless repo-cipher-pass-old is set
+            if (!cfgOptionIdxTest(cfgOptRepoCipherPassOld, repoIdx))
+                stanzaCipherPassCheck(repoIdx, format, NULL);
         }
     }
     MEM_CONTEXT_TEMP_END();
