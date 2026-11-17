@@ -537,40 +537,6 @@ testRun(void)
         driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
 
         TEST_RESULT_STR_Z(driver->signingService, "s3", "check signing service is s3 for default repo-s3-service");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("KMS encryption context requires a key");
-
-        argList = strLstDup(commonArgList);
-        hrnCfgArgRawZ(argList, cfgOptRepoS3KmsEncryptionContext, "cluster_id=pg-prod-01");
-        TEST_ERROR(
-            HRN_CFG_LOAD(cfgCmdArchivePush, argList), OptionInvalidError,
-            "option 'repo1-s3-kms-encryption-context' not valid without option 'repo1-s3-kms-key-id'");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("KMS encryption context requires key/value pairs");
-
-        argList = strLstDup(commonArgList);
-        hrnCfgArgRawZ(argList, cfgOptRepoS3KmsKeyId, "kmskey1");
-        hrnCfgArgRawZ(argList, cfgOptRepoS3KmsEncryptionContext, "invalid");
-        TEST_ERROR(
-            HRN_CFG_LOAD(cfgCmdArchivePush, argList), OptionInvalidError,
-            "key/value 'invalid' not valid for 'repo1-s3-kms-encryption-context' option");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("KMS encryption context sorts keys and escapes JSON");
-
-        argList = strLstDup(commonArgList);
-        hrnCfgArgRawZ(argList, cfgOptRepoS3KmsKeyId, "kmskey1");
-        hrnCfgArgRawZ(argList, cfgOptRepoS3KmsEncryptionContext, "tenant_id=tenant\"\\\xc3\xa9");
-        hrnCfgArgRawZ(argList, cfgOptRepoS3KmsEncryptionContext, "cluster_id=pg-prod-01");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageS3 *)storageDriver(storageRepoGet(0, true));
-
-        TEST_RESULT_STR_Z(
-            strNewBuf(bufNewDecode(encodingBase64, driver->kmsEncryptionContext)),
-            "{\"cluster_id\":\"pg-prod-01\",\"tenant_id\":\"tenant\\\"\\\\\xc3\xa9\"}", "check encryption context JSON");
     }
 
     // *****************************************************************************************************************************
@@ -1081,22 +1047,11 @@ testRun(void)
                 TEST_RESULT_BOOL(bufEq(driver->signingKey, oldSigningKey), false, "signing key changed");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("read with KMS encryption context configured");
-
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .sseC = "rA1P");
-                testResponseP(service, .content = "ABCD");
-
-                TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt")))), "ABCD", "read file");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write zero-length file with KMS but without encryption context");
-
-                const String *const kmsEncryptionContext = driver->kmsEncryptionContext;
-                driver->kmsEncryptionContext = NULL;
+                TEST_TITLE("write zero-length file");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_PUT, "/file.txt", .content = "", .kms = "kmskey1", .sseC = "rA1P",
-                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
+                    service, s3, HTTP_VERB_PUT, "/file.txt", .content = "", .kms = "kmskey1", .kmsContext = S3_TEST_KMS_CONTEXT,
+                    .sseC = "rA1P", .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service);
 
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
@@ -1104,8 +1059,6 @@ testRun(void)
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with nothing left over on close");
-
-                driver->kmsEncryptionContext = kmsEncryptionContext;
 
                 testRequestP(
                     service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1", .kmsContext = S3_TEST_KMS_CONTEXT,
