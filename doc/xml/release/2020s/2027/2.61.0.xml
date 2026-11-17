@@ -69,6 +69,9 @@
                 <commit subject="Warn about a weak repository passphrase in stanza-upgrade and check.">
                     <github-pull-request id="2923"/>
                 </commit>
+                <commit subject="Add a key check to format 6 files encrypted with the passphrase.">
+                    <github-pull-request id="2924"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
