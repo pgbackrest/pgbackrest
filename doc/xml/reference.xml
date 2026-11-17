@@ -1087,7 +1087,9 @@
 
                             <p>Each entry is a key/value pair, for example <setting>repo1-s3-kms-encryption-context=cluster_id=pg-prod-01</setting>. Multiple entries require a separate option for each entry.</p>
 
-                            <p><backrest/> sends the context when it creates objects, including multipart uploads. This option does not change existing objects. S3 stores the context with each object and uses it to decrypt the object.</p>
+                            <p><backrest/> sends the context when it creates objects, including multipart uploads. S3 stores the context with each object and uses it to decrypt the object.</p>
+
+                            <p>There is no provision in <backrest/> to modify the context of existing objects so be sure to set it correctly before running <cmd>stanza-create</cmd> to ensure a uniform context across the entire repository. A KMS key policy or grant that requires a context for decryption will deny reads of objects written with a different context or without a context.</p>
 
                             <p>Encryption context is not secret and must not contain sensitive information.</p>
                         </text>
