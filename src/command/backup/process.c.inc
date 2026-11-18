@@ -304,6 +304,10 @@ backupJobResult(
                     file.bundleOffset = bundleOffset;
                     file.blockIncrMapSize = blockIncrMapSize;
 
+                    // Zero block incremental values for a truncated file
+                    if (copyResult == backupCopyResultTruncate)
+                        file.blockIncrSize = file.blockIncrChecksumSize = 0;
+
                     manifestFileUpdate(manifest, &file);
                 }
             }

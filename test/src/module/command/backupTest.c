@@ -484,6 +484,10 @@ testBackupValidate(const Storage *const storage, const String *const path, const
             ManifestFilePack **const filePack = lstGet(manifest->pub.fileList, fileIdx);
             ManifestFile file = manifestFileUnpack(manifest, *filePack);
 
+            // Block incremental size without a map
+            if (file.blockIncrSize != 0 && file.blockIncrMapSize == 0)
+                THROW_FMT(AssertError, "'%s' has block incremental size but no map", strZ(file.name));
+
             // If compressed or block incremental then set the repo-size to size so it will not be in test output. Even the same
             // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
             // compression. Block incremental maps increase repo-size in a non-obvious way.
