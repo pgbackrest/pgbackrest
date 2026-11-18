@@ -179,7 +179,7 @@ testRun(void)
         "    annotate        add or modify backup annotation\n"
         "    archive-get     get a WAL segment from the archive\n"
         "    archive-push    push a WAL segment to the archive\n"
-        "    backup          backup a database cluster\n"
+        "    backup          back up a database cluster\n"
         "    check           check the configuration\n"
         "    expire          expire backups that exceed retention\n"
         "    help            get help\n"
@@ -554,7 +554,7 @@ testRun(void)
             zNewFmt(
                 "%s - 'backup' command - 'repo-retention-archive' option help\n"
                 "\n"
-                "Number of backups worth of continuous WAL to retain.",
+                "Number of backups' worth of continuous WAL to retain.",
                 helpVersion),
             "header and summary");
         TEST_RESULT_STR_Z(

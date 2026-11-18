@@ -345,7 +345,7 @@
                         <summary>Set process priority.</summary>
 
                         <text>
-                            <p>Defines how much priority (i.e. niceness) will be given to the process by the kernel scheduler. Positive values decrease priority and negative values increase priority. In most case processes do not have permission to increase their priority.</p>
+                            <p>Defines how much priority (i.e. niceness) will be given to the process by the kernel scheduler. Positive values decrease priority and negative values increase priority. In most cases the processes do not have permission to increase their priority.</p>
                         </text>
 
                         <example>19</example>
@@ -451,11 +451,11 @@
                         <summary>Allowed TLSv1.2 cipher suites.</summary>
 
                         <text>
-                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
+                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to object stores (e.g. <proper>S3</proper>) are also encrypted.</p>
 
                             <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2 unless <br-option>repo-storage-verify-tls=n</br-option>.</admonition>
 
-                            <p>The accepted cipher suites can be adjusted if need arises. The example is reasonable choice unless you have specific security requirements. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
+                            <p>The accepted cipher suites can be adjusted if need arises. The example is a reasonable choice unless you have specific security requirements. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
                         </text>
 
                         <example>HIGH:MEDIUM:+3DES:!aNULL</example>
@@ -465,7 +465,7 @@
                         <summary>Allowed TLSv1.3 cipher suites.</summary>
 
                         <text>
-                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
+                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to object stores (e.g. <proper>S3</proper>) are also encrypted.</p>
 
                             <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2 unless <br-option>repo-storage-verify-tls=n</br-option>.</admonition>
 
@@ -551,7 +551,7 @@
 
                     <p><b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories. For example, a single repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options. If there is more than one repository configured and the <br-option>{[dash]}-repo</br-option> option is not specified for a command, the repositories will be acted upon in highest priority order (e.g. repo1 then repo2).</p>
 
-                    <p>The <setting>repo-retention-*</setting> options define how long backups will be retained. Expiration only occurs when the count of complete backups exceeds the allowed retention. In other words, if <setting>repo1-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo1-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired. If <setting>repo1-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo1-retention-full</setting> represents days so there must be at least that many days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</p>
+                    <p>The <setting>repo-retention-*</setting> options define how long backups will be retained. Expiration only occurs when the count of complete backups exceeds the allowed retention. In other words, if <setting>repo1-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo1-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired. If <setting>repo1-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo1-retention-full</setting> represents days so there must be at least that many days' worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</p>
                 </text>
 
                 <config-key-list>
@@ -1021,7 +1021,7 @@
                     </config-key>
 
                     <config-key id="repo-retention-archive" name="Archive Retention">
-                        <summary>Number of backups worth of continuous WAL to retain.</summary>
+                        <summary>Number of backups' worth of continuous WAL to retain.</summary>
 
                         <text>
                             <admonition type="note">WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured.</admonition>
@@ -1110,7 +1110,7 @@
                         <text>
                             <p>S3 bucket used to store the repository.</p>
 
-                            <p><backrest/> repositories can be stored in the bucket root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other AWS generated content can also be stored in the bucket.</p>
+                            <p><backrest/> repositories can be stored in the bucket root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other AWS-generated content can also be stored in the bucket.</p>
                         </text>
 
                         <example>pg-backup</example>
@@ -1427,7 +1427,7 @@
                         <summary>Create symlinks within the repository.</summary>
 
                         <text>
-                            <p>Enable creation of the <file>lastest</file> and tablespace symlinks. These symlinks are most useful when using snapshots to do in-place recovery in the repository, which is an uncommon use case.</p>
+                            <p>Enable creation of the <file>latest</file> and tablespace symlinks. These symlinks are most useful when using snapshots to do in-place recovery in the repository, which is an uncommon use case.</p>
 
                             <p>While this feature is likely not useful for the vast majority of users it remains on by default for legacy purposes. However, it may be useful to disable symlinks for Posix-like storage that does not support them.</p>
                         </text>
@@ -1712,14 +1712,14 @@
                         <summary>Maximum size of the <backrest/> archive-get queue.</summary>
 
                         <text>
-                            <p>Specifies the maximum size of the <cmd>archive-get</cmd> queue when <br-option>archive-async</br-option> is enabled. The queue is stored in the <br-option>spool-path</br-option> and is used to speed providing WAL to <postgres/>.</p>
+                            <p>Specifies the maximum size of the <cmd>archive-get</cmd> queue when <br-option>archive-async</br-option> is enabled. The queue is stored in the <br-option>spool-path</br-option> and is used to speed up providing WAL to <postgres/>.</p>
                         </text>
 
                         <example>1GiB</example>
                     </config-key>
 
                     <config-key id="archive-missing-retry" name="Retry Missing WAL Segment">
-                        <summary>Retry missing WAL segment</summary>
+                        <summary>Retry missing WAL segment.</summary>
 
                         <text>
                             <p>Retry a WAL segment that was previously reported as missing by the <cmd>archive-get</cmd> command when in asynchronous mode. This prevents notifications in the spool path from a prior restore from being used and possibly causing a recovery failure if consistency has not been reached.</p>
@@ -2188,7 +2188,7 @@
 
             <p>Command-line options override environment options which override config file options.</p>
 
-            <p>See <link page="configuration" section="/introduction">Configuration Introduction</link> for information on option types</p>
+            <p>See <link page="configuration" section="/introduction">Configuration Introduction</link> for information on option types.</p>
         </text>
 
         <operation-general title="General Options">
@@ -2251,7 +2251,7 @@
                     <summary>Do not transform data.</summary>
 
                     <text>
-                        <p>Do not transform (i.e, encrypt, decompress, etc.) data for the current command.</p>
+                        <p>Do not transform (i.e. encrypt, decompress, etc.) data for the current command.</p>
                     </text>
 
                     <example>y</example>
@@ -2305,10 +2305,10 @@
             </command>
 
             <command id="backup" name="Backup">
-                <summary>Backup a database cluster.</summary>
+                <summary>Back up a database cluster.</summary>
 
                 <text>
-                    <p>When multiple repositories are configured, <backrest/> will backup to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</p>
+                    <p>When multiple repositories are configured, <backrest/> will back up to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</p>
 
                     <p><backrest/> does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.</p>
 
@@ -2432,7 +2432,7 @@
                         <text>
                             <p>If enabled, the <cmd>expire</cmd> command will terminate with an error before any changes if the oldest retained backup would contain checksum errors. If this option is disabled, the <cmd>expire</cmd> will proceed and issue a warning if there are checksum errors in the oldest retained backup.</p>
 
-                            <p>If the <br-option>--set</br-option> is used, the <cmd>expire</cmd> will proceed even if this option is enabled. It will emit a warning if the oldest retained backup contains checksum errors.</p>
+                            <p>If <br-option>--set</br-option> is used, the <cmd>expire</cmd> will proceed even if this option is enabled. It will emit a warning if the oldest retained backup contains checksum errors.</p>
                         </text>
 
                         <example>n</example>
@@ -2512,7 +2512,7 @@
                     </option>
 
                     <option id="pg" name="PostgreSQL Cluster">
-                        <summary>PostgreSQL Cluster</summary>
+                        <summary>PostgreSQL cluster.</summary>
 
                         <text>
                             <p>Specify the PostgreSQL cluster to compare the manifest against.</p>
@@ -2722,7 +2722,7 @@
 
                             <admonition type="warning">Recovery <br-option>type=none</br-option> should be avoided because the timeline will not be incremented at the end of recovery. This can lead to, for example, <postgres/> attempting to archive duplicate WAL, which will be rejected, and may cause the disk to fill up and result in a <postgres/> panic. In addition, tools like <id>pg_rewind</id> may not work correctly or may cause corruption.</admonition>
 
-                            <p>Note that the default restore <br-option>type</br-option> for offline backups is <id>none</id> since Point-in-Time-Recovery is not possible if <setting>wal_level=minimal</setting>. If <br-option>type</br-option> is set explicitly then it will be honored since Point-in-Time-Recovery is possible from offline backups as long as <setting>wal_level > minimal</setting>.</p>
+                            <p>Note that the default restore <br-option>type</br-option> for offline backups is <id>none</id> since Point-in-Time Recovery is not possible if <setting>wal_level=minimal</setting>. If <br-option>type</br-option> is set explicitly then it will be honored since Point-in-Time Recovery is possible from offline backups as long as <setting>wal_level > minimal</setting>.</p>
                         </text>
 
                         <example>xid</example>
@@ -2742,7 +2742,7 @@
                         <summary>Stop just before the recovery target is reached.</summary>
 
                         <text>
-                            <p>Defines whether recovery to the target would be exclusive (the default is inclusive) and is only valid when <br-option>--type</br-option> is <id>lsn</id>, <id>time</id> or <id>xid</id>. For example, using <br-option>--target-exclusive</br-option> would exclude the contents of transaction <id>1007</id> when <br-option>--type=xid</br-option> and <br-option>--target=1007</br-option>. See the <setting>recovery_target_inclusive</setting> option in the <postgres/> docs for more information.</p>
+                            <p>Defines whether recovery to the target would be exclusive (the default is inclusive) and is only valid when <br-option>--type</br-option> is <id>lsn</id>, <id>time</id>, or <id>xid</id>. For example, using <br-option>--target-exclusive</br-option> would exclude the contents of transaction <id>1007</id> when <br-option>--type=xid</br-option> and <br-option>--target=1007</br-option>. See the <setting>recovery_target_inclusive</setting> option in the <postgres/> docs for more information.</p>
                         </text>
 
                         <example>n</example>
@@ -2790,7 +2790,7 @@
 
                     <p>Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option. The stanza '<id>status</id>' gives a brief indication of the stanza's health. If this is '<id>ok</id>' then <backrest/> is functioning normally. If there are multiple repositories, then a status of '<id>mixed</id>' indicates that the stanza is not in a healthy state on one or more of the repositories; in this case the state of the stanza will be detailed per repository. For cases in which an error on a repository occurred that is not one of the known error codes, then an error code of '<id>other</id>' will be used and the full error details will be provided. The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive and, in the case of multiple repositories, will be reported across all repositories unless the <br-option>{[dash]}-repo</br-option> option is set. Note that there may be gaps due to archive retention policies or other reasons.</p>
 
-                    <p>The '<id>backup/expire running</id>' and/or '<id>restore running</id>' messages will appear beside the '<id>status</id>' information if any of those commands are currently running on the host. Per-repo progress will be also reported in text output and a '<id>repo</id>' array will be included in JSON output.</p>
+                    <p>The '<id>backup/expire running</id>' and/or '<id>restore running</id>' messages will appear beside the '<id>status</id>' information if any of those commands are currently running on the host. Per-repo progress will also be reported in text output and a '<id>repo</id>' array will be included in JSON output.</p>
 
                     <p>The backups are displayed oldest to newest. The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).</p>
 
@@ -2930,7 +2930,7 @@
                         <summary>Force all <backrest/> processes to stop.</summary>
 
                         <text>
-                            <p>This option will send TERM signals to all running <backrest/> processes to effect a graceful but immediate shutdown. Note that this will also shutdown processes that were initiated on another system but have remotes running on the current system. For instance, if a backup was started on the backup server then running <cmd>stop --force</cmd> on the database server will shutdown the backup process on the backup server.</p>
+                            <p>This option will send TERM signals to all running <backrest/> processes to effect a graceful but immediate shutdown. Note that this will also shut down processes that were initiated on another system but have remotes running on the current system. For instance, if a backup was started on the backup server then running <cmd>stop --force</cmd> on the database server will shut down the backup process on the backup server.</p>
                         </text>
 
                         <example>y</example>
