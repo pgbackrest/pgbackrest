@@ -184,6 +184,20 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2905"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="yegor.zhmak"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Use block incremental for same-size files stored without it in the prior backup.</p>
+
+                <p>A file that was not stored with block incremental in the prior backup, e.g. a file that had not been modified for four weeks or more when the full backup was taken, was stored without block incremental in later backups while its size stayed the same. A change that did not alter the size, e.g. to a full relation segment, copied the entire file until the next full backup.</p>
+            </release-item>
+
+            <release-item>
                 <commit subject="Avoid flush and seek between contiguous writes in ioWriteSeek().">
                     <github-pull-request id="2887"/>
                 </commit>
