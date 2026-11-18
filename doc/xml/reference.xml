@@ -6,6 +6,8 @@
         <text>
             <p><backrest/> can be used entirely with command-line parameters but a configuration file is more practical for installations that are complex or set a lot of options. The default location for the configuration file is <file>/etc/pgbackrest/pgbackrest.conf</file>. If no file exists in that location then the old default of <file>/etc/pgbackrest.conf</file> will be checked.</p>
 
+            <p>The commands an option is valid for are listed after <id>commands:</id>. An option that is only valid with another option lists it after <id>valid with:</id>, e.g. <id>valid with: repo-type=s3</id> for <br-option>repo-s3-bucket</br-option>. When the dependency only applies to some of the commands they are listed, e.g. <id>valid with (backup): online=y</id>. An option given on the command-line without the option it is valid with is an error, while in an environment variable or <file>pgbackrest.conf</file> it is ignored.</p>
+
             <p>The following option types are used:</p>
 
             <p><b>String</b>: A text string, commonly an identifier, password, etc.</p>

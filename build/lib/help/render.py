@@ -14,6 +14,7 @@ from common.error import ToolError
 from common.pack import PackWrite
 from common.render import LINE_LENGTH, bld_header
 from common.storage import file_write_differs
+from config.parse import OPT_TYPE_BOOLEAN
 
 _MODULE = "help"
 _DESCRIPTION = "Help Data"
@@ -116,6 +117,38 @@ def bld_hlp_render_xml(node):
 
 
 ####################################################################################################################################
+def bld_hlp_render_depend(depend):
+    """Render what an option is valid with, e.g. repo-type in (azure, s3), or None when there is no dependency."""
+
+    if depend is None:
+        return None
+
+    # Follow a dependency on an option being set to the dependency of that option when that option has a default and its dependency
+    # does not
+    while (
+        depend.value_list is None
+        and depend.option.depend is not None
+        and depend.option.depend.default_value is None
+        and depend.option.default_value is not None
+        and depend.option.default_value.value is not None
+    ):
+        depend = depend.option.depend
+
+    if depend.value_list is None:
+        return depend.option.name
+
+    # A boolean is written the way it is given in the configuration file rather than the way it is declared
+    value_list = [
+        ("y" if value == "true" else "n") if depend.option.type == OPT_TYPE_BOOLEAN else value for value in depend.value_list
+    ]
+
+    if len(value_list) == 1:
+        return "%s=%s" % (depend.option.name, value_list[0])
+
+    return "%s in (%s)" % (depend.option.name, ", ".join(value_list))
+
+
+####################################################################################################################################
 def _find(item_list, name):
     """Find an entry in a list by name, or None when it is not there."""
 
@@ -155,6 +188,10 @@ def _pack(bld_cfg, bld_hlp):
         pack.str_write(bld_hlp_render_xml(opt_hlp.summary) if opt_hlp is not None else None)
         pack.str_write(bld_hlp_render_xml(opt_hlp.description) if opt_hlp is not None else None)
 
+        # What the option is valid with
+        depend = bld_hlp_render_depend(opt.depend)
+        pack.str_write(depend)
+
         # Deprecated names, less any that is the option name itself since that is not a name to report as deprecated
         deprecate_list = [deprecate.name for deprecate in opt.deprecate_list or [] if deprecate.name != opt.name]
 
@@ -168,7 +205,8 @@ def _pack(bld_cfg, bld_hlp):
         else:
             pack.null_write()
 
-        # What a command says about the option that differs from what the option says, i.e. its own help or being internal
+        # What a command declares for the option that differs from what the option declares, i.e. its own help, being internal, or
+        # what it is valid with
         found = False
 
         for cmd_idx, cmd in enumerate(bld_cfg.cmd_list):
@@ -178,8 +216,12 @@ def _pack(bld_cfg, bld_hlp):
                 continue
 
             cmd_opt_hlp = _find(_find(bld_hlp.cmd_list, cmd.name).opt_list, opt.name)
+            cmd_depend = bld_hlp_render_depend(opt_cmd.depend)
 
-            if opt.internal == opt_cmd.internal and cmd_opt_hlp is None:
+            if cmd_depend == depend:
+                cmd_depend = None
+
+            if opt.internal == opt_cmd.internal and cmd_opt_hlp is None and cmd_depend is None:
                 continue
 
             if not found:
@@ -196,6 +238,11 @@ def _pack(bld_cfg, bld_hlp):
             if cmd_opt_hlp is not None:
                 pack.str_write(bld_hlp_render_xml(cmd_opt_hlp.summary))
                 pack.str_write(bld_hlp_render_xml(cmd_opt_hlp.description))
+            else:
+                pack.null_write()
+                pack.null_write()
+
+            pack.str_write(cmd_depend)
 
             pack.obj_end()
 

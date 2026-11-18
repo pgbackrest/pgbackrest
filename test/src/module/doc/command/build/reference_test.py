@@ -23,6 +23,8 @@ from help.parse import bld_hlp_parse
 PATH_HELP = "doc/xml/reference.xml"
 
 CONFIG = """command:
+  archive-push: {}
+
   backup: {}
 
   expire:
@@ -32,12 +34,33 @@ CONFIG = """command:
 
   restore: {}
 
+  stanza-create: {}
+
+  stanza-delete: {}
+
+  stanza-upgrade: {}
+
   version: {}
 
 optionGroup:
   repo: {}
 
 option:
+  archive-check:
+    section: global
+    type: boolean
+    default: true
+    command:
+      backup:
+        depend:
+          option: online
+          list:
+            - true
+      expire:
+        depend:
+          option: compress-type
+      restore: {}
+
   archive-copy:
     section: global
     type: boolean
@@ -200,6 +223,7 @@ HELP = """<doc title="Reference">
 """ % (
     "".join(
         (
+            _option("archive-check", "Archive Check", tag="config-key"),
             _option("archive-copy", "Archive Copy", tag="config-key"),
             _option("cmd", "Cmd", tag="config-key"),
             _option("compress-level", "Compress Level", tag="config-key"),
@@ -228,14 +252,22 @@ HELP = """<doc title="Reference">
         '<command id="%s" name="%s"><summary>%s summary.</summary><text><p>%s description.</p></text>%s</command>'
         % (id, name, name, name, option)
         for id, name, option in (
-            ("backup", "Backup", ""),
+            ("archive-push", "Archive Push", ""),
+            ("backup", "Backup", "<option-list>%s</option-list>" % _option("archive-check", "Archive Check")),
             ("expire", "Expire", ""),
             ("help", "Help", ""),
             ("restore", "Restore", "<option-list>%s</option-list>" % _option("set", "Set", example=["latest"])),
+            ("stanza-create", "Stanza Create", ""),
+            ("stanza-delete", "Stanza Delete", ""),
+            ("stanza-upgrade", "Stanza Upgrade", ""),
             ("version", "Version", ""),
         )
     ),
 )
+
+
+# Commands an option without a command list is valid for, wrapped at the width of a code block
+COMMAND_ALL = "commands: archive-push, backup, restore, stanza-create, stanza-delete,\n    stanza-upgrade"
 
 
 ####################################################################################################################################
@@ -353,7 +385,7 @@ def test_reference_command_general():
     # An option that can be set in the configuration file is described in the configuration reference instead, as is one a reader
     # has no use for or should not be told about
     for name in ("option-process-max", "option-force", "option-repo-cipher-pass"):
-        assert_not_in(name, command.split('id="section-general"')[1].split('id="command-backup"')[0])
+        assert_not_in(name, command.split('id="section-general"')[1].split('id="command-archive-push"')[0])
 
     # An example is a command line, with the options given one after another
     assert_in("example: --stanza=main</code-block>", command)
@@ -368,24 +400,48 @@ def test_reference_option_detail():
 
     command, configuration = _render()
 
+    # The commands an option is valid for, wrapped without breaking a name, and less a command a reader has no use for
+    assert_in("<code-block>%s\ndefault: 1\n" % COMMAND_ALL, configuration)
+    assert_in("<code-block>commands: restore</code-block>", configuration)
+    assert_in("<code-block>commands: restore\nexample: --delta --no-delta</code-block>", command)
+
+    # An option no command takes for the role a user gives has no commands to list
+    assert_in("<p>Description of target.</p></section>", command)
+
     # A default, written the way it would be given rather than the way it is declared
-    assert_in("<code-block>default: 1", configuration)
-    assert_in("<code-block>default: y\n", configuration)
-    assert_in("<code-block>default: n</code-block>", configuration)
-    assert_in("<code-block>default: /var/lib/pgbackrest", configuration)
+    assert_in("\ndefault: y\n", configuration)
+    assert_in("\ndefault: n</code-block>", configuration)
+    assert_in("\ndefault: /var/lib/pgbackrest\n", configuration)
 
     # A default that is worked out when the command runs
-    assert_in("<code-block>default: [path of executed pgbackrest binary]</code-block>", configuration)
+    assert_in("\ndefault: [path of executed pgbackrest binary]</code-block>", configuration)
 
     # A default per value of the option it depends on
-    assert_in("<code-block>default (depending on compress-type):\n    s3 - 443\n    azure - 443</code-block>", configuration)
+    assert_in(
+        "\nvalid with: compress-type\ndefault (depending on compress-type):\n    s3 - 443\n    azure - 443</code-block>",
+        configuration,
+    )
 
     # A range, and a range per value of the option it depends on
     assert_in("allowed: [1, 999]", configuration)
-    assert_in("allow range (depending on compress-type):\n    none - [0, 0]\n    gz - [0, 9]", configuration)
+    assert_in(
+        "\nvalid with: compress-type\nallow range (depending on compress-type):\n    none - [0, 0]\n    gz - [0, 9]",
+        configuration,
+    )
+
+    # What an option is valid with that differs by command lists the commands, less a command a reader has no use for and one the
+    # option is valid without
+    assert_in("<code-block>commands: backup, restore\nvalid with (backup): online=y\ndefault: y</code-block>", configuration)
+
+    # Under a command it is what the option is valid with for that command, without a list of commands
+    assert_in(
+        "<title>Archive Check (<id>--archive-check</id>)</title><p>Summary.</p><p>Description of archive-check.</p>"
+        "<code-block>valid with: online=y\ndefault: y</code-block>",
+        command,
+    )
 
     # The minimum repository format, which is only rendered for an option that has one
-    assert_in("<code-block>minimum repository format: 6</code-block>", configuration)
+    assert_in("\nminimum repository format: 6</code-block>", configuration)
     assert_equal(configuration.count("minimum repository format:"), 1)
 
     # An option that is not ready to be relied on says so

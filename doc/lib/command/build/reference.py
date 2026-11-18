@@ -12,8 +12,11 @@ given on the command line is described at the top of the command reference, and 
 reference."""
 
 ####################################################################################################################################
+import textwrap
+
 from common.xml import xml_document_new, xml_node_add, xml_node_attribute_set, xml_node_child_add, xml_node_content_add
 from config.parse import DEFAULT_TYPE_DYNAMIC, OPT_TYPE_BOOLEAN, SECTION_COMMAND_LINE
+from help.render import bld_hlp_render_depend
 
 # Role a user gives an option, as opposed to a role a command starts for itself
 _CMD_ROLE_MAIN = "main"
@@ -26,6 +29,9 @@ _SECTION_DEFAULT = "general"
 _SECTION_COMMAND_LIST = ("general", "log", "maintainer", "repository", "stanza")
 
 _SECTION_COMMAND = "command"
+
+# Width a line in a code block is wrapped at
+_CODE_BLOCK_WIDTH = 80
 
 
 ####################################################################################################################################
@@ -44,6 +50,46 @@ def _section_title(section):
     """The heading a group of options is listed under."""
 
     return "%s Options" % (section[:1].upper() + section[1:])
+
+
+####################################################################################################################################
+def _command_main(cmd_cfg, opt_cmd_cfg):
+    """Is the option given to the command by a user, i.e. neither is internal and the command takes it for the main role?"""
+
+    return not cmd_cfg.internal and not opt_cmd_cfg.internal and _CMD_ROLE_MAIN in opt_cmd_cfg.role_list
+
+
+####################################################################################################################################
+def _command_block(block_list, opt_cmd_list):
+    """List the commands an option is valid for."""
+
+    if len(opt_cmd_list) > 0:
+        block_list.extend(
+            textwrap.wrap(
+                "commands: %s" % ", ".join(opt_cmd_cfg.name for opt_cmd_cfg in opt_cmd_list),
+                width=_CODE_BLOCK_WIDTH,
+                subsequent_indent="    ",
+                break_on_hyphens=False,
+            )
+        )
+
+
+####################################################################################################################################
+def _depend_block(block_list, opt_cmd_list, opt_cfg):
+    """Describe what an option is valid with, which may differ by command."""
+
+    # The commands are grouped by what the option is valid with for each, i.e. what the command declares or else what the option
+    # declares
+    depend_map = {}
+
+    for opt_cmd_cfg in opt_cmd_list:
+        depend_map.setdefault(bld_hlp_render_depend(opt_cmd_cfg.depend or opt_cfg.depend), []).append(opt_cmd_cfg.name)
+
+    # Commands are listed when there is more than one group
+    for depend, cmd_name_list in depend_map.items():
+        if depend is not None:
+            cmd_name = "" if len(depend_map) == 1 else " (%s)" % ", ".join(cmd_name_list)
+            block_list.append("valid with%s: %s" % (cmd_name, depend))
 
 
 ####################################################################################################################################
@@ -120,7 +166,7 @@ def _example_block(block_list, opt_cfg, opt_hlp, command):
 
 
 ####################################################################################################################################
-def _option_render(xml_section, opt_cmd_cfg, opt_cfg, opt_hlp, command):
+def _option_render(xml_section, cmd_list, opt_cmd_cfg, opt_cfg, opt_hlp, command):
     """Render one option, either as a command takes it or as the configuration file sets it, and return the section it is in."""
 
     xml_option = xml_node_add(xml_section, "section")
@@ -147,6 +193,14 @@ def _option_render(xml_section, opt_cmd_cfg, opt_cfg, opt_hlp, command):
         opt_cmd_cfg.default_value if opt_cmd_cfg is not None and opt_cmd_cfg.default_value is not None else opt_cfg.default_value
     )
 
+    # Without a command the option is described for every command it is valid for
+    if opt_cmd_cfg is None:
+        opt_cmd_list = [opt_cmd for opt_cmd in opt_cfg.cmd_list if _command_main(_find(cmd_list, opt_cmd.name), opt_cmd)]
+        _command_block(block_list, opt_cmd_list)
+    else:
+        opt_cmd_list = [opt_cmd_cfg]
+
+    _depend_block(block_list, opt_cmd_list, opt_cfg)
     _default_block(block_list, opt_cfg, default)
 
     if opt_cfg.allow_range is not None:
@@ -247,7 +301,7 @@ def reference_configuration_render(bld_cfg, bld_hlp):
             if opt_cfg.section == SECTION_COMMAND_LINE or opt_cfg.internal:
                 continue
 
-            _option_render(xml_section, None, opt_cfg, opt_hlp, False)
+            _option_render(xml_section, bld_cfg.cmd_list, None, opt_cfg, opt_hlp, False)
 
     return result
 
@@ -290,7 +344,7 @@ def _command_option_list(cmd_cfg, cmd_hlp, bld_cfg, bld_hlp):
         # Skip an option this command does not take, or takes only for a role the user does not start
         opt_cmd_cfg = _find(opt_cfg.cmd_list, cmd_cfg.name)
 
-        if opt_cmd_cfg is None or opt_cmd_cfg.internal or _CMD_ROLE_MAIN not in opt_cmd_cfg.role_list:
+        if opt_cmd_cfg is None or not _command_main(cmd_cfg, opt_cmd_cfg):
             continue
 
         # Help a command documents differently wins over the help the option has of its own
@@ -326,7 +380,7 @@ def _command_general_render(result, bld_cfg, bld_hlp):
             continue
 
         # The contents list the commands rather than the options each of them takes, so these options are left out of it as well
-        xml_node_attribute_set(_option_render(xml_section, None, opt_cfg, opt_hlp, True), "toc", "n")
+        xml_node_attribute_set(_option_render(xml_section, bld_cfg.cmd_list, None, opt_cfg, opt_hlp, True), "toc", "n")
 
 
 ####################################################################################################################################
@@ -372,7 +426,7 @@ def reference_command_render(bld_cfg, bld_hlp):
                     continue
 
                 if xml_list is None:
-                    _option_render(xml_category, opt.opt_cmd_cfg, opt.opt_cfg, opt.opt_hlp, True)
+                    _option_render(xml_category, bld_cfg.cmd_list, opt.opt_cmd_cfg, opt.opt_cfg, opt.opt_hlp, True)
                 else:
                     _option_link_render(xml_list, opt.opt_cfg, opt.opt_hlp)
 
