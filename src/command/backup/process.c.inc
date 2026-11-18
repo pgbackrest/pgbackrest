@@ -824,10 +824,9 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
 
             // Build expression to identify files that can be copied from the standby when standby backup is supported
             .standbyExp = regExpNew(
-                strNewFmt(
-                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))"
-                    "|" MANIFEST_TARGET_PGTBLSPC ")/",
-                    strZ(pgXactPath(backupData->version)))),
+                STRDEF(
+                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|" PG_PATH_PGXACT "|"
+                    PG_PATH_PGMULTIXACT "))|" MANIFEST_TARGET_PGTBLSPC ")/")),
         };
 
         if (jobData.bundle)

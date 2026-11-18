@@ -9,8 +9,7 @@ Check Common Handler
 #include "common/debug.h"
 #include "config/config.h"
 #include "db/helper.h"
-#include "info/infoArchive.h"
-#include "info/infoBackup.h"
+#include "info/helper.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
 #include "version.h"
@@ -162,26 +161,20 @@ checkStanzaInfo(const unsigned int repoIdx, const InfoPg *const archiveInfoPg, c
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-checkStanzaInfoPg(
-    const unsigned int repoIdx, const Storage *const storage, const unsigned int pgVersion, const uint64_t pgSystemId,
-    const CipherSpec *const cipherSpecMain)
+checkStanzaInfoPg(const unsigned int repoIdx, const unsigned int pgVersion, const uint64_t pgSystemId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, repoIdx);
-        FUNCTION_TEST_PARAM(STORAGE, storage);
         FUNCTION_TEST_PARAM(UINT, pgVersion);
         FUNCTION_TEST_PARAM(UINT64, pgSystemId);
-        FUNCTION_TEST_PARAM(CIPHER_SPEC, cipherSpecMain);
     FUNCTION_TEST_END();
-
-    ASSERT(storage != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Check that the backup and archive info files exist
-        const InfoArchive *const infoArchive = infoArchiveLoadFile(storage, INFO_ARCHIVE_PATH_FILE_STR, cipherSpecMain);
+        const InfoArchive *const infoArchive = infoArchiveRepoIdx(repoIdx);
         const InfoPgData archiveInfoPg = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
-        const InfoBackup *const infoBackup = infoBackupLoadFile(storage, INFO_BACKUP_PATH_FILE_STR, cipherSpecMain);
+        const InfoBackup *const infoBackup = infoBackupRepoIdxP(repoIdx);
 
         // Check that the info files pg data and repository format match each other
         checkStanzaInfo(repoIdx, infoArchivePg(infoArchive), infoBackupPg(infoBackup));

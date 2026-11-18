@@ -242,10 +242,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby only, repo local - fail to find primary database");
 
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_10, TEST_PATH "/pg", true, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
@@ -263,7 +263,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_96);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_10);
 
         // Two standbys found but no primary
         HRN_PQ_SCRIPT_SET(
@@ -287,13 +287,13 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_10, "/pgdata", true, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         // Only confirming we get passed the check for repoIsLocal || more than one pg-path configured
         TEST_ERROR(
             cmdCheck(), DbMismatchError,
-            "version '9.6' and path '/pgdata' queried from cluster do not match version '9.6' and '" TEST_PATH "/pg' read from"
+            "version '10' and path '/pgdata' queried from cluster do not match version '10' and '" TEST_PATH "/pg' read from"
             " '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
@@ -310,7 +310,7 @@ testRun(void)
 
         // Primary database connection ok
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_10, TEST_PATH "/pg", false, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
@@ -442,10 +442,13 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "new");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 2, TEST_CIPHER_PASS);
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
-        // Create stanza files on repo2
+        // Create stanza files on repo2 with the old passphrase
         HRN_INFO_PUT(
             storageTest, "repo2/archive/test1/" INFO_ARCHIVE_FILE,
             "[db]\n"
@@ -454,7 +457,8 @@ testRun(void)
             "db-version=\"15\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":" HRN_PG_SYSTEMID_15_Z ",\"db-version\":\"15\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_15_Z ",\"db-version\":\"15\"}\n",
+            .cipherSpec = TEST_CIPHER_SPEC);
         HRN_INFO_PUT(
             storageTest, "repo2/backup/test1/" INFO_BACKUP_FILE,
             "[db]\n"
@@ -466,13 +470,14 @@ testRun(void)
             "\n"
             "[db:history]\n"
             "1={\"db-catalog-version\":202209061,\"db-control-version\":1300,\"db-system-id\":" HRN_PG_SYSTEMID_15_Z
-            ",\"db-version\":\"15\"}\n");
+            ",\"db-version\":\"15\"}\n",
+            .cipherSpec = TEST_CIPHER_SPEC);
 
         // Error when WAL segment not found
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
             HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "1/1"),
-            HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", "000000010000000100000001"),
+            HRN_PQ_SCRIPT_WAL_SWITCH(1, "000000010000000100000001"),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
@@ -508,6 +513,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
@@ -520,7 +526,7 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
             HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "1/1"),
-            HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", "000000010000000100000001"),
+            HRN_PQ_SCRIPT_WAL_SWITCH(1, "000000010000000100000001"),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         HRN_STORAGE_PUT(
@@ -539,7 +545,48 @@ testRun(void)
             "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1\n"
             "P00   INFO: check repo2 archive for WAL (primary)\n"
             "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo2/archive/test1/15-1"
-            "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2");
+            "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo2\n"
+            "P00   WARN: option 'repo2-cipher-pass-old' is set and the stanza has not been rekeyed\n"
+            "            HINT: run stanza-rekey and then remove the option.");
+
+        // Save archive.info with the new passphrase and leave backup.info with the old passphrase
+        infoArchiveCipherPriorClear(infoArchiveRepoIdx(1));
+        infoArchiveRepoIdxSave(1);
+
+        TEST_RESULT_VOID(checkCipherPass(), "backup info has old passphrase");
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'repo2-cipher-pass-old' is set and the stanza has not been rekeyed\n"
+            "            HINT: run stanza-rekey and then remove the option.");
+
+        // Save backup.info with the new passphrase
+        infoBackupCipherPriorClear(infoBackupRepoIdxP(1));
+        infoBackupRepoIdxSave(1);
+
+        TEST_RESULT_VOID(checkCipherPass(), "info files have new passphrase");
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'repo2-cipher-pass-old' is set and the stanza has been rekeyed\n"
+            "            HINT: remove the option.");
+
+        // Save the info files with the example passphrase
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 2, "new");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        infoArchiveCipherPriorClear(infoArchiveRepoIdx(1));
+        infoArchiveRepoIdxSave(1);
+        infoBackupCipherPriorClear(infoBackupRepoIdxP(1));
+        infoBackupRepoIdxSave(1);
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPassOld, 2);
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        TEST_RESULT_VOID(checkCipherPass(), "example passphrase");
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'repo2-cipher-pass' should not be the example passphrase from the documentation\n"
+            "            HINT: generate a passphrase from at least 256 random bits, e.g. with 'openssl rand -base64 32', and"
+            " change it with stanza-rekey.");
+
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Primary == NULL (for test coverage)");
@@ -598,9 +645,9 @@ testRun(void)
         TEST_TITLE("checkDbConfig() version mismatch");
 
         TEST_ERROR(
-            checkDbConfig(PG_VERSION_96, db.primaryIdx, db.primary, false), DbMismatchError,
+            checkDbConfig(PG_VERSION_10, db.primaryIdx, db.primary, false), DbMismatchError,
             "version '" PG_VERSION_11_Z "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
-            PG_VERSION_96_Z "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
+            PG_VERSION_10_Z "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -672,9 +719,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkStanzaInfo() - files match");
 
-        InfoArchive *archiveInfo = infoArchiveNew(PG_VERSION_96, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, NULL);
+        InfoArchive *archiveInfo = infoArchiveNew(PG_VERSION_10, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, NULL);
         InfoBackup *backupInfo = infoBackupNew(
-            PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL);
+            PG_VERSION_10, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT, NULL);
 
         TEST_RESULT_VOID(checkStanzaInfo(0, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), "stanza info files match");
 
@@ -682,13 +729,13 @@ testRun(void)
         TEST_TITLE("checkStanzaInfo() - corrupted backup file: system id");
 
         backupInfo = infoBackupNew(
-            PG_VERSION_96, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL);
+            PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT, NULL);
 
         TEST_ERROR(
             checkStanzaInfo(0, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
             "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.6, system-id = 6569239123849665999\n"
+            "archive: id = 1, version = 10, system-id = 6569239123849665679\n"
+            "backup : id = 1, version = 10, system-id = 6569239123849665999\n"
             "HINT: this may be a symptom of repository corruption!");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -700,7 +747,7 @@ testRun(void)
         TEST_ERROR(
             checkStanzaInfo(0, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
             "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
+            "archive: id = 1, version = 10, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 18, system-id = 6569239123849665999\n"
             "HINT: this may be a symptom of repository corruption!");
 
@@ -713,27 +760,27 @@ testRun(void)
         TEST_ERROR(
             checkStanzaInfo(0, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
             "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
+            "archive: id = 1, version = 10, system-id = 6569239123849665679\n"
             "backup : id = 1, version = 18, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkStanzaInfo() - corrupted backup file: db id");
 
-        infoBackupPgSet(backupInfo, PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96));
+        infoBackupPgSet(backupInfo, PG_VERSION_10, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_10));
 
         TEST_ERROR(
             checkStanzaInfo(0, infoArchivePg(archiveInfo), infoBackupPg(backupInfo)), FileInvalidError,
             "backup info file and archive info file do not match\n"
-            "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 2, version = 9.6, system-id = 6569239123849665679\n"
+            "archive: id = 1, version = 10, system-id = 6569239123849665679\n"
+            "backup : id = 2, version = 10, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkStanzaInfo() - info files at different repository formats");
 
         backupInfo = infoBackupNew(
-            PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL);
+            PG_VERSION_10, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT, NULL);
         infoArchiveFormatSet(archiveInfo, REPOSITORY_FORMAT_6);
 
         TEST_ERROR(
@@ -777,7 +824,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_96);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_10);
 
         // Create info files
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - encryption");
@@ -785,7 +832,7 @@ testRun(void)
 
         // Version mismatch
         TEST_ERROR(
-            checkStanzaInfoPg(0, storageRepoIdx(0), PG_VERSION_18, HRN_PG_SYSTEMID_18, cfgCipherSpecMainIdx(0)), FileInvalidError,
+            checkStanzaInfoPg(0, PG_VERSION_18, HRN_PG_SYSTEMID_18), FileInvalidError,
             "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");
@@ -795,7 +842,7 @@ testRun(void)
 
         // SystemId mismatch
         TEST_ERROR(
-            checkStanzaInfoPg(0, storageRepoIdx(0), PG_VERSION_96, 6569239123849665699, cfgCipherSpecMainIdx(0)), FileInvalidError,
+            checkStanzaInfoPg(0, PG_VERSION_10, 6569239123849665699), FileInvalidError,
             "backup and archive info files exist but do not match the database\n"
             "HINT: is this the correct stanza?\n"
             "HINT: did an error occur during stanza-upgrade?");

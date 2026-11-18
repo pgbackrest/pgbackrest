@@ -19,7 +19,7 @@ typedef struct TestStorageGetParam
     VAR_PARAM_HEADER;
     bool remove;                                                    // Remove file after testing?
     bool nullOnMissing;                                             // NULL when file is missing
-    CompressType compressType;                                      // Compression extension added to file name (limited gz and bz2)
+    CompressType compressType;                                      // Compression extension added to file name
     const CipherSpec *cipherSpec;                                   // Cipher spec the file is encrypted with
     const char *comment;                                            // Comment
 } TestStorageGetParam;
@@ -201,7 +201,7 @@ typedef struct HrnStoragePutParam
     VAR_PARAM_HEADER;
     mode_t modeFile;                                                // File mode if not the default
     time_t timeModified;                                            // Time file was last modified
-    CompressType compressType;                                      // Limited to gz and bz2 (lz4 and zstd are not always available)
+    CompressType compressType;                                      // Compression type
     const CipherSpec *cipherSpec;                                   // Cipher spec to encrypt the file with
     const char *comment;                                            // Comment
 } HrnStoragePutParam;
@@ -262,6 +262,13 @@ typedef struct HrnStorageTimeParam
     while (0)
 
 void hrnStorageTime(const Storage *const storage, const char *const path, const time_t modified, const HrnStorageTimeParam param);
+
+/***********************************************************************************************************************************
+Use storage Posix shims for one call - fail with the specified errno
+***********************************************************************************************************************************/
+void hrnStoragePosixFileOpenShimOne(int errNo);
+void hrnStorageReadPosixDirectShimOne(int errNo);
+void hrnStorageWritePosixShimOne(int errNo);
 
 /***********************************************************************************************************************************
 Dummy interface for constructing test storage drivers. All functions and features are pulled from the Posix driver.

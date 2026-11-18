@@ -14,6 +14,7 @@ Expire Command
 #include "common/time.h"
 #include "common/type/list.h"
 #include "config/config.h"
+#include "info/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "protocol/helper.h"
@@ -642,8 +643,7 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                 (!strLstEmpty(globalBackupRetentionList) && archiveRetention <= strLstSize(globalBackupRetentionList)))
             {
                 // Attempt to load the archive info file
-                const InfoArchive *const infoArchive = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                const InfoArchive *const infoArchive = infoArchiveRepoIdx(repoIdx);
                 const InfoPg *const infoArchivePgData = infoArchivePg(infoArchive);
 
                 // Get a list of archive directories (e.g. 9.6-1, 10-2, etc) sorted by the db-id (number after the dash).
@@ -1098,8 +1098,7 @@ expireArchiveCipherRotate(const unsigned int repoIdx)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            InfoArchive *const infoArchive = infoArchiveLoadFile(
-                storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+            InfoArchive *const infoArchive = infoArchiveRepoIdx(repoIdx);
             const time_t timeNow = time(NULL);
 
             if (infoArchiveCipherRotateTime(infoArchive) <
@@ -1111,10 +1110,7 @@ expireArchiveCipherRotate(const unsigned int repoIdx)
 
                 // Store the new archive info only if the dry-run mode is disabled
                 if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
-                {
-                    infoArchiveSaveFile(
-                        infoArchive, storageRepoIdxWrite(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
-                }
+                    infoArchiveRepoIdxSave(repoIdx);
 
                 LOG_INFO_FMT(
                     "%s: rotate archive key to id %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
@@ -1185,8 +1181,6 @@ cmdExpire(void)
 
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            const Storage *const storageRepo = storageRepoIdx(repoIdx);
             InfoBackup *infoBackup = NULL;
 
             // Is full retention time-based?
@@ -1196,14 +1190,10 @@ cmdExpire(void)
             TRY_BEGIN()
             {
                 // Load backup.info for this repo
-                infoBackup = infoBackupLoadFileReconstruct(storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoBackup = infoBackupRepoIdxP(repoIdx, .reconstruct = true);
 
-                // Set the repository format after checking that archive.info is at the same format as backup.info
-                checkStanzaInfoFormat(
-                    repoIdx,
-                    infoArchivePg(infoArchiveLoadFile(storageRepo, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx))),
-                    infoBackupPg(infoBackup));
-                cfgRepoFormatSet(repoIdx, infoBackupFormat(infoBackup));
+                // Check that archive.info is at the same format as backup.info
+                checkStanzaInfoFormat(repoIdx, infoArchivePg(infoArchiveRepoIdx(repoIdx)), infoBackupPg(infoBackup));
 
                 // When expire oldest requested, expire the oldest full backup by lowering retention for this execution
                 if (expireOldest)
@@ -1283,10 +1273,7 @@ cmdExpire(void)
 
                 // Store the new backup info only if the dry-run mode is disabled
                 if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
-                {
-                    infoBackupSaveFile(
-                        infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
-                }
+                    infoBackupRepoIdxSave(repoIdx);
 
                 // Remove all files on disk that are now expired
                 removeExpiredBackup(infoBackup, adhocBackupLabel, repoIdx);

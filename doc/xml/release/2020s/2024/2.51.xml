@@ -14,7 +14,7 @@
 
                 <p>Skip zero-length files for block incremental delta restore.</p>
 
-                <p>An existing zero-length file caused a block incremental delta restore to fail in the block checksum filter. These files are now skipped, since there is nothing in them to reuse.</p>
+                <p>An existing zero-length file caused a block incremental delta restore to fail in the block checksum filter. This was introduced in <commit-link subject="Preserve partial files during block incremental delta restore."/>. These files are now skipped, since there is nothing in them to reuse.</p>
             </release-item>
 
             <release-item>
@@ -29,7 +29,7 @@
 
                 <p>Fix performance regression in storage list.</p>
 
-                <p>Listing a path requested detailed information for each file, which could be slow, e.g. on object stores. Only the information the list needs is now requested.</p>
+                <p>Listing a path requested detailed information for each file, which could be slow, e.g. on object stores. This was introduced in <commit-link subject="Create snapshot when listing contents of a path."/>. Only the information the list needs is now requested.</p>
             </release-item>
 
             <release-item>
@@ -59,7 +59,7 @@
 
                 <p>Improved support for dual stack connections.</p>
 
-                <p>When a host name resolves to more than one address, e.g. IPv4 and IPv6, the next address is tried once the prior address has had reasonable time to connect, following the <quote>happy eyeballs</quote> approach of RFC 8305. A connection attempt that neither fails nor connects no longer uses up all the available time.</p>
+                <p>When a host name resolves to more than one address, e.g. IPv4 and IPv6, the next address is tried once the prior address has had reasonable time to connect, following the <quote>happy eyeballs</quote> approach of RFC 8305. A connection attempt that neither fails nor connects no longer uses up all the available time. Dual stack support was added in <commit-link subject="Support for dual stack connections."/>.</p>
             </release-item>
 
             <release-item>

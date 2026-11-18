@@ -14,7 +14,7 @@
 
                 <p>Fix issue with <cmd>version</cmd>/<cmd>help</cmd> commands attempting to load <file>pgbackrest.conf</file>.</p>
 
-                <p>In v2.54.0 the <cmd>version</cmd> and <cmd>help</cmd> commands loaded <file>pgbackrest.conf</file> and failed when it could not be read or parsed.</p>
+                <p>In v2.54.0 the <cmd>version</cmd> and <cmd>help</cmd> commands loaded <file>pgbackrest.conf</file> and failed when it could not be read or parsed. This was introduced in <commit-link subject="Refactor config parse to remove none command, add version/help options."/>.</p>
             </release-item>
         </release-bug-list>
 

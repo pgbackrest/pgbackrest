@@ -33,7 +33,7 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(pgVersionToStr(PG_VERSION_11), "11", "infoPgVersionToString 11");
-        TEST_RESULT_STR_Z(pgVersionToStr(PG_VERSION_96), "9.6", "infoPgVersionToString 9.6");
+        TEST_RESULT_STR_Z(pgVersionToStr(90600), "9.6", "infoPgVersionToString 9.6");
         TEST_RESULT_STR_Z(pgVersionToStr(96456), "9.64", "infoPgVersionToString 96456");
     }
 
@@ -53,16 +53,23 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pgControlVersion()"))
+    if (testBegin("pgControlVersion() and pgVersionCheck()"))
     {
         TEST_ERROR(
             pgControlVersion(70300), VersionNotSupportedError,
             "invalid PostgreSQL version 7.3\n"
             "HINT: is this version of PostgreSQL supported?\n"
             "HINT: is pgBackRest up to date on all hosts?");
-        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_96), 960, "9.6 control version");
+        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_10), 1002, "10 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_17), 1700, "17 control version");
+
+        TEST_ERROR(
+            pgVersionCheck(90600), VersionNotSupportedError,
+            "invalid PostgreSQL version 9.6\n"
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
+        TEST_RESULT_VOID(pgVersionCheck(PG_VERSION_10), "10 supported");
     }
 
     // *****************************************************************************************************************************
@@ -150,7 +157,7 @@ testRun(void)
             "wal segment size is 2147483648 but must be a power of two between 1048576 and 1073741824 inclusive");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_96, .pageSize = 64 * 1024);
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_10, .pageSize = 64 * 1024);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), FormatError,
@@ -179,13 +186,13 @@ testRun(void)
         TEST_TITLE("check all valid page sizes");
 
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_96, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_96),
+            storageTest, PG_VERSION_10, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_10),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize1, .pageChecksumVersion = 1);
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_96, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 201608131, "check catalog version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_10, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 201707211, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize1, "check page size");
@@ -357,22 +364,9 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("pgLsnName(), pgTablespaceId(), pgWalName(), pgWalPath(), and pgXactPath()"))
+    if (testBegin("pgTablespaceId()"))
     {
-        TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_96), "location", "check location name");
-        TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_10), "lsn", "check lsn name");
-
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_96, 888888888), "PG_9.6_888888888", "check 9.6 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_16, 999999999), "PG_16_999999999", "check 16 tablespace id");
-
-        TEST_RESULT_STR_Z(pgWalName(PG_VERSION_96), "xlog", "check xlog name");
-        TEST_RESULT_STR_Z(pgWalName(PG_VERSION_10), "wal", "check wal name");
-
-        TEST_RESULT_STR_Z(pgWalPath(PG_VERSION_96), "pg_xlog", "check xlog path");
-        TEST_RESULT_STR_Z(pgWalPath(PG_VERSION_10), "pg_wal", "check wal path");
-
-        TEST_RESULT_STR_Z(pgXactPath(PG_VERSION_96), "pg_clog", "check pg_clog name");
-        TEST_RESULT_STR_Z(pgXactPath(PG_VERSION_10), "pg_xact", "check pg_xact name");
     }
 
     // *****************************************************************************************************************************
@@ -500,12 +494,12 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_96, .systemId = 0xEAEAEAEA, .size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT);
+        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_10, .systemId = 0xEAEAEAEA, .size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
-        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, NULL), "get wal info v9.6");
+        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, NULL), "get wal info v10");
         TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_96, "   check version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_10, "   check version");
         TEST_RESULT_UINT(info.size, HRN_PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
 
         // -------------------------------------------------------------------------------------------------------------------------

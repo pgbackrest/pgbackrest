@@ -25,12 +25,13 @@ from common.xml import (
     xml_node_child,
     xml_node_child_add,
     xml_node_child_list,
+    xml_node_child_replace,
     xml_node_content_add,
     xml_node_field,
     xml_node_text_add,
 )
 from command.render.render import SECTION_ANCHOR, SECTION_ANCHOR_NO_INHERIT, DocRender
-from config.project import PROJECT_NAME
+from config.project import PROJECT_NAME, project_version_part
 
 # Where the git history is cached
 _FILE_HISTORY = "resource/git-history.cache"
@@ -39,6 +40,9 @@ _FILE_HISTORY = "resource/git-history.cache"
 # branch of the project repository, which CI fetches.
 _HISTORY_BRANCH_LOCAL = "refs/heads/integration"
 _HISTORY_BRANCH_LIST = (_HISTORY_BRANCH_LOCAL, "refs/remotes/upstream/integration")
+
+# Local branch the git history of a patch release ends at when it is related to HEAD, e.g. integration-2.60.1-ci
+_HISTORY_BRANCH_PATCH = "refs/heads/integration-%s-ci"
 
 # Subject of a commit that closed a release
 _RELEASE_SUBJECT_EXP = re.compile(r"^v[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]+)?: ")
@@ -114,19 +118,28 @@ def release_history_update(path_repo, path_doc):
     """Write the git history the release notes are checked against when the newest commit in it has changed.
 
     When the local or the upstream integration branch is related to HEAD the history ends at the newest commit of HEAD that is also
-    in that branch. The commits of a release branch are left out this way. Otherwise the history ends at HEAD. The result is true
-    when the local integration branch is related to HEAD. The body of a commit that closed a release is left out."""
+    in that branch. The commits of a release branch are left out this way. When PROJECT_VERSION_PATCH != 0 only the local
+    integration-x.y.z-ci branch of the patch release is tried. Otherwise the history ends at HEAD. The result is true when the local
+    branch is related to HEAD. The body of a commit that closed a release is left out."""
 
     path_history = os.path.join(path_doc, _FILE_HISTORY)
     head = None
     related = False
+    part = project_version_part(path_repo)
 
-    for branch in _HISTORY_BRANCH_LIST:
+    if part["PATCH"] == "0":
+        branch_local = _HISTORY_BRANCH_LOCAL
+        branch_list = _HISTORY_BRANCH_LIST
+    else:
+        branch_local = _HISTORY_BRANCH_PATCH % ("%s.%s.%s" % (part["MAJOR"], part["MINOR"], part["PATCH"]))
+        branch_list = (branch_local,)
+
+    for branch in branch_list:
         command = "git -C %s merge-base HEAD %s" % (path_repo, branch)
 
         if exec_status(command) == 0:
             head = exec_result(command, suppress_stderr=True)[1].strip()
-            related = branch == _HISTORY_BRANCH_LOCAL
+            related = branch == branch_local
             break
 
     if head is None:
@@ -457,6 +470,50 @@ class _Release:
         return result
 
     ################################################################################################################################
+    def _commit_link_render(self, node, version, history_list):
+        """Replace each commit-link under a node with a link to the commit that has the subject it names.
+
+        history_list is the commits of the release and the commits before it. An id selects a commit by what its hash begins with
+        when more than one commit has the subject. A commit that is not found is an error unless the release is in development,
+        where the subject is rendered in quotes instead."""
+
+        # The children are taken first because replacing one removes it
+        for child in list(node):
+            if child.tag != "commit-link":
+                self._commit_link_render(child, version, history_list)
+                continue
+
+            subject = xml_node_attribute(child, "subject", True)
+            commit_id = xml_node_attribute(child, "id")
+            name = "subject '%s'" % subject if commit_id is None else "id '%s' subject '%s'" % (commit_id, subject)
+
+            commit_list = [
+                commit
+                for history in history_list
+                for commit in history
+                if commit["subject"] == subject and (commit_id is None or commit["commit"].startswith(commit_id))
+            ]
+
+            if len(commit_list) > 1:
+                raise ToolError(
+                    "release %s commit link %s found in commits %s"
+                    % (version, name, ", ".join(commit["commit"] for commit in commit_list))
+                )
+
+            replace = xml_document_new(child.tag)
+
+            if len(commit_list) == 0:
+                if not version.endswith("dev"):
+                    raise ToolError("unable to find release %s commit link %s" % (version, name))
+
+                xml_node_content_add(xml_node_add(replace, "quote"), subject)
+            else:
+                link = xml_node_add(replace, "link", {"url": _COMMIT_URL % commit_list[0]["commit"]})
+                xml_node_content_add(xml_node_add(link, "code"), commit_list[0]["commit"][:_COMMIT_SIZE])
+
+            xml_node_child_replace(node, child, replace)
+
+    ################################################################################################################################
     @staticmethod
     def _ref_add(ref, label, url, value, code=False):
         """Add a link to an issue, a pull request, or a commit."""
@@ -650,6 +707,9 @@ class _Release:
             dev = version.endswith("dev")
 
             commit_list, remaining_list, commit_map, check = self._commit_list(version, release_idx, release_all)
+
+            # The commits of the release and the commits before it
+            self._commit_link_render(release, version, (commit_list, self.history))
 
             # Where the release is listed, which is by how interesting it still is rather than by when it happened
             if dev:

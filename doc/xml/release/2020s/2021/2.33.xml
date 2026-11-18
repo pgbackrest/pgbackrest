@@ -13,7 +13,7 @@
 
                 <p>Fix option warnings breaking async <cmd>archive-get</cmd>/<cmd>archive-push</cmd>.</p>
 
-                <p>An option warning in the async process was logged to a closed stdout, which made the process abort. Since the async role can now have different valid options than the default role, this happened more often. Option warnings are now logged only for the default role.</p>
+                <p>An option warning in the async process was logged to a closed stdout, which made the process abort. Since the async role can now have different valid options than the default role, this happened more often. Different valid options for the async role were added in <commit-link subject="Limit option validity by command role."/>. Option warnings are now logged only for the default role.</p>
             </release-item>
 
             <release-item>

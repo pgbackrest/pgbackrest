@@ -11,7 +11,7 @@
 
                 <p>Fix issue after disabling bundling with block incremental enabled.</p>
 
-                <p>When bundling was disabled after backups were made with bundling and block incremental enabled, the prior backups could not be read. The setting needed to read them is now preserved.</p>
+                <p>When bundling was disabled after backups were made with bundling and block incremental enabled, the prior backups could not be read. This was introduced in <commit-link subject="Use raw compression/encryption to bundling and block incremental backup."/>. The setting needed to read them is now preserved.</p>
             </release-item>
         </release-bug-list>
 

@@ -1,65 +1,10 @@
 <release date="XXXX-XX-XX" version="2.61.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: The <proper>zstd</proper> library is now required by the meson build and the <id>libzstd</id> build option has been removed.</p>
+        </text>
+
         <release-bug-list>
-            <release-item>
-                <github-issue id="2889"/>
-                <github-pull-request id="2900"/>
-
-                <release-item-contributor-list>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="douglas.j.hunley"/>
-                    <release-item-reviewer id="stefan.fercot"/>
-                </release-item-contributor-list>
-
-                <p>Fix reporting of <proper>OpenSSL</proper> errors.</p>
-
-                <p>An error queued by the <proper>OpenSSL</proper> config or left over from an earlier failure could be reported instead of the actual failure, e.g. <quote>ssl command section not found</quote> for an invalid <br-option>tls-cipher-12</br-option> value. System errors such as a missing CA file reported <quote>no details available</quote> with <proper>OpenSSL</proper> &gt;= 3.0 and now report the system error message.</p>
-            </release-item>
-
-            <release-item>
-                <github-issue id="2889"/>
-                <github-pull-request id="2899"/>
-
-                <release-item-contributor-list>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="douglas.j.hunley"/>
-                    <release-item-reviewer id="stefan.fercot"/>
-                </release-item-contributor-list>
-
-                <p>Do not lower a minimum TLS version set by the <proper>OpenSSL</proper> config.</p>
-
-                <p>The minimum TLS version was set to 1.2 after the <proper>OpenSSL</proper> config was applied. This lowered a higher minimum such as <code>MinProtocol = TLSv1.3</code> so TLS 1.2 connections were still allowed. The minimum is now set only when the minimum from the config is lower than TLS 1.2.</p>
-            </release-item>
-
-            <release-item>
-                <github-issue id="2884"/>
-                <github-pull-request id="2902"/>
-
-                <release-item-contributor-list>
-                    <release-item-ideator id="fineline19"/>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="douglas.j.hunley"/>
-                </release-item-contributor-list>
-
-                <p>Fix possible block incremental restore failure on <proper>SFTP</proper> storage.</p>
-
-                <p>Each super block read left a file open on the server until the session ended. A restore could reach the open file limit of the server and fail with an error such as <quote>sftp errno [4]</quote> or <quote>client state is 'response' but expected 'idle'</quote>. Super block reads are now closed before they are freed.</p>
-            </release-item>
-
-            <release-item>
-                <github-issue id="2884"/>
-                <github-pull-request id="2903"/>
-
-                <release-item-contributor-list>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="douglas.j.hunley"/>
-                </release-item-contributor-list>
-
-                <p>Fix use of <proper>SFTP</proper> file handles after a reconnect.</p>
-
-                <p>A reconnect freed the session while other files could still be open on it and the next read or write of one of those files used freed memory. These now fail with <quote>connection was lost</quote>, which allows the job to be retried.</p>
-            </release-item>
-
             <release-item>
                 <github-issue id="705"/>
                 <github-issue id="2893"/>
@@ -92,20 +37,6 @@
 
                 <p>Each wait for the server restarted the timeout and any packet from the server ended the wait. When the server stopped responding but still sent keepalives more often than <br-option>io-timeout</br-option> an operation such as a file write or remove could wait indefinitely. The timeout now limits how long an operation can wait without making progress. A directory read that timed out or failed ended the list without an error and now reports the error.</p>
             </release-item>
-
-            <release-item>
-                <github-pull-request id="2916"/>
-
-                <release-item-contributor-list>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="stefan.fercot"/>
-                    <release-item-reviewer id="douglas.j.hunley"/>
-                </release-item-contributor-list>
-
-                <p>Fix <cmd>annotate</cmd> saving <file>backup.info</file> to the default repository.</p>
-
-                <p>When <br-option>repo</br-option> was not specified, the <cmd>annotate</cmd> command searched each repository for the backup set but saved the updated <file>backup.info</file> to the default repository. Annotating a backup set that was not in the default repository replaced the <file>backup.info</file> of the default repository with the <file>backup.info</file> of the repository where the backup set was found. If the default repository was encrypted, the key required to read its backups was lost, so those backups could no longer be restored.</p>
-            </release-item>
         </release-bug-list>
 
         <release-feature-list>
@@ -128,6 +59,18 @@
                 <commit subject="Load archive.info and backup.info through infoLoadFile()."/>
                 <commit subject="Add a minimum repository format for options.">
                     <github-pull-request id="2915"/>
+                </commit>
+                <commit subject="Add an info helper to load, cache, and save info files.">
+                    <github-pull-request id="2917"/>
+                </commit>
+                <commit subject="Add stanza-rekey command to change the repository passphrase.">
+                    <github-pull-request id="2898"/>
+                </commit>
+                <commit subject="Warn about a weak repository passphrase in stanza-upgrade and check.">
+                    <github-pull-request id="2923"/>
+                </commit>
+                <commit subject="Add a key check to format 6 files encrypted with the passphrase.">
+                    <github-pull-request id="2924"/>
                 </commit>
 
                 <release-item-contributor-list>
@@ -156,9 +99,49 @@
 
                 <p>Set <br-option>tls-min-version=1.3</br-option> to allow only TLS 1.3, e.g. for compliance. The default is <id>1.2</id>. A higher minimum set in the <proper>OpenSSL</proper> config is not lowered. The option is ignored for repository storage connections when <br-option>repo-storage-verify-tls=n</br-option>.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2887"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="francisco.miguel.biete"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Direct I/O for <proper>Posix</proper>/<proper>CIFS</proper> storage.</p>
+
+                <p>Set <br-option>repo-io-mode=direct</br-option> or <br-option>pg-io-mode=direct</br-option> to read and write files with direct I/O (<id>O_DIRECT</id>), which bypasses the page cache. Direct I/O does not fill the page cache but disables readahead and background writeback and can reduce throughput. <br-option>repo-io-mode</br-option> is valid when <br-option>repo-type</br-option> is <id>posix</id> or <id>cifs</id>. Buffered I/O is used when the file system does not support direct I/O.</p>
+            </release-item>
         </release-feature-list>
 
         <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2921"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Remove support for <proper>PostgreSQL</proper> <id>9.6</id>.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2925"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="stefan.fercot"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Check the <postgres/> version before <cmd>restore</cmd> modifies the data directory.</p>
+
+                <p>A <cmd>restore</cmd> of a backup from an unsupported <postgres/> version, e.g. <id>9.6</id>, failed after the data directory had been modified. With <br-option>--delta</br-option> <file>pg_control</file> and files not in the backup had already been removed. The version is now checked before the data directory is modified.</p>
+            </release-item>
+
             <release-item>
                 <github-pull-request id="2895"/>
 
@@ -212,7 +195,20 @@
 
                 <p>Improve performance of block incremental delta restore.</p>
 
-                <p>Each changed block was written and followed by a seek even when the next changed block was contiguous, which defeated the seek optimization added in v2.59.0. Contiguous blocks are now written without a seek in between.</p>
+                <p>Each changed block was written and followed by a seek even when the next changed block was contiguous, which defeated the seek optimization added by <commit-link subject="Improve seek performance during block incremental delta restore."/> in v2.59.0. Contiguous blocks are now written without a seek in between.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2922"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Require the <proper>zstd</proper> library.</p>
+
+                <p><br-option>compress-type=zst</br-option> was not available when <backrest/> was built without <proper>zstd</proper>. <proper>zstd</proper> is now required by the build so <br-option>compress-type=zst</br-option> is available in every build.</p>
             </release-item>
         </release-improvement-list>
     </release-core-list>
@@ -254,4 +250,20 @@
             </release-item>
         </release-improvement-list>
     </release-test-list>
+
+    <release-backpatch-list>
+        <release-backpatch version="2.60.1">
+            <commit subject="Document TLS settings skipped when repo-storage-verify-tls=n."/>
+            <commit subject="Fix reporting of OpenSSL errors."/>
+            <commit subject="Do not lower a minimum TLS version set by the OpenSSL config."/>
+            <commit subject="Close block incremental super block reads during restore."/>
+            <commit subject="Prevent use of SFTP handles after a reconnect."/>
+            <commit subject="Remove stale files from site paths written by the documentation build."/>
+            <commit subject="Fix annotate saving backup.info to the default repository."/>
+            <commit subject="Fix excessive memory use by the memory context free list."/>
+            <commit subject="New CI container builds."/>
+            <commit subject="End patch release note history at the integration-x.y.z-ci branch."/>
+            <commit subject="Merge v2.60.1 release."/>
+        </release-backpatch>
+    </release-backpatch-list>
 </release>

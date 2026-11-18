@@ -1,0 +1,15 @@
+# libgcc's stack unwinder reads uninitialized memory (a false positive) while generating backtraces
+{
+    libgcc_unwind_uninit_cond
+    Memcheck:Cond
+    ...
+    fun:_Unwind_Backtrace
+    fun:backtrace_full
+}
+{
+    libgcc_unwind_uninit_value
+    Memcheck:Value8
+    ...
+    fun:_Unwind_Backtrace
+    fun:backtrace_full
+}

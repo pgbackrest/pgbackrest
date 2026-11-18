@@ -233,8 +233,8 @@
                                 <allow-item id="none">no compression</allow-item>
                                 <allow-item id="bz2">bzip2 compression format</allow-item>
                                 <allow-item id="gz">gzip compression format</allow-item>
-                                <allow-item id="lz4">lz4 compression format (not available on all platforms)</allow-item>
-                                <allow-item id="zst">Zstandard compression format (not available on all platforms)</allow-item>
+                                <allow-item id="lz4">lz4 compression format</allow-item>
+                                <allow-item id="zst">Zstandard compression format</allow-item>
                             </allow-list>
                         </text>
 
@@ -345,7 +345,7 @@
                         <summary>Set process priority.</summary>
 
                         <text>
-                            <p>Defines how much priority (i.e. niceness) will be given to the process by the kernel scheduler. Positive values decrease priority and negative values increase priority. In most case processes do not have permission to increase their priority.</p>
+                            <p>Defines how much priority (i.e. niceness) will be given to the process by the kernel scheduler. Positive values decrease priority and negative values increase priority. In most cases the processes do not have permission to increase their priority.</p>
                         </text>
 
                         <example>19</example>
@@ -451,11 +451,11 @@
                         <summary>Allowed TLSv1.2 cipher suites.</summary>
 
                         <text>
-                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
+                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to object stores (e.g. <proper>S3</proper>) are also encrypted.</p>
 
                             <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2 unless <br-option>repo-storage-verify-tls=n</br-option>.</admonition>
 
-                            <p>The accepted cipher suites can be adjusted if need arises. The example is reasonable choice unless you have specific security requirements. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
+                            <p>The accepted cipher suites can be adjusted if need arises. The example is a reasonable choice unless you have specific security requirements. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
                         </text>
 
                         <example>HIGH:MEDIUM:+3DES:!aNULL</example>
@@ -465,7 +465,7 @@
                         <summary>Allowed TLSv1.3 cipher suites.</summary>
 
                         <text>
-                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
+                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to object stores (e.g. <proper>S3</proper>) are also encrypted.</p>
 
                             <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2 unless <br-option>repo-storage-verify-tls=n</br-option>.</admonition>
 
@@ -551,7 +551,7 @@
 
                     <p><b>Indexing</b>: All <setting>repo-</setting> options are indexed to allow for configuring multiple repositories. For example, a single repository is configured with the <setting>repo1-path</setting>, <setting>repo1-host</setting>, etc. options. If there is more than one repository configured and the <br-option>{[dash]}-repo</br-option> option is not specified for a command, the repositories will be acted upon in highest priority order (e.g. repo1 then repo2).</p>
 
-                    <p>The <setting>repo-retention-*</setting> options define how long backups will be retained. Expiration only occurs when the count of complete backups exceeds the allowed retention. In other words, if <setting>repo1-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo1-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired. If <setting>repo1-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo1-retention-full</setting> represents days so there must be at least that many days worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</p>
+                    <p>The <setting>repo-retention-*</setting> options define how long backups will be retained. Expiration only occurs when the count of complete backups exceeds the allowed retention. In other words, if <setting>repo1-retention-full-type</setting> is set to <setting>count</setting> (default) and <setting>repo1-retention-full</setting> is set to 2, then there must be 3 complete backups before the oldest will be expired. If <setting>repo1-retention-full-type</setting> is set to <setting>time</setting> then <setting>repo1-retention-full</setting> represents days so there must be at least that many days' worth of full backups before expiration can occur. Make sure you always have enough space for retention + 1 backups.</p>
                 </text>
 
                 <config-key-list>
@@ -938,6 +938,21 @@
                         <example>y</example>
                     </config-key>
 
+                    <config-key id="repo-io-mode" name="Repository I/O Mode">
+                        <summary>I/O mode for a local repository.</summary>
+
+                        <text>
+                            <p>Determines how files in the repository are read and written. This option is only valid when <setting>repo-type</setting> is <id>posix</id> or <id>cifs</id>.</p>
+
+                            <allow-list caption="I/O modes">
+                                <allow-item id="default">use the buffered I/O provided by the operating system</allow-item>
+                                <allow-item id="direct">bypass the operating system page cache using direct I/O (<id>O_DIRECT</id>). This mode is only available on platforms that support direct I/O. When the file system does not support direct I/O, buffered I/O is used instead. Direct I/O avoids filling the page cache but disables readahead and background writeback. This can reduce throughput. Data at the end of a file that does not fill a 4KiB block is written with buffered I/O.</allow-item>
+                            </allow-list>
+                        </text>
+
+                        <example>direct</example>
+                    </config-key>
+
                     <config-key id="repo-path" name="Repository Path">
                         <summary>Path where backups and archive are stored.</summary>
 
@@ -1006,7 +1021,7 @@
                     </config-key>
 
                     <config-key id="repo-retention-archive" name="Archive Retention">
-                        <summary>Number of backups worth of continuous WAL to retain.</summary>
+                        <summary>Number of backups' worth of continuous WAL to retain.</summary>
 
                         <text>
                             <admonition type="note">WAL segments required to make a backup consistent are always retained until the backup is expired regardless of how this option is configured.</admonition>
@@ -1095,7 +1110,7 @@
                         <text>
                             <p>S3 bucket used to store the repository.</p>
 
-                            <p><backrest/> repositories can be stored in the bucket root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other AWS generated content can also be stored in the bucket.</p>
+                            <p><backrest/> repositories can be stored in the bucket root by setting <br-option>repo-path=/</br-option> but it is usually best to specify a prefix, such as <path>/repo</path>, so logs and other AWS-generated content can also be stored in the bucket.</p>
                         </text>
 
                         <example>pg-backup</example>
@@ -1412,7 +1427,7 @@
                         <summary>Create symlinks within the repository.</summary>
 
                         <text>
-                            <p>Enable creation of the <file>lastest</file> and tablespace symlinks. These symlinks are most useful when using snapshots to do in-place recovery in the repository, which is an uncommon use case.</p>
+                            <p>Enable creation of the <file>latest</file> and tablespace symlinks. These symlinks are most useful when using snapshots to do in-place recovery in the repository, which is an uncommon use case.</p>
 
                             <p>While this feature is likely not useful for the vast majority of users it remains on by default for legacy purposes. However, it may be useful to disable symlinks for Posix-like storage that does not support them.</p>
                         </text>
@@ -1480,6 +1495,18 @@
                             <p>A stanza created at <br-option>repo-format</br-option> 6 or higher requires a passphrase generated from at least 256 random bits, e.g. with <code>openssl rand -base64 32</code>. The passphrase must be hex, base64, or unpadded base64url that decodes to at least 256 bits, the decoded bytes must not all be text, and they must contain at least 16 distinct values and at least 16 distinct differences between adjacent bytes. The last two rule out repeated values, sequences, and short repeating patterns.</p>
 
                             <admonition type="note">When run without the <br-option>stanza</br-option> option the <cmd>info</cmd> command reads encryption settings only from the <setting>global</setting> section. If encryption settings are configured per stanza, run the <cmd>info</cmd> command with the <br-option>stanza</br-option> option to read an encrypted stanza.</admonition>
+                        </text>
+
+                        <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=</example>
+                    </config-key>
+
+                    <config-key id="repo-cipher-pass-old" name="Repository Cipher Old Passphrase">
+                        <summary>Repository cipher passphrase before a rekey.</summary>
+
+                        <text>
+                            <p>Previous value of <br-option>repo-cipher-pass</br-option> while the repository is rekeyed with the <cmd>stanza-rekey</cmd> command. An info file that cannot be decrypted with <br-option>repo-cipher-pass</br-option> is decrypted with this passphrase and saved with it until <cmd>stanza-rekey</cmd> runs. The <cmd>check</cmd> command warns while this option is set.</p>
+
+                            <p>Set <br-option>repo-cipher-pass</br-option> to the new passphrase and this option to the old passphrase on every host where <br-option>repo-cipher-pass</br-option> is configured, run <cmd>stanza-rekey</cmd>, then remove this option.</p>
                         </text>
 
                         <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=</example>
@@ -1685,14 +1712,14 @@
                         <summary>Maximum size of the <backrest/> archive-get queue.</summary>
 
                         <text>
-                            <p>Specifies the maximum size of the <cmd>archive-get</cmd> queue when <br-option>archive-async</br-option> is enabled. The queue is stored in the <br-option>spool-path</br-option> and is used to speed providing WAL to <postgres/>.</p>
+                            <p>Specifies the maximum size of the <cmd>archive-get</cmd> queue when <br-option>archive-async</br-option> is enabled. The queue is stored in the <br-option>spool-path</br-option> and is used to speed up providing WAL to <postgres/>.</p>
                         </text>
 
                         <example>1GiB</example>
                     </config-key>
 
                     <config-key id="archive-missing-retry" name="Retry Missing WAL Segment">
-                        <summary>Retry missing WAL segment</summary>
+                        <summary>Retry missing WAL segment.</summary>
 
                         <text>
                             <p>Retry a WAL segment that was previously reported as missing by the <cmd>archive-get</cmd> command when in asynchronous mode. This prevents notifications in the spool path from a prior restore from being used and possibly causing a recovery failure if consistency has not been reached.</p>
@@ -1985,6 +2012,18 @@
                         <example>/conf/pgbackrest</example>
                     </config-key>
 
+                    <config-key id="pg-io-mode" name="PostgreSQL I/O Mode">
+                        <summary>I/O mode for the <postgres/> data directory.</summary>
+
+                        <text>
+                            <p>Determines how files in the <postgres/> data directory are read and written.</p>
+
+                            <allow-list inherit="repo-io-mode"/>
+                        </text>
+
+                        <example>direct</example>
+                    </config-key>
+
                     <config-key id="pg-host" name="PostgreSQL Host">
                         <summary><postgres/> host for operating remotely.</summary>
 
@@ -2149,7 +2188,7 @@
 
             <p>Command-line options override environment options which override config file options.</p>
 
-            <p>See <link page="configuration" section="/introduction">Configuration Introduction</link> for information on option types</p>
+            <p>See <link page="configuration" section="/introduction">Configuration Introduction</link> for information on option types.</p>
         </text>
 
         <operation-general title="General Options">
@@ -2212,7 +2251,7 @@
                     <summary>Do not transform data.</summary>
 
                     <text>
-                        <p>Do not transform (i.e, encrypt, decompress, etc.) data for the current command.</p>
+                        <p>Do not transform (i.e. encrypt, decompress, etc.) data for the current command.</p>
                     </text>
 
                     <example>y</example>
@@ -2266,10 +2305,10 @@
             </command>
 
             <command id="backup" name="Backup">
-                <summary>Backup a database cluster.</summary>
+                <summary>Back up a database cluster.</summary>
 
                 <text>
-                    <p>When multiple repositories are configured, <backrest/> will backup to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</p>
+                    <p>When multiple repositories are configured, <backrest/> will back up to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified.</p>
 
                     <p><backrest/> does not have a built-in scheduler so it's best to run it from cron or some other scheduling mechanism.</p>
 
@@ -2357,6 +2396,8 @@
 
                     <p>Note that <code>pg_create_restore_point('pgBackRest Archive Check')</code> and <code>pg_switch_xlog()</code>/<code>pg_switch_wal()</code> are called to force <postgres/> to archive a WAL segment.</p>
 
+                    <p>The <cmd>check</cmd> command warns while <br-option>repo-cipher-pass-old</br-option> is set and reports whether the stanza has been rekeyed. Otherwise it warns when <br-option>repo-cipher-pass</br-option> is the example passphrase from the documentation or, at <br-option>repo-format</br-option> 6 or higher, is not a generated passphrase, with a hint to change it with the <cmd>stanza-rekey</cmd> command.</p>
+
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>
 
@@ -2391,7 +2432,7 @@
                         <text>
                             <p>If enabled, the <cmd>expire</cmd> command will terminate with an error before any changes if the oldest retained backup would contain checksum errors. If this option is disabled, the <cmd>expire</cmd> will proceed and issue a warning if there are checksum errors in the oldest retained backup.</p>
 
-                            <p>If the <br-option>--set</br-option> is used, the <cmd>expire</cmd> will proceed even if this option is enabled. It will emit a warning if the oldest retained backup contains checksum errors.</p>
+                            <p>If <br-option>--set</br-option> is used, the <cmd>expire</cmd> will proceed even if this option is enabled. It will emit a warning if the oldest retained backup contains checksum errors.</p>
                         </text>
 
                         <example>n</example>
@@ -2471,7 +2512,7 @@
                     </option>
 
                     <option id="pg" name="PostgreSQL Cluster">
-                        <summary>PostgreSQL Cluster</summary>
+                        <summary>PostgreSQL cluster.</summary>
 
                         <text>
                             <p>Specify the PostgreSQL cluster to compare the manifest against.</p>
@@ -2681,7 +2722,7 @@
 
                             <admonition type="warning">Recovery <br-option>type=none</br-option> should be avoided because the timeline will not be incremented at the end of recovery. This can lead to, for example, <postgres/> attempting to archive duplicate WAL, which will be rejected, and may cause the disk to fill up and result in a <postgres/> panic. In addition, tools like <id>pg_rewind</id> may not work correctly or may cause corruption.</admonition>
 
-                            <p>Note that the default restore <br-option>type</br-option> for offline backups is <id>none</id> since Point-in-Time-Recovery is not possible if <setting>wal_level=minimal</setting>. If <br-option>type</br-option> is set explicitly then it will be honored since Point-in-Time-Recovery is possible from offline backups as long as <setting>wal_level > minimal</setting>.</p>
+                            <p>Note that the default restore <br-option>type</br-option> for offline backups is <id>none</id> since Point-in-Time Recovery is not possible if <setting>wal_level=minimal</setting>. If <br-option>type</br-option> is set explicitly then it will be honored since Point-in-Time Recovery is possible from offline backups as long as <setting>wal_level > minimal</setting>.</p>
                         </text>
 
                         <example>xid</example>
@@ -2701,7 +2742,7 @@
                         <summary>Stop just before the recovery target is reached.</summary>
 
                         <text>
-                            <p>Defines whether recovery to the target would be exclusive (the default is inclusive) and is only valid when <br-option>--type</br-option> is <id>lsn</id>, <id>time</id> or <id>xid</id>. For example, using <br-option>--target-exclusive</br-option> would exclude the contents of transaction <id>1007</id> when <br-option>--type=xid</br-option> and <br-option>--target=1007</br-option>. See the <setting>recovery_target_inclusive</setting> option in the <postgres/> docs for more information.</p>
+                            <p>Defines whether recovery to the target would be exclusive (the default is inclusive) and is only valid when <br-option>--type</br-option> is <id>lsn</id>, <id>time</id>, or <id>xid</id>. For example, using <br-option>--target-exclusive</br-option> would exclude the contents of transaction <id>1007</id> when <br-option>--type=xid</br-option> and <br-option>--target=1007</br-option>. See the <setting>recovery_target_inclusive</setting> option in the <postgres/> docs for more information.</p>
                         </text>
 
                         <example>n</example>
@@ -2749,7 +2790,7 @@
 
                     <p>Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option. The stanza '<id>status</id>' gives a brief indication of the stanza's health. If this is '<id>ok</id>' then <backrest/> is functioning normally. If there are multiple repositories, then a status of '<id>mixed</id>' indicates that the stanza is not in a healthy state on one or more of the repositories; in this case the state of the stanza will be detailed per repository. For cases in which an error on a repository occurred that is not one of the known error codes, then an error code of '<id>other</id>' will be used and the full error details will be provided. The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive and, in the case of multiple repositories, will be reported across all repositories unless the <br-option>{[dash]}-repo</br-option> option is set. Note that there may be gaps due to archive retention policies or other reasons.</p>
 
-                    <p>The '<id>backup/expire running</id>' and/or '<id>restore running</id>' messages will appear beside the '<id>status</id>' information if any of those commands are currently running on the host. Per-repo progress will be also reported in text output and a '<id>repo</id>' array will be included in JSON output.</p>
+                    <p>The '<id>backup/expire running</id>' and/or '<id>restore running</id>' messages will appear beside the '<id>status</id>' information if any of those commands are currently running on the host. Per-repo progress will also be reported in text output and a '<id>repo</id>' array will be included in JSON output.</p>
 
                     <p>The backups are displayed oldest to newest. The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).</p>
 
@@ -2889,7 +2930,7 @@
                         <summary>Force all <backrest/> processes to stop.</summary>
 
                         <text>
-                            <p>This option will send TERM signals to all running <backrest/> processes to effect a graceful but immediate shutdown. Note that this will also shutdown processes that were initiated on another system but have remotes running on the current system. For instance, if a backup was started on the backup server then running <cmd>stop --force</cmd> on the database server will shutdown the backup process on the backup server.</p>
+                            <p>This option will send TERM signals to all running <backrest/> processes to effect a graceful but immediate shutdown. Note that this will also shut down processes that were initiated on another system but have remotes running on the current system. For instance, if a backup was started on the backup server then running <cmd>stop --force</cmd> on the database server will shut down the backup process on the backup server.</p>
                         </text>
 
                         <example>y</example>
@@ -3018,6 +3059,8 @@
                 <text>
                     <p>Immediately after upgrading <postgres/> to a newer major version, the <br-option>pg-path</br-option> for all <backrest/> configurations must be set to the new database location and the <cmd>stanza-upgrade</cmd> command run. If there is more than one repository configured on the host, the stanza will be upgraded on each. If the database is offline use the <br-option>--no-online</br-option> option.</p>
 
+                    <p>A warning is logged when <br-option>repo-cipher-pass</br-option> is the example passphrase from the documentation or, at <br-option>repo-format</br-option> 6 or higher, is not a generated passphrase, with a hint to change it with the <cmd>stanza-rekey</cmd> command. There is no warning while <br-option>repo-cipher-pass-old</br-option> is set.</p>
+
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>
 
@@ -3056,6 +3099,33 @@
                         <example>6</example>
                     </option>
                 </option-list>
+            </command>
+
+            <command id="stanza-rekey" name="Stanza Rekey">
+                <summary>Rekey a stanza.</summary>
+
+                <text>
+                    <p>Encrypt the info files of the stanza with the passphrase in <br-option>repo-cipher-pass</br-option>. The info files are decrypted with either <br-option>repo-cipher-pass</br-option> or <br-option>repo-cipher-pass-old</br-option>. Only the info files are encrypted with the passphrase, so backups and archived WAL are not rewritten.</p>
+
+                    <p>To change the passphrase:</p>
+
+                    <list>
+                        <list-item>On every host where <br-option>repo-cipher-pass</br-option> is configured set it to the new passphrase and set <br-option>repo-cipher-pass-old</br-option> to the old passphrase.</list-item>
+                        <list-item>Run the <cmd>stanza-rekey</cmd> command.</list-item>
+                        <list-item>On the same hosts remove <br-option>repo-cipher-pass-old</br-option>.</list-item>
+                        <list-item>Run the <cmd>check</cmd> command, which warns while <br-option>repo-cipher-pass-old</br-option> is set.</list-item>
+                    </list>
+
+                    <p>A host with no encryption settings gets both options from the repository host. Every host where <br-option>repo-cipher-pass</br-option> is configured must have both options set before <cmd>stanza-rekey</cmd> runs. Until then the info files remain encrypted with the old passphrase, so backups and archiving can continue while hosts are updated. Once the stanza is rekeyed, a host that still has the old passphrase in <br-option>repo-cipher-pass</br-option> can no longer read the stanza.</p>
+
+                    <p>Until the stanza is rekeyed, <cmd>repo-get</cmd> can read an info file only when <br-option>repo-cipher-pass</br-option> is the passphrase it was encrypted with.</p>
+
+                    <p>Each encrypted repository with <br-option>repo-cipher-pass-old</br-option> set is rekeyed. The command does not connect to <postgres/>.</p>
+
+                    <p>The archive key of each encrypted repository is also rotated, even when <br-option>repo-cipher-pass-old</br-option> is not set. A new key is generated to encrypt archived WAL and WAL encrypted with an earlier key remains readable. A backup set gets a new key with the next full backup, which should run after the stanza is rekeyed when the old passphrase was exposed. Archive key rotation requires <br-option>repo-format</br-option> 6 or higher.</p>
+
+                    <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
+                </text>
             </command>
 
             <command id="stanza-delete" name="Stanza Delete">

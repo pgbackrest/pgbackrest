@@ -26,13 +26,14 @@ Command constants
 #define CFGCMD_SERVER_PING                                          "server-ping"
 #define CFGCMD_STANZA_CREATE                                        "stanza-create"
 #define CFGCMD_STANZA_DELETE                                        "stanza-delete"
+#define CFGCMD_STANZA_REKEY                                         "stanza-rekey"
 #define CFGCMD_STANZA_UPGRADE                                       "stanza-upgrade"
 #define CFGCMD_START                                                "start"
 #define CFGCMD_STOP                                                 "stop"
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           22
+#define CFG_COMMAND_TOTAL                                           23
 
 /***********************************************************************************************************************************
 Option group constants
@@ -147,7 +148,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            203
+#define CFG_OPTION_TOTAL                                            206
 
 /***********************************************************************************************************************************
 Option value constants
@@ -279,6 +280,13 @@ Option value constants
 #define CFGOPTVAL_PG_HOST_TYPE_TLS                                  STRID5("tls", 0x4d940)
 #define CFGOPTVAL_PG_HOST_TYPE_TLS_Z                                "tls"
 
+#define CFGOPTVAL_PG_IO_MODE_DEFAULT                                0
+#define CFGOPTVAL_PG_IO_MODE_DEFAULT_STRID                          STRID5S("default", 0, 0x5195098a42)
+#define CFGOPTVAL_PG_IO_MODE_DEFAULT_Z                              "default"
+#define CFGOPTVAL_PG_IO_MODE_DIRECT                                 1
+#define CFGOPTVAL_PG_IO_MODE_DIRECT_STRID                           STRID5S("direct", 1, 0x2832c9244)
+#define CFGOPTVAL_PG_IO_MODE_DIRECT_Z                               "direct"
+
 #define CFGOPTVAL_REMOTE_TYPE_PG                                    STRID5("pg", 0xf00)
 #define CFGOPTVAL_REMOTE_TYPE_PG_Z                                  "pg"
 #define CFGOPTVAL_REMOTE_TYPE_REPO                                  STRID5("repo", 0x7c0b20)
@@ -323,6 +331,13 @@ Option value constants
 #define CFGOPTVAL_REPO_HOST_TYPE_SSH_Z                              "ssh"
 #define CFGOPTVAL_REPO_HOST_TYPE_TLS                                STRID5("tls", 0x4d940)
 #define CFGOPTVAL_REPO_HOST_TYPE_TLS_Z                              "tls"
+
+#define CFGOPTVAL_REPO_IO_MODE_DEFAULT                              0
+#define CFGOPTVAL_REPO_IO_MODE_DEFAULT_STRID                        STRID5S("default", 0, 0x5195098a42)
+#define CFGOPTVAL_REPO_IO_MODE_DEFAULT_Z                            "default"
+#define CFGOPTVAL_REPO_IO_MODE_DIRECT                               1
+#define CFGOPTVAL_REPO_IO_MODE_DIRECT_STRID                         STRID5S("direct", 1, 0x2832c9244)
+#define CFGOPTVAL_REPO_IO_MODE_DIRECT_Z                             "direct"
 
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF                  STRID5("diff", 0x319240)
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF_Z                "diff"
@@ -464,6 +479,7 @@ typedef enum
     cfgCmdServerPing,
     cfgCmdStanzaCreate,
     cfgCmdStanzaDelete,
+    cfgCmdStanzaRekey,
     cfgCmdStanzaUpgrade,
     cfgCmdStart,
     cfgCmdStop,
@@ -559,6 +575,7 @@ typedef enum
     cfgOptPgHostPort,
     cfgOptPgHostType,
     cfgOptPgHostUser,
+    cfgOptPgIoMode,
     cfgOptPgLocal,
     cfgOptPgPath,
     cfgOptPgPort,
@@ -591,6 +608,7 @@ typedef enum
     cfgOptRepoBundleLimit,
     cfgOptRepoBundleSize,
     cfgOptRepoCipherPass,
+    cfgOptRepoCipherPassOld,
     cfgOptRepoCipherRotate,
     cfgOptRepoCipherType,
     cfgOptRepoFormat,
@@ -612,6 +630,7 @@ typedef enum
     cfgOptRepoHostPort,
     cfgOptRepoHostType,
     cfgOptRepoHostUser,
+    cfgOptRepoIoMode,
     cfgOptRepoLocal,
     cfgOptRepoPath,
     cfgOptRepoRetentionArchive,

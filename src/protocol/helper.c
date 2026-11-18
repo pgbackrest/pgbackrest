@@ -832,6 +832,7 @@ protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned 
                 VariantList *const param = varLstNew();
                 varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherType, hostIdx)));
                 varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherPass, hostIdx)));
+                varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherPassOld, hostIdx)));
 
                 const VariantList *const optionList = configOptionRemote(protocolHelperClient->client, param);
 
@@ -839,6 +840,7 @@ protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned 
                 {
                     cfgOptionIdxSet(cfgOptRepoCipherType, hostIdx, cfgSourceConfig, varLstGet(optionList, 0));
                     cfgOptionIdxSet(cfgOptRepoCipherPass, hostIdx, cfgSourceConfig, varLstGet(optionList, 1));
+                    cfgOptionIdxSet(cfgOptRepoCipherPassOld, hostIdx, cfgSourceConfig, varLstGet(optionList, 2));
                 }
             }
         }
