@@ -67,16 +67,21 @@ storagePosixFileOpen(const String *const file, const int flags, const mode_t mod
 
     int result = -1;
 
+#ifdef HAVE_O_DIRECT
     if (*ioMode == storagePosixIoModeDirect)
     {
-        result = storagePosixFileOpenInternal(strZ(file), flags | STORAGE_POSIX_DIRECT_FLAG, mode);
+        result = storagePosixFileOpenInternal(strZ(file), flags | O_DIRECT, mode);
 
         // Fall back to buffered I/O when direct I/O is not supported, e.g. by the file system
         if (result == -1 && errno == EINVAL)
             *ioMode = storagePosixIoModeDefault;
     }
 
-    if (*ioMode != storagePosixIoModeDirect)
+    if (*ioMode == storagePosixIoModeDefault)
+#else
+    ASSERT(*ioMode == storagePosixIoModeDefault);
+    (void)ioMode;                                                   // unused without HAVE_O_DIRECT
+#endif
         result = storagePosixFileOpenInternal(strZ(file), flags, mode);
 
     FUNCTION_TEST_RETURN(INT, result);
@@ -658,7 +663,9 @@ storagePosixNewInternal(
     ASSERT(path != NULL);
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
-    ASSERT(ioMode != storagePosixIoModeDirect || STORAGE_POSIX_DIRECT_FLAG != 0);
+#ifndef HAVE_O_DIRECT
+    ASSERT(ioMode != storagePosixIoModeDirect);
+#endif
 
     // Initialize user module
     userInit();
