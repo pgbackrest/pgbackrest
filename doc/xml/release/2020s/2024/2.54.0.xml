@@ -126,7 +126,7 @@
 
                 <p>Remove limitation on reading files in parallel during restore.</p>
 
-                <p>The protocol could only read or write one file at a time on a remote, so a restore read one file at a time from the repository. Protocol commands can now be multiplexed, so a restore can read more than one file at a time, e.g. a bundle and the block incremental data for a file in it.</p>
+                <p>The protocol could only read or write one file at a time on a remote, so a restore read one file at a time from the repository. Protocol command multiplexing was added in <commit-link subject="Protocol command multiplexing."/>, so a restore can read more than one file at a time, e.g. a bundle and the block incremental data for a file in it.</p>
             </release-item>
 
             <release-item>

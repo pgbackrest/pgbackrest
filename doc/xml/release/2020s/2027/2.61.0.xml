@@ -195,7 +195,7 @@
 
                 <p>Improve performance of block incremental delta restore.</p>
 
-                <p>Each changed block was written and followed by a seek even when the next changed block was contiguous, which defeated the seek optimization added in v2.59.0. Contiguous blocks are now written without a seek in between.</p>
+                <p>Each changed block was written and followed by a seek even when the next changed block was contiguous, which defeated the seek optimization added by <commit-link subject="Improve seek performance during block incremental delta restore."/> in v2.59.0. Contiguous blocks are now written without a seek in between.</p>
             </release-item>
 
             <release-item>

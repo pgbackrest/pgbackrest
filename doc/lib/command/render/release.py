@@ -25,6 +25,7 @@ from common.xml import (
     xml_node_child,
     xml_node_child_add,
     xml_node_child_list,
+    xml_node_child_replace,
     xml_node_content_add,
     xml_node_field,
     xml_node_text_add,
@@ -469,6 +470,50 @@ class _Release:
         return result
 
     ################################################################################################################################
+    def _commit_link_render(self, node, version, history_list):
+        """Replace each commit-link under a node with a link to the commit that has the subject it names.
+
+        history_list is the commits of the release and the commits before it. An id selects a commit by what its hash begins with
+        when more than one commit has the subject. A commit that is not found is an error unless the release is in development,
+        where the subject is rendered in quotes instead."""
+
+        # The children are taken first because replacing one removes it
+        for child in list(node):
+            if child.tag != "commit-link":
+                self._commit_link_render(child, version, history_list)
+                continue
+
+            subject = xml_node_attribute(child, "subject", True)
+            commit_id = xml_node_attribute(child, "id")
+            name = "subject '%s'" % subject if commit_id is None else "id '%s' subject '%s'" % (commit_id, subject)
+
+            commit_list = [
+                commit
+                for history in history_list
+                for commit in history
+                if commit["subject"] == subject and (commit_id is None or commit["commit"].startswith(commit_id))
+            ]
+
+            if len(commit_list) > 1:
+                raise ToolError(
+                    "release %s commit link %s found in commits %s"
+                    % (version, name, ", ".join(commit["commit"] for commit in commit_list))
+                )
+
+            replace = xml_document_new(child.tag)
+
+            if len(commit_list) == 0:
+                if not version.endswith("dev"):
+                    raise ToolError("unable to find release %s commit link %s" % (version, name))
+
+                xml_node_content_add(xml_node_add(replace, "quote"), subject)
+            else:
+                link = xml_node_add(replace, "link", {"url": _COMMIT_URL % commit_list[0]["commit"]})
+                xml_node_content_add(xml_node_add(link, "code"), commit_list[0]["commit"][:_COMMIT_SIZE])
+
+            xml_node_child_replace(node, child, replace)
+
+    ################################################################################################################################
     @staticmethod
     def _ref_add(ref, label, url, value, code=False):
         """Add a link to an issue, a pull request, or a commit."""
@@ -662,6 +707,9 @@ class _Release:
             dev = version.endswith("dev")
 
             commit_list, remaining_list, commit_map, check = self._commit_list(version, release_idx, release_all)
+
+            # The commits of the release and the commits before it
+            self._commit_link_render(release, version, (commit_list, self.history))
 
             # Where the release is listed, which is by how interesting it still is rather than by when it happened
             if dev:

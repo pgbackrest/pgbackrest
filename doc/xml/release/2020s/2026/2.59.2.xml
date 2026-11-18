@@ -28,7 +28,7 @@
 
                 <p>Disable read retry when filters are passed to the driver.</p>
 
-                <p>A retried read from a repository on an object store, accessed through a repository host, crashed. These reads are no longer retried by the client. The repository host still retries its read from the object store.</p>
+                <p>A retried read from a repository on an object store, accessed through a repository host, crashed. This was introduced in <commit-link subject="Invert storage read/write interface ownership."/>. These reads are no longer retried by the client. The repository host still retries its read from the object store.</p>
             </release-item>
 
             <release-item>
