@@ -46,13 +46,18 @@ endif
 ####################################################################################################################################
 # OS-specific settings
 ####################################################################################################################################
+# Feature macros
 if host_machine.system() == 'linux'
-    add_global_arguments('-D_GNU_SOURCE', language: 'c')
+    feature_args = ['-D_GNU_SOURCE']
 elif host_machine.system() == 'darwin'
-    add_global_arguments('-D_DARWIN_C_SOURCE', language: 'c')
+    feature_args = ['-D_DARWIN_C_SOURCE']
 elif host_machine.system() == 'sunos'
-    add_global_arguments('-D_POSIX_C_SOURCE=200809L', '-D__EXTENSIONS__', language: 'c')
+    feature_args = ['-D_POSIX_C_SOURCE=200809L', '-D__EXTENSIONS__']
+else
+    feature_args = []
 endif
+
+add_global_arguments(feature_args, language: 'c')
 
 ####################################################################################################################################
 # Enable/disable warnings
@@ -252,6 +257,11 @@ lib_ssh2 = dependency('libssh2', required: get_option('libssh2'))
 
 if lib_ssh2.found()
     configuration.set('HAVE_LIBSSH2', true, description: 'Is libssh2 present?')
+endif
+
+# Check for direct I/O support
+if cc.has_header_symbol('fcntl.h', 'O_DIRECT', args: feature_args)
+    configuration.set('HAVE_O_DIRECT', true, description: 'Is O_DIRECT present?')
 endif
 
 # Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros

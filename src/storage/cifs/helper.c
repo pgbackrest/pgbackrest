@@ -22,7 +22,7 @@ storageCifsHelper(const unsigned int repoIdx, const bool write, StoragePathExpre
 
     Storage *const result = storageCifsNew(
         cfgOptionIdxStr(cfgOptRepoPath, repoIdx), STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write,
-        pathExpressionCallback);
+        pathExpressionCallback, (StoragePosixIoMode)cfgOptionIdxSeq(cfgOptRepoIoMode, repoIdx));
 
     FUNCTION_LOG_RETURN(STORAGE, result);
 }
