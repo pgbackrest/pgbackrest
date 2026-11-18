@@ -66,6 +66,13 @@ option:
     type: boolean
     default: false
 
+  checksum-page-error:
+    section: global
+    type: boolean
+    command:
+      backup: {}
+      restore: {}
+
   cmd:
     section: global
     type: string
@@ -225,6 +232,7 @@ HELP = """<doc title="Reference">
         (
             _option("archive-check", "Archive Check", tag="config-key"),
             _option("archive-copy", "Archive Copy", tag="config-key"),
+            '<config-key id="checksum-page-error" name="Checksum Page Error"><summary>Summary.</summary></config-key>',
             _option("cmd", "Cmd", tag="config-key"),
             _option("compress-level", "Compress Level", tag="config-key"),
             _option("compress-type", "Compress Type", example=["lz4"], tag="config-key"),
@@ -253,10 +261,21 @@ HELP = """<doc title="Reference">
         % (id, name, name, name, option)
         for id, name, option in (
             ("archive-push", "Archive Push", ""),
-            ("backup", "Backup", "<option-list>%s</option-list>" % _option("archive-check", "Archive Check")),
+            (
+                "backup",
+                "Backup",
+                '<option-list><option id="archive-check"><text><p>Backup description of archive-check.</p></text></option>'
+                '<option id="checksum-page-error"><text><p>Backup description of checksum-page-error.</p></text></option>'
+                "</option-list>",
+            ),
             ("expire", "Expire", ""),
             ("help", "Help", ""),
-            ("restore", "Restore", "<option-list>%s</option-list>" % _option("set", "Set", example=["latest"])),
+            (
+                "restore",
+                "Restore",
+                '<option-list><option id="checksum-page-error" command="backup"/>%s</option-list>'
+                % _option("set", "Set", example=["latest"]),
+            ),
             ("stanza-create", "Stanza Create", ""),
             ("stanza-delete", "Stanza Delete", ""),
             ("stanza-upgrade", "Stanza Upgrade", ""),
@@ -271,12 +290,12 @@ COMMAND_ALL = "commands: archive-push, backup, restore, stanza-create, stanza-de
 
 
 ####################################################################################################################################
-def _render():
+def _render(help=HELP):
     """Render both references and return the xml of each."""
 
     with tempfile.TemporaryDirectory() as path:
         file_write(os.path.join(path, "build/config.yaml"), CONFIG)
-        file_write(os.path.join(path, PATH_HELP), HELP)
+        file_write(os.path.join(path, PATH_HELP), help)
 
         bld_cfg = bld_cfg_parse(path)
         bld_hlp = bld_hlp_parse(os.path.join(path, PATH_HELP), bld_cfg, True)
@@ -328,6 +347,20 @@ def test_reference_configuration():
     assert_in("option-repo-cipher-pass", configuration)
     assert_not_in("option-repo-cipher-pass", _render()[0])
 
+    # Each command-specific description follows the general description, under a subtitle naming the command
+    assert_in(
+        "<p>Description of archive-check.</p><subtitle><text><cmd>backup</cmd> command</text></subtitle>"
+        "<p>Backup description of archive-check.</p><code-block>commands: backup, restore\n",
+        configuration,
+    )
+
+    # General option help may leave out the description, and commands that share command-specific help are named together
+    assert_in(
+        "<p>Summary.</p><subtitle><text><cmd>backup</cmd> and <cmd>restore</cmd> commands</text></subtitle>"
+        "<p>Backup description of checksum-page-error.</p><code-block>commands: backup, restore</code-block>",
+        configuration,
+    )
+
     # An example is a configuration file line, one per line, and an option in a group is shown at the first index
     assert_in("example: repo1-path=/backup\nexample: repo1-path=/other</code-block>", configuration)
 
@@ -353,6 +386,20 @@ def test_reference_command():
 
     # Help a command documents itself wins over the help the option has of its own, and is grouped as a command option
     assert_in("<p>Description of set.</p>", command)
+
+    # Command-specific option help is the general description followed by the command-specific description, with the name and
+    # summary of the general help when they are left out
+    assert_in(
+        "<title>Archive Check (<id>--archive-check</id>)</title><p>Summary.</p><p>Description of archive-check.</p>"
+        "<p>Backup description of archive-check.</p><code-block>",
+        command,
+    )
+
+    assert_in(
+        "<title>Checksum Page Error (<id>--checksum-page-error</id>)</title><p>Summary.</p>"
+        "<p>Backup description of checksum-page-error.</p></section>",
+        command,
+    )
 
     # An option a command does not take is not under it, nor is one the command marks internal, nor one no user can give
     assert_not_in("option-delta</", command.split('id="command-backup"')[1].split('id="command-help"')[0])
@@ -434,11 +481,7 @@ def test_reference_option_detail():
     assert_in("<code-block>commands: backup, restore\nvalid with (backup): online=y\ndefault: y</code-block>", configuration)
 
     # Under a command it is what the option is valid with for that command, without a list of commands
-    assert_in(
-        "<title>Archive Check (<id>--archive-check</id>)</title><p>Summary.</p><p>Description of archive-check.</p>"
-        "<code-block>valid with: online=y\ndefault: y</code-block>",
-        command,
-    )
+    assert_in("<code-block>valid with: online=y\ndefault: y</code-block>", command)
 
     # The minimum repository format, which is only rendered for an option that has one
     assert_in("\nminimum repository format: 6</code-block>", configuration)

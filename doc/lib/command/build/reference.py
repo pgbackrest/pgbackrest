@@ -14,7 +14,14 @@ reference."""
 ####################################################################################################################################
 import textwrap
 
-from common.xml import xml_document_new, xml_node_add, xml_node_attribute_set, xml_node_child_add, xml_node_content_add
+from common.xml import (
+    xml_document_new,
+    xml_node_add,
+    xml_node_attribute_set,
+    xml_node_child_add,
+    xml_node_content_add,
+    xml_node_text_add,
+)
 from config.parse import DEFAULT_TYPE_DYNAMIC, OPT_TYPE_BOOLEAN, SECTION_COMMAND_LINE
 from help.render import bld_hlp_render_depend
 
@@ -166,7 +173,26 @@ def _example_block(block_list, opt_cfg, opt_hlp, command):
 
 
 ####################################################################################################################################
-def _option_render(xml_section, cmd_list, opt_cmd_cfg, opt_cfg, opt_hlp, command):
+def _command_description_render(xml_option, cmd_name_list, description):
+    """Render a command-specific option description under a subtitle naming the commands it is for."""
+
+    xml_subtitle = xml_node_text_add(xml_node_add(xml_option, "subtitle"))
+
+    for cmd_idx, cmd_name in enumerate(cmd_name_list):
+        if cmd_idx > 0:
+            xml_node_content_add(
+                xml_subtitle,
+                ", " if cmd_idx < len(cmd_name_list) - 1 else (", and " if len(cmd_name_list) > 2 else " and "),
+            )
+
+        xml_node_content_add(xml_node_add(xml_subtitle, "cmd"), cmd_name)
+
+    xml_node_content_add(xml_subtitle, " command" if len(cmd_name_list) == 1 else " commands")
+    xml_node_child_add(xml_option, description)
+
+
+####################################################################################################################################
+def _option_render(xml_section, bld_cfg, bld_hlp, opt_cmd_cfg, opt_cfg, opt_hlp, command):
     """Render one option, either as a command takes it or as the configuration file sets it, and return the section it is in."""
 
     xml_option = xml_node_add(xml_section, "section")
@@ -185,7 +211,27 @@ def _option_render(xml_section, cmd_list, opt_cmd_cfg, opt_cfg, opt_hlp, command
     if opt_cfg.beta:
         xml_node_content_add(xml_node_add(xml_option, "p"), "FOR BETA TESTING ONLY. DO NOT USE IN PRODUCTION.")
 
-    xml_node_child_add(xml_option, opt_hlp.description)
+    if opt_hlp.description is not None:
+        xml_node_child_add(xml_option, opt_hlp.description)
+
+    # Without a command the option is described for every command it is valid for, followed by each command-specific description
+    if opt_cmd_cfg is None:
+        opt_cmd_list = [opt_cmd for opt_cmd in opt_cfg.cmd_list if _command_main(_find(bld_cfg.cmd_list, opt_cmd.name), opt_cmd)]
+
+        # Commands that share command-specific help are grouped together
+        cmd_name_map = {}
+
+        for opt_cmd in opt_cmd_list:
+            cmd_opt_hlp = _find(_find(bld_hlp.cmd_list, opt_cmd.name).opt_list, opt_cfg.name)
+
+            if cmd_opt_hlp is not None:
+                cmd_name_map.setdefault(cmd_opt_hlp.command or opt_cmd.name, []).append(opt_cmd.name)
+
+        for cmd_name, cmd_name_list in cmd_name_map.items():
+            cmd_opt_hlp = _find(_find(bld_hlp.cmd_list, cmd_name).opt_list, opt_cfg.name)
+            _command_description_render(xml_option, cmd_name_list, cmd_opt_hlp.description_command)
+    else:
+        opt_cmd_list = [opt_cmd_cfg]
 
     # What a reader needs to use the option, which is rendered as one block below the description
     block_list = []
@@ -193,12 +239,8 @@ def _option_render(xml_section, cmd_list, opt_cmd_cfg, opt_cfg, opt_hlp, command
         opt_cmd_cfg.default_value if opt_cmd_cfg is not None and opt_cmd_cfg.default_value is not None else opt_cfg.default_value
     )
 
-    # Without a command the option is described for every command it is valid for
     if opt_cmd_cfg is None:
-        opt_cmd_list = [opt_cmd for opt_cmd in opt_cfg.cmd_list if _command_main(_find(cmd_list, opt_cmd.name), opt_cmd)]
         _command_block(block_list, opt_cmd_list)
-    else:
-        opt_cmd_list = [opt_cmd_cfg]
 
     _depend_block(block_list, opt_cmd_list, opt_cfg)
     _default_block(block_list, opt_cfg, default)
@@ -301,7 +343,7 @@ def reference_configuration_render(bld_cfg, bld_hlp):
             if opt_cfg.section == SECTION_COMMAND_LINE or opt_cfg.internal:
                 continue
 
-            _option_render(xml_section, bld_cfg.cmd_list, None, opt_cfg, opt_hlp, False)
+            _option_render(xml_section, bld_cfg, bld_hlp, None, opt_cfg, opt_hlp, False)
 
     return result
 
@@ -380,7 +422,7 @@ def _command_general_render(result, bld_cfg, bld_hlp):
             continue
 
         # The contents list the commands rather than the options each of them takes, so these options are left out of it as well
-        xml_node_attribute_set(_option_render(xml_section, bld_cfg.cmd_list, None, opt_cfg, opt_hlp, True), "toc", "n")
+        xml_node_attribute_set(_option_render(xml_section, bld_cfg, bld_hlp, None, opt_cfg, opt_hlp, True), "toc", "n")
 
 
 ####################################################################################################################################
@@ -426,7 +468,7 @@ def reference_command_render(bld_cfg, bld_hlp):
                     continue
 
                 if xml_list is None:
-                    _option_render(xml_category, bld_cfg.cmd_list, opt.opt_cmd_cfg, opt.opt_cfg, opt.opt_hlp, True)
+                    _option_render(xml_category, bld_cfg, bld_hlp, opt.opt_cmd_cfg, opt.opt_cfg, opt.opt_hlp, True)
                 else:
                     _option_link_render(xml_list, opt.opt_cfg, opt.opt_hlp)
 

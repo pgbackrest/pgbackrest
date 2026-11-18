@@ -186,7 +186,7 @@ def _pack(bld_cfg, bld_hlp):
         # An option documented only by the commands that take it has no help of its own here
         pack.str_write(opt_hlp.section if opt_hlp is not None else None)
         pack.str_write(bld_hlp_render_xml(opt_hlp.summary) if opt_hlp is not None else None)
-        pack.str_write(bld_hlp_render_xml(opt_hlp.description) if opt_hlp is not None else None)
+        pack.str_write(bld_hlp_render_xml(opt_hlp.description) if opt_hlp is not None and opt_hlp.description is not None else None)
 
         # What the option is valid with
         depend = bld_hlp_render_depend(opt.depend)
