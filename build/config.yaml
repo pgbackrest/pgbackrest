@@ -1443,7 +1443,10 @@ option:
     allow-list:
       - default
       - direct: HAVE_O_DIRECT
-    command: pg-path
+    command:
+      +inherit: pg-path
+    depend:
+      option: pg-path
 
   # PostgreSQL host options
   #---------------------------------------------------------------------------------------------------------------------------------

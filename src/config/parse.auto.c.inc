@@ -4441,58 +4441,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                                          // opt/pg-io-mode
             PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/pg-io-mode
             (                                                                                                      // opt/pg-io-mode
-                PARSE_RULE_FILTER_CMD                                                                              // opt/pg-io-mode
-                (                                                                                                  // opt/pg-io-mode
-                    PARSE_RULE_VAL_CMD(ArchivePush),                                                               // opt/pg-io-mode
-                    PARSE_RULE_VAL_CMD(Manifest),                                                                  // opt/pg-io-mode
-                ),                                                                                                 // opt/pg-io-mode
-                                                                                                                   // opt/pg-io-mode
-                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                     // opt/pg-io-mode
-                (                                                                                                  // opt/pg-io-mode
-                    PARSE_RULE_VAL_STRID(default),                                                                 // opt/pg-io-mode
-                    PARSE_RULE_VAL_STRID(direct),                                                                  // opt/pg-io-mode
-#ifndef HAVE_O_DIRECT                                                                                              // opt/pg-io-mode
-                        PARSE_RULE_BOOL_FALSE,                                                                     // opt/pg-io-mode
-#endif                                                                                                             // opt/pg-io-mode
-                ),                                                                                                 // opt/pg-io-mode
-                                                                                                                   // opt/pg-io-mode
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/pg-io-mode
-                (                                                                                                  // opt/pg-io-mode
-                    PARSE_RULE_VAL_STRID(default),                                                                 // opt/pg-io-mode
-                ),                                                                                                 // opt/pg-io-mode
-                                                                                                                   // opt/pg-io-mode
-                PARSE_RULE_OPTIONAL_NOT_REQUIRED(),                                                                // opt/pg-io-mode
-            ),                                                                                                     // opt/pg-io-mode
-                                                                                                                   // opt/pg-io-mode
-            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/pg-io-mode
-            (                                                                                                      // opt/pg-io-mode
-                PARSE_RULE_FILTER_CMD                                                                              // opt/pg-io-mode
-                (                                                                                                  // opt/pg-io-mode
-                    PARSE_RULE_VAL_CMD(Check),                                                                     // opt/pg-io-mode
-                ),                                                                                                 // opt/pg-io-mode
-                                                                                                                   // opt/pg-io-mode
                 PARSE_RULE_OPTIONAL_DEPEND                                                                         // opt/pg-io-mode
                 (                                                                                                  // opt/pg-io-mode
-                    PARSE_RULE_VAL_OPT(Stanza),                                                                    // opt/pg-io-mode
+                    PARSE_RULE_VAL_OPT(PgPath),                                                                    // opt/pg-io-mode
                 ),                                                                                                 // opt/pg-io-mode
                                                                                                                    // opt/pg-io-mode
-                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                     // opt/pg-io-mode
-                (                                                                                                  // opt/pg-io-mode
-                    PARSE_RULE_VAL_STRID(default),                                                                 // opt/pg-io-mode
-                    PARSE_RULE_VAL_STRID(direct),                                                                  // opt/pg-io-mode
-#ifndef HAVE_O_DIRECT                                                                                              // opt/pg-io-mode
-                        PARSE_RULE_BOOL_FALSE,                                                                     // opt/pg-io-mode
-#endif                                                                                                             // opt/pg-io-mode
-                ),                                                                                                 // opt/pg-io-mode
-                                                                                                                   // opt/pg-io-mode
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/pg-io-mode
-                (                                                                                                  // opt/pg-io-mode
-                    PARSE_RULE_VAL_STRID(default),                                                                 // opt/pg-io-mode
-                ),                                                                                                 // opt/pg-io-mode
-            ),                                                                                                     // opt/pg-io-mode
-                                                                                                                   // opt/pg-io-mode
-            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/pg-io-mode
-            (                                                                                                      // opt/pg-io-mode
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                     // opt/pg-io-mode
                 (                                                                                                  // opt/pg-io-mode
                     PARSE_RULE_VAL_STRID(default),                                                                 // opt/pg-io-mode
@@ -12769,7 +12722,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptOutput,                                                                                               // opt-resolve-order
     cfgOptPageHeaderCheck,                                                                                      // opt-resolve-order
     cfgOptPg,                                                                                                   // opt-resolve-order
-    cfgOptPgIoMode,                                                                                             // opt-resolve-order
     cfgOptPgLocal,                                                                                              // opt-resolve-order
     cfgOptPgPath,                                                                                               // opt-resolve-order
     cfgOptPgPort,                                                                                               // opt-resolve-order
@@ -12840,6 +12792,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptPgHostConfigPath,                                                                                     // opt-resolve-order
     cfgOptPgHostType,                                                                                           // opt-resolve-order
     cfgOptPgHostUser,                                                                                           // opt-resolve-order
+    cfgOptPgIoMode,                                                                                             // opt-resolve-order
     cfgOptRecoveryOption,                                                                                       // opt-resolve-order
     cfgOptRepoAzureAccount,                                                                                     // opt-resolve-order
     cfgOptRepoAzureContainer,                                                                                   // opt-resolve-order
