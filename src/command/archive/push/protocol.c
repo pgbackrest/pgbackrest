@@ -64,7 +64,20 @@ archivePushFileProtocol(PackRead *const param)
             priorErrorList);
 
         // Return result
-        pckWriteStrLstP(protocolServerResultData(result), fileResult.warnList);
+        PackWrite *const resultPack = protocolServerResultData(result);
+
+        pckWriteStrLstP(resultPack, fileResult.warnList);
+        pckWriteStrP(resultPack, fileResult.error);
+        pckWriteArrayBeginP(resultPack);
+
+        for (unsigned int repoErrorIdx = 0; repoErrorIdx < lstSize(fileResult.repoErrorList); repoErrorIdx++)
+        {
+            const ArchivePushFileRepoError *const repoError = lstGet(fileResult.repoErrorList, repoErrorIdx);
+
+            pckWriteU32P(resultPack, repoError->repoIdx, .defaultWrite = true);
+        }
+
+        pckWriteArrayEndP(resultPack);
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -420,6 +420,11 @@ cmdArchivePush(void)
                     archiveInfo.pgSystemId, archiveFile, compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
                     cfgOptionInt(cfgOptCompressLevel), archiveInfo.repoList, archiveInfo.errorList);
 
+                // Throw any errors, even if some pushes were successful. It is important that PostgreSQL receives an error so it
+                // does not remove the file.
+                if (fileResult.error != NULL)
+                    THROW(CommandError, strZ(fileResult.error));
+
                 // If a warning was returned then log it
                 for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)
                     LOG_WARN(strZ(strLstGet(fileResult.warnList, warnIdx)));
@@ -443,7 +448,7 @@ typedef struct ArchivePushAsyncData
     CompressType compressType;                                      // Type of compression for WAL segments
     int compressLevel;                                              // Compression level for wal files
     ArchivePushCheckResult archiveInfo;                             // Archive info
-    bool errorFound;                                                // Has a job errored? If so, stop scheduling new jobs
+    bool errorFound;                                                // Stop scheduling jobs when a job errored or no repos remain
 } ArchivePushAsyncData;
 
 static ProtocolParallelJob *
@@ -461,9 +466,10 @@ archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
         // No special logic based on the client, we'll just get the next job
         (void)clientIdx;
 
-        // Get a new job if there are any left. Stop scheduling new jobs as soon as one errors so the async process exits and the
-        // next run rechecks the queue. Continuing past an error does not relieve disk pressure since PostgreSQL cannot recycle any
-        // WAL past the oldest unarchived segment, so the sooner the queue is rechecked the sooner WAL can be dropped if needed.
+        // Get a new job if there are any left. Stop scheduling new jobs as soon as a job errors or no repos remain so the async
+        // process exits and the next run rechecks the queue. Continuing past an error does not relieve disk pressure since
+        // PostgreSQL cannot recycle any WAL past the oldest unarchived segment, so the sooner the queue is rechecked the sooner WAL
+        // can be dropped if needed.
         ArchivePushAsyncData *const jobData = data;
 
         if (!jobData->errorFound && jobData->walFileIdx < strLstSize(jobData->walFileList))
@@ -511,6 +517,45 @@ archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
+}
+
+// Remove repos that errored from the repo list and add an error for each to the error list
+static void
+archivePushAsyncRepoRemove(ArchivePushCheckResult *const archiveInfo, PackRead *const jobResult, const String *const walFile)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, archiveInfo);
+        FUNCTION_TEST_PARAM(PACK_READ, jobResult);
+        FUNCTION_TEST_PARAM(STRING, walFile);
+    FUNCTION_TEST_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        pckReadArrayBeginP(jobResult);
+
+        while (!pckReadNullP(jobResult))
+        {
+            const unsigned int repoIdx = pckReadU32P(jobResult);
+
+            // Remove the repo when it is in the repo list
+            for (unsigned int repoListIdx = 0; repoListIdx < lstSize(archiveInfo->repoList); repoListIdx++)
+            {
+                if (((const ArchivePushFileRepoData *)lstGet(archiveInfo->repoList, repoListIdx))->repoIdx == repoIdx)
+                {
+                    lstRemoveIdx(archiveInfo->repoList, repoListIdx);
+                    strLstAddFmt(
+                        archiveInfo->errorList, "%s: skipped after error pushing WAL file '%s'",
+                        cfgOptionGroupName(cfgOptGrpRepo, repoIdx), strZ(walFile));
+                    break;
+                }
+            }
+        }
+
+        pckReadArrayEndP(jobResult);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 FN_EXTERN void
@@ -639,36 +684,56 @@ cmdArchivePushAsync(void)
                             ProtocolParallelJob *const job = protocolParallelResult(parallelExec);
                             const unsigned int processId = protocolParallelJobProcessId(job);
                             const String *const walFile = varStr(protocolParallelJobKey(job));
+                            int errorCode = protocolParallelJobErrorCode(job);
+                            const String *errorMessage = protocolParallelJobErrorMessage(job);
 
                             // The job was successful
-                            if (protocolParallelJobErrorCode(job) == 0)
+                            if (errorCode == 0)
                             {
-                                // Output file warnings
-                                const StringList *const fileWarnList = pckReadStrLstP(protocolParallelJobResult(job));
+                                PackRead *const jobResult = protocolParallelJobResult(job);
+                                const StringList *const fileWarnList = pckReadStrLstP(jobResult);
+                                const String *const fileError = pckReadStrP(jobResult);
 
-                                for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
-                                    LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
+                                // The WAL file was pushed to all repos
+                                if (fileError == NULL)
+                                {
+                                    // Output file warnings
+                                    for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
+                                        LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
 
-                                // Log success
-                                LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
+                                    // Log success
+                                    LOG_DETAIL_PID_FMT(processId, "pushed WAL file '%s' to the archive", strZ(walFile));
 
-                                // Write the status file
-                                archiveAsyncStatusOkWrite(
-                                    archiveModePush, walFile, strLstEmpty(fileWarnList) ? NULL : strLstJoin(fileWarnList, "\n"));
+                                    // Write the status file
+                                    archiveAsyncStatusOkWrite(
+                                        archiveModePush, walFile,
+                                        strLstEmpty(fileWarnList) ? NULL : strLstJoin(fileWarnList, "\n"));
+                                }
+                                // Else one or more repos errored
+                                else
+                                {
+                                    archivePushAsyncRepoRemove(&jobData.archiveInfo, jobResult, walFile);
+
+                                    if (lstEmpty(jobData.archiveInfo.repoList))
+                                        jobData.errorFound = true;
+
+                                    errorCode = errorTypeCode(&CommandError);
+                                    errorMessage = fileError;
+                                }
                             }
                             // Else the job errored
                             else
-                            {
                                 jobData.errorFound = true;
 
+                            // Log the error and write the status file
+                            if (errorCode != 0)
+                            {
                                 LOG_WARN_PID_FMT(
                                     processId,
                                     "could not push WAL file '%s' to the archive (will be retried): [%d] %s", strZ(walFile),
-                                    protocolParallelJobErrorCode(job), strZ(protocolParallelJobErrorMessage(job)));
+                                    errorCode, strZ(errorMessage));
 
-                                archiveAsyncStatusErrorWrite(
-                                    archiveModePush, walFile, protocolParallelJobErrorCode(job),
-                                    protocolParallelJobErrorMessage(job));
+                                archiveAsyncStatusErrorWrite(archiveModePush, walFile, errorCode, errorMessage);
                             }
 
                             protocolParallelJobFree(job);

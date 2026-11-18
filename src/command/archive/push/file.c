@@ -32,14 +32,25 @@ typedef enum
 
 // Helper to add errors to the list
 static void
-archivePushErrorAdd(StringList *const errorList, const unsigned int repoIdx)
+archivePushErrorAdd(List *const repoErrorList, const unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_LIST, errorList);
+        FUNCTION_TEST_PARAM(LIST, repoErrorList);
         FUNCTION_TEST_PARAM(UINT, repoIdx);
     FUNCTION_TEST_END();
 
-    strLstAddFmt(errorList, "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage());
+    MEM_CONTEXT_OBJ_BEGIN(repoErrorList)
+    {
+        const ArchivePushFileRepoError repoError =
+        {
+            .repoIdx = repoIdx,
+            .message = strNewFmt(
+                "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(errorType()), errorMessage()),
+        };
+
+        lstAdd(repoErrorList, &repoError);
+    }
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -47,18 +58,18 @@ archivePushErrorAdd(StringList *const errorList, const unsigned int repoIdx)
 static bool
 archivePushFileIo(
     const ArchivePushFileIoType type, IoWrite *const write, const Buffer *const buffer, const unsigned int repoIdx,
-    StringList *const errorList)
+    List *const repoErrorList)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_ID, type);
         FUNCTION_TEST_PARAM(IO_WRITE, write);
         FUNCTION_TEST_PARAM(BUFFER, buffer);
         FUNCTION_TEST_PARAM(UINT, repoIdx);
-        FUNCTION_TEST_PARAM(STRING_LIST, errorList);
+        FUNCTION_TEST_PARAM(LIST, repoErrorList);
     FUNCTION_TEST_END();
 
     ASSERT(write != NULL);
-    ASSERT(errorList != NULL);
+    ASSERT(repoErrorList != NULL);
 
     bool result = true;
 
@@ -84,7 +95,7 @@ archivePushFileIo(
     // Handle errors
     CATCH_ANY()
     {
-        archivePushErrorAdd(errorList, repoIdx);
+        archivePushErrorAdd(repoErrorList, repoIdx);
         result = false;
     }
     TRY_END();
@@ -120,11 +131,11 @@ archivePushFile(
     ASSERT(priorErrorList != NULL);
     ASSERT(lstSize(repoList) > 0);
 
-    ArchivePushFileResult result = {.warnList = strLstNew()};
+    ArchivePushFileResult result = {.warnList = strLstNew(), .repoErrorList = lstNewP(sizeof(ArchivePushFileRepoError))};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StringList *const errorList = strLstDup(priorErrorList);
+        List *const repoErrorList = result.repoErrorList;
 
         // Is this a WAL segment?
         const bool isSegment = walIsSegment(archiveFile);
@@ -182,7 +193,7 @@ archivePushFile(
                 }
                 CATCH_ANY()
                 {
-                    archivePushErrorAdd(errorList, repoData->repoIdx);
+                    archivePushErrorAdd(repoErrorList, repoData->repoIdx);
                     destinationCopy[repoListIdx] = false;
                 }
                 TRY_END();
@@ -283,7 +294,7 @@ archivePushFile(
                 if (destinationCopy[repoListIdx])
                 {
                     destinationCopy[repoListIdx] = archivePushFileIo(
-                        archivePushFileIoTypeOpen, storageWriteIo(destination[repoListIdx]), NULL, repoIdx, errorList);
+                        archivePushFileIoTypeOpen, storageWriteIo(destination[repoListIdx]), NULL, repoIdx, repoErrorList);
                 }
             }
 
@@ -303,7 +314,7 @@ archivePushFile(
                     if (destinationCopy[repoListIdx])
                     {
                         destinationCopy[repoListIdx] = archivePushFileIo(
-                            archivePushFileIoTypeWrite, storageWriteIo(destination[repoListIdx]), read, repoIdx, errorList);
+                            archivePushFileIoTypeWrite, storageWriteIo(destination[repoListIdx]), read, repoIdx, repoErrorList);
                     }
                 }
 
@@ -322,15 +333,26 @@ archivePushFile(
                 if (destinationCopy[repoListIdx])
                 {
                     destinationCopy[repoListIdx] = archivePushFileIo(
-                        archivePushFileIoTypeClose, storageWriteIo(destination[repoListIdx]), NULL, repoIdx, errorList);
+                        archivePushFileIoTypeClose, storageWriteIo(destination[repoListIdx]), NULL, repoIdx, repoErrorList);
                 }
             }
         }
 
-        // Throw any errors, even if some pushes were successful. It is important that PostgreSQL receives an error so it does not
-        // remove the file.
-        if (strLstSize(errorList) > 0)
-            THROW_FMT(CommandError, CFGCMD_ARCHIVE_PUSH " command encountered error(s):\n%s", strZ(strLstJoin(errorList, "\n")));
+        // Return prior errors and repo errors, even if some pushes were successful
+        if (!strLstEmpty(priorErrorList) || !lstEmpty(repoErrorList))
+        {
+            StringList *const errorList = strLstDup(priorErrorList);
+
+            for (unsigned int repoErrorIdx = 0; repoErrorIdx < lstSize(repoErrorList); repoErrorIdx++)
+                strLstAdd(errorList, ((ArchivePushFileRepoError *)lstGet(repoErrorList, repoErrorIdx))->message);
+
+            MEM_CONTEXT_PRIOR_BEGIN()
+            {
+                result.error = strNewFmt(
+                    CFGCMD_ARCHIVE_PUSH " command encountered error(s):\n%s", strZ(strLstJoin(errorList, "\n")));
+            }
+            MEM_CONTEXT_PRIOR_END();
+        }
     }
     MEM_CONTEXT_TEMP_END();
 
