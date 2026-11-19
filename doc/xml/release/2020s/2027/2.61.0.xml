@@ -184,7 +184,7 @@
             </release-item>
 
             <release-item>
-                <github-pull-request id="2905"/>
+                    <github-pull-request id="2905"/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="yegor.zhmak"/>
@@ -225,6 +225,23 @@
                 <p><br-option>compress-type=zst</br-option> was not available when <backrest/> was built without <proper>zstd</proper>. <proper>zstd</proper> is now required by the build so <br-option>compress-type=zst</br-option> is available in every build.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Render block incremental info in manifest command only when a map exists."/>
+                <commit subject="Zero block incremental info for truncated files.">
+                    <github-pull-request id="2922"/>
+                </commit>
+
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix block incremental info for files stored without a block map.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 
     <release-doc-list>
