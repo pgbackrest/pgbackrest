@@ -360,6 +360,7 @@ typedef struct HelpOptionData
     const String *section;                                          // eg. general, command
     const String *summary;                                          // Short summary of the option
     const String *description;                                      // Full description of the option
+    const String *depend;                                           // What the option is valid with, e.g. repo-type=s3
     StringList *deprecatedNames;                                    // Deprecated names for the option
 } HelpOptionData;
 
@@ -476,6 +477,7 @@ helpRender(void)
                     .section = pckReadStrP(pckHelp, .defaultValue = STRDEF("general")),
                     .summary = pckReadStrP(pckHelp),
                     .description = pckReadStrP(pckHelp),
+                    .depend = pckReadStrP(pckHelp),
                 };
 
                 // Unpack deprecated names
@@ -505,8 +507,9 @@ helpRender(void)
                         pckReadObjBeginP(pckHelp, .id = commandIdArray + 1);
 
                         const bool internal = pckReadBoolP(pckHelp, .defaultValue = optionData[optionId].internal);
-                        const String *const summary = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].summary);
-                        const String *const description = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].description);
+                        const String *const summary = pckReadStrP(pckHelp);
+                        const String *const description = pckReadStrP(pckHelp);
+                        const String *const depend = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].depend);
 
                         pckReadObjEndP(pckHelp);
 
@@ -514,9 +517,15 @@ helpRender(void)
                         if (commandId == commandIdArray)
                         {
                             optionData[optionId].internal = internal;
-                            optionData[optionId].section = NULL;
-                            optionData[optionId].summary = summary;
-                            optionData[optionId].description = description;
+                            optionData[optionId].depend = depend;
+
+                            // An option with help of its own for the command is a command option
+                            if (summary != NULL)
+                            {
+                                optionData[optionId].section = NULL;
+                                optionData[optionId].summary = summary;
+                                optionData[optionId].description = description;
+                            }
                         }
                     }
 
@@ -658,14 +667,18 @@ helpRender(void)
                             optionData[option.id].description, optionData[option.id].internal, option.beta, 0, true,
                             CONSOLE_WIDTH)));
 
-                // Output current and default values and minimum repository format if they exist
+                // Output what the option is valid with, current and default values, and minimum repository format if they exist
+                const String *const depend = optionData[option.id].depend;
                 const String *const defaultValue = helpRenderDefault(option.id);
                 const String *const value = helpRenderValue(option.id);
                 const unsigned int format = cfgParseOptionFormat(option.id);
 
-                if (value != NULL || defaultValue != NULL || format != 0)
+                if (value != NULL || defaultValue != NULL || format != 0 || depend != NULL)
                 {
                     strCat(result, LF_STR);
+
+                    if (depend != NULL)
+                        strCatFmt(result, "valid with: %s\n", strZ(depend));
 
                     if (value != NULL)
                     {
