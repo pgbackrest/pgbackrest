@@ -184,7 +184,7 @@
             </release-item>
 
             <release-item>
-                    <github-pull-request id="2905"/>
+                <github-pull-request id="2905"/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="yegor.zhmak"/>
