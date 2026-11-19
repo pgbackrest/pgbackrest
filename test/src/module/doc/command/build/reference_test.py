@@ -59,7 +59,8 @@ option:
       expire:
         depend:
           option: compress-type
-      restore: {}
+      restore:
+        default: false
 
   archive-copy:
     section: global
@@ -70,8 +71,10 @@ option:
     section: global
     type: boolean
     command:
-      backup: {}
-      restore: {}
+      backup:
+        default: false
+      restore:
+        default: true
 
   cmd:
     section: global
@@ -357,7 +360,7 @@ def test_reference_configuration():
     # General option help may leave out the description, and commands that share command-specific help are named together
     assert_in(
         "<p>Summary.</p><subtitle><text><cmd>backup</cmd> and <cmd>restore</cmd> commands</text></subtitle>"
-        "<p>Backup description of checksum-page-error.</p><code-block>commands: backup, restore</code-block>",
+        "<p>Backup description of checksum-page-error.</p><code-block>commands: backup, restore\n",
         configuration,
     )
 
@@ -397,7 +400,7 @@ def test_reference_command():
 
     assert_in(
         "<title>Checksum Page Error (<id>--checksum-page-error</id>)</title><p>Summary.</p>"
-        "<p>Backup description of checksum-page-error.</p></section>",
+        "<p>Backup description of checksum-page-error.</p><code-block>",
         command,
     )
 
@@ -478,10 +481,18 @@ def test_reference_option_detail():
 
     # What an option is valid with that differs by command lists the commands, less a command a reader has no use for and one the
     # option is valid without
-    assert_in("<code-block>commands: backup, restore\nvalid with (backup): online=y\ndefault: y</code-block>", configuration)
+    assert_in(
+        "<code-block>commands: backup, restore\nvalid with (backup): online=y\ndefault: y\ndefault (restore): n</code-block>",
+        configuration,
+    )
 
-    # Under a command it is what the option is valid with for that command, without a list of commands
+    # A default that differs by command lists the commands, less the commands that have the default the option declares
+    assert_in("<code-block>commands: backup, restore\ndefault (backup): n\ndefault (restore): y</code-block>", configuration)
+
+    # Under a command it is what the option is valid with and the default for that command, without a list of commands
     assert_in("<code-block>valid with: online=y\ndefault: y</code-block>", command)
+    assert_in("checksum-page-error.</p><code-block>default: n</code-block>", command)
+    assert_in("checksum-page-error.</p><code-block>default: y</code-block>", command)
 
     # The minimum repository format, which is only rendered for an option that has one
     assert_in("\nminimum repository format: 6</code-block>", configuration)

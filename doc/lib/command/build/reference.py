@@ -100,24 +100,54 @@ def _depend_block(block_list, opt_cmd_list, opt_cfg):
 
 
 ####################################################################################################################################
-def _default_block(block_list, opt_cfg, default):
-    """Describe the default of an option, which may be a value per value of the option it depends on."""
+def _default_value(opt_cfg, default):
+    """The default of an option as it is written, i.e. the value or a tuple of map and value pairs, or None when there is none."""
+
+    if default is None:
+        return None
+
+    if default.value is None:
+        return tuple((map.map, map.value) for map in default.map_list)
+
+    # A boolean is written the way it is given on the command line rather than the way it is declared
+    if opt_cfg.type == OPT_TYPE_BOOLEAN:
+        return "y" if default.value == "true" else "n"
+
+    return default.value
+
+
+####################################################################################################################################
+def _default_block(block_list, opt_cmd_list, opt_cfg):
+    """Describe the default of an option, which may differ by command and may be a value per value of the option it depends on."""
 
     # A dynamic default is worked out when the command runs, so what it depends on is described rather than a value
     if opt_cfg.default_type == DEFAULT_TYPE_DYNAMIC:
         block_list.append("default: [path of executed pgbackrest binary]")
-    elif default is not None:
-        if default.value is not None:
-            # A boolean is written the way it is given on the command line rather than the way it is declared
-            if opt_cfg.type == OPT_TYPE_BOOLEAN:
-                block_list.append("default: %s" % ("y" if default.value == "true" else "n"))
-            else:
-                block_list.append("default: %s" % default.value)
-        else:
-            block_list.append("default (depending on %s):" % opt_cfg.depend.option.name)
+        return
 
-            for map in default.map_list:
-                block_list.append("    %s - %s" % (map.map, map.value))
+    # The commands are grouped by the default for each, i.e. what the command declares or else what the option declares
+    default_option = _default_value(opt_cfg, opt_cfg.default_value)
+    default_map = {}
+
+    for opt_cmd_cfg in opt_cmd_list:
+        default_map.setdefault(_default_value(opt_cfg, opt_cmd_cfg.default_value or opt_cfg.default_value), []).append(
+            opt_cmd_cfg.name
+        )
+
+    # Commands are listed when there is more than one group and the default is not what the option declares
+    for default, cmd_name_list in default_map.items():
+        if default is None:
+            continue
+
+        cmd_name = "" if len(default_map) == 1 or default == default_option else " (%s)" % ", ".join(cmd_name_list)
+
+        if isinstance(default, str):
+            block_list.append("default%s: %s" % (cmd_name, default))
+        else:
+            block_list.append("default%s (depending on %s):" % (cmd_name, opt_cfg.depend.option.name))
+
+            for map, value in default:
+                block_list.append("    %s - %s" % (map, value))
 
             block_list.append("")
 
@@ -235,15 +265,12 @@ def _option_render(xml_section, bld_cfg, bld_hlp, opt_cmd_cfg, opt_cfg, opt_hlp,
 
     # What a reader needs to use the option, which is rendered as one block below the description
     block_list = []
-    default = (
-        opt_cmd_cfg.default_value if opt_cmd_cfg is not None and opt_cmd_cfg.default_value is not None else opt_cfg.default_value
-    )
 
     if opt_cmd_cfg is None:
         _command_block(block_list, opt_cmd_list)
 
     _depend_block(block_list, opt_cmd_list, opt_cfg)
-    _default_block(block_list, opt_cfg, default)
+    _default_block(block_list, opt_cmd_list, opt_cfg)
 
     if opt_cfg.allow_range is not None:
         _allow_range_block(block_list, opt_cfg)
