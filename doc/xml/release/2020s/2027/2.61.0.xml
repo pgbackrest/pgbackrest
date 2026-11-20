@@ -114,6 +114,22 @@
 
                 <p>Set <br-option>repo-io-mode=direct</br-option> or <br-option>pg-io-mode=direct</br-option> to read and write files with direct I/O (<id>O_DIRECT</id>), which bypasses the page cache. Direct I/O does not fill the page cache but disables readahead and background writeback and can reduce throughput. <br-option>repo-io-mode</br-option> is valid when <br-option>repo-type</br-option> is <id>posix</id> or <id>cifs</id>. Buffered I/O is used when the file system does not support direct I/O.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2891"/>
+                <github-pull-request id="2896"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="qinru.yao"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Support encryption context for <proper>S3</proper> server-side encryption using <proper>KMS</proper>.</p>
+
+                <p>Set <br-option>repo-s3-kms-context</br-option> to add an encryption context to objects encrypted with <br-option>repo-s3-kms-key-id</br-option>, e.g. when a <proper>KMS</proper> key policy or grant requires a context. The context of existing objects is not changed so set this option before running <cmd>stanza-create</cmd>.</p>
+            </release-item>
         </release-feature-list>
 
         <release-improvement-list>
