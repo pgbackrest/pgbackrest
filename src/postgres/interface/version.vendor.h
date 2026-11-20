@@ -129,7 +129,7 @@ Types from src/include/catalog/catversion.h
  */
 
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	202605131
+#define CATALOG_VERSION_NO	202610061
 
 #elif PG_VERSION >= PG_VERSION_18
 

@@ -253,7 +253,7 @@ testRun(void)
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_19, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202605131, "check catalog version");
+        TEST_RESULT_UINT(info.catalogVersion, 202610061, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize32, "check page size");

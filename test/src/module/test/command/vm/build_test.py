@@ -53,7 +53,7 @@ SCRIPT_BASE_U24 = """ && \\
 
 # Install PostgreSQL packages
     apt-get install -y --no-install-recommends postgresql-common && \\
-    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y -c 19 && \\
+    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && \\
     apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\
     sed -i 's/^\\#create\\_main\\_cluster.*$/create\\_main\\_cluster \\= false/' /etc/postgresql-common/createcluster.conf && \\
 
@@ -292,8 +292,12 @@ def test_container_script_vm():
     assert_true("apk add --no-cache postgresql15 postgresql16 postgresql17" in script)
     assert_true("Install PostgreSQL packages" not in script)
 
-    # An architecture the PostgreSQL repo does not build for installs one version for the smoke test
-    script = script_base("u24", VM_ARCH_PPC64LE)
+    # An unreleased version adds the beta repo on the architectures it is built for
+    with patch.object(vm_get("u24"), "pg_beta", "19"):
+        assert_true("apt.postgresql.org.sh -y -c 19 &&" in script_base("u24", VM_ARCH_X86_64))
+
+        # An architecture the PostgreSQL repo does not build for installs one version for the smoke test
+        script = script_base("u24", VM_ARCH_PPC64LE)
 
     assert_true("apt.postgresql.org.sh -y &&" in script)
     assert_true("Install a single PostgreSQL version for the smoke test" in script)
