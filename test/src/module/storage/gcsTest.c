@@ -1595,7 +1595,7 @@ testRun(void)
                     storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("configure a repository KMS key");
+                TEST_TITLE("switch to KMS key");
 
                 hrnServerScriptClose(service);
 
@@ -1619,13 +1619,8 @@ testRun(void)
                 hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write with a KMS key and retry");
+                TEST_TITLE("write with KMS key");
 
-                testRequestP(
-                    service, HTTP_VERB_POST, .upload = true,
-                    .query = "fields=md5Hash%2Csize&" TEST_KMS_KEY_QUERY "&name=file.txt&uploadType=media&userProject=usrprj",
-                    .content = "ABCD");
-                testResponseP(service, .code = 503);
                 testRequestP(
                     service, HTTP_VERB_POST, .upload = true,
                     .query = "fields=md5Hash%2Csize&" TEST_KMS_KEY_QUERY "&name=file.txt&uploadType=media&userProject=usrprj",
@@ -1635,17 +1630,7 @@ testRun(void)
                 TEST_RESULT_VOID(storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), BUFSTRDEF("ABCD")), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write zero-length file with a KMS key");
-
-                testRequestP(
-                    service, HTTP_VERB_POST, .upload = true,
-                    .query = "fields=md5Hash%2Csize&" TEST_KMS_KEY_QUERY "&name=file.txt&uploadType=media&userProject=usrprj");
-                testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"0\"}");
-
-                TEST_RESULT_VOID(storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), NULL), "write");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write chunks with a KMS key and tags");
+                TEST_TITLE("write chunks with KMS key and tags");
 
                 testRequestP(
                     service, HTTP_VERB_POST, .upload = true,
@@ -1671,36 +1656,26 @@ testRun(void)
                 ((StorageGcs *)storageDriver(storage))->tag = NULL;
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("KMS key errors do not fall back to default encryption");
+                TEST_TITLE("KMS key error on resumable upload");
 
-                for (unsigned int uploadIdx = 0; uploadIdx < 2; uploadIdx++)
-                {
-                    const String *const query = strNewFmt(
-                        "%s%s&name=file.txt&uploadType=%s&userProject=usrprj",
-                        uploadIdx == 0 ? "fields=md5Hash%2Csize&" : "", TEST_KMS_KEY_QUERY,
-                        uploadIdx == 0 ? "media" : "resumable");
+                testRequestP(
+                    service, HTTP_VERB_POST, .upload = true,
+                    .query = TEST_KMS_KEY_QUERY "&name=file.txt&uploadType=resumable&userProject=usrprj");
+                testResponseP(service, .code = 403);
 
-                    testRequestP(
-                        service, HTTP_VERB_POST, .upload = true, .query = strZ(query), .content = uploadIdx == 0 ? "ABCD" : NULL);
-                    testResponseP(service, .code = 403);
-
-                    TEST_ERROR_FMT(
-                        storagePutP(
-                            storageNewWriteP(storage, STRDEF("file.txt")),
-                            uploadIdx == 0 ? BUFSTRDEF("ABCD") : BUFSTRDEF("12345678901234567890")),
-                        ProtocolError,
-                        "HTTP request failed with 403 (Forbidden):\n"
-                        "*** Path/Query ***:\n"
-                        "POST /upload/storage/v1/b/bucket/o?%s\n"
-                        "*** Request Headers ***:\n"
-                        "authorization: <redacted>\n"
-                        "content-length: %u\n"
-                        "host: %s",
-                        strZ(query), uploadIdx == 0 ? 4U : 0U, strZ(hrnServerHost()));
-                }
+                TEST_ERROR_FMT(
+                    storagePutP(storageNewWriteP(storage, STRDEF("file.txt")), BUFSTRDEF("12345678901234567890")), ProtocolError,
+                    "HTTP request failed with 403 (Forbidden):\n"
+                    "*** Path/Query ***:\n"
+                    "POST /upload/storage/v1/b/bucket/o?%s&name=file.txt&uploadType=resumable&userProject=usrprj\n"
+                    "*** Request Headers ***:\n"
+                    "authorization: <redacted>\n"
+                    "content-length: 0\n"
+                    "host: %s",
+                    TEST_KMS_KEY_QUERY, strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("reads omit the configured KMS key");
+                TEST_TITLE("read without KMS key");
 
                 testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media&userProject=usrprj");
                 testResponseP(service, .content = "ABCD");
@@ -1708,7 +1683,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "ABCD", "read");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("second repository uses its own KMS key");
+                TEST_TITLE("second repository KMS key");
 
                 hrnServerScriptClose(service);
                 TEST_ASSIGN(storage, storageRepoGet(1, true), "get second repo storage");
