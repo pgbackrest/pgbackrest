@@ -3,6 +3,8 @@ Azure Storage Helper
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <stdlib.h>
+
 #include "common/debug.h"
 #include "common/io/http/url.h"
 #include "common/io/io.h"
@@ -72,6 +74,39 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
             TRY_END();
         }
 
+        const String *tenantId = NULL;
+        const String *clientId = NULL;
+        const String *authorityHost = NULL;
+        const String *federatedTokenFile = NULL;
+
+        if (keyType == storageAzureKeyTypeWebId)
+        {
+            #define AZURE_TENANT_ID               "AZURE_TENANT_ID"
+            #define AZURE_CLIENT_ID               "AZURE_CLIENT_ID"
+            #define AZURE_AUTHORITY_HOST          "AZURE_AUTHORITY_HOST"
+            #define AZURE_FEDERATED_TOKEN_FILE    "AZURE_FEDERATED_TOKEN_FILE"
+
+            const char *const tenantIdZ = getenv(AZURE_TENANT_ID);
+            const char *const clientIdZ = getenv(AZURE_CLIENT_ID);
+            const char *const authorityHostZ = getenv(AZURE_AUTHORITY_HOST);
+            const char *const federatedTokenFileZ = getenv(AZURE_FEDERATED_TOKEN_FILE);
+
+            if (tenantIdZ == NULL || clientIdZ == NULL || authorityHostZ == NULL || federatedTokenFileZ == NULL)
+            {
+                THROW_FMT(
+                    OptionInvalidError,
+                    "option '%s' is '" CFGOPTVAL_REPO_AZURE_KEY_TYPE_WEB_ID_Z "' but some of '"
+                    AZURE_TENANT_ID "', '" AZURE_CLIENT_ID "', '" AZURE_AUTHORITY_HOST "' and '"
+                    AZURE_FEDERATED_TOKEN_FILE "' are not set",
+                    cfgOptionIdxName(cfgOptRepoAzureKeyType, repoIdx));
+            }
+
+            tenantId = strNewZ(tenantIdZ);
+            clientId = strNewZ(clientIdZ);
+            authorityHost = strNewZ(authorityHostZ);
+            federatedTokenFile = strNewZ(federatedTokenFileZ);
+        }
+
         // If port was specified, overwrite the parsed/default port
         if (cfgOptionIdxSource(cfgOptRepoStoragePort, repoIdx) != cfgSourceDefault)
             port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
@@ -81,6 +116,7 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
             result = storageAzureNew(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoTargetTime(), pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx), keyType, key,
+                tenantId, clientId, authorityHost, federatedTokenFile,
                 (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), endpoint, uriStyle, port, ioTimeoutMs(), protocolType,
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
