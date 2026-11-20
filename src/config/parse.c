@@ -236,6 +236,23 @@ typedef enum
 #define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
     | (1 << cfgCmd##commandParam)
 
+// Bit set when a command role valid list is the list of the option in the remaining bits
+#define PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT                    ((uint32_t)1 << 31)
+
+static_assert(CFG_COMMAND_TOTAL <= 31, "commands must fit in the bits below the option reference bit");
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_OPT(optionParam)                                                                 \
+    .commandRoleValid[cfgCmdRoleMain] = PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT | cfgOpt##optionParam
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_OPT(optionParam)                                                                \
+    .commandRoleValid[cfgCmdRoleAsync] = PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT | cfgOpt##optionParam
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_OPT(optionParam)                                                                \
+    .commandRoleValid[cfgCmdRoleLocal] = PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT | cfgOpt##optionParam
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_OPT(optionParam)                                                               \
+    .commandRoleValid[cfgCmdRoleRemote] = PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT | cfgOpt##optionParam
+
 #define PARSE_RULE_STRPUB(value)                                    {.buffer = (const char *)value, .size = sizeof(value) - 1}
 
 // Macros used to define optional parse rules in pack format
@@ -1473,7 +1490,17 @@ cfgParseOptionValid(const ConfigCommand commandId, const ConfigCommandRole comma
     ASSERT(commandId < CFG_COMMAND_TOTAL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(BOOL, parseRuleOption[optionId].commandRoleValid[commandRoleId] & ((uint32_t)1 << commandId));
+    uint32_t commandRoleValid = parseRuleOption[optionId].commandRoleValid[commandRoleId];
+
+    // Get the list from the option it references
+    if (commandRoleValid & PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT)
+    {
+        commandRoleValid =
+            parseRuleOption[commandRoleValid & ~PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT].commandRoleValid[commandRoleId];
+        ASSERT(!(commandRoleValid & PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT));
+    }
+
+    FUNCTION_TEST_RETURN(BOOL, commandRoleValid & ((uint32_t)1 << commandId));
 }
 
 /***********************************************************************************************************************************

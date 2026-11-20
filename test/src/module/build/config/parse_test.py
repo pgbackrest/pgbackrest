@@ -324,6 +324,15 @@ def test_config_parse_inherit():
       - 1
       - 2
     command: repo-path
+
+  repo-retention-diff:
+    inherit: repo-retention-full
+    command: repo-host
+
+  repo-storage-host:
+    inherit: repo-host
+    command:
+      restore: {}
 """
     )
 
@@ -348,6 +357,14 @@ def test_config_parse_inherit():
 
     # A command list can be taken from another option on its own
     assert_equal([cmd.name for cmd in _find(cfg.opt_list, "repo-retention-full").cmd_list], ["backup"])
+
+    # Option the command list is inherited from, followed to the option that declares it
+    assert_is_none(_find(cfg.opt_list, "repo-path").cmd_list_inherit)
+    assert_equal(_find(cfg.opt_list, "repo-host").cmd_list_inherit.name, "repo-path")
+    assert_equal(_find(cfg.opt_list, "repo-host-user").cmd_list_inherit.name, "repo-path")
+    assert_equal(_find(cfg.opt_list, "repo-retention-full").cmd_list_inherit.name, "repo-path")
+    assert_equal(_find(cfg.opt_list, "repo-retention-diff").cmd_list_inherit.name, "repo-path")
+    assert_is_none(_find(cfg.opt_list, "repo-storage-host").cmd_list_inherit)
 
 
 ####################################################################################################################################

@@ -105,6 +105,7 @@ OPTION = """  annotation:
     type: time
     default: 60
     allow-range: [100ms, 1h]
+    command: buffer-size
 
   online:
     section: global
@@ -193,6 +194,8 @@ OPTION = """  annotation:
     type: boolean
     bool-like: true
     default: false
+    command-role:
+      main: {}
 
   target:
     type: string
@@ -207,6 +210,10 @@ OPTION = """  annotation:
     allow-list:
       - pause
       - promote
+    command: start-fast
+    command-role:
+      async: {}
+      main: {}
 
   repo-storage-host:
     section: global
@@ -399,6 +406,30 @@ def test_config_render_option():
     # Commands the option is valid for, per role
     assert_in("PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST", parse)
     assert_in("PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST", parse)
+
+    # Role lists equal to the option the command list is inherited from
+    assert_in(
+        """        PARSE_RULE_OPTION_SECTION(Global),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_OPT(BufferSize),
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_OPT(BufferSize),
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_OPT(BufferSize),
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_OPT(BufferSize),
+
+        PARSE_RULE_OPTIONAL""",
+        parse,
+    )
+
+    # A role list that differs from the option the command list is inherited from
+    assert_in(
+        """        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_OPT(StartFast),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(Backup)
+        ),""",
+        parse,
+    )
 
 
 ####################################################################################################################################

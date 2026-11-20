@@ -449,6 +449,13 @@ def _render_config_auto_h(bld_cfg):
 
 
 ####################################################################################################################################
+def _option_command_role(opt, role):
+    """Names of the commands an option is valid for in a role."""
+
+    return [cmd.name for cmd in opt.cmd_list if role in cmd.role_list]
+
+
+####################################################################################################################################
 def _render_option(opt, bld_cfg, rule_val_map, dynamic_default_list):
     """Render the parse rules for one option."""
 
@@ -512,14 +519,30 @@ def _render_option(opt, bld_cfg, rule_val_map, dynamic_default_list):
     if cmd_internal != "":
         result += "\n        PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST\n        (\n%s        )\n" % cmd_internal
 
-    # Commands the option is valid for, per role, since a role only gets the options its part of the command needs
-    for role in CMD_ROLE_LIST:
-        cmd_role = "".join(
-            "            PARSE_RULE_OPTION_COMMAND(%s)\n" % bld_enum("", cmd.name) for cmd in opt.cmd_list if role in cmd.role_list
-        )
+    # Commands the option is valid for, per role, since a role only gets the options its part of the command needs. A role list
+    # equal to the role list of the option the command list is inherited from references that option.
+    opt_inherit = opt.cmd_list_inherit
+    inherit_prior = False
 
-        if cmd_role != "":
-            result += "\n        PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_LIST\n        (\n%s        ),\n" % (role.upper(), cmd_role)
+    for role in CMD_ROLE_LIST:
+        cmd_role = _option_command_role(opt, role)
+
+        if cmd_role == []:
+            continue
+
+        if opt_inherit is not None and cmd_role == _option_command_role(opt_inherit, role):
+            result += "%s        PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_OPT(%s),\n" % (
+                "" if inherit_prior else "\n",
+                role.upper(),
+                bld_enum("", opt_inherit.name),
+            )
+            inherit_prior = True
+        else:
+            result += "\n        PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_LIST\n        (\n%s        ),\n" % (
+                role.upper(),
+                "".join("            PARSE_RULE_OPTION_COMMAND(%s)\n" % bld_enum("", cmd) for cmd in cmd_role),
+            )
+            inherit_prior = False
 
     # Rules that apply to the option whatever the command
     rule_default = {}

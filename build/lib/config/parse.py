@@ -193,6 +193,7 @@ class BldCfgOption:
         self.allow_list = None
         self.allow_range = None
         self.cmd_list = None  # What the option means for each command it is valid for
+        self.cmd_list_inherit = None  # Option the command list is inherited from, if any
         self.cmd_role_list = None  # Roles the option is valid for, before they are filtered per command
         self.deprecate_list = None
 
@@ -497,6 +498,18 @@ def _option_command_list(opt_cmd_raw, cmd_list, opt_list, name):
 
 
 ####################################################################################################################################
+def _option_command_list_inherit(opt_cmd_raw, opt_list):
+    """Name of the option that declares the command list a scalar inherits, or None for a list."""
+
+    if not isinstance(opt_cmd_raw, str):
+        return None
+
+    opt_inherit = _find(opt_list, opt_cmd_raw)
+
+    return opt_inherit.cmd_list_inherit or opt_inherit.name
+
+
+####################################################################################################################################
 def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
     """Parse the options as declared, before any of them are resolved against each other."""
 
@@ -513,6 +526,7 @@ def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
                 opt.allow_range = _allow_range(value, "option '%s'" % name)
             elif key == "command":
                 opt.cmd_list = _option_command_list(value, cmd_list, result, "option '%s'" % name)
+                opt.cmd_list_inherit = _option_command_list_inherit(value, result)
             elif key == "command-role":
                 opt.cmd_role_list = _command_role(value, "option '%s'" % name)
             elif key == "default":
@@ -538,6 +552,7 @@ def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
                 # first. Deprecations are not inherited since they name the option they are a deprecation of.
                 opt = copy.copy(opt_inherit)
                 opt.name = name
+                opt.cmd_list_inherit = _option_command_list_inherit(value, result)
                 opt.deprecate_list = None
 
                 inherit_found = True
@@ -643,6 +658,9 @@ def _option_list(opt_raw, cmd_list, opt_grp_list):
 
         result[idx].cmd_list = cmd_opt_list
         result[idx].depend = _depend_reconcile(opt_raw, opt_raw.depend, result)
+
+        if opt_raw.cmd_list_inherit is not None:
+            result[idx].cmd_list_inherit = _find(result, opt_raw.cmd_list_inherit)
 
     return result
 
