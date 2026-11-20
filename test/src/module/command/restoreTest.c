@@ -3152,15 +3152,6 @@ testRun(void)
         TEST_RESULT_VOID(objFree(sync), "close remaining descriptor");
         TEST_RESULT_BOOL(hrnRestoreSyncScriptDone(), true, "failed descriptor close not retried");
         hrnRestoreSyncScriptClear();
-#else
-        StringList *argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
-        hrnCfgArgRawStrId(argList, cfgOptRestoreSyncMethod, CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS);
-        HRN_CFG_LOAD(cfgCmdRestore, argList);
-        TEST_ERROR(cmdRestore(), OptionInvalidError, "syncfs is not supported on this platform");
-        TEST_RESULT_BOOL(
-            storagePathExistsP(storageTest, STRDEF("pg")), false, "unsupported platform rejected before creating paths");
 #endif
     }
 

@@ -104,12 +104,6 @@ cmdRestore(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const bool syncFileSystem = cfgOptionStrId(cfgOptRestoreSyncMethod) == CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS;
-
-#ifndef HAVE_SYNCFS
-        CHECK(OptionInvalidError, !syncFileSystem, "syncfs is not supported on this platform");
-#endif
-
         // Get information for the current user
         userInit();
 
@@ -198,6 +192,7 @@ cmdRestore(void)
 
 #ifdef HAVE_SYNCFS
         // Retain descriptors before workers can write so the final sync reports writeback errors from the restore
+        const bool syncFileSystem = cfgOptionStrId(cfgOptRestoreSyncMethod) == CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS;
         RestoreSync *const sync = syncFileSystem ? restoreSyncNew(jobData.manifest) : NULL;
 #endif
 

@@ -1322,7 +1322,7 @@ option:
     default: fsync
     allow-list:
       - fsync
-      - syncfs
+      - syncfs: HAVE_SYNCFS
     beta: true
     command:
       restore: {}

@@ -11139,6 +11139,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (                                                                                         // opt/restore-sync-method
                     PARSE_RULE_VAL_STRID(fsync),                                                          // opt/restore-sync-method
                     PARSE_RULE_VAL_STRID(syncfs),                                                         // opt/restore-sync-method
+#ifndef HAVE_SYNCFS                                                                                       // opt/restore-sync-method
+                        PARSE_RULE_BOOL_FALSE,                                                            // opt/restore-sync-method
+#endif                                                                                                    // opt/restore-sync-method
                 ),                                                                                        // opt/restore-sync-method
                                                                                                           // opt/restore-sync-method
                 PARSE_RULE_OPTIONAL_DEFAULT                                                               // opt/restore-sync-method
