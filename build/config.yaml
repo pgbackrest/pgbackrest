@@ -1328,7 +1328,6 @@ option:
       restore: {}
     command-role:
       main: {}
-      local: {}
 
   tablespace-map:
     section: global

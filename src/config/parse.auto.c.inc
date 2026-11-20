@@ -11126,11 +11126,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/restore-sync-method
         ),                                                                                                // opt/restore-sync-method
                                                                                                           // opt/restore-sync-method
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                   // opt/restore-sync-method
-        (                                                                                                 // opt/restore-sync-method
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/restore-sync-method
-        ),                                                                                                // opt/restore-sync-method
-                                                                                                          // opt/restore-sync-method
         PARSE_RULE_OPTIONAL                                                                               // opt/restore-sync-method
         (                                                                                                 // opt/restore-sync-method
             PARSE_RULE_OPTIONAL_GROUP                                                                     // opt/restore-sync-method

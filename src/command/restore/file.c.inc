@@ -9,6 +9,7 @@ typedef struct RestoreFile
     time_t timeModified;                                            // Original modification time
     mode_t mode;                                                    // Original mode
     bool zero;                                                      // Should the file be zeroed?
+    bool noSyncFile;                                                // Skip file sync
     const String *user;                                             // Original user
     const String *group;                                            // Original group
     uint64_t offset;                                                // Offset into repo file where pg file is located
@@ -47,11 +48,6 @@ restoreFile(
     FUNCTION_LOG_END();
 
     ASSERT(repoFile != NULL);
-
-    // The coordinator synchronizes all destination filesystems before publishing pg_control when syncfs is selected
-    const bool syncFileSystem =
-        cfgOptionValid(cfgOptRestoreSyncMethod) &&
-        cfgOptionStrId(cfgOptRestoreSyncMethod) == CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS;
 
     // Restore file results
     List *const result = lstNewP(sizeof(RestoreFileResult));
@@ -110,7 +106,7 @@ restoreFile(
                                     IoWrite *const pgWriteTruncate = storageWriteIo(
                                         storageNewWriteP(
                                             storagePgWrite(), file->name, .noAtomic = true, .noCreatePath = true,
-                                            .noSyncPath = true, .noTruncate = true, .noSyncFile = syncFileSystem));
+                                            .noSyncPath = true, .noTruncate = true, .noSyncFile = file->noSyncFile));
                                     ioWriteOpen(pgWriteTruncate);
 
                                     // Truncate to original size
@@ -204,7 +200,7 @@ restoreFile(
                     StorageWrite *const pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                         .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
-                        .noSyncFile = syncFileSystem);
+                        .noSyncFile = file->noSyncFile);
 
                     ioWriteOpen(storageWriteIo(pgFileWrite));
 
@@ -254,7 +250,7 @@ restoreFile(
                     StorageWrite *const pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                         .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
-                        .noTruncate = file->blockChecksum != NULL, .noSyncFile = syncFileSystem);
+                        .noTruncate = file->blockChecksum != NULL, .noSyncFile = file->noSyncFile);
 
                     // If block incremental file
                     const Buffer *checksum = NULL;

@@ -4,8 +4,6 @@ Restore Command
 #include <build.h>
 
 #include <fcntl.h>
-#include <limits.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -34,7 +32,7 @@ Restore Command
 #include "validate.c.inc"
 
 /***********************************************************************************************************************************
-Synchronize restored directories and file link parents. The global directory is synchronized after pg_control is published.
+Synchronize restored paths in the data directory. The global path is synchronized after pg_control is published.
 ***********************************************************************************************************************************/
 static void
 restorePathSync(const Manifest *const manifest)
@@ -47,31 +45,6 @@ restorePathSync(const Manifest *const manifest)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Sync file link paths. These need to be synced separately because they are not linked from the data directory.
-        StringList *const pathSynced = strLstNew();
-
-        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
-        {
-            const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
-
-            if (target->type == manifestTargetTypeLink && target->file != NULL)
-            {
-                const String *const pgPath = manifestTargetPath(manifest, target);
-
-                // Don't sync the same path twice. Multiple file links can share a path, but syncing it more than once makes the
-                // logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect performance.
-                if (strLstExists(pathSynced, pgPath))
-                    continue;
-                else
-                    strLstAdd(pathSynced, pgPath);
-
-                // Sync the path
-                LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
-                storagePathSyncP(storageLocalWrite(), pgPath);
-            }
-        }
-
-        // Sync paths in the data directory
         for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
         {
             const String *const manifestName = manifestPath(manifest, pathIdx)->name;
@@ -122,7 +95,11 @@ cmdRestore(void)
         const RestoreBackupData backupData = restoreBackupSet();
 
         // Load manifest
-        RestoreJobData jobData = {.repoIdx = backupData.repoIdx};
+        RestoreJobData jobData =
+        {
+            .repoIdx = backupData.repoIdx,
+            .syncFileSystem = cfgOptionStrId(cfgOptRestoreSyncMethod) == CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS,
+        };
 
         jobData.manifest = manifestLoadFile(
             storageRepoIdx(backupData.repoIdx),
@@ -191,9 +168,8 @@ cmdRestore(void)
         restoreCleanBuild(jobData.manifest, jobData.rootReplaceUser, jobData.rootReplaceGroup);
 
 #ifdef HAVE_SYNCFS
-        // Retain descriptors before workers can write so the final sync reports writeback errors from the restore
-        const bool syncFileSystem = cfgOptionStrId(cfgOptRestoreSyncMethod) == CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS;
-        RestoreSync *const sync = syncFileSystem ? restoreSyncNew(jobData.manifest) : NULL;
+        // Open filesystems containing restored paths before workers write
+        RestoreSync *const sync = jobData.syncFileSystem ? restoreSyncNew(jobData.manifest) : NULL;
 #endif
 
         // Generate processing queues
@@ -253,9 +229,34 @@ cmdRestore(void)
         // Remove backup.manifest
         storageRemoveP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);
 
-        // A filesystem barrier covers restored files and their paths, including file link parent directories
+        // Sync file link paths. These need to be synced separately because they are not linked from the data directory.
+        StringList *const pathSynced = strLstNew();
+
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(jobData.manifest); targetIdx++)
+        {
+            const ManifestTarget *const target = manifestTarget(jobData.manifest, targetIdx);
+
+            if (target->type == manifestTargetTypeLink && target->file != NULL)
+            {
+                const String *const pgPath = manifestTargetPath(jobData.manifest, target);
+
+                // Don't sync the same path twice. There can be multiple links to files in the same path, but syncing it more than
+                // once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect
+                // performance.
+                if (strLstExists(pathSynced, pgPath))
+                    continue;
+                else
+                    strLstAdd(pathSynced, pgPath);
+
+                // Sync the path
+                LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
+                storagePathSyncP(storageLocalWrite(), pgPath);
+            }
+        }
+
+        // Sync paths in the data directory
 #ifdef HAVE_SYNCFS
-        if (syncFileSystem)
+        if (jobData.syncFileSystem)
             restoreFileSystemSync(sync);
         else
 #endif

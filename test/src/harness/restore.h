@@ -28,8 +28,6 @@ typedef struct HrnRestoreSyncScript
     const char *path;                                               // Expected path for open
     int fd;                                                         // Descriptor returned by open or passed to other operations
     dev_t device;                                                   // Device returned by fstat
-    bool file;                                                      // Expect a regular file descriptor rather than a directory
-    bool writeOnly;                                                 // Expect non-truncating write access for a write-only file
     int errNo;                                                      // Return -1 with this errno when nonzero
     void (*callback)(void);                                         // Observe actual restore state at this operation
 } HrnRestoreSyncScript;

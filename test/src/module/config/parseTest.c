@@ -1258,7 +1258,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptBeta), false, "beta is disabled");
         TEST_RESULT_BOOL(cfgParseOptionP(STRDEF("restore-sync-method")).beta, true, "method is a beta option");
         TEST_RESULT_BOOL(
-            cfgParseOptionValid(cfgCmdRestore, cfgCmdRoleLocal, cfgOptRestoreSyncMethod), true, "method is valid for workers");
+            cfgParseOptionValid(cfgCmdRestore, cfgCmdRoleLocal, cfgOptRestoreSyncMethod), false, "method is not sent to workers");
         TEST_RESULT_BOOL(
             cfgParseOptionValid(cfgCmdRestore, cfgCmdRoleRemote, cfgOptRestoreSyncMethod), false,
             "method is not sent to repository");

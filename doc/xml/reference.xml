@@ -1896,9 +1896,9 @@
                                 <allow-item id="syncfs">synchronize each destination filesystem after restoring files.</allow-item>
                             </allow-list>
 
-                            <p>The <id>syncfs</id> method is available only on Linux and may reduce restore time for clusters containing many small files. It synchronizes all destination filesystems, including those containing tablespaces or linked files and directories, before completing the restore. Delta restores are supported.</p>
+                            <p>The <id>syncfs</id> method is available only on Linux and may reduce restore time for clusters containing many small files. It synchronizes the filesystems containing the data directory, tablespaces, and linked directories before completing the restore. Linked files are synchronized individually. Delta restores are supported.</p>
 
-                            <p>When using <id>syncfs</id>, delta and force restores require read access to <file>/proc/self/mountinfo</file> to identify files mounted separately within destination directories. Destination mounts and links must remain unchanged during the restore.</p>
+                            <p>Files mounted from another filesystem within restored directories are not synchronized. Destination mounts and links must remain unchanged during the restore.</p>
 
                             <p><id>syncfs</id> also synchronizes unrelated writes on the same filesystems. Errors writing that data to disk may therefore cause the restore to fail.</p>
 

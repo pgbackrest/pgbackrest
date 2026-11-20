@@ -139,9 +139,7 @@ hrnRestoreSyncOpen(const char *const path, const int flags, const mode_t mode)
         return open(path, flags, mode);
 
     const HrnRestoreSyncScript *const script = hrnRestoreSyncScriptNext(hrnRestoreSyncOpOpen, -1, path);
-    CHECK(
-        AssertError, flags == ((script->writeOnly ? O_WRONLY : O_RDONLY) | O_CLOEXEC | (script->file ? 0 : O_DIRECTORY)),
-        "restore filesystem descriptor flags are incorrect");
+    CHECK(AssertError, flags == (O_RDONLY | O_CLOEXEC | O_DIRECTORY), "restore filesystem descriptor flags are incorrect");
     return script->errNo == 0 ? script->fd : -1;
 }
 
@@ -152,7 +150,7 @@ hrnRestoreSyncStat(const int fd, struct stat *const info)
         return fstat(fd, info);
 
     const HrnRestoreSyncScript *const script = hrnRestoreSyncScriptNext(hrnRestoreSyncOpStat, fd, NULL);
-    *info = (struct stat){.st_dev = script->device, .st_mode = (script->file ? S_IFREG : S_IFDIR) | 0700};
+    *info = (struct stat){.st_dev = script->device, .st_mode = S_IFDIR | 0700};
     return script->errNo == 0 ? 0 : -1;
 }
 
