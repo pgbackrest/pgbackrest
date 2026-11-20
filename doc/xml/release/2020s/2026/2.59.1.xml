@@ -14,7 +14,7 @@
 
                 <p>Fix hang when the chunk buffer is smaller than the input buffer.</p>
 
-                <p>A multi-part upload to <proper>S3</proper>, <proper>GCS</proper>, or <proper>Azure</proper> could loop forever when the chunk buffer was smaller than the input buffer, e.g. after the chunk size grew during the upload. The chunk buffer is now always large enough to hold the input buffer.</p>
+                <p>A multi-part upload to <proper>S3</proper>, <proper>GCS</proper>, or <proper>Azure</proper> could loop forever when the chunk buffer was smaller than the input buffer, e.g. after the chunk size grew during the upload. This was introduced in <commit-link subject="Optimize S3/GCS/Azure chunk size for small files."/>. The chunk buffer is now always large enough to hold the input buffer.</p>
             </release-item>
 
             <release-item>

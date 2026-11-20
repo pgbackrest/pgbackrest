@@ -30,6 +30,13 @@ optionGroup:
   pg: {}
 
 option:
+  archive-check:
+    section: global
+    type: boolean
+    command:
+      backup: {}
+      restore: {}
+
   buffer-size:
     section: global
     type: size
@@ -39,6 +46,13 @@ option:
 
   buffer-size-file:
     inherit: buffer-size
+
+  checksum-page-error:
+    section: global
+    type: boolean
+    command:
+      backup: {}
+      restore: {}
 
   force:
     type: boolean
@@ -79,7 +93,8 @@ option:
 # command line, and set and type only by the commands that take them. File buffer size allows what buffer size allows, so it
 # inherits the list rather than describing it again, and restore inherits the list backup describes for set the same way, naming
 # the command since an option documented by more than one has a list per command. Process has no help at all, since no user can
-# give it.
+# give it. Archive check and checksum page error have both general and command-specific help, and archive check has no general
+# description. Restore shares the command-specific help of backup for checksum page error.
 HELP = """<doc title="Reference">
     <config title="Configuration Reference">
         <description>Configuration description.</description>
@@ -95,6 +110,12 @@ HELP = """<doc title="Reference">
                 </text>
 
                 <config-key-list>
+                    <config-key id="archive-check" name="Archive Check">
+                        <summary>Archive check.</summary>
+
+                        <example>n</example>
+                    </config-key>
+
                     <config-key id="buffer-size" name="Buffer Size">
                         <summary>Buffer size.</summary>
 
@@ -118,6 +139,14 @@ HELP = """<doc title="Reference">
                             <p>File buffer size description.</p>
 
                             <allow-list inherit="buffer-size"/>
+                        </text>
+                    </config-key>
+
+                    <config-key id="checksum-page-error" name="Checksum Page Error">
+                        <summary>Checksum page error.</summary>
+
+                        <text>
+                            <p>Checksum page error description.</p>
                         </text>
                     </config-key>
                 </config-key-list>
@@ -161,6 +190,14 @@ HELP = """<doc title="Reference">
                 </text>
 
                 <option-list>
+                    <option id="archive-check">
+                        <text>
+                            <p>Archive check restore description.</p>
+                        </text>
+                    </option>
+
+                    <option id="checksum-page-error" command="backup"/>
+
                     <option id="set" name="Set">
                         <summary>Set summary.</summary>
 
@@ -189,6 +226,22 @@ HELP = """<doc title="Reference">
                 </text>
 
                 <option-list>
+                    <option id="archive-check" name="Backup Archive Check">
+                        <summary>Backup archive check.</summary>
+
+                        <text>
+                            <p>Archive check backup description.</p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
+
+                    <option id="checksum-page-error">
+                        <text>
+                            <p>Checksum page error backup description.</p>
+                        </text>
+                    </option>
+
                     <option id="set" name="Set">
                         <summary>Set summary.</summary>
 
@@ -282,11 +335,14 @@ def test_help_parse():
     assert_equal(cmd.summary.tag, "summary")
 
     # An option a command documents differently is under the command rather than in the option list
-    assert_equal([opt.name for opt in cmd.opt_list], ["set", "type"])
+    assert_equal([opt.name for opt in cmd.opt_list], ["archive-check", "checksum-page-error", "set", "type"])
     assert_is_none(_find(bld_hlp.cmd_list, "help").opt_list)
 
     # Options are sorted and are found wherever they were documented
-    assert_equal([opt.name for opt in bld_hlp.opt_list], ["buffer-size", "buffer-size-file", "force", "stanza"])
+    assert_equal(
+        [opt.name for opt in bld_hlp.opt_list],
+        ["archive-check", "buffer-size", "buffer-size-file", "checksum-page-error", "force", "stanza"],
+    )
 
     # An option documented in a configuration section takes the section it is documented in
     opt = _find(bld_hlp.opt_list, "buffer-size")
@@ -299,6 +355,91 @@ def test_help_parse():
     assert_is_none(_find(bld_hlp.opt_list, "force").section)
     assert_is_none(_find(bld_hlp.opt_list, "force").example_list)
     assert_equal(_find(bld_hlp.opt_list, "stanza").section, "stanza")
+
+
+####################################################################################################################################
+def test_help_parse_option_command():
+    """Command-specific option help is completed from the general option help."""
+
+    bld_hlp = _parse()
+    backup_hlp = _find(bld_hlp.cmd_list, "backup")
+    restore_hlp = _find(bld_hlp.cmd_list, "restore")
+
+    # General option help may leave out the description
+    assert_is_none(_find(bld_hlp.opt_list, "archive-check").description)
+
+    # Command-specific help that leaves out the name, summary, and examples has those of the general help
+    opt_hlp = _find(restore_hlp.opt_list, "archive-check")
+
+    assert_equal(opt_hlp.title, "Archive Check")
+    assert_in("<summary>Archive check.</summary>", _render(opt_hlp.summary))
+    assert_equal(opt_hlp.example_list, ["n"])
+
+    # Command-specific help that has them keeps its own
+    opt_hlp = _find(backup_hlp.opt_list, "archive-check")
+
+    assert_equal(opt_hlp.title, "Backup Archive Check")
+    assert_in("<summary>Backup archive check.</summary>", _render(opt_hlp.summary))
+    assert_equal(opt_hlp.example_list, ["y"])
+
+    # The description is the command-specific description when there is no general description
+    assert_in("<p>Archive check backup description.</p>", _render(opt_hlp.description))
+    assert_not_in("Archive check restore", _render(opt_hlp.description))
+
+    # Otherwise it is the general description followed by the command-specific description, which is also kept
+    opt_hlp = _find(backup_hlp.opt_list, "checksum-page-error")
+    description = _render(opt_hlp.description)
+
+    assert_in("<p>Checksum page error description.</p>", description)
+    assert_in("<p>Checksum page error backup description.</p>", description)
+    assert_true(description.index("page error description") < description.index("backup description"))
+    assert_not_in("page error description", _render(opt_hlp.description_command))
+    assert_in("<p>Checksum page error backup description.</p>", _render(opt_hlp.description_command))
+
+    # A command that names another command shares its command-specific help
+    opt_hlp = _find(restore_hlp.opt_list, "checksum-page-error")
+
+    assert_equal(opt_hlp.command, "backup")
+    assert_in("<p>Checksum page error description.</p>", _render(opt_hlp.description))
+    assert_in("<p>Checksum page error backup description.</p>", _render(opt_hlp.description_command))
+
+    # The command named must have command-specific help
+    assert_equal(
+        _error(
+            HELP.replace('<option id="checksum-page-error" command="backup"/>', '<option id="checksum-page-error" command="help"/>')
+        ),
+        "option 'checksum-page-error' for command 'restore' names command 'help', which does not document it",
+    )
+
+    # A command that names another command may not have help of its own
+    assert_equal(
+        _error(
+            HELP.replace(
+                '<option id="checksum-page-error" command="backup"/>',
+                '<option id="checksum-page-error" command="backup"><text><p>Restore.</p></text></option>',
+            )
+        ),
+        "option 'checksum-page-error' for command 'restore' names command 'backup' and may not document anything else",
+    )
+
+    # An option without a general description must have command-specific help for every command that takes it
+    help = HELP.replace(
+        """                    <option id="archive-check">
+                        <text>
+                            <p>Archive check restore description.</p>
+                        </text>
+                    </option>
+""",
+        "",
+    )
+
+    assert_equal(_error(help), "option 'archive-check' must have help for command 'restore'")
+
+    # Command-specific help for an option with no general help must have a name and summary
+    assert_equal(
+        _error(HELP.replace("<summary>Type summary.</summary>", "")),
+        "option 'type' for command 'restore' must have a name and summary",
+    )
 
 
 ####################################################################################################################################
@@ -386,7 +527,7 @@ def test_help_parse_allow_list():
 
     # A list inherited from a command that describes none
     assert_equal(
-        _error(HELP.replace('command="backup"', 'command="help"')),
+        _error(HELP.replace('<allow-list inherit="set" command="backup"/>', '<allow-list inherit="set" command="help"/>')),
         "option 'set' for command 'restore' inherits the allow list of option 'set' for command 'help', which does not describe"
         " one",
     )

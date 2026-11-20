@@ -11,11 +11,22 @@ Block Cipher
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/common.h"
 #include "common/crypto/common.intern.h"
+#include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
 #include "common/type/convert.h"
 #include "common/type/object.h"
+
+/***********************************************************************************************************************************
+Key check stored before the salt, the first bytes of an HMAC of the salt with the key. An incorrect key fails validation before
+anything is decrypted.
+***********************************************************************************************************************************/
+#define CIPHER_BLOCK_KEY_CHECK_SIZE                                 4
+
+// Max size of everything before the content: the magic, the key check, and the salt
+#define CIPHER_BLOCK_HEADER_SIZE_MAX                                                                                               \
+    (CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN + CIPHER_BLOCK_KEY_CHECK_SIZE)
 
 /***********************************************************************************************************************************
 Object type
@@ -24,11 +35,12 @@ typedef struct CipherBlock
 {
     CipherMode mode;                                                // Mode encrypt/decrypt
     bool raw;                                                       // Omit header magic to save space
+    bool keyCheck;                                                  // Is a key check stored before the salt?
     bool saltDone;                                                  // Has the salt been read/generated?
     bool processDone;                                               // Has any data been processed?
     const Buffer *pass;                                             // Passphrase used to generate encryption key
     size_t headerSize;                                              // Size of header read during decrypt
-    uint8_t header[CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN];       // Buffer to hold partial header during decrypt
+    uint8_t header[CIPHER_BLOCK_HEADER_SIZE_MAX];                   // Buffer to hold partial header during decrypt
     const EVP_CIPHER *cipher;                                       // Cipher object
     const EVP_MD *digest;                                           // Message digest object
     EVP_CIPHER_CTX *cipherContext;                                  // Encrypt/decrypt context
@@ -72,6 +84,36 @@ cipherBlockFreeResource(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
+Generate the key check for a key and salt
+***********************************************************************************************************************************/
+static void
+cipherBlockKeyCheck(const CipherBlock *const this, const uint8_t *const key, const uint8_t *const salt, uint8_t *const keyCheck)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, this);
+        FUNCTION_TEST_PARAM_P(VOID, key);
+        FUNCTION_TEST_PARAM_P(VOID, salt);
+        FUNCTION_TEST_PARAM_P(VOID, keyCheck);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(key != NULL);
+    ASSERT(salt != NULL);
+    ASSERT(keyCheck != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const Buffer *const hmac = cryptoHmacOne(
+            hashTypeSha256, BUF(key, (size_t)EVP_CIPHER_key_length(this->cipher)), BUF(salt, PKCS5_SALT_LEN));
+
+        memcpy(keyCheck, bufPtrConst(hmac), CIPHER_BLOCK_KEY_CHECK_SIZE);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Determine how large the destination buffer should be
 ***********************************************************************************************************************************/
 static size_t
@@ -89,7 +131,7 @@ cipherBlockProcessSize(const CipherBlock *const this, const size_t sourceSize)
 
     // On encrypt the header size must be included before the first block
     if (this->mode == cipherModeEncrypt && !this->saltDone)
-        destinationSize += CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN;
+        destinationSize += CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN + (this->keyCheck ? CIPHER_BLOCK_KEY_CHECK_SIZE : 0);
 
     FUNCTION_LOG_RETURN(SIZE, destinationSize);
 }
@@ -118,6 +160,7 @@ cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t s
     if (!this->saltDone)
     {
         const uint8_t *salt = NULL;
+        uint8_t *keyCheckDestination = NULL;
 
         // On encrypt the salt is generated
         if (this->mode == cipherModeEncrypt)
@@ -130,6 +173,14 @@ cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t s
                 destinationSize += CIPHER_BLOCK_MAGIC_SIZE;
             }
 
+            // Leave space for the key check. It is generated after the key.
+            if (this->keyCheck)
+            {
+                keyCheckDestination = destination;
+                destination += CIPHER_BLOCK_KEY_CHECK_SIZE;
+                destinationSize += CIPHER_BLOCK_KEY_CHECK_SIZE;
+            }
+
             // Add salt to the destination buffer
             cryptoRandomBytes(destination, PKCS5_SALT_LEN);
             salt = destination;
@@ -140,13 +191,15 @@ cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t s
         else if (sourceSize > 0)
         {
             // Check if the entire header has been read
-            const size_t headerExpected = this->raw ? PKCS5_SALT_LEN : CIPHER_BLOCK_MAGIC_SIZE + PKCS5_SALT_LEN;
+            const size_t headerExpected =
+                (this->raw ? 0 : CIPHER_BLOCK_MAGIC_SIZE) + PKCS5_SALT_LEN + (this->keyCheck ? CIPHER_BLOCK_KEY_CHECK_SIZE : 0);
 
             if (this->headerSize + sourceSize >= headerExpected)
             {
                 // Copy header (or remains of header) from source into the header buffer
                 memcpy(this->header + this->headerSize, source, headerExpected - this->headerSize);
-                salt = this->header + (this->raw ? 0 : CIPHER_BLOCK_MAGIC_SIZE);
+                salt =
+                    this->header + (this->raw ? 0 : CIPHER_BLOCK_MAGIC_SIZE) + (this->keyCheck ? CIPHER_BLOCK_KEY_CHECK_SIZE : 0);
 
                 // Advance source and source size by the number of bytes read
                 source += headerExpected - this->headerSize;
@@ -179,6 +232,22 @@ cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t s
                 EVP_BytesToKey(
                     this->cipher, this->digest, salt, bufPtrConst(this->pass), (int)bufSize(this->pass), 1, key, initVector) == 0,
                 "unable to generate key and initialization vector");
+
+            // Write the key check before the salt on encrypt and compare it to the key check before the salt on decrypt
+            if (this->keyCheck)
+            {
+                if (this->mode == cipherModeEncrypt)
+                    cipherBlockKeyCheck(this, key, salt, keyCheckDestination);
+                else
+                {
+                    uint8_t keyCheck[CIPHER_BLOCK_KEY_CHECK_SIZE];
+
+                    cipherBlockKeyCheck(this, key, salt, keyCheck);
+
+                    if (memcmp(salt - CIPHER_BLOCK_KEY_CHECK_SIZE, keyCheck, CIPHER_BLOCK_KEY_CHECK_SIZE) != 0)
+                        THROW(CryptoError, "cipher passphrase does not match");
+                }
+            }
 
             // Create context to track cipher
             cryptoError(!(this->cipherContext = EVP_CIPHER_CTX_new()), "unable to create context");
@@ -384,12 +453,14 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
         FUNCTION_LOG_PARAM(STRING_ID, mode);
         FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpec);
         FUNCTION_LOG_PARAM(ENUM, param.header);
+        FUNCTION_LOG_PARAM(BOOL, param.keyCheck);
     FUNCTION_LOG_END();
 
     ASSERT(cipherSpec != NULL);
     ASSERT(cipherSpecType(cipherSpec) != cipherTypeNone);
     ASSERT(cipherSpecDigest(cipherSpec) != 0);
     ASSERT(cipherSpecPass(cipherSpec) != NULL && !bufEmpty(cipherSpecPass(cipherSpec)));
+    ASSERT(!param.keyCheck || param.header == cipherBlockHeaderNone);
 
     // Init crypto subsystem
     cryptoInit();
@@ -413,6 +484,7 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
         {
             .mode = mode,
             .raw = param.header == cipherBlockHeaderNone,
+            .keyCheck = param.keyCheck,
             .cipher = cipher,
             .digest = digest,
             .pass = bufDup(cipherSpecPass(cipherSpec)),
@@ -430,6 +502,7 @@ cipherBlockNew(const CipherMode mode, const CipherSpec *const cipherSpec, const 
         pckWriteU64P(packWrite, mode);
         cipherSpecPack(packWrite, cipherSpec);
         pckWriteU32P(packWrite, param.header);
+        pckWriteBoolP(packWrite, param.keyCheck);
         pckWriteEndP(packWrite);
 
         paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
@@ -454,8 +527,9 @@ cipherBlockNewPack(const Pack *const paramList)
         const CipherMode cipherMode = (CipherMode)pckReadU64P(paramListPack);
         const CipherSpec *const cipherSpec = cipherSpecNewPack(paramListPack);
         const CipherBlockHeader header = (CipherBlockHeader)pckReadU32P(paramListPack);
+        const bool keyCheck = pckReadBoolP(paramListPack);
 
-        result = ioFilterMove(cipherBlockNewP(cipherMode, cipherSpec, .header = header), memContextPrior());
+        result = ioFilterMove(cipherBlockNewP(cipherMode, cipherSpec, .header = header, .keyCheck = keyCheck), memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

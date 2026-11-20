@@ -179,62 +179,93 @@ verifyInfoFile(const String *const pathFileName, const bool keepFile, const Ciph
     FUNCTION_AUDIT_STRUCT();
 
     ASSERT(pathFileName != NULL);
+    ASSERT(cipherSpec != NULL);
 
     VerifyInfoFile result = {.errorCode = 0};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        TRY_BEGIN()
+        const CipherSpec *cipherSpecRead = cipherSpec;
+        int errorCodeMain = 0;
+        String *errorMsg = NULL;
+
+        // Read with the cipher spec, then with the prior cipher spec when the file exists but cannot be read
+        do
         {
-            StorageRead *const infoStorageRead = storageNewReadP(storageRepo(), pathFileName);
-            IoRead *const infoRead = storageReadIo(infoStorageRead);
+            result.errorCode = 0;
 
-            ioFilterGroupAdd(ioReadFilterGroup(infoRead), cryptoHashNew(hashTypeSha1));
-
-            const bool isBackup = strBeginsWith(pathFileName, INFO_BACKUP_PATH_FILE_STR);
-            const bool isArchive = strBeginsWith(pathFileName, INFO_ARCHIVE_PATH_FILE_STR);
-
-            // Add decryption after the hash so the checksum is over the file as stored. An info file is read through the filter
-            // that reads its header, a manifest with the spec as it was given since it has no header of its own.
-            if (isBackup || isArchive)
-                cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(infoRead), cipherSpec);
-            else
-                cipherBlockFilterGroupAdd(ioReadFilterGroup(infoRead), cipherModeDecrypt, cipherSpec);
-
-            // If directed to keep the loaded file in memory, then move the file into the result, else drain the io and close it
-            if (keepFile)
+            TRY_BEGIN()
             {
-                if (isBackup)
-                    result.backup = infoBackupMove(infoBackupNewLoad(infoRead, cipherSpec), memContextPrior());
-                else if (isArchive)
-                    result.archive = infoArchiveMove(infoArchiveNewLoad(infoRead, cipherSpec), memContextPrior());
+                StorageRead *const infoStorageRead = storageNewReadP(storageRepo(), pathFileName);
+                IoRead *const infoRead = storageReadIo(infoStorageRead);
+
+                ioFilterGroupAdd(ioReadFilterGroup(infoRead), cryptoHashNew(hashTypeSha1));
+
+                const bool isBackup = strBeginsWith(pathFileName, INFO_BACKUP_PATH_FILE_STR);
+                const bool isArchive = strBeginsWith(pathFileName, INFO_ARCHIVE_PATH_FILE_STR);
+
+                // Add decryption after the hash so the checksum is over the file as stored. An info file is read through the
+                // filter that reads its header, a manifest with the spec as it was given since it has no header of its own.
+                if (isBackup || isArchive)
+                    cipherBlockFormatFilterGroupReadAdd(ioReadFilterGroup(infoRead), cipherSpecRead);
                 else
-                    result.manifest = manifestMove(manifestNewLoad(infoRead, cipherSpec), memContextPrior());
+                    cipherBlockFilterGroupAdd(ioReadFilterGroup(infoRead), cipherModeDecrypt, cipherSpecRead);
+
+                // If directed to keep the loaded file in memory, then move the file into the result, else drain the io and close
+                if (keepFile)
+                {
+                    if (isBackup)
+                        result.backup = infoBackupMove(infoBackupNewLoad(infoRead, cipherSpecRead), memContextPrior());
+                    else if (isArchive)
+                        result.archive = infoArchiveMove(infoArchiveNewLoad(infoRead, cipherSpecRead), memContextPrior());
+                    else
+                        result.manifest = manifestMove(manifestNewLoad(infoRead, cipherSpecRead), memContextPrior());
+                }
+                // Else nothing needs the file, so the drain runs the filters
+                else
+                    ioReadDrain(infoRead);
+
+                const Buffer *const filterResult = pckReadBinP(
+                    ioFilterGroupResultP(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE));
+
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    result.checksum = strNewEncode(encodingHex, filterResult);
+                }
+                MEM_CONTEXT_PRIOR_END();
+
+                // Report a file read with the prior cipher spec
+                if (cipherSpecRead != cipherSpec)
+                    LOG_DETAIL_FMT("%s was decrypted with the old passphrase", strZ(pathFileName));
             }
-            // Else nothing needs the file, so the drain runs the filters
-            else
-                ioReadDrain(infoRead);
-
-            const Buffer *const filterResult = pckReadBinP(
-                ioFilterGroupResultP(ioReadFilterGroup(infoRead), CRYPTO_HASH_FILTER_TYPE));
-
-            MEM_CONTEXT_PRIOR_BEGIN()
+            CATCH_ANY()
             {
-                result.checksum = strNewEncode(encodingHex, filterResult);
+                result.errorCode = errorCode();
+
+                // Keep the error from the cipher spec
+                if (errorMsg == NULL)
+                {
+                    errorCodeMain = result.errorCode;
+                    errorMsg = strCatZ(strNew(), errorMessage());
+
+                    if (result.errorCode == errorTypeCode(&ChecksumError))
+                        strCat(errorMsg, strNewFmt(" %s", strZ(pathFileName)));
+                }
             }
-            MEM_CONTEXT_PRIOR_END();
+            TRY_END();
+
+            cipherSpecRead =
+                result.errorCode == 0 || result.errorCode == errorTypeCode(&FileMissingError) ?
+                    NULL : cipherSpecPrior(cipherSpecRead);
         }
-        CATCH_ANY()
+        while (cipherSpecRead != NULL);
+
+        // Report the error when no read succeeded
+        if (result.errorCode != 0)
         {
-            result.errorCode = errorCode();
-            String *const errorMsg = strCatZ(strNew(), errorMessage());
-
-            if (result.errorCode == errorTypeCode(&ChecksumError))
-                strCat(errorMsg, strNewFmt(" %s", strZ(pathFileName)));
-
+            result.errorCode = errorCodeMain;
             LOG_DETAIL(strZ(errorMsg));
         }
-        TRY_END();
     }
     MEM_CONTEXT_TEMP_END();
 

@@ -344,19 +344,15 @@ hrnHostPgConf(HrnHost *const this)
         strCatZ(config, "log_rotation_size = 0\n");
         strCatZ(config, "log_error_verbosity = verbose\n");
 
-        // Force parallel mode on to make sure we are disabling it and there are no issues. This is important for testing that 9.6
-        // works since pg_stop_backup() is marked parallel safe and will error if run in a worker.
-        if (hrnHostPgVersion() >= PG_VERSION_96)
-        {
-            strCatZ(config, "\n");
+        // Force parallel mode on to make sure we are disabling it and there are no issues
+        strCatZ(config, "\n");
 
-            if (hrnHostPgVersion() >= PG_VERSION_16)
-                strCatZ(config, "debug_parallel_query = on\n");
-            else
-                strCatZ(config, "force_parallel_mode = on\n");
+        if (hrnHostPgVersion() >= PG_VERSION_16)
+            strCatZ(config, "debug_parallel_query = on\n");
+        else
+            strCatZ(config, "force_parallel_mode = on\n");
 
-            strCatZ(config, "max_parallel_workers_per_gather = 2\n");
-        }
+        strCatZ(config, "max_parallel_workers_per_gather = 2\n");
 
         // Write postgresql.conf
         storagePutP(
@@ -708,6 +704,13 @@ hrnHostConfig(HrnHost *const this)
             {
                 strCatFmt(config, "repo1-cipher-type=%s\n", zNewStrId(cipherSpecType(hrnHostLocal.cipherSpecMain)));
                 strCatFmt(config, "repo1-cipher-pass=%s\n", strZ(strNewBuf(cipherSpecPass(hrnHostLocal.cipherSpecMain))));
+
+                if (cipherSpecPrior(hrnHostLocal.cipherSpecMain) != NULL)
+                {
+                    strCatFmt(
+                        config, "repo1-cipher-pass-old=%s\n",
+                        strZ(strNewBuf(cipherSpecPass(cipherSpecPrior(hrnHostLocal.cipherSpecMain)))));
+                }
             }
 
             if (hrnHostLocal.bundle)
@@ -789,7 +792,7 @@ hrnHostConfig(HrnHost *const this)
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
                             STR(HRN_HOST_S3_REGION), STRDEF("s3"), storageS3KeyTypeShared, storageS3UriStyleHost,
                             STRDEF(HRN_HOST_S3_ACCESS_KEY), STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL,
-                            NULL, NULL, NULL, 5 * 1024 * 1024, NULL, hrnHostIp(s3), 443, ioTimeoutMs(), httpProtocolTypeHttps,
+                            NULL, NULL, NULL, NULL, 5 * 1024 * 1024, NULL, hrnHostIp(s3), 443, ioTimeoutMs(), httpProtocolTypeHttps,
                             false, NULL, NULL, NULL, 2, 8192);
                     }
                     MEM_CONTEXT_OBJ_END();
@@ -1102,11 +1105,21 @@ hrnHostConfigUpdate(const HrnHostConfigUpdateParam param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(VARIANT, param.archiveAsync);
+        FUNCTION_HARNESS_PARAM(CIPHER_SPEC, param.cipherSpec);
     FUNCTION_HARNESS_END();
 
     // Update config
     if (param.archiveAsync != NULL)
         hrnHostLocal.archiveAsync = varBool(param.archiveAsync);
+
+    if (param.cipherSpec != NULL)
+    {
+        MEM_CONTEXT_BEGIN(hrnHostLocal.memContext)
+        {
+            hrnHostLocal.cipherSpecMain = cipherSpecDupP(param.cipherSpec);
+        }
+        MEM_CONTEXT_END();
+    }
 
     // Write pgBackRest configuration for hosts
     hrnHostConfig(hrnHostPg1());

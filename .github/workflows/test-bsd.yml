@@ -125,10 +125,11 @@ jobs:
           pgSupport=$(sed -n 's/^#define PG_VERSION_[0-9_]*_Z  *"\([0-9.]*\)".*/\1/p' \
               ${GITHUB_WORKSPACE?}/src/postgres/version.auto.h | tr -d . | sed 's/^/postgresql/;s/$/-server/')
 
-          # The versions that are both supported and available. FreeBSD removes a version once it is end-of-life and does not
-          # package betas, so everything available is safe to test. The order comes from the supported list since these do not sort
-          # naturally, e.g. postgresql96-server is not greater than postgresql10-server.
-          pgAvail=$(echo "${pgSupport}" | grep -xF "$(pkg rquery -x '%n' '^postgresql[0-9]*-server$')")
+          # The versions that are both supported and released. A beta or release candidate has a letter after the dot in its package
+          # version, e.g. 19.b4 or 19.r2. FreeBSD removes a version once it is end-of-life. The order comes from the supported list
+          # since these do not sort naturally, e.g. postgresql96-server is not greater than postgresql10-server.
+          pgRelease=$(pkg rquery -x '%n %v' '^postgresql[0-9]*-server$' | grep -v ' [0-9]*\.[a-z]' | cut -d' ' -f1)
+          pgAvail=$(echo "${pgSupport}" | grep -xF "${pgRelease}")
           echo "postgresql available: $(echo ${pgAvail})"
 
           # Only one version can be installed at a time so the matrix selects either the oldest or the newest

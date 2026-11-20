@@ -152,6 +152,11 @@ testRun(void)
 
             ManifestFile file = manifestFileFind(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
             file.checksumSha1 = bufPtr(bufNewDecode(encodingHex, STRDEF("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+
+            // Block incremental size without a map
+            file.blockIncrSize = 8192;
+            file.blockIncrChecksumSize = 6;
+
             manifestFileUpdate(manifest, &file);
 
             manifestSave(

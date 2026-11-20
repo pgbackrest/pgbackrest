@@ -44,6 +44,13 @@ OPT_TYPE_TIME = "time"
 # Options that the rest of the build refers to by name
 OPT_STANZA = "stanza"
 
+# Option group that has a repository format
+OPT_GRP_REPO = "repo"
+
+# Repository format the parse rules store a minimum format as an offset from. Must match REPOSITORY_FORMAT_5 in
+# src/common/format/format.h.
+_FORMAT_BASE = 5
+
 # Sections an option can be configured in. An option in the command-line section cannot be set in the configuration file, which is
 # why it can be neither negated nor reset.
 SECTION_COMMAND_LINE = "command-line"
@@ -180,6 +187,7 @@ class BldCfgOption:
         self.default_type = DEFAULT_TYPE_QUOTE  # How the default is rendered
         self.default_value = None
         self.group = None  # Option group, if any
+        self.format = None  # Minimum repository format, if any
         self.secure = False  # Does the option contain a secret?
         self.depend = None
         self.allow_list = None
@@ -516,6 +524,9 @@ def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
             elif key == "default-type":
                 check(value in _DEFAULT_TYPE_LIST, "option '%s' has invalid default type '%s'" % (name, value))
                 opt.default_type = value
+            elif key == "format":
+                check(value.isdigit() and int(value) > _FORMAT_BASE, "option '%s' has invalid format '%s'" % (name, value))
+                opt.format = int(value)
             elif key == "group":
                 check(_find(opt_grp_list, value) is not None, "option '%s' has invalid group '%s'" % (name, value))
                 opt.group = value
@@ -553,6 +564,10 @@ def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
 
         if opt.type is None:
             raise ToolError("option '%s' requires 'type'" % name)
+
+        # Only an option in the repo group can have a format
+        if opt.format is not None:
+            check(opt.group == OPT_GRP_REPO, "option '%s' with a format must be in group '%s'" % (name, OPT_GRP_REPO))
 
         # An inherited option already has these set from the option it inherited from
         if not inherit_found:

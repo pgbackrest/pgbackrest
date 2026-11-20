@@ -116,7 +116,7 @@
 
                 <p>Handle <proper>TLS</proper> servers that do not close connections gracefully.</p>
 
-                <p>Some servers close the socket rather than the TLS connection. When a response has no content length or chunked encoding and its content can be parsed, the closed socket is now treated as EOF. These servers stopped working in v2.35.</p>
+                <p>Some servers close the socket rather than the TLS connection. When a response has no content length or chunked encoding and its content can be parsed, the closed socket is now treated as EOF. These servers stopped working in v2.35 when <commit-link subject="Detect errors in S3 multi-part upload finalize."/> started reading the response to an <proper>S3</proper> multi-part upload finalize.</p>
             </release-item>
 
             <release-item>

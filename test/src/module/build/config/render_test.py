@@ -145,6 +145,7 @@ OPTION = """  annotation:
     group: repo
     type: string
     default: pgbackrest
+    format: 6
     depend:
       option: repo-host
 
@@ -371,6 +372,7 @@ def test_config_render_option():
         "PARSE_RULE_OPTION_NEGATE(true),",
         "PARSE_RULE_OPTION_RESET(true),",
         "PARSE_RULE_OPTION_GROUP_ID(Repo),",
+        "PARSE_RULE_OPTION_FORMAT(6),",
         "PARSE_RULE_OPTION_DEFAULT_TYPE(Dynamic),",
     ):
         assert_in(rule, parse)

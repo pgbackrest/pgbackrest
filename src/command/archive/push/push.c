@@ -21,7 +21,7 @@ Archive Push Command
 #include "config/config.h"
 #include "config/exec.h"
 #include "config/load.h"
-#include "info/infoArchive.h"
+#include "info/helper.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
@@ -227,12 +227,8 @@ archivePushCheck(const bool pgPathSet)
         {
             TRY_BEGIN()
             {
-                // Get the repo storage in case it is remote and encryption settings need to be pulled down
-                storageRepoIdx(repoIdx);
-
                 // Attempt to load the archive info file
-                const InfoArchive *const info = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                const InfoArchive *const info = infoArchiveRepoIdx(repoIdx);
 
                 // Get archive id for the most recent version -- archive-push will only operate against the most recent version
                 const String *const archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
@@ -441,7 +437,7 @@ cmdArchivePush(void)
 /**********************************************************************************************************************************/
 typedef struct ArchivePushAsyncData
 {
-    const String *walPath;                                          // Path to pg_wal/pg_xlog
+    const String *walPath;                                          // Path to pg_wal
     StringList *walFileList;                                        // List of wal files to process
     unsigned int walFileIdx;                                        // Current index in the list to be processed
     CompressType compressType;                                      // Type of compression for WAL segments

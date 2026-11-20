@@ -365,7 +365,15 @@ unit:
     harness:
       name: storage
       shim:
-        - storage/posix/storage
+        - name: storage/posix/read
+          function:
+            - storageReadPosixDirectInternal
+        - name: storage/posix/storage
+          function:
+            - storagePosixFileOpenInternal
+        - name: storage/posix/write
+          function:
+            - storageWritePosixInternal
 
     coverage:
       - common/crypto/cipherBlock
@@ -383,6 +391,9 @@ unit:
       - common/format/cipherBlockFormat
       - common/format/cipherSpecMap
       - common/format/format
+
+    include:
+      - common/crypto/cipherBlock
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: common/io/tls
@@ -551,7 +562,7 @@ unit:
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: storage/posix
-    total: 24
+    total: 25
 
     coverage:
       - storage/cifs/helper
@@ -648,6 +659,7 @@ unit:
       - storage/sftp/write
 
     include:
+      - common/user
       - storage/helper
       - storage/read
       - storage/storage
@@ -724,6 +736,22 @@ unit:
       - info/infoBackup
 
   # --------------------------------------------------------------------------------------------------------------------------------
+  - name: info/helper
+    total: 1
+    harness:
+      name: infoHelper
+      shim:
+        - info/infoArchive
+        - info/infoBackup
+        - name: info/helper
+          function:
+            - infoArchiveRepoIdx
+            - infoBackupRepoIdx
+
+    coverage:
+      - info/helper
+
+  # --------------------------------------------------------------------------------------------------------------------------------
   - name: db/db
     total: 3
     containerReq: true
@@ -793,13 +821,14 @@ unit:
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: command/stanza
-    total: 4
+    total: 5
 
     coverage:
       - command/stanza/common
       - command/stanza/create
       - command/stanza/upgrade
       - command/stanza/delete
+      - command/stanza/rekey
 
     depend:
       - command/check/common

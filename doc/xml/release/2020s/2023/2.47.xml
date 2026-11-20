@@ -31,7 +31,7 @@
 
                 <p>Fix block incremental file names in <cmd>verify</cmd> command.</p>
 
-                <p>The <cmd>verify</cmd> command used the compression extension instead of <file>.pgbi</file> for block incremental files stored outside a bundle, so it could not find them.</p>
+                <p>The <cmd>verify</cmd> command used the compression extension instead of <file>.pgbi</file> for block incremental files stored outside a bundle, so it could not find them. This was introduced in <commit-link subject="Block-level incremental backup."/>.</p>
             </release-item>
 
             <release-item>

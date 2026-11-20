@@ -24,6 +24,7 @@ struct StorageReadSftp
     const Variant *limit;                                           // Read limit (NULL for no limit)
 
     LIBSSH2_SFTP_HANDLE *sftpHandle;                                // LibSsh2 session sftp handle
+    unsigned int connId;                                            // Id of the connection the handle was opened on
     LIBSSH2_SFTP_ATTRIBUTES *attr;                                  // LibSsh2 file attributes
     uint64_t current;                                               // Current bytes read from file
     bool eof;                                                       // Did we reach end of file
@@ -45,7 +46,7 @@ storageReadSftpOpen(THIS_VOID)
 
     // Retry the open once if the connection was lost (e.g. the server dropped an idle connection) and reopened successfully
     unsigned int retry = 0;
-    int connErrno;
+    int connErrno = LIBSSH2_ERROR_NONE;
 
     do
     {
@@ -55,8 +56,10 @@ storageReadSftpOpen(THIS_VOID)
                 storageSftpSessionSftp(this->storage), strZ(this->name), (unsigned int)strSize(this->name), LIBSSH2_FXF_READ, 0,
                 LIBSSH2_SFTP_OPENFILE);
         }
-        while (this->sftpHandle == NULL &&
-               storageSftpWaitFd(this->storage, (connErrno = libssh2_session_last_errno(storageSftpSession(this->storage)))));
+        while (storageSftpWaitFd(
+                   this->storage,
+                   this->sftpHandle != NULL ?
+                       LIBSSH2_ERROR_NONE : (connErrno = libssh2_session_last_errno(storageSftpSession(this->storage)))));
     }
     while (this->sftpHandle == NULL && retry++ == 0 && storageSftpReconnect(this->storage, connErrno));
 
@@ -75,6 +78,8 @@ storageReadSftpOpen(THIS_VOID)
     // Else success
     else
     {
+        this->connId = storageSftpConnId(this->storage);
+
         // Seek to offset, libssh2_sftp_seek64 returns void
         if (this->offset != 0)
             libssh2_sftp_seek64(this->sftpHandle, this->offset);
@@ -105,6 +110,10 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
     // Read if EOF has not been reached
     if (!this->eof)
     {
+        // Error when the connection the handle was opened on has been lost
+        if (this->connId != storageSftpConnId(this->storage))
+            THROW_FMT(FileReadError, "unable to read '%s': connection was lost", strZ(this->name));
+
         // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident that
         // no files will be > UINT64_MAX in size.
         const uint64_t limit = this->limit == NULL ? UINT64_MAX : varUInt64(this->limit);
@@ -191,7 +200,8 @@ storageReadSftpClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    if (this->sftpHandle != NULL)
+    // Skip the close when the connection the handle was opened on has been lost
+    if (this->sftpHandle != NULL && this->connId == storageSftpConnId(this->storage))
     {
         int rc;
 

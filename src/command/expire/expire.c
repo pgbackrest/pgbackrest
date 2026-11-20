@@ -5,15 +5,16 @@ Expire Command
 
 #include "command/archive/common.h"
 #include "command/backup/common.h"
+#include "command/check/common.h"
 #include "command/control/common.h"
 #include "command/expire/expire.h"
 #include "command/stanza/common.h"
 #include "common/debug.h"
-#include "common/format/format.h"
 #include "common/regExp.h"
 #include "common/time.h"
 #include "common/type/list.h"
 #include "config/config.h"
+#include "info/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "protocol/helper.h"
@@ -642,8 +643,7 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                 (!strLstEmpty(globalBackupRetentionList) && archiveRetention <= strLstSize(globalBackupRetentionList)))
             {
                 // Attempt to load the archive info file
-                const InfoArchive *const infoArchive = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                const InfoArchive *const infoArchive = infoArchiveRepoIdx(repoIdx);
                 const InfoPg *const infoArchivePgData = infoArchivePg(infoArchive);
 
                 // Get a list of archive directories (e.g. 9.6-1, 10-2, etc) sorted by the db-id (number after the dash).
@@ -1098,41 +1098,23 @@ expireArchiveCipherRotate(const unsigned int repoIdx)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            InfoArchive *const infoArchive = infoArchiveLoadFile(
-                storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+            InfoArchive *const infoArchive = infoArchiveRepoIdx(repoIdx);
+            const time_t timeNow = time(NULL);
 
-            // Format < 6 has a single archive key that cannot be rotated. Warn only when the option is not the default.
-            if (infoArchiveFormat(infoArchive) < REPOSITORY_FORMAT_6)
+            if (infoArchiveCipherRotateTime(infoArchive) <
+                timeNow - (time_t)(cfgOptionIdxUInt64(cfgOptRepoCipherRotate, repoIdx) / MSEC_PER_SEC))
             {
-                if (cfgOptionIdxSource(cfgOptRepoCipherRotate, repoIdx) != cfgSourceDefault)
-                {
-                    LOG_WARN_FMT(
-                        "option '%s' requires repository format %d or higher", cfgOptionIdxName(cfgOptRepoCipherRotate, repoIdx),
-                        REPOSITORY_FORMAT_6);
-                }
-            }
-            else
-            {
-                const time_t timeNow = time(NULL);
+                infoArchiveCipherRotate(
+                    infoArchive, cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), infoArchiveFormat(infoArchive)),
+                    timeNow);
 
-                if (infoArchiveCipherRotateTime(infoArchive) <
-                    timeNow - (time_t)(cfgOptionIdxUInt64(cfgOptRepoCipherRotate, repoIdx) / MSEC_PER_SEC))
-                {
-                    infoArchiveCipherRotate(
-                        infoArchive,
-                        cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), infoArchiveFormat(infoArchive)), timeNow);
+                // Store the new archive info only if the dry-run mode is disabled
+                if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                    infoArchiveRepoIdxSave(repoIdx);
 
-                    // Store the new archive info only if the dry-run mode is disabled
-                    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
-                    {
-                        infoArchiveSaveFile(
-                            infoArchive, storageRepoIdxWrite(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
-                    }
-
-                    LOG_INFO_FMT(
-                        "%s: rotate archive key to id %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
-                        strZ(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive))));
-                }
+                LOG_INFO_FMT(
+                    "%s: rotate archive key to id %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
+                    strZ(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive))));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -1199,8 +1181,6 @@ cmdExpire(void)
 
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            const Storage *const storageRepo = storageRepoIdx(repoIdx);
             InfoBackup *infoBackup = NULL;
 
             // Is full retention time-based?
@@ -1210,7 +1190,10 @@ cmdExpire(void)
             TRY_BEGIN()
             {
                 // Load backup.info for this repo
-                infoBackup = infoBackupLoadFileReconstruct(storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoBackup = infoBackupRepoIdxP(repoIdx, .reconstruct = true);
+
+                // Check that archive.info is at the same format as backup.info
+                checkStanzaInfoFormat(repoIdx, infoArchivePg(infoArchiveRepoIdx(repoIdx)), infoBackupPg(infoBackup));
 
                 // When expire oldest requested, expire the oldest full backup by lowering retention for this execution
                 if (expireOldest)
@@ -1290,10 +1273,7 @@ cmdExpire(void)
 
                 // Store the new backup info only if the dry-run mode is disabled
                 if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
-                {
-                    infoBackupSaveFile(
-                        infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
-                }
+                    infoBackupRepoIdxSave(repoIdx);
 
                 // Remove all files on disk that are now expired
                 removeExpiredBackup(infoBackup, adhocBackupLabel, repoIdx);

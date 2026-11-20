@@ -1,5 +1,44 @@
 <release date="XXXX-XX-XX" version="2.61.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: The <proper>zstd</proper> library is now required by the meson build and the <id>libzstd</id> build option has been removed.</p>
+        </text>
+
+        <release-bug-list>
+            <release-item>
+                <github-issue id="705"/>
+                <github-issue id="2893"/>
+                <github-pull-request id="2906"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="loehrson"/>
+                    <release-item-ideator id="pg-fdelac"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix page checksum validation for non-default relation segment sizes.</p>
+
+                <p><postgres/> can be built with a relation segment size other than 1GB, e.g. <code>--with-segsize=2</code>. Page checksums were validated for a 1GB segment so pages in every segment after the first were reported as invalid and corruption past the first 1GB of a larger segment was not reported. The segment size is now read from <file>pg_control</file>.</p>
+
+                <p>Backups of these clusters taken with earlier versions may contain false page checksum errors, which cause the <cmd>restore</cmd> command to fail and the <cmd>expire</cmd> command to refuse to expire. Set <br-option>checksum-page-error=n</br-option> for these backups. Differential and incremental backups keep the errors for unchanged files until the next full backup.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2909"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix <br-option>io-timeout</br-option> for <proper>SFTP</proper> storage while server keepalives are arriving.</p>
+
+                <p>Each wait for the server restarted the timeout and any packet from the server ended the wait. When the server stopped responding but still sent keepalives more often than <br-option>io-timeout</br-option> an operation such as a file write or remove could wait indefinitely. The timeout now limits how long an operation can wait without making progress. A directory read that timed out or failed ended the list without an error and now reports the error.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-feature-list>
             <release-item>
                 <commit subject="Use 256-bit subkeys for repository format 6.">
@@ -18,6 +57,21 @@
                 <commit subject="Add cipherSpecMapEmpty()."/>
                 <commit subject="Move stanza passphrase checks to stanzaCipherPassCheck()."/>
                 <commit subject="Load archive.info and backup.info through infoLoadFile()."/>
+                <commit subject="Add a minimum repository format for options.">
+                    <github-pull-request id="2915"/>
+                </commit>
+                <commit subject="Add an info helper to load, cache, and save info files.">
+                    <github-pull-request id="2917"/>
+                </commit>
+                <commit subject="Add stanza-rekey command to change the repository passphrase.">
+                    <github-pull-request id="2898"/>
+                </commit>
+                <commit subject="Warn about a weak repository passphrase in stanza-upgrade and check.">
+                    <github-pull-request id="2923"/>
+                </commit>
+                <commit subject="Add a key check to format 6 files encrypted with the passphrase.">
+                    <github-pull-request id="2924"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -28,7 +82,182 @@
 
                 <p>Repository encryption key rotation.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2889"/>
+                <github-pull-request id="2901"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="gunnar.bluth"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="gunnar.bluth"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>tls-min-version</br-option> option.</p>
+
+                <p>Set <br-option>tls-min-version=1.3</br-option> to allow only TLS 1.3, e.g. for compliance. The default is <id>1.2</id>. A higher minimum set in the <proper>OpenSSL</proper> config is not lowered. The option is ignored for repository storage connections when <br-option>repo-storage-verify-tls=n</br-option>.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2887"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="francisco.miguel.biete"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Direct I/O for <proper>Posix</proper>/<proper>CIFS</proper> storage.</p>
+
+                <p>Set <br-option>repo-io-mode=direct</br-option> or <br-option>pg-io-mode=direct</br-option> to read and write files with direct I/O (<id>O_DIRECT</id>), which bypasses the page cache. Direct I/O does not fill the page cache but disables readahead and background writeback and can reduce throughput. <br-option>repo-io-mode</br-option> is valid when <br-option>repo-type</br-option> is <id>posix</id> or <id>cifs</id>. Buffered I/O is used when the file system does not support direct I/O.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2891"/>
+                <github-pull-request id="2896"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="qinru.yao"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Support encryption context for <proper>S3</proper> server-side encryption using <proper>KMS</proper>.</p>
+
+                <p>Set <br-option>repo-s3-kms-context</br-option> to add an encryption context to objects encrypted with <br-option>repo-s3-kms-key-id</br-option>, e.g. when a <proper>KMS</proper> key policy or grant requires a context. The context of existing objects is not changed so set this option before running <cmd>stanza-create</cmd>.</p>
+            </release-item>
         </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2921"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Remove support for <proper>PostgreSQL</proper> <id>9.6</id>.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2925"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="stefan.fercot"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Check the <postgres/> version before <cmd>restore</cmd> modifies the data directory.</p>
+
+                <p>A <cmd>restore</cmd> of a backup from an unsupported <postgres/> version, e.g. <id>9.6</id>, failed after the data directory had been modified. With <br-option>--delta</br-option> <file>pg_control</file> and files not in the backup had already been removed. The version is now checked before the data directory is modified.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2895"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Improve errors for an info file or manifest that cannot be loaded.</p>
+
+                <p>A file decrypted with the wrong <br-option>repo-cipher-pass</br-option> was reported with the random bytes it decrypted to, once for the file and again for its copy. A line that is not text is now shown as <code>&lt;binary data&gt;</code> and an error that repeats for the copy is reported once.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2877"/>
+                <github-pull-request id="2908"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="clayton.azzopardi"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect <proper>SFTP</proper> storage after an open times out.</p>
+
+                <p>An <proper>SFTP</proper> server can stop responding on a session while the connection stays up. An open on that session failed with <quote>libssh2 error [-9]</quote> or <quote>libssh2 error [-37]</quote> and each retry used the same session and failed the same way. The session is now reopened and the open is retried once.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2910"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect <proper>SFTP</proper> storage after a failed send during open.</p>
+
+                <p>An <proper>SFTP</proper> server with <code>ClientAliveInterval</code> set drops a session that does not respond to keepalives, e.g. the session of the main process during the copy phase of a backup. The next open on that session failed with <quote>libssh2 error [-7]</quote>. The session is now reopened and the open is retried once.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2905"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="yegor.zhmak"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Use block incremental for same-size files stored without it in the prior backup.</p>
+
+                <p>A file that was not stored with block incremental in the prior backup, e.g. a file that had not been modified for four weeks or more when the full backup was taken, was stored without block incremental in later backups while its size stayed the same. A change that did not alter the size, e.g. to a full relation segment, copied the entire file until the next full backup.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Avoid flush and seek between contiguous writes in ioWriteSeek().">
+                    <github-pull-request id="2887"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="francisco.miguel.biete"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve performance of block incremental delta restore.</p>
+
+                <p>Each changed block was written and followed by a seek even when the next changed block was contiguous, which defeated the seek optimization added by <commit-link subject="Improve seek performance during block incremental delta restore."/> in v2.59.0. Contiguous blocks are now written without a seek in between.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2922"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Require the <proper>zstd</proper> library.</p>
+
+                <p><br-option>compress-type=zst</br-option> was not available when <backrest/> was built without <proper>zstd</proper>. <proper>zstd</proper> is now required by the build so <br-option>compress-type=zst</br-option> is available in every build.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Render block incremental info in manifest command only when a map exists."/>
+                <commit subject="Zero block incremental info for truncated files.">
+                    <github-pull-request id="2922"/>
+                </commit>
+
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix block incremental info for files stored without a block map.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 
     <release-doc-list>
@@ -51,4 +280,37 @@
             </release-item>
         </release-feature-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2904"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Prevent the <proper>SFTP</proper> unit test from modifying <file>~/.ssh/known_hosts</file>.</p>
+
+                <p>The test created and removed <file>~/.ssh/known_hosts</file> so running it outside a container deleted the file of the current user. The test now uses a home directory in the test path.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
+
+    <release-backpatch-list>
+        <release-backpatch version="2.60.1">
+            <commit subject="Document TLS settings skipped when repo-storage-verify-tls=n."/>
+            <commit subject="Fix reporting of OpenSSL errors."/>
+            <commit subject="Do not lower a minimum TLS version set by the OpenSSL config."/>
+            <commit subject="Close block incremental super block reads during restore."/>
+            <commit subject="Prevent use of SFTP handles after a reconnect."/>
+            <commit subject="Remove stale files from site paths written by the documentation build."/>
+            <commit subject="Fix annotate saving backup.info to the default repository."/>
+            <commit subject="Fix excessive memory use by the memory context free list."/>
+            <commit subject="New CI container builds."/>
+            <commit subject="End patch release note history at the integration-x.y.z-ci branch."/>
+            <commit subject="Merge v2.60.1 release."/>
+        </release-backpatch>
+    </release-backpatch-list>
 </release>

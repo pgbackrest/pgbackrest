@@ -3,8 +3,6 @@ ZST Decompress
 ***********************************************************************************************************************************/
 #include <build.h>
 
-#ifdef HAVE_LIBZST
-
 #include <zstd.h>
 
 #include "common/compress/common.h"
@@ -183,5 +181,3 @@ zstDecompressNew(const bool raw)
             ZST_DECOMPRESS_FILTER_TYPE, this, decompressParamList(raw), .done = zstDecompressDone, .inOut = zstDecompressProcess,
             .inputSame = zstDecompressInputSame));
 }
-
-#endif // HAVE_LIBZST

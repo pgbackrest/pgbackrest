@@ -52,11 +52,11 @@ jobs:
       - name: Install
         run: |
           package="git pkg-config meson ninja-build python3-yaml python3-coverage zlib1g-dev libssl-dev libxml2-dev libpq-dev"
-          package="${package} libbz2-dev liblz4-dev liblz4-tool bzip2 ${{matrix.cc}}"
-          optional="libssh2-1-dev libsystemd-dev libzstd-dev"
+          package="${package} libbz2-dev liblz4-dev liblz4-tool bzip2 libzstd-dev zstd ${{matrix.cc}}"
+          optional="libssh2-1-dev libsystemd-dev"
 
           if test "${{matrix.lib}}" = full; then
-              package="${package} ${optional} zstd"
+              package="${package} ${optional}"
           fi
 
           DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y ${package}
@@ -70,7 +70,7 @@ jobs:
       # would say so.
       - name: Check Libraries
         run: |
-          for lib in libssh2 libsystemd libzstd; do
+          for lib in libssh2 libsystemd; do
               pkg-config --exists ${lib} && found=full || found=minimal
 
               if test "${found}" != "${{matrix.lib}}"; then

@@ -13,7 +13,7 @@
 
                 <p>Fix permissions when <cmd>restore</cmd> run as root user.</p>
 
-                <p>When <cmd>restore</cmd> was run as root, <file>pg_control</file> was owned by root. A restore as root also failed when the base path did not exist.</p>
+                <p>When <cmd>restore</cmd> was run as root, <file>pg_control</file> was owned by root. A restore as root also failed when the base path did not exist. This was introduced in <commit-link subject="Prevent invalid recovery when backup_label removed."/>.</p>
             </release-item>
 
             <release-item>
@@ -28,7 +28,7 @@
 
                 <p>Fix segfault on delayed connection errors.</p>
 
-                <p>A connection error that was delayed long enough to be reported on a later wait could cause a segfault.</p>
+                <p>A connection error that was delayed long enough to be reported on a later wait could cause a segfault. This was introduced in <commit-link subject="Improved support for dual stack connections."/>.</p>
             </release-item>
 
             <release-item>

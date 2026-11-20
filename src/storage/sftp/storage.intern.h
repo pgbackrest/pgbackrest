@@ -21,6 +21,9 @@ Getters
 FN_EXTERN LIBSSH2_SESSION *storageSftpSession(StorageSftp *this);
 FN_EXTERN LIBSSH2_SFTP *storageSftpSessionSftp(StorageSftp *this);
 
+// Id of the current connection
+FN_EXTERN unsigned int storageSftpConnId(StorageSftp *this);
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
