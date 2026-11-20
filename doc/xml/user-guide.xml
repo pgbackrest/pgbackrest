@@ -347,6 +347,9 @@
         RUN sed -i 's/^\#create\_main\_cluster.*$/create\_main\_cluster \= false/' /etc/postgresql-common/createcluster.conf
         RUN apt-get install -y --no-install-recommends postgresql-{[pg-version]} postgresql-{[pg-version-upgrade]} 2>&amp;1
 
+        # Install libcurl required by the PGDG libpq.pc
+        RUN apt-get install -y --no-install-recommends libcurl4-openssl-dev 2>&amp;1
+
         # Install Azure CLI
         RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
