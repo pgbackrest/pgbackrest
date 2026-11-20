@@ -429,7 +429,7 @@ hrnHostSqlCommit(HrnHost *const this)
 
 // Switch WAL segment
 #define HRN_HOST_WAL_SWITCH(this)                                                                                                  \
-    HRN_HOST_SQL_EXEC(this, zNewFmt("select pg_switch_%s()::text", strZ(pgWalName(hrnHostPgVersion()))))
+    HRN_HOST_SQL_EXEC(this, "select pg_switch_wal()::text")
 
 /***********************************************************************************************************************************
 Helper functions

@@ -622,7 +622,7 @@ def test_release_render_detail_dev():
             DETAIL_RELEASE_LIST.replace('date="2026-10-01" version="2.60.0"', 'date="XXXX-XX-XX" version="2.60.0dev"').replace(
                 "</release-feature-list>",
                 """<release-item>
-                        <p>Do a thing.</p>
+                        <p>Do a thing after <commit-link subject="Improve speed."/> and <commit-link subject="Do more."/>.</p>
                     </release-item>
 
                     <release-item>
@@ -652,7 +652,12 @@ def test_release_render_detail_dev():
     item_list = _item_html(development)
 
     assert_equal(len(item_list), 6)
-    assert_equal(item_list[3], "Do a thing.")
+
+    # A commit link that is not found is the subject in quotes
+    assert_equal(
+        item_list[3],
+        'Do a thing after <a href="{[github-url-base]}/commit/d0"><span class="id">d0</span></a> and <q>Do more.</q>.',
+    )
     assert_equal(
         item_list[4],
         "Do another thing."
@@ -686,6 +691,8 @@ def test_release_render_commit_id():
                         <commit id="e2" subject="Fix lines."/>
 
                         <p>Fix lines.</p>
+
+                        <p>Missed in <commit-link subject="Improve a thing."/> and <commit-link id="e2" subject="Fix lines."/>.</p>
                     </release-item>
                 </release-feature-list>""",
         1,
@@ -694,10 +701,13 @@ def test_release_render_commit_id():
     root = _render(_doc(release_list), history=history)
     release = xml_node_child_list(xml_node_child_list(root, "section")[1], "section")[0]
 
+    # A commit link is found in the commits of the release and the commits before it
     assert_equal(
         _item_html(release)[3],
         "Fix lines."
         + DETAIL_HTML
+        + '\n<div class="list-detail-text">Missed in <a href="{[github-url-base]}/commit/d6"><span class="id">d6</span></a> and '
+        + '<a href="{[github-url-base]}/commit/e2"><span class="id">e2</span></a>.</div>'
         + '\n<div class="list-detail-ref">'
         + '<span class="list-detail-ref-item"><a href="{[github-url-base]}/commit/e1"><span class="id">e1</span></a>'
         + " Fix lines.</span></div>"
@@ -731,6 +741,27 @@ def test_release_render_commit_id():
         )
 
     assert_equal(str(raised.exception), "release 2.60.0 commit id 'e2' subject 'Fix lines.' does not begin with 'Fix more lines.'")
+
+    # A commit link subject that more than one commit has
+    with assert_raises(ToolError) as raised:
+        _render(_doc(release_list.replace('<commit-link id="e2" subject=', "<commit-link subject=")), history=history)
+
+    assert_equal(str(raised.exception), "release 2.60.0 commit link subject 'Fix lines.' found in commits e1, e2")
+
+    # A commit link that is not found
+    with assert_raises(ToolError) as raised:
+        _render(_doc(release_list.replace('<commit-link id="e2"', '<commit-link id="e3"')), history=history)
+
+    assert_equal(str(raised.exception), "unable to find release 2.60.0 commit link id 'e3' subject 'Fix lines.'")
+
+    # A commit link to a commit of a later release
+    with assert_raises(ToolError) as raised:
+        _render(
+            _doc(release_list.replace("<p>Say more.</p>", '<p>Before <commit-link subject="Add a feature."/>.</p>')),
+            history=history,
+        )
+
+    assert_equal(str(raised.exception), "unable to find release 2.10.0 commit link subject 'Add a feature.'")
 
 
 ####################################################################################################################################

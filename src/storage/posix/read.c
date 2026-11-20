@@ -7,6 +7,7 @@ Posix Storage Read
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/io/io.h"
 #include "common/io/read.h"
 #include "common/log.h"
 #include "common/type/object.h"
@@ -28,6 +29,12 @@ struct StorageReadPosix
     int fd;                                                         // File descriptor
     uint64_t current;                                               // Current bytes read from file
     bool eof;
+
+    StoragePosixIoMode ioMode;                                      // I/O mode
+    Buffer *dioBuffer;                                              // Aligned bounce buffer
+    size_t dioSkip;                                                 // Bytes to skip in first block to reach offset
+    size_t dioPos;                                                  // Bytes consumed from bounce buffer
+    bool dioEnd;                                                    // Has the end of the file been read?
 };
 
 /***********************************************************************************************************************************
@@ -66,7 +73,7 @@ storageReadPosixOpen(THIS_VOID)
     ASSERT(this->fd == -1);
 
     // Open the file
-    this->fd = open(strZ(this->name), O_RDONLY, 0);
+    this->fd = storagePosixFileOpen(this->name, O_RDONLY, 0, &this->ioMode);
 
     // Handle errors except missing, which is reported to the caller via the result
     if (this->fd == -1)
@@ -80,16 +87,119 @@ storageReadPosixOpen(THIS_VOID)
         // Set free callback to ensure the file descriptor is freed
         memContextCallbackSet(objMemContext(this), storageReadPosixFreeResource, this);
 
-        // Seek to offset
-        if (this->offset != 0)
+        // Seek to offset. With direct I/O seek to the aligned offset below it and skip the remainder when reading.
+        uint64_t seekOffset = this->offset;
+
+        if (this->ioMode == storagePosixIoModeDirect)
+        {
+            MEM_CONTEXT_OBJ_BEGIN(this)
+            {
+                this->dioBuffer = bufNewAlign(STORAGE_POSIX_DIRECT_ALIGN_UP(ioBufferSize()), STORAGE_POSIX_DIRECT_ALIGN);
+            }
+            MEM_CONTEXT_OBJ_END();
+
+            seekOffset = this->offset / STORAGE_POSIX_DIRECT_ALIGN * STORAGE_POSIX_DIRECT_ALIGN;
+            this->dioSkip = (size_t)(this->offset - seekOffset);
+        }
+
+        if (seekOffset != 0)
         {
             THROW_ON_SYS_ERROR_FMT(
-                lseek(this->fd, (off_t)this->offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, this->offset,
+                lseek(this->fd, (off_t)seekOffset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, seekOffset,
                 strZ(this->name));
         }
     }
 
     FUNCTION_LOG_RETURN(BOOL, this->fd != -1);
+}
+
+/***********************************************************************************************************************************
+Wrapper around read()
+***********************************************************************************************************************************/
+static ssize_t
+storageReadPosixDirectInternal(const int fd, void *const buffer, const size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, fd);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(SSIZE, read(fd, buffer, size));
+}
+
+/***********************************************************************************************************************************
+Read from a file using direct I/O. Data is read in aligned blocks into the bounce buffer and then copied to the output buffer.
+***********************************************************************************************************************************/
+static size_t
+storageReadPosixDirect(StorageReadPosix *const this, Buffer *const buffer)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_POSIX, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+
+    const size_t usedBegin = bufUsed(buffer);
+
+    if (!this->eof)
+    {
+        const uint64_t limit = this->limit == NULL ? UINT64_MAX : varUInt64(this->limit);
+
+        while (bufRemains(buffer) > 0 && this->current < limit)
+        {
+            // Fill the bounce buffer when it has been consumed
+            if (this->dioPos == bufUsed(this->dioBuffer))
+            {
+                if (this->dioEnd)
+                    break;
+
+                // Read no more than the aligned size needed to reach the limit
+                size_t readSize = bufSize(this->dioBuffer);
+
+                if (limit - this->current < readSize - this->dioSkip)
+                    readSize = STORAGE_POSIX_DIRECT_ALIGN_UP(this->dioSkip + (size_t)(limit - this->current));
+
+                ssize_t actualBytes = storageReadPosixDirectInternal(this->fd, bufPtr(this->dioBuffer), readSize);
+
+                // Fall back to buffered I/O when the device requires a larger alignment. Setting status flags to 0 clears O_DIRECT.
+                // No other status flags are set.
+                if (actualBytes == -1 && errno == EINVAL && fcntl(this->fd, F_SETFL, 0) != -1)
+                    actualBytes = storageReadPosixDirectInternal(this->fd, bufPtr(this->dioBuffer), readSize);
+
+                if (actualBytes == -1)
+                    THROW_SYS_ERROR_FMT(FileReadError, "unable to read '%s'", strZ(this->name));
+
+                bufUsedSet(this->dioBuffer, (size_t)actualBytes);
+                this->dioPos = this->dioSkip < bufUsed(this->dioBuffer) ? this->dioSkip : bufUsed(this->dioBuffer);
+                this->dioSkip = 0;
+
+                // A short read means the end of the file has been reached
+                if ((size_t)actualBytes < readSize)
+                    this->dioEnd = true;
+            }
+
+            // Copy from the bounce buffer without exceeding the limit
+            size_t copyBytes = bufUsed(this->dioBuffer) - this->dioPos;
+
+            if (copyBytes > bufRemains(buffer))
+                copyBytes = bufRemains(buffer);
+
+            if (this->current + copyBytes > limit)
+                copyBytes = (size_t)(limit - this->current);
+
+            bufCatSub(buffer, this->dioBuffer, this->dioPos, copyBytes);
+            this->dioPos += copyBytes;
+            this->current += copyBytes;
+        }
+
+        if (this->current == limit || (this->dioEnd && this->dioPos == bufUsed(this->dioBuffer)))
+            this->eof = true;
+    }
+
+    FUNCTION_LOG_RETURN(SIZE, bufUsed(buffer) - usedBegin);
 }
 
 /***********************************************************************************************************************************
@@ -108,6 +218,11 @@ storageReadPosix(THIS_VOID, Buffer *const buffer, const bool block)
 
     ASSERT(this != NULL && this->fd != -1);
     ASSERT(buffer != NULL && !bufFull(buffer));
+
+    if (this->ioMode == storagePosixIoModeDirect)
+    {
+        FUNCTION_LOG_RETURN(SIZE, storageReadPosixDirect(this, buffer));
+    }
 
     // Read if EOF has not been reached
     ssize_t actualBytes = 0;
@@ -210,13 +325,16 @@ static const StorageReadInterface storageReadPosixInterface =
 };
 
 FN_EXTERN StorageReadPosix *
-storageReadPosixNew(StoragePosix *const storage, const String *const name, const uint64_t offset, const Variant *const limit)
+storageReadPosixNew(
+    StoragePosix *const storage, const String *const name, const uint64_t offset, const Variant *const limit,
+    const StoragePosixIoMode ioMode)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(ENUM, ioMode);
     FUNCTION_LOG_END();
 
     ASSERT(name != NULL);
@@ -231,6 +349,7 @@ storageReadPosixNew(StoragePosix *const storage, const String *const name, const
             .offset = offset,
             .limit = varDup(limit),
             .fd = -1,
+            .ioMode = ioMode,
         };
     }
     OBJ_NEW_END();

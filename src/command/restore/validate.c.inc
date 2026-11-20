@@ -69,6 +69,9 @@ restoreManifestValidate(const Manifest *const manifest, const String *const back
                 "HINT: this indicates some sort of corruption (at the very least paths have been renamed).",
                 strZ(backupSet), strZ(data->backupLabel));
         }
+
+        // Check that the PostgreSQL version is supported
+        pgVersionCheck(data->pgVersion);
     }
     MEM_CONTEXT_TEMP_END();
 

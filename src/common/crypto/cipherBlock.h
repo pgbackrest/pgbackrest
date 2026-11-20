@@ -35,6 +35,7 @@ typedef struct CipherBlockNewParam
 {
     VAR_PARAM_HEADER;
     CipherBlockHeader header;                                       // What precedes the content, the magic by default
+    bool keyCheck;                                                  // Is a key check stored before the salt? Header must be none.
 } CipherBlockNewParam;
 
 #define cipherBlockNewP(mode, cipherSpec, ...)                                                                                     \

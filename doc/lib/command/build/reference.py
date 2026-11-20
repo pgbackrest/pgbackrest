@@ -12,8 +12,18 @@ given on the command line is described at the top of the command reference, and 
 reference."""
 
 ####################################################################################################################################
-from common.xml import xml_document_new, xml_node_add, xml_node_attribute_set, xml_node_child_add, xml_node_content_add
+import textwrap
+
+from common.xml import (
+    xml_document_new,
+    xml_node_add,
+    xml_node_attribute_set,
+    xml_node_child_add,
+    xml_node_content_add,
+    xml_node_text_add,
+)
 from config.parse import DEFAULT_TYPE_DYNAMIC, OPT_TYPE_BOOLEAN, SECTION_COMMAND_LINE
+from help.render import bld_hlp_render_depend
 
 # Role a user gives an option, as opposed to a role a command starts for itself
 _CMD_ROLE_MAIN = "main"
@@ -26,6 +36,9 @@ _SECTION_DEFAULT = "general"
 _SECTION_COMMAND_LIST = ("general", "log", "maintainer", "repository", "stanza")
 
 _SECTION_COMMAND = "command"
+
+# Width a line in a code block is wrapped at
+_CODE_BLOCK_WIDTH = 80
 
 
 ####################################################################################################################################
@@ -47,24 +60,94 @@ def _section_title(section):
 
 
 ####################################################################################################################################
-def _default_block(block_list, opt_cfg, default):
-    """Describe the default of an option, which may be a value per value of the option it depends on."""
+def _command_main(cmd_cfg, opt_cmd_cfg):
+    """Is the option given to the command by a user, i.e. neither is internal and the command takes it for the main role?"""
+
+    return not cmd_cfg.internal and not opt_cmd_cfg.internal and _CMD_ROLE_MAIN in opt_cmd_cfg.role_list
+
+
+####################################################################################################################################
+def _command_block(block_list, opt_cmd_list):
+    """List the commands an option is valid for."""
+
+    if len(opt_cmd_list) > 0:
+        block_list.extend(
+            textwrap.wrap(
+                "commands: %s" % ", ".join(opt_cmd_cfg.name for opt_cmd_cfg in opt_cmd_list),
+                width=_CODE_BLOCK_WIDTH,
+                subsequent_indent="    ",
+                break_on_hyphens=False,
+            )
+        )
+
+
+####################################################################################################################################
+def _depend_block(block_list, opt_cmd_list, opt_cfg):
+    """Describe what an option is valid with, which may differ by command."""
+
+    # The commands are grouped by what the option is valid with for each, i.e. what the command declares or else what the option
+    # declares
+    depend_map = {}
+
+    for opt_cmd_cfg in opt_cmd_list:
+        depend_map.setdefault(bld_hlp_render_depend(opt_cmd_cfg.depend or opt_cfg.depend), []).append(opt_cmd_cfg.name)
+
+    # Commands are listed when there is more than one group
+    for depend, cmd_name_list in depend_map.items():
+        if depend is not None:
+            cmd_name = "" if len(depend_map) == 1 else " (%s)" % ", ".join(cmd_name_list)
+            block_list.append("valid with%s: %s" % (cmd_name, depend))
+
+
+####################################################################################################################################
+def _default_value(opt_cfg, default):
+    """The default of an option as it is written, i.e. the value or a tuple of map and value pairs, or None when there is none."""
+
+    if default is None:
+        return None
+
+    if default.value is None:
+        return tuple((map.map, map.value) for map in default.map_list)
+
+    # A boolean is written the way it is given on the command line rather than the way it is declared
+    if opt_cfg.type == OPT_TYPE_BOOLEAN:
+        return "y" if default.value == "true" else "n"
+
+    return default.value
+
+
+####################################################################################################################################
+def _default_block(block_list, opt_cmd_list, opt_cfg):
+    """Describe the default of an option, which may differ by command and may be a value per value of the option it depends on."""
 
     # A dynamic default is worked out when the command runs, so what it depends on is described rather than a value
     if opt_cfg.default_type == DEFAULT_TYPE_DYNAMIC:
         block_list.append("default: [path of executed pgbackrest binary]")
-    elif default is not None:
-        if default.value is not None:
-            # A boolean is written the way it is given on the command line rather than the way it is declared
-            if opt_cfg.type == OPT_TYPE_BOOLEAN:
-                block_list.append("default: %s" % ("y" if default.value == "true" else "n"))
-            else:
-                block_list.append("default: %s" % default.value)
-        else:
-            block_list.append("default (depending on %s):" % opt_cfg.depend.option.name)
+        return
 
-            for map in default.map_list:
-                block_list.append("    %s - %s" % (map.map, map.value))
+    # The commands are grouped by the default for each, i.e. what the command declares or else what the option declares
+    default_option = _default_value(opt_cfg, opt_cfg.default_value)
+    default_map = {}
+
+    for opt_cmd_cfg in opt_cmd_list:
+        default_map.setdefault(_default_value(opt_cfg, opt_cmd_cfg.default_value or opt_cfg.default_value), []).append(
+            opt_cmd_cfg.name
+        )
+
+    # Commands are listed when there is more than one group and the default is not what the option declares
+    for default, cmd_name_list in default_map.items():
+        if default is None:
+            continue
+
+        cmd_name = "" if len(default_map) == 1 or default == default_option else " (%s)" % ", ".join(cmd_name_list)
+
+        if isinstance(default, str):
+            block_list.append("default%s: %s" % (cmd_name, default))
+        else:
+            block_list.append("default%s (depending on %s):" % (cmd_name, opt_cfg.depend.option.name))
+
+            for map, value in default:
+                block_list.append("    %s - %s" % (map, value))
 
             block_list.append("")
 
@@ -120,7 +203,26 @@ def _example_block(block_list, opt_cfg, opt_hlp, command):
 
 
 ####################################################################################################################################
-def _option_render(xml_section, opt_cmd_cfg, opt_cfg, opt_hlp, command):
+def _command_description_render(xml_option, cmd_name_list, description):
+    """Render a command-specific option description under a subtitle naming the commands it is for."""
+
+    xml_subtitle = xml_node_text_add(xml_node_add(xml_option, "subtitle"))
+
+    for cmd_idx, cmd_name in enumerate(cmd_name_list):
+        if cmd_idx > 0:
+            xml_node_content_add(
+                xml_subtitle,
+                ", " if cmd_idx < len(cmd_name_list) - 1 else (", and " if len(cmd_name_list) > 2 else " and "),
+            )
+
+        xml_node_content_add(xml_node_add(xml_subtitle, "cmd"), cmd_name)
+
+    xml_node_content_add(xml_subtitle, " command" if len(cmd_name_list) == 1 else " commands")
+    xml_node_child_add(xml_option, description)
+
+
+####################################################################################################################################
+def _option_render(xml_section, bld_cfg, bld_hlp, opt_cmd_cfg, opt_cfg, opt_hlp, command):
     """Render one option, either as a command takes it or as the configuration file sets it, and return the section it is in."""
 
     xml_option = xml_node_add(xml_section, "section")
@@ -139,15 +241,36 @@ def _option_render(xml_section, opt_cmd_cfg, opt_cfg, opt_hlp, command):
     if opt_cfg.beta:
         xml_node_content_add(xml_node_add(xml_option, "p"), "FOR BETA TESTING ONLY. DO NOT USE IN PRODUCTION.")
 
-    xml_node_child_add(xml_option, opt_hlp.description)
+    if opt_hlp.description is not None:
+        xml_node_child_add(xml_option, opt_hlp.description)
+
+    # Without a command the option is described for every command it is valid for, followed by each command-specific description
+    if opt_cmd_cfg is None:
+        opt_cmd_list = [opt_cmd for opt_cmd in opt_cfg.cmd_list if _command_main(_find(bld_cfg.cmd_list, opt_cmd.name), opt_cmd)]
+
+        # Commands that share command-specific help are grouped together
+        cmd_name_map = {}
+
+        for opt_cmd in opt_cmd_list:
+            cmd_opt_hlp = _find(_find(bld_hlp.cmd_list, opt_cmd.name).opt_list, opt_cfg.name)
+
+            if cmd_opt_hlp is not None:
+                cmd_name_map.setdefault(cmd_opt_hlp.command or opt_cmd.name, []).append(opt_cmd.name)
+
+        for cmd_name, cmd_name_list in cmd_name_map.items():
+            cmd_opt_hlp = _find(_find(bld_hlp.cmd_list, cmd_name).opt_list, opt_cfg.name)
+            _command_description_render(xml_option, cmd_name_list, cmd_opt_hlp.description_command)
+    else:
+        opt_cmd_list = [opt_cmd_cfg]
 
     # What a reader needs to use the option, which is rendered as one block below the description
     block_list = []
-    default = (
-        opt_cmd_cfg.default_value if opt_cmd_cfg is not None and opt_cmd_cfg.default_value is not None else opt_cfg.default_value
-    )
 
-    _default_block(block_list, opt_cfg, default)
+    if opt_cmd_cfg is None:
+        _command_block(block_list, opt_cmd_list)
+
+    _depend_block(block_list, opt_cmd_list, opt_cfg)
+    _default_block(block_list, opt_cmd_list, opt_cfg)
 
     if opt_cfg.allow_range is not None:
         _allow_range_block(block_list, opt_cfg)
@@ -247,7 +370,7 @@ def reference_configuration_render(bld_cfg, bld_hlp):
             if opt_cfg.section == SECTION_COMMAND_LINE or opt_cfg.internal:
                 continue
 
-            _option_render(xml_section, None, opt_cfg, opt_hlp, False)
+            _option_render(xml_section, bld_cfg, bld_hlp, None, opt_cfg, opt_hlp, False)
 
     return result
 
@@ -290,7 +413,7 @@ def _command_option_list(cmd_cfg, cmd_hlp, bld_cfg, bld_hlp):
         # Skip an option this command does not take, or takes only for a role the user does not start
         opt_cmd_cfg = _find(opt_cfg.cmd_list, cmd_cfg.name)
 
-        if opt_cmd_cfg is None or opt_cmd_cfg.internal or _CMD_ROLE_MAIN not in opt_cmd_cfg.role_list:
+        if opt_cmd_cfg is None or not _command_main(cmd_cfg, opt_cmd_cfg):
             continue
 
         # Help a command documents differently wins over the help the option has of its own
@@ -326,7 +449,7 @@ def _command_general_render(result, bld_cfg, bld_hlp):
             continue
 
         # The contents list the commands rather than the options each of them takes, so these options are left out of it as well
-        xml_node_attribute_set(_option_render(xml_section, None, opt_cfg, opt_hlp, True), "toc", "n")
+        xml_node_attribute_set(_option_render(xml_section, bld_cfg, bld_hlp, None, opt_cfg, opt_hlp, True), "toc", "n")
 
 
 ####################################################################################################################################
@@ -372,7 +495,7 @@ def reference_command_render(bld_cfg, bld_hlp):
                     continue
 
                 if xml_list is None:
-                    _option_render(xml_category, opt.opt_cmd_cfg, opt.opt_cfg, opt.opt_hlp, True)
+                    _option_render(xml_category, bld_cfg, bld_hlp, opt.opt_cmd_cfg, opt.opt_cfg, opt.opt_hlp, True)
                 else:
                     _option_link_render(xml_list, opt.opt_cfg, opt.opt_hlp)
 

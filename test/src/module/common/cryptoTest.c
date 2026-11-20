@@ -320,16 +320,19 @@ testRun(void)
         ioFilterFree(blockDecryptFilter);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("encrypt zero byte file with no magic");
+        TEST_TITLE("encrypt zero byte file with no magic and a key check");
 
         blockEncryptFilter = cipherBlockNewP(
-            cipherModeEncrypt, TEST_CIPHER_SPEC(), .header = cipherBlockHeaderNone);
+            cipherModeEncrypt, TEST_CIPHER_SPEC(), .header = cipherBlockHeaderNone, .keyCheck = true);
         blockEncrypt = (CipherBlock *)ioFilterDriver(blockEncryptFilter);
 
         bufUsedZero(encryptBuffer);
 
         ioFilterProcessInOut(blockEncryptFilter, NULL, encryptBuffer);
-        TEST_RESULT_UINT(bufUsed(encryptBuffer), 24, "check remaining size");
+        TEST_RESULT_UINT(
+            bufUsed(encryptBuffer),
+            PKCS5_SALT_LEN + CIPHER_BLOCK_KEY_CHECK_SIZE + (size_t)EVP_CIPHER_block_size(blockEncrypt->cipher),
+            "check remaining size");
 
         ioFilterFree(blockEncryptFilter);
 
@@ -340,10 +343,11 @@ testRun(void)
         TEST_ERROR(ioFilterProcessInOut(blockDecryptFilter, encryptBuffer, decryptBuffer), CryptoError, "cipher header invalid");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("decrypt zero byte file with no magic");
+        TEST_TITLE("decrypt zero byte file with no magic and a key check");
 
-        blockDecryptFilter = cipherBlockNewP(
-            cipherModeDecrypt, TEST_CIPHER_SPEC(), .header = cipherBlockHeaderNone);
+        blockDecryptFilter = cipherBlockNewPack(
+            ioFilterParamList(
+                cipherBlockNewP(cipherModeDecrypt, TEST_CIPHER_SPEC(), .header = cipherBlockHeaderNone, .keyCheck = true)));
         blockDecrypt = (CipherBlock *)ioFilterDriver(blockDecryptFilter);
 
         bufUsedZero(decryptBuffer);
@@ -352,6 +356,19 @@ testRun(void)
         TEST_RESULT_UINT(bufUsed(decryptBuffer), 0, "0 bytes processed");
         ioFilterProcessInOut(blockDecryptFilter, NULL, decryptBuffer);
         TEST_RESULT_UINT(bufUsed(decryptBuffer), 0, "0 bytes on flush");
+
+        ioFilterFree(blockDecryptFilter);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on decrypt with a key check for another passphrase");
+
+        blockDecryptFilter = cipherBlockNewP(
+            cipherModeDecrypt, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("other"), .digest = hashTypeSha256),
+            .header = cipherBlockHeaderNone, .keyCheck = true);
+
+        TEST_ERROR(
+            ioFilterProcessInOut(blockDecryptFilter, encryptBuffer, decryptBuffer), CryptoError,
+            "cipher passphrase does not match");
 
         ioFilterFree(blockDecryptFilter);
 

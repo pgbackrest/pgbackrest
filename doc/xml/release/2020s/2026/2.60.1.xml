@@ -60,7 +60,7 @@
 
                 <p>Fix excessive memory use by the memory context free list.</p>
 
-                <p>The free list retained freed allocations of 64KiB or more for reuse. Buffers that grow as data is written, e.g. object store upload buffers, and allocations that did not repeat filled the list without being reused. Each process could retain up to 64MiB so memory use increased significantly with a high <br-option>process-max</br-option>. Only allocations of <br-option>buffer-size</br-option> are now retained.</p>
+                <p>The free list retained freed allocations of 64KiB or more for reuse. Buffers that grow as data is written, e.g. object store upload buffers, and allocations that did not repeat filled the list without being reused. Each process could retain up to 64MiB so memory use increased significantly with a high <br-option>process-max</br-option>. This was introduced in <commit-link subject="Reuse large freed allocations from a memory context free list."/>. Only allocations of <br-option>buffer-size</br-option> are now retained.</p>
             </release-item>
 
             <release-item>

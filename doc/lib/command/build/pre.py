@@ -37,7 +37,7 @@ def _description(node, parent, item_list, key, what):
     """Replace a node with the description the help holds for what it names."""
 
     item = _find(item_list, key)
-    check(item is not None, "%s '%s' has no help to describe it" % (what, key))
+    check(item is not None and item.description is not None, "%s '%s' has no help to describe it" % (what, key))
 
     xml_node_child_replace(parent, node, item.description)
 

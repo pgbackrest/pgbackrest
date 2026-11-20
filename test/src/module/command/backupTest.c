@@ -240,8 +240,7 @@ testBackupValidateFile(
     // the test output.
     // -------------------------------------------------------------------------------------------------------------
     if (strEqZ(file.name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ||
-        strBeginsWith(
-            file.name, strNewFmt(MANIFEST_TARGET_PGDATA "/%s/", strZ(pgWalPath(manifestData->pgVersion)))))
+        strBeginsWith(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_PGWAL "/")))
     {
         file.checksumSha1 = NULL;
     }
@@ -484,6 +483,10 @@ testBackupValidate(const Storage *const storage, const String *const path, const
         {
             ManifestFilePack **const filePack = lstGet(manifest->pub.fileList, fileIdx);
             ManifestFile file = manifestFileUnpack(manifest, *filePack);
+
+            // Block incremental size without a map
+            if (file.blockIncrSize != 0 && file.blockIncrMapSize == 0)
+                THROW_FMT(AssertError, "'%s' has block incremental size but no map", strZ(file.name));
 
             // If compressed or block incremental then set the repo-size to size so it will not be in test output. Even the same
             // compression algorithm can give slightly different results based on the version so repo-size is not deterministic for
@@ -1517,7 +1520,7 @@ testRun(void)
         TEST_TITLE("warn and reset when backup from standby used in offline mode");
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -1531,7 +1534,7 @@ testRun(void)
         TEST_RESULT_VOID(
             backupInit(
                 infoBackupNew(
-                    PG_VERSION_96, HRN_PG_SYSTEMID_96, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL)),
+                    PG_VERSION_10, HRN_PG_SYSTEMID_10, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT, NULL)),
             "backup init");
 
         TEST_RESULT_LOG(
@@ -2312,7 +2315,7 @@ testRun(void)
             // Add files
             HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_14_Z, .timeModified = backupTimeStart);
-            HRN_STORAGE_PATH_CREATE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_14)), .noParentCreate = true);
+            HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_PGWAL, .noParentCreate = true);
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
@@ -2718,20 +2721,17 @@ testRun(void)
                 "P00   INFO: full backup size = [SIZE], file total = 4");
         }
 
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_wal", .errorOnMissing = true);
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog");
-
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 9.6 backup-standby full backup");
+        TEST_TITLE("online 10 backup-standby full backup");
 
         backupTimeStart = BACKUP_EPOCH + 1200000;
 
         {
             // Update pg_control
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
             // Update version
-            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_96_Z, .timeModified = backupTimeStart);
+            HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_10_Z, .timeModified = backupTimeStart);
 
             // Upgrade stanza
             StringList *argList = strLstNew();
@@ -2759,7 +2759,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Add pg_control to standby
-            HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_96);
+            HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_10);
 
             // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
             // but no bytes will be copied.
@@ -2786,7 +2786,7 @@ testRun(void)
 
             // Run backup but error on first archive check
             hrnBackupPqScriptP(
-                PG_VERSION_96, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz,
+                PG_VERSION_10, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz,
                 .startFast = true);
             TEST_ERROR(
                 hrnCmdBackup(), ArchiveTimeoutError,
@@ -2797,7 +2797,7 @@ testRun(void)
 
             // Run backup but error on archive check
             hrnBackupPqScriptP(
-                PG_VERSION_96, backupTimeStart, .noWal = true, .backupStandby = true, .walCompressType = compressTypeGz,
+                PG_VERSION_10, backupTimeStart, .noWal = true, .backupStandby = true, .walCompressType = compressTypeGz,
                 .startFast = true);
             TEST_ERROR(
                 hrnCmdBackup(), ArchiveTimeoutError,
@@ -2819,7 +2819,7 @@ testRun(void)
 
             // Run backup
             hrnBackupPqScriptP(
-                PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz, .startFast = true);
+                PG_VERSION_10, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz, .startFast = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Check archive.info/copy timestamp was updated but contents were not
@@ -2839,13 +2839,13 @@ testRun(void)
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ".> {d=20191016-042640F}\n"
-                "pg_data/PG_VERSION {s=3}\n"
+                "pg_data/PG_VERSION {s=2}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
                 "pg_data/base/1/1 {s=0}\n"
                 "pg_data/base/1/2 {s=2}\n"
                 "pg_data/base/1/3 {s=3, so=4}\n"
                 "pg_data/global/pg_control {s=8192}\n"
-                "pg_data/pg_xlog/0000000105DA69C000000000 {s=16777216, ts=+2}\n"
+                "pg_data/pg_wal/0000000105DA69C000000000 {s=16777216, ts=+2}\n"
                 "pg_data/postgresql.conf {s=11, ts=-1200000}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -2858,7 +2858,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 9.6 backup-standby full backup with block incremental");
+        TEST_TITLE("online 10 backup-standby full backup with block incremental");
 
         backupTimeStart = BACKUP_EPOCH + 1600000;
 
@@ -2905,7 +2905,7 @@ testRun(void)
             harnessLogLevelSet(logLevelWarn);
 
             // Run backup
-            hrnBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .startFast = true);
+            hrnBackupPqScriptP(PG_VERSION_10, backupTimeStart, .backupStandby = true, .startFast = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Set log level back to detail
@@ -2914,7 +2914,7 @@ testRun(void)
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ".> {d=20191020-193320F}\n"
-                "bundle/1/pg_data/PG_VERSION {s=3, ts=-400000}\n"
+                "bundle/1/pg_data/PG_VERSION {s=2, ts=-400000}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "bundle/1/pg_data/postgresql.conf {s=11, ts=-1600000}\n"
                 "bundle/2/pg_data/base/1/3 {s=24576, so=40960, m=0:{0,1,2}}\n"
@@ -2927,7 +2927,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 9.6 backup-standby incr backup with block incremental");
+        TEST_TITLE("online 10 backup-standby incr backup with block incremental");
 
         backupTimeStart = BACKUP_EPOCH + 1700000;
 
@@ -2960,7 +2960,7 @@ testRun(void)
             harnessLogLevelSet(logLevelWarn);
 
             // Run backup
-            hrnBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .startFast = true);
+            hrnBackupPqScriptP(PG_VERSION_10, backupTimeStart, .backupStandby = true, .startFast = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Set log level back to detail
@@ -2972,7 +2972,7 @@ testRun(void)
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "bundle/2/pg_data/base/1/3 {s=32768, so=40960, m=0:{0,1,2},1:{0}, ts=-100000}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
-                "20191020-193320F/bundle/1/pg_data/PG_VERSION {s=3, ts=-500000}\n"
+                "20191020-193320F/bundle/1/pg_data/PG_VERSION {s=2, ts=-500000}\n"
                 "20191020-193320F/bundle/2/pg_data/base/1/4 {s=32768, so=40960, m=0:{0,1,2,3}, ts=-100000}\n"
                 "20191020-193320F/bundle/1/pg_data/postgresql.conf {s=11, ts=-1700000}\n"
                 "--------\n"
@@ -2982,7 +2982,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 9.6 backup-standby (prefer) incr backup with block incremental");
+        TEST_TITLE("online 10 backup-standby (prefer) incr backup with block incremental");
 
         backupTimeStart = BACKUP_EPOCH + 1800000;
 
@@ -3005,7 +3005,7 @@ testRun(void)
 
             // Run backup
             hrnBackupPqScriptP(
-                PG_VERSION_96, backupTimeStart, .backupStandby = true, .backupStandbyError = true, .startFast = true);
+                PG_VERSION_10, backupTimeStart, .backupStandby = true, .backupStandbyError = true, .startFast = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3034,14 +3034,12 @@ testRun(void)
                 "bundle/1/pg_data/base/1/4 {s=40960, m=0:{0,1,2,3},2:{0}, ts=-200000}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
-                "20191020-193320F/bundle/1/pg_data/PG_VERSION {s=3, ts=-600000}\n"
+                "20191020-193320F/bundle/1/pg_data/PG_VERSION {s=2, ts=-600000}\n"
                 "20191020-193320F/bundle/1/pg_data/postgresql.conf {s=11, ts=-1800000}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
                 "compare file list");
-
-            HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog", .errorOnMissing = true);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3056,10 +3054,6 @@ testRun(void)
 
             // Update version
             HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = backupTimeStart);
-
-            // Update wal path
-            HRN_STORAGE_PATH_REMOVE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_14)));
-            HRN_STORAGE_PATH_CREATE(storagePgWrite(), strZ(pgWalPath(PG_VERSION_11)), .noParentCreate = true);
 
             // Upgrade stanza to format 6
             StringList *argList = strLstNew();
@@ -3742,6 +3736,27 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-same", file, .timeModified = backupTimeStart);
 
+            // Block incremental file below the block size calculated from its age that remains the same between backups
+            file = bufNew(BLOCK_MIN_FILE_SIZE);
+            memset(bufPtr(file), 32, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-same-below", file, .timeModified = backupTimeStart - 14 * SEC_PER_DAY);
+
+            // File too old for block incremental that will get a new timestamp without changing contents
+            file = bufNew(BLOCK_MIN_FILE_SIZE);
+            memset(bufPtr(file), 31, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-add-same", file, .timeModified = backupTimeStart - 28 * SEC_PER_DAY);
+
+            // File too old for block incremental that will change without changing size
+            file = bufNew(BLOCK_MIN_FILE_SIZE);
+            memset(bufPtr(file), 30, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-add-change", file, .timeModified = backupTimeStart - 28 * SEC_PER_DAY);
+
             // Normal file that remains the same between backups
             HRN_STORAGE_PUT_Z(storagePgWrite(), "normal-same", "SAME", .timeModified = backupTimeStart);
 
@@ -3788,26 +3803,32 @@ testRun(void)
                 "            NOTE: this does not indicate a problem with the PostgreSQL page checksums.\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-truncate (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/16403, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/32809, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-past-bundle-limit (bundle 1/49215, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/65621, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/82035, 2B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/normal-same (bundle 1/82037, 4B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/82041, 16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/98424, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-same-below (bundle 1/16403, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/32807, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/49213, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-past-bundle-limit (bundle 1/65619, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/82025, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/98439, 2B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/normal-same (bundle 1/98441, 4B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/98445, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-add-change (bundle 1/114828, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-add-same (bundle 1/131212, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/147596, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC08C000000001, lsn = 5dc08c0/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC08C000000000:0000000105DC08C000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 13");
+                "P00   INFO: full backup size = [SIZE], file total = 16");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ".> {d=20191103-165320F}\n"
                 "bundle/1/pg_data/PG_VERSION {s=2, ts=-100000}\n"
+                "bundle/1/pg_data/block-incr-add-change {s=16384, ts=-2419200}\n"
+                "bundle/1/pg_data/block-incr-add-same {s=16384, ts=-2419200}\n"
                 "bundle/1/pg_data/block-incr-same {s=16384, m=0:{0,1}}\n"
+                "bundle/1/pg_data/block-incr-same-below {s=16384, m=0:{0}, ts=-1209600}\n"
                 "bundle/1/pg_data/block-incr-shrink {s=16385, m=0:{0,1,2}}\n"
                 "bundle/1/pg_data/block-incr-shrink-below {s=16384, m=0:{0,1}}\n"
                 "bundle/1/pg_data/block-incr-shrink-block {s=16384, m=0:{0,1}}\n"
@@ -3894,7 +3915,15 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "block-incr-shrink-below", file, .timeModified = backupTimeStart);
 
+            // Change file without block incremental in the prior backup without changing size
+            file = bufNew(BLOCK_MIN_FILE_SIZE);
+            memset(bufPtr(file), 29, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-add-change", file, .timeModified = backupTimeStart);
+
             // Update timestamps without changing contents of the files
+            HRN_STORAGE_TIME(storagePgWrite(), "block-incr-add-same", backupTimeStart);
             HRN_STORAGE_TIME(storagePgWrite(), "block-incr-same", backupTimeStart);
             HRN_STORAGE_TIME(storagePgWrite(), "normal-same", backupTimeStart);
 
@@ -3964,27 +3993,32 @@ testRun(void)
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (128KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-past-bundle-limit (32KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: store truncated file " TEST_PATH "/pg1/block-incr-truncate (24KB->0B, [PCT])\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-add-change (bundle 1/0, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-add-same (16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/grow-to-block-incr (bundle 1/16403, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-same (16KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/16411, 8KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/16428, 16KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-block (bundle 1/32817, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink (bundle 1/32834, 16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/normal-same (4B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: store truncated file " TEST_PATH "/pg1/truncate-to-zero (4B->0B, [PCT])\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/24654, 8B, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/24662, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-shrink-below (bundle 1/41060, 8B, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/41068, 8KB, [PCT]) checksum [SHA1]\n"
                 "P00 DETAIL: reference pg_data/PG_VERSION to 20191103-165320F\n"
+                "P00 DETAIL: reference pg_data/block-incr-add-same to 20191103-165320F\n"
                 "P00 DETAIL: reference pg_data/block-incr-same to 20191103-165320F\n"
+                "P00 DETAIL: reference pg_data/block-incr-same-below to 20191103-165320F\n"
                 "P00 DETAIL: reference pg_data/normal-same to 20191103-165320F\n"
                 "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DC213000000001, lsn = 5dc2130/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DC213000000000:0000000105DC213000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F_20191106-002640D\n"
-                "P00   INFO: diff backup size = [SIZE], file total = 14");
+                "P00   INFO: diff backup size = [SIZE], file total = 17");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ".> {d=20191103-165320F_20191106-002640D}\n"
+                "bundle/1/pg_data/block-incr-add-change {s=16384, m=1:{0,1}}\n"
                 "bundle/1/pg_data/block-incr-shrink {s=16383, m=0:{0},1:{0}}\n"
                 "bundle/1/pg_data/block-incr-shrink-below {s=8}\n"
                 "bundle/1/pg_data/block-incr-shrink-block {s=8192, m=0:{0}}\n"
@@ -3995,16 +4029,21 @@ testRun(void)
                 "pg_data/block-incr-larger.pgbi {s=1507328, m=1:{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15},1:{0,1,2,3,4,5,6}}\n"
                 "pg_data/grow-past-bundle-limit.pgbi {s=32768, m=0:{0,1},1:{0,1}}\n"
                 "20191103-165320F/bundle/1/pg_data/PG_VERSION {s=2, ts=-200000}\n"
+                "20191103-165320F/bundle/1/pg_data/block-incr-add-same {s=16384}\n"
                 "20191103-165320F/bundle/1/pg_data/block-incr-same {s=16384, m=0:{0,1}}\n"
+                "20191103-165320F/bundle/1/pg_data/block-incr-same-below {s=16384, m=0:{0}, ts=-1309600}\n"
                 "20191103-165320F/bundle/1/pg_data/normal-same {s=4}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
                 "compare file list");
 
+            HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-add-change");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-add-same");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-grow");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-larger");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-same");
+            HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-same-below");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-shrink");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-shrink-below");
             HRN_STORAGE_REMOVE(storagePgWrite(), "block-incr-shrink-block");

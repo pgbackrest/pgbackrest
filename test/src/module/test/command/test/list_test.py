@@ -169,7 +169,7 @@ def test_list_pg_version():
     )
 
     # A version the vm does not install selects nothing, since another vm in the same run may well install it
-    assert_equal(test_list_get(MODULE_LIST, _Config(vm="d12", module=["integration"], pg_version="9.6")), [])
+    assert_equal(test_list_get(MODULE_LIST, _Config(vm="d12", module=["integration"], pg_version="10")), [])
 
     # A version the project does not support is a typo rather than a selection of nothing
     with assert_raises(ToolError) as error:

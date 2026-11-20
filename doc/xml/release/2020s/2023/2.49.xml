@@ -20,7 +20,7 @@
 
                 <p>Fix regression in retries.</p>
 
-                <p>v2.48 dropped the retry that was made when an operation used up its whole timeout, so a timeout became an error, e.g. waiting for a socket to be writable on an object store. Two retries are now made even when the timeout has expired.</p>
+                <p>In v2.48 <commit-link subject="Adjust Wait object to be more accurate when nested."/> dropped the retry that was made when an operation used up its whole timeout, so a timeout became an error, e.g. waiting for a socket to be writable on an object store. Two retries are now made even when the timeout has expired.</p>
             </release-item>
 
             <release-item>

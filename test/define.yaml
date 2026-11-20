@@ -365,7 +365,15 @@ unit:
     harness:
       name: storage
       shim:
-        - storage/posix/storage
+        - name: storage/posix/read
+          function:
+            - storageReadPosixDirectInternal
+        - name: storage/posix/storage
+          function:
+            - storagePosixFileOpenInternal
+        - name: storage/posix/write
+          function:
+            - storageWritePosixInternal
 
     coverage:
       - common/crypto/cipherBlock
@@ -383,6 +391,9 @@ unit:
       - common/format/cipherBlockFormat
       - common/format/cipherSpecMap
       - common/format/format
+
+    include:
+      - common/crypto/cipherBlock
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: common/io/tls
@@ -551,7 +562,7 @@ unit:
 
   # --------------------------------------------------------------------------------------------------------------------------------
   - name: storage/posix
-    total: 24
+    total: 25
 
     coverage:
       - storage/cifs/helper

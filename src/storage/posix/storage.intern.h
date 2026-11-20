@@ -7,16 +7,31 @@ Posix Storage Internal
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
+Direct I/O alignment of address, size, and offset
+***********************************************************************************************************************************/
+#define STORAGE_POSIX_DIRECT_ALIGN                                  4096
+
+// Round size up to the direct I/O alignment
+#define STORAGE_POSIX_DIRECT_ALIGN_UP(size)                                                                                        \
+    (((size) + STORAGE_POSIX_DIRECT_ALIGN - 1) / STORAGE_POSIX_DIRECT_ALIGN * STORAGE_POSIX_DIRECT_ALIGN)
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct StoragePosix StoragePosix;
+
+/***********************************************************************************************************************************
+Functions
+***********************************************************************************************************************************/
+// Open a file with the I/O mode. The I/O mode is set to storagePosixIoModeDefault when direct I/O is not supported.
+FN_EXTERN int storagePosixFileOpen(const String *file, int flags, mode_t mode, StoragePosixIoMode *ioMode);
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Storage *storagePosixNewInternal(
     StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
-    StoragePathExpressionCallback pathExpressionFunction, bool pathSync, bool symLink);
+    StoragePathExpressionCallback pathExpressionFunction, bool pathSync, bool symLink, StoragePosixIoMode ioMode);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -105,6 +105,39 @@ testRun(void)
             REPOSITORY_FORMAT_6, "filter reports the format");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("a file with no key id has a key check");
+
+        Buffer *const keyCheckResult = bufNew(0);
+        IoWrite *const keyCheckRead = ioBufferWriteNew(keyCheckResult);
+
+        cipherBlockFormatFilterGroupReadAdd(
+            ioWriteFilterGroup(keyCheckRead), cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("other")));
+        ioWriteOpen(keyCheckRead);
+
+        TEST_ERROR(ioWrite(keyCheckRead, headerBuffer), CryptoError, "cipher passphrase does not match");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("replacing the header and key check with the magic gives the format openssl reads");
+
+        Buffer *const opensslBuffer = bufNew(0);
+        const size_t opensslSkip = CIPHER_BLOCK_FORMAT_HEADER_SIZE + CIPHER_BLOCK_KEY_CHECK_SIZE;
+
+        bufCat(opensslBuffer, BUFSTRDEF(CIPHER_BLOCK_MAGIC));
+        bufCatSub(opensslBuffer, headerBuffer, opensslSkip, bufUsed(headerBuffer) - opensslSkip);
+
+        Buffer *const opensslResult = bufNew(0);
+        IoWrite *const opensslRead = ioBufferWriteNew(opensslResult);
+
+        cipherBlockFilterGroupAdd(
+            ioWriteFilterGroup(opensslRead), cipherModeDecrypt,
+            cipherSpecDupP(cipherSpec, .digestDefault = repoFormatDigest(REPOSITORY_FORMAT_6)));
+        ioWriteOpen(opensslRead);
+        ioWrite(opensslRead, opensslBuffer);
+        ioWriteClose(opensslRead);
+
+        TEST_RESULT_STR_Z(strNewBuf(opensslResult), TEST_PLAINTEXT, "content decrypted");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("content is handed on in pieces when the destination cannot take it whole");
 
         // Content long enough that decryption has output to hand on while input is still arriving, so the destination fills before
@@ -356,13 +389,10 @@ testRun(void)
         Buffer *const digestBuffer = bufNew(0);
         IoWrite *const digestWrite = ioBufferWriteNew(digestBuffer);
 
-        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(digestWrite), keySpecOld, REPOSITORY_FORMAT_5);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(digestWrite), keySpecOld, REPOSITORY_FORMAT_6);
         ioWriteOpen(digestWrite);
         ioWrite(digestWrite, testPlainText);
         ioWriteClose(digestWrite);
-
-        // Replace the magic with a format 6 header, which leaves content that only the SHA-1 key can decrypt
-        memcpy(bufPtr(digestBuffer), CIPHER_BLOCK_FORMAT_MAGIC "006_", CIPHER_BLOCK_FORMAT_HEADER_SIZE);
 
         Buffer *const digestResult = bufNew(0);
         IoWrite *const digestRead = ioBufferWriteNew(digestResult);

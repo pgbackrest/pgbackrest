@@ -377,7 +377,7 @@ cmdManifestFileRender(const Manifest *const manifest, const ManifestFile *const 
             if (file->bundleId != 0)
                 strCatFmt(result, ",\"bundle\":{\"id\":%" PRIu64 ",\"offset\":%" PRIu64 "}", file->bundleId, file->bundleOffset);
 
-            if (file->blockIncrSize != 0)
+            if (file->blockIncrMapSize != 0)
             {
                 strCatFmt(
                     result, ",\"block\":{\"size\":%zu,\"map\":{\"size\":%" PRIu64, file->blockIncrSize, file->blockIncrMapSize);
@@ -405,7 +405,7 @@ cmdManifestFileRender(const Manifest *const manifest, const ManifestFile *const 
             if (file->bundleId != 0)
                 strCatFmt(result, "      bundle: %" PRIu64 "\n", file->bundleId);
 
-            if (file->blockIncrSize != 0)
+            if (file->blockIncrMapSize != 0)
             {
                 strCatFmt(
                     result, "      block: size %s, map size %s, checksum size %s\n",

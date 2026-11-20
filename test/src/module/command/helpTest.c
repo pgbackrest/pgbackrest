@@ -179,7 +179,7 @@ testRun(void)
         "    annotate        add or modify backup annotation\n"
         "    archive-get     get a WAL segment from the archive\n"
         "    archive-push    push a WAL segment to the archive\n"
-        "    backup          backup a database cluster\n"
+        "    backup          back up a database cluster\n"
         "    check           check the configuration\n"
         "    expire          expire backups that exceed retention\n"
         "    help            get help\n"
@@ -457,6 +457,25 @@ testRun(void)
         TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 1), "current: 32k\ndefault: 1MiB\n", "check text, current value");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("valid with for one command");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "backup");
+        strLstAddZ(argList, "archive-check");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, archive-check option");
+        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 1), "valid with: online=y\ndefault: y\n", "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "check");
+        strLstAddZ(argList, "archive-check");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for check command, archive-check option");
+        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 1), "default: y\n", "check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("deprecated host option names");
 
         argList = strLstNew();
@@ -473,7 +492,11 @@ testRun(void)
         strLstAddZ(argList, "--repo1-s3-host=s3-host");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR_Z(
-            testHelpBlockLast(helpRender(), 2), "current: s3-host\n\ndeprecated names: repo-azure-host, repo-s3-host\n",
+            testHelpBlockLast(helpRender(), 2),
+            "valid with: repo-type in (azure, s3)\n"
+            "current: s3-host\n"
+            "\n"
+            "deprecated names: repo-azure-host, repo-s3-host\n",
             "check text, current value");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -487,13 +510,15 @@ testRun(void)
         strLstAddZ(argList, "archive-push");
         strLstAddZ(argList, "repo-cipher-pass");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 1), "current: <redacted>\n", "check text");
+        TEST_RESULT_STR_Z(
+            testHelpBlockLast(helpRender(), 1), "valid with: repo-cipher-type=aes-256-cbc\ncurrent: <redacted>\n", "check text");
         hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("deprecated and new option name produce same results");
 
         #define TEST_HELP_HARDLINK                                                                                                 \
+            "valid with: repo-bundle=n\n"                                                                                          \
             "default: n\n"                                                                                                         \
             "\n"                                                                                                                   \
             "deprecated name: hardlink\n"
@@ -523,7 +548,9 @@ testRun(void)
         strLstAddZ(argList, "expire");
         strLstAddZ(argList, "repo-cipher-rotate");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for expire command, repo-cipher-rotate option");
-        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 1), "minimum repository format: 6\n", "check text");
+        TEST_RESULT_STR_Z(
+            testHelpBlockLast(helpRender(), 1), "valid with: repo-cipher-type=aes-256-cbc\nminimum repository format: 6\n",
+            "check text");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
@@ -533,7 +560,12 @@ testRun(void)
         strLstAddZ(argList, "expire");
         strLstAddZ(argList, "repo-cipher-rotate");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for expire command, repo-cipher-rotate option with default");
-        TEST_RESULT_STR_Z(testHelpBlockLast(helpRender(), 1), "default: 90d\nminimum repository format: 6\n", "check text");
+        TEST_RESULT_STR_Z(
+            testHelpBlockLast(helpRender(), 1),
+            "valid with: repo-cipher-type=aes-256-cbc\n"
+            "default: 90d\n"
+            "minimum repository format: 6\n",
+            "check text");
         hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -554,7 +586,7 @@ testRun(void)
             zNewFmt(
                 "%s - 'backup' command - 'repo-retention-archive' option help\n"
                 "\n"
-                "Number of backups worth of continuous WAL to retain.",
+                "Number of backups' worth of continuous WAL to retain.",
                 helpVersion),
             "header and summary");
         TEST_RESULT_STR_Z(
@@ -576,6 +608,7 @@ testRun(void)
         TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-host option");
         TEST_RESULT_STR_Z(
             testHelpBlockLast(helpRender(), 2),
+            "valid with: repo-local=n\n"
             "current:\n"
             "  repo1: backup.example.net\n"
             "  repo3: dr.test.org\n"
@@ -596,6 +629,7 @@ testRun(void)
         TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-host option");
         TEST_RESULT_STR_Z(
             testHelpBlockLast(helpRender(), 2),
+            "valid with: repo-local=n\n"
             "current:\n"
             "  repo3: dr.test.org\n"
             "\n"
@@ -620,6 +654,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             testHelpBlockLast(helpRender(), 1),
+            "valid with: repo-type in (azure, gcs, s3)\n"
             "default:\n"
             "  repo1: 5MiB\n"
             "  repo2: 4MiB\n",

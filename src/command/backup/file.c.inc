@@ -456,12 +456,10 @@ backupFile(
                                 // If checksum is also equal then no need to copy the file
                                 if (bufEq(file->pgFileChecksum, copyChecksum))
                                 {
-                                    // If block incremental make sure no map was returned but a prior map was provided
+                                    // If a prior map was provided make sure no map was returned
                                     ASSERT(
-                                        file->blockIncrSize == 0 ||
-                                        (pckReadU64P(
-                                             ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE)) == 0 &&
-                                         file->blockIncrMapPriorFile != NULL));
+                                        file->blockIncrMapPriorFile == NULL ||
+                                        pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE)) == 0);
 
                                     fileResult->backupCopyResult = backupCopyResultNoOp;
                                     fileResult->copyChecksum = file->pgFileChecksum;

@@ -3,8 +3,6 @@ ZST Compress
 
 Compress IO to the zst format.
 ***********************************************************************************************************************************/
-#ifdef HAVE_LIBZST
-
 #ifndef COMMON_COMPRESS_ZST_COMPRESS_H
 #define COMMON_COMPRESS_ZST_COMPRESS_H
 
@@ -27,5 +25,3 @@ Constructors
 FN_EXTERN IoFilter *zstCompressNew(int level, bool raw);
 
 #endif
-
-#endif // HAVE_LIBZST

@@ -14,7 +14,7 @@
                     <release-item-ideator id="benoit.lobreau"/>
                 </release-item-contributor-list>
 
-                <p>Remove error when overlapping timelines are detected. Overlapping timelines are valid in many Point-in-Time-Recovery (PITR) scenarios.</p>
+                <p>Remove error when overlapping timelines are detected. Overlapping timelines are valid in many Point-in-Time Recovery (PITR) scenarios.</p>
             </release-item>
 
             <release-item>

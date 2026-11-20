@@ -18,7 +18,7 @@
 
                 <p>Fix missing reference in diff/incr backup.</p>
 
-                <p>In v2.42 a diff or incr backup failed with <quote>unable to find '...' in string list</quote> when its prior backup was made by an earlier version. The reference list built for a manifest from an earlier version now includes the backup's own label.</p>
+                <p>In v2.42 a diff or incr backup failed with <quote>unable to find '...' in string list</quote> when its prior backup was made by an earlier version. The reference list was added to the manifest in <commit-link subject="Add persistent reference list to manifest."/>. The reference list built for a manifest from an earlier version now includes the backup's own label.</p>
             </release-item>
         </release-bug-list>
 
