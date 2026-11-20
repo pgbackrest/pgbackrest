@@ -304,6 +304,7 @@ def test_config_parse_inherit():
     default: /var/lib/pgbackrest
     command:
       backup: {}
+      -command: restore
     deprecate:
       repo-path: {}
 
@@ -357,6 +358,9 @@ def test_config_parse_inherit():
 
     # A command list can be taken from another option on its own
     assert_equal([cmd.name for cmd in _find(cfg.opt_list, "repo-retention-full").cmd_list], ["backup"])
+
+    # Commands excluded from the command list, inherited with it
+    assert_equal(_find(cfg.opt_list, "repo-retention-full").cmd_list_exclude, ["restore"])
 
     # Option the command list is inherited from, followed to the option that declares it
     assert_is_none(_find(cfg.opt_list, "repo-path").cmd_list_inherit)
@@ -567,6 +571,8 @@ def test_config_parse_option_command():
 
     # Every command that has any role, less the ones removed, and never the commands that take no options
     assert_equal([cmd.name for cmd in opt.cmd_list], ["backup"])
+    assert_equal(opt.cmd_list_exclude, ["restore", "missing"])
+    assert_is_none(_find(cfg.opt_list, "type").cmd_list_exclude)
 
     cmd = _find(opt.cmd_list, "backup")
 

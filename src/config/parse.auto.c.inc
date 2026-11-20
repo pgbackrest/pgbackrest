@@ -1515,27 +1515,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                         // opt/buffer-size
         PARSE_RULE_OPTION_SECTION(Global),                                                                        // opt/buffer-size
                                                                                                                   // opt/buffer-size
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                            // opt/buffer-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL_EXCEPT                                                      // opt/buffer-size
         (                                                                                                         // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                   // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                 // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                     // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(Check)                                                                      // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                     // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(Info)                                                                       // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                   // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                    // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                     // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                     // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(Server)                                                                     // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                 // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/buffer-size
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/buffer-size
+            Main,                                                                                                 // opt/buffer-size
+            PARSE_RULE_OPTION_COMMAND(Start)                                                                      // opt/buffer-size
+            PARSE_RULE_OPTION_COMMAND(Stop)                                                                       // opt/buffer-size
         ),                                                                                                        // opt/buffer-size
                                                                                                                   // opt/buffer-size
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                    // opt/buffer-size
@@ -2691,47 +2675,23 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                       // opt/neutral-umask
         PARSE_RULE_OPTION_SECTION(Global),                                                                      // opt/neutral-umask
                                                                                                                 // opt/neutral-umask
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                          // opt/neutral-umask
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL_EXCEPT                                                    // opt/neutral-umask
         (                                                                                                       // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                 // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                               // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                              // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                   // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Check)                                                                    // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                   // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                  // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                   // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                   // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                  // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Start)                                                                    // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Stop)                                                                     // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/neutral-umask
+            Main,                                                                                               // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                     // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                 // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(Server)                                                                   // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                               // opt/neutral-umask
         ),                                                                                                      // opt/neutral-umask
                                                                                                                 // opt/neutral-umask
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                  // opt/neutral-umask
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                  // opt/neutral-umask
                                                                                                                 // opt/neutral-umask
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                        // opt/neutral-umask
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL_EXCEPT                                                  // opt/neutral-umask
         (                                                                                                       // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                 // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                               // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                              // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                   // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Check)                                                                    // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                   // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                  // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                   // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                   // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                  // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                             // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                              // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/neutral-umask
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/neutral-umask
+            Remote,                                                                                             // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                     // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                 // opt/neutral-umask
         ),                                                                                                      // opt/neutral-umask
                                                                                                                 // opt/neutral-umask
         PARSE_RULE_OPTIONAL                                                                                     // opt/neutral-umask
@@ -3767,26 +3727,12 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                    // opt/protocol-timeout
         PARSE_RULE_OPTION_SECTION(Global),                                                                   // opt/protocol-timeout
                                                                                                              // opt/protocol-timeout
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/protocol-timeout
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL_EXCEPT                                                 // opt/protocol-timeout
         (                                                                                                    // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(Annotate)                                                              // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                            // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                           // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(Check)                                                                 // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(Info)                                                                  // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(Manifest)                                                              // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                               // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(Server)                                                                // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                           // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/protocol-timeout
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/protocol-timeout
+            Main,                                                                                            // opt/protocol-timeout
+            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                            // opt/protocol-timeout
+            PARSE_RULE_OPTION_COMMAND(Start)                                                                 // opt/protocol-timeout
+            PARSE_RULE_OPTION_COMMAND(Stop)                                                                  // opt/protocol-timeout
         ),                                                                                                   // opt/protocol-timeout
                                                                                                              // opt/protocol-timeout
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                               // opt/protocol-timeout

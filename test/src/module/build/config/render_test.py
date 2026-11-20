@@ -86,6 +86,9 @@ OPTION = """  annotation:
   db-include:
     section: global
     type: list
+    command:
+      +role: any
+      -command: restore
 
   force:
     type: boolean
@@ -436,6 +439,18 @@ def test_config_render_option():
 
     # A role list equal to all commands with another role
     assert_in("PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Async),", parse)
+
+    # A role list equal to all commands with the role less the commands the option excludes
+    assert_in(
+        """        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL_EXCEPT
+        (
+            Main,
+            PARSE_RULE_OPTION_COMMAND(Restore)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),""",
+        parse,
+    )
 
     # A role list equal to all commands with the role, after a role list that is not
     assert_in(

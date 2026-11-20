@@ -194,6 +194,7 @@ class BldCfgOption:
         self.allow_range = None
         self.cmd_list = None  # What the option means for each command it is valid for
         self.cmd_list_inherit = None  # Option the command list is inherited from, if any
+        self.cmd_list_exclude = None  # Commands excluded from the command list, if any
         self.cmd_role_list = None  # Roles the option is valid for, before they are filtered per command
         self.deprecate_list = None
 
@@ -510,6 +511,16 @@ def _option_command_list_inherit(opt_cmd_raw, opt_list):
 
 
 ####################################################################################################################################
+def _option_command_list_exclude(opt_cmd_raw, opt_list):
+    """Commands a list excludes with -command, or the commands the option a scalar names excludes, or None."""
+
+    if isinstance(opt_cmd_raw, str):
+        return _find(opt_list, opt_cmd_raw).cmd_list_exclude
+
+    return [detail for opt_cmd, detail in opt_cmd_raw if opt_cmd == "-command"] or None
+
+
+####################################################################################################################################
 def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
     """Parse the options as declared, before any of them are resolved against each other."""
 
@@ -527,6 +538,7 @@ def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
             elif key == "command":
                 opt.cmd_list = _option_command_list(value, cmd_list, result, "option '%s'" % name)
                 opt.cmd_list_inherit = _option_command_list_inherit(value, result)
+                opt.cmd_list_exclude = _option_command_list_exclude(value, result)
             elif key == "command-role":
                 opt.cmd_role_list = _command_role(value, "option '%s'" % name)
             elif key == "default":

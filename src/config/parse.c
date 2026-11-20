@@ -248,6 +248,18 @@ typedef enum
 #define PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(roleParam)                                                                 \
     .commandRoleValid[cfgCmdRoleRemote] = parseRuleCommandRoleAll##roleParam
 
+#define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL_EXCEPT(roleParam, ...)                                                       \
+    .commandRoleValid[cfgCmdRoleMain] = parseRuleCommandRoleAll##roleParam & ~(0 __VA_ARGS__)
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL_EXCEPT(roleParam, ...)                                                      \
+    .commandRoleValid[cfgCmdRoleAsync] = parseRuleCommandRoleAll##roleParam & ~(0 __VA_ARGS__)
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL_EXCEPT(roleParam, ...)                                                      \
+    .commandRoleValid[cfgCmdRoleLocal] = parseRuleCommandRoleAll##roleParam & ~(0 __VA_ARGS__)
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL_EXCEPT(roleParam, ...)                                                     \
+    .commandRoleValid[cfgCmdRoleRemote] = parseRuleCommandRoleAll##roleParam & ~(0 __VA_ARGS__)
+
 // Bit set when a command role valid list is the list of the option in the remaining bits
 #define PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT                    ((uint32_t)1 << 31)
 

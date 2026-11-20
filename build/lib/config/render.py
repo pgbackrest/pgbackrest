@@ -465,17 +465,18 @@ def _command_role_all(bld_cfg, role):
 
 
 ####################################################################################################################################
-def _command_role_all_find(bld_cfg, role, cmd_role):
-    """Role whose commands are the commands given, checking the role given first, or None."""
+def _command_role_all_find(bld_cfg, role, cmd_role, cmd_exclude):
+    """Role whose commands less the commands excluded are the commands given, checking the role given first.
 
-    return next(
-        (
-            role_all
-            for role_all in sorted(CMD_ROLE_LIST, key=lambda role_all: role_all != role)
-            if cmd_role == _command_role_all(bld_cfg, role_all)
-        ),
-        None,
-    )
+    Returns the role and the excluded commands that have it, or None and None."""
+
+    for role_all in sorted(CMD_ROLE_LIST, key=lambda role_all: role_all != role):
+        cmd_all = _command_role_all(bld_cfg, role_all)
+
+        if cmd_role == [cmd for cmd in cmd_all if cmd not in cmd_exclude]:
+            return role_all, [cmd for cmd in cmd_all if cmd in cmd_exclude]
+
+    return None, None
 
 
 ####################################################################################################################################
@@ -544,7 +545,7 @@ def _render_option(opt, bld_cfg, rule_val_map, dynamic_default_list):
 
     # Commands the option is valid for, per role, since a role only gets the options its part of the command needs. A role list
     # equal to the role list of the option the command list is inherited from references that option. A role list equal to all
-    # commands with a role references that role.
+    # commands with a role references that role, less the commands the option excludes.
     opt_inherit = opt.cmd_list_inherit
     line_prior = False  # Was the prior role list rendered on one line?
 
@@ -554,11 +555,11 @@ def _render_option(opt, bld_cfg, rule_val_map, dynamic_default_list):
         if cmd_role == []:
             continue
 
-        role_all = _command_role_all_find(bld_cfg, role, cmd_role)
+        role_all, cmd_except = _command_role_all_find(bld_cfg, role, cmd_role, opt.cmd_list_exclude or [])
 
         if opt_inherit is not None and cmd_role == _option_command_role(opt_inherit, role):
             line = "PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_OPT(%s)" % (role.upper(), bld_enum("", opt_inherit.name))
-        elif role_all is not None:
+        elif role_all is not None and cmd_except == []:
             line = "PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_ALL(%s)" % (role.upper(), bld_enum("", role_all))
         else:
             line = None
@@ -566,12 +567,23 @@ def _render_option(opt, bld_cfg, rule_val_map, dynamic_default_list):
         if line is not None:
             result += "%s        %s,\n" % ("" if line_prior else "\n", line)
             line_prior = True
-        else:
-            result += "\n        PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_LIST\n        (\n%s        ),\n" % (
+            continue
+
+        if role_all is not None:
+            block = "PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_ALL_EXCEPT\n        (\n            %s,\n" % (
                 role.upper(),
-                "".join("            PARSE_RULE_OPTION_COMMAND(%s)\n" % bld_enum("", cmd) for cmd in cmd_role),
+                bld_enum("", role_all),
             )
-            line_prior = False
+            cmd_block = cmd_except
+        else:
+            block = "PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_LIST\n        (\n" % role.upper()
+            cmd_block = cmd_role
+
+        result += "\n        %s%s        ),\n" % (
+            block,
+            "".join("            PARSE_RULE_OPTION_COMMAND(%s)\n" % bld_enum("", cmd) for cmd in cmd_block),
+        )
+        line_prior = False
 
     # Rules that apply to the option whatever the command
     rule_default = {}
