@@ -43,13 +43,13 @@ Query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(GCS_QUERY_DELIMITER_STR,                              "delimiter");
 STRING_EXTERN(GCS_QUERY_FIELDS_STR,                                 GCS_QUERY_FIELDS);
+STRING_STATIC(GCS_QUERY_KMS_KEY_NAME_STR,                           "kmsKeyName");
 STRING_EXTERN(GCS_QUERY_MEDIA_STR,                                  GCS_QUERY_MEDIA);
 STRING_EXTERN(GCS_QUERY_NAME_STR,                                   GCS_QUERY_NAME);
 STRING_STATIC(GCS_QUERY_PAGE_TOKEN_STR,                             "pageToken");
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
 STRING_STATIC(GCS_QUERY_VERSIONS_STR,                               "versions");
-STRING_STATIC(GCS_QUERY_KMS_KEY_NAME_STR,                           "kmsKeyName");
 STRING_STATIC(GCS_QUERY_USER_PROJECT_STR,                           "userProject");
 
 /***********************************************************************************************************************************
@@ -606,9 +606,10 @@ storageGcsRequestAsync(StorageGcs *const this, const String *const verb, Storage
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
             content == NULL || bufEmpty(content) ? ZERO_STR : strNewFmt("%zu", bufUsed(content)));
 
-        // Make a copy of the query so it can be modified
+        // Add KMS key?
         const bool kms = param.kms && this->kmsKeyName != NULL;
 
+        // Make a copy of the query so it can be modified
         HttpQuery *const query =
             (this->userProject != NULL || kms) && param.query == NULL ?
                 httpQueryNewP(.redactList = this->queryRedactList) :
