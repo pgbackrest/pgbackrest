@@ -249,14 +249,14 @@ OPTION = """  annotation:
 
 
 ####################################################################################################################################
-def _render(option=OPTION, label=False):
+def _render(option=OPTION, label=False, command=COMMAND):
     """Render a declaration and return both generated files.
 
     Labels are off unless a test is checking them, since a label is appended to every line and would be in the way of reading the
     rules the rest of the tests check."""
 
     with tempfile.TemporaryDirectory() as path:
-        file_write(os.path.join(path, "build/config.yaml"), COMMAND + option)
+        file_write(os.path.join(path, "build/config.yaml"), command + option)
         bld_cfg_render(path, bld_cfg_parse(path), label)
 
         return (
@@ -403,9 +403,40 @@ def test_config_render_option():
         parse,
     )
 
-    # Commands the option is valid for, per role
-    assert_in("PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST", parse)
-    assert_in("PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST", parse)
+    # All commands with a role, less help and version
+    assert_in(
+        "\n".join(
+            line.ljust(131) + "\\"
+            for line in (
+                "#define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL",
+                "    PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST",
+                "    (",
+                "        PARSE_RULE_OPTION_COMMAND(Backup)",
+                "        PARSE_RULE_OPTION_COMMAND(Restore)",
+            )
+        )
+        + "\n    )\n",
+        parse,
+    )
+
+    # A role no command has
+    assert_not_in(
+        "PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL",
+        _render(command=COMMAND.replace("      async: {}\n", ""))[1],
+    )
+
+    # Role lists equal to all commands with the role, after a role list that is not
+    assert_in(
+        """        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(Backup)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,""",
+        parse,
+    )
 
     # Role lists equal to the option the command list is inherited from
     assert_in(
@@ -423,11 +454,9 @@ def test_config_render_option():
     # A role list that differs from the option the command list is inherited from
     assert_in(
         """        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_OPT(StartFast),
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST
-        (
-            PARSE_RULE_OPTION_COMMAND(Backup)
-        ),""",
+        PARSE_RULE_OPTIONAL""",
         parse,
     )
 
