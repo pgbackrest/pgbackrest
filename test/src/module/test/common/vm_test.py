@@ -5,6 +5,8 @@ any test here runs. The parsing and the checks are exercised again with declarat
 be valid."""
 
 ####################################################################################################################################
+from unittest.mock import patch
+
 from harness.test import *
 
 from common.error import *
@@ -120,7 +122,9 @@ def test_vm_parse():
 
     # An unreleased version is only in the beta repository, so the container build is told which installed version needs it
     assert_is_none(vm.pg_beta)
-    assert_true(vm_get("u24").pg_beta in vm_get("u24").db_list)
+
+    with patch("common.vm._PG_BETA_LIST", ("18",)):
+        assert_equal(_parse("    os-base: debian\n    db: [17, 18]\n").pg_beta, "18")
 
     # A vm with no image has no container, so it declares only whether it is a default and whether it collects C coverage
     vm = vm_parse("vm:\n  none:\n    coverage-c: true\n")["none"]

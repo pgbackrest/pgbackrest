@@ -29,21 +29,6 @@ STRING_EXTERN(PG_FILE_STANDBYSIGNAL_STR,                            PG_FILE_STAN
 
 STRING_EXTERN(PG_PATH_GLOBAL_STR,                                   PG_PATH_GLOBAL);
 
-STRING_EXTERN(PG_NAME_WAL_STR,                                      PG_NAME_WAL);
-STRING_EXTERN(PG_NAME_XLOG_STR,                                     PG_NAME_XLOG);
-
-// Wal path names depending on version
-STRING_STATIC(PG_PATH_PGWAL_STR,                                    "pg_wal");
-STRING_STATIC(PG_PATH_PGXLOG_STR,                                   "pg_xlog");
-
-// Transaction commit log path names depending on version
-STRING_STATIC(PG_PATH_PGCLOG_STR,                                   "pg_clog");
-STRING_STATIC(PG_PATH_PGXACT_STR,                                   "pg_xact");
-
-// Lsn name used in functions depending on version
-STRING_STATIC(PG_NAME_LSN_STR,                                      "lsn");
-STRING_STATIC(PG_NAME_LOCATION_STR,                                 "location");
-
 /***********************************************************************************************************************************
 The control file is 8192 bytes but only the first 512 bytes are used to prevent torn pages even on really old storage with 512-byte
 sectors. This is true across all versions of PostgreSQL. Unfortunately, this is not sufficient to prevent torn pages during
@@ -467,6 +452,19 @@ pgControlVersion(const unsigned int pgVersion)
     FUNCTION_TEST_RETURN(UINT32, pgInterfaceVersion(pgVersion)->controlVersion);
 }
 
+/**********************************************************************************************************************************/
+FN_EXTERN void
+pgVersionCheck(const unsigned int pgVersion)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+    FUNCTION_TEST_END();
+
+    pgInterfaceVersion(pgVersion);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 These WAL header fields are common to all versions of PostgreSQL, so we can use them to generate error messages when the WAL magic
 cannot be found.
@@ -691,52 +689,6 @@ pgLsnRangeToWalSegmentList(
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN(STRING_LIST, result);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN const String *
-pgLsnName(const unsigned int pgVersion)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_LSN_STR : PG_NAME_LOCATION_STR);
-}
-
-/***********************************************************************************************************************************
-Get WAL name (wal/xlog) for a PostgreSQL version
-***********************************************************************************************************************************/
-FN_EXTERN const String *
-pgWalName(const unsigned int pgVersion)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_NAME_WAL_STR : PG_NAME_XLOG_STR);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN const String *
-pgWalPath(const unsigned int pgVersion)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGWAL_STR : PG_PATH_PGXLOG_STR);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN const String *
-pgXactPath(const unsigned int pgVersion)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN_CONST(STRING, pgVersion >= PG_VERSION_WAL_RENAME ? PG_PATH_PGXACT_STR : PG_PATH_PGCLOG_STR);
 }
 
 /**********************************************************************************************************************************/

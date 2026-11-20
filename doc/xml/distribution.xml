@@ -29,7 +29,7 @@
     <section id="build">
         <title>Build</title>
 
-        <p><backrest/> builds with meson and ninja. The required libraries are libpq, OpenSSL (&gt;= 1.1.1), libxml2, lz4, bz2, and zlib; zstd, libssh2 (for SFTP), and libsystemd are optional. For example, on Debian/Ubuntu:</p>
+        <p><backrest/> builds with meson and ninja. The required libraries are libpq, OpenSSL (&gt;= 1.1.1), libxml2, lz4, bz2, zlib, and zstd; libssh2 (for SFTP) and libsystemd are optional. For example, on Debian/Ubuntu:</p>
 
         <code-block>
 apt-get install {[build-package-debian]}

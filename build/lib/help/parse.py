@@ -24,6 +24,7 @@ from common.xml import (
     xml_node_child_replace,
     xml_node_content,
     xml_node_content_add,
+    xml_node_dup,
     xml_parse,
 )
 from config.parse import CMD_ROLE_MAIN
@@ -61,7 +62,9 @@ class BldHlpOption:
         self.title = title
         self.summary = summary
         self.description = description
+        self.description_command = None  # Command-specific description, without the general description
         self.example_list = example_list
+        self.command = None  # Command whose command-specific help this command shares, if any
 
 
 ####################################################################################################################################
@@ -99,22 +102,27 @@ def _find(item_list, name):
 
 
 ####################################################################################################################################
-def _option_list(xml_opt_list, opt_list, section_default):
-    """Parse a list of option help into opt_list."""
+def _option_list(xml_opt_list, opt_list, section_default, command):
+    """Parse a list of option help into opt_list.
+
+    Command-specific option help may leave out the name and summary, or name another command to share its command-specific help.
+    General option help may leave out the description."""
 
     for xml_opt in xml_opt_list:
         example_list = [xml_node_content(example) for example in xml_node_child_list(xml_opt, "example")]
+        command_from = xml_node_attribute(xml_opt, "command") if command else None
 
-        opt_list.append(
-            BldHlpOption(
-                xml_node_attribute(xml_opt, "id", True),
-                xml_node_attribute(xml_opt, "section") or section_default,
-                xml_node_attribute(xml_opt, "name", True),
-                xml_node_child(xml_opt, "summary", True),
-                xml_node_child(xml_opt, "text", True),
-                example_list if len(example_list) > 0 else None,
-            )
+        opt_hlp = BldHlpOption(
+            xml_node_attribute(xml_opt, "id", True),
+            xml_node_attribute(xml_opt, "section") or section_default,
+            xml_node_attribute(xml_opt, "name", not command),
+            xml_node_child(xml_opt, "summary", not command),
+            xml_node_child(xml_opt, "text", command and command_from is None),
+            example_list if len(example_list) > 0 else None,
         )
+
+        opt_hlp.command = command_from
+        opt_list.append(opt_hlp)
 
     opt_list.sort(key=lambda opt: opt.name)
 
@@ -138,6 +146,7 @@ def _help_option_list(xml):
             xml_node_child_list(xml_node_child(xml_section, "config-key-list", True), "config-key"),
             result,
             xml_node_attribute(xml_section, "id", True),
+            False,
         )
 
     # Options that can only be given on the command line, which are in no section
@@ -148,6 +157,7 @@ def _help_option_list(xml):
         ),
         result,
         None,
+        False,
     )
 
     return result
@@ -165,7 +175,7 @@ def _help_command_list(xml):
 
         if xml_opt_list is not None:
             opt_list = []
-            _option_list(xml_node_child_list(xml_opt_list, "option"), opt_list, None)
+            _option_list(xml_node_child_list(xml_opt_list, "option"), opt_list, None, True)
 
         result.append(
             BldHlpCommand(
@@ -343,7 +353,8 @@ def _allow_list(bld_hlp, bld_cfg):
     inherit_map = {}
 
     for opt_hlp in bld_hlp.opt_list:
-        _allow_list_inherit_add(inherit_map, (None, opt_hlp.name), opt_hlp.description)
+        if opt_hlp.description is not None:
+            _allow_list_inherit_add(inherit_map, (None, opt_hlp.name), opt_hlp.description)
 
     for cmd_hlp in bld_hlp.cmd_list:
         for opt_hlp in cmd_hlp.opt_list or []:
@@ -352,7 +363,7 @@ def _allow_list(bld_hlp, bld_cfg):
     for opt in bld_cfg.opt_list:
         opt_hlp = _find(bld_hlp.opt_list, opt.name)
 
-        if opt_hlp is not None:
+        if opt_hlp is not None and opt_hlp.description is not None:
             _allow_list_render(opt_hlp.description, opt.allow_list, "option '%s'" % opt.name, inherit_map)
 
         # An option a command documents differently is checked against what the command allows when it allows something else
@@ -377,11 +388,12 @@ def _validate(bld_hlp, bld_cfg):
             raise ToolError("command '%s' must have help" % cmd.name)
 
     for opt in bld_cfg.opt_list:
-        if _find(bld_hlp.opt_list, opt.name) is not None:
+        opt_hlp = _find(bld_hlp.opt_list, opt.name)
+
+        if opt_hlp is not None and opt_hlp.description is not None:
             continue
 
-        # An option documented under neither a configuration section nor the command line must be documented by every command that
-        # takes it, since that is the only place left for its help to be
+        # An option without a general description must have command-specific help for every command that takes it
         for opt_cmd in opt.cmd_list:
             cmd_hlp = _find(bld_hlp.cmd_list, opt_cmd.name)
             check(cmd_hlp is not None, "command help for '%s' is missing" % opt_cmd.name)
@@ -392,6 +404,72 @@ def _validate(bld_hlp, bld_cfg):
 
             if _find(cmd_hlp.opt_list, opt.name) is None:
                 raise ToolError("option '%s' must have help for command '%s'" % (opt.name, opt_cmd.name))
+
+
+####################################################################################################################################
+def _option_command_inherit(bld_hlp):
+    """Copy the command-specific option help of the command another command names."""
+
+    for cmd_hlp in bld_hlp.cmd_list:
+        for opt_hlp in cmd_hlp.opt_list or []:
+            if opt_hlp.command is None:
+                continue
+
+            cmd_hlp_from = _find(bld_hlp.cmd_list, opt_hlp.command)
+            opt_hlp_from = None if cmd_hlp_from is None else _find(cmd_hlp_from.opt_list, opt_hlp.name)
+
+            check(
+                opt_hlp_from is not None and opt_hlp_from.command is None,
+                "option '%s' for command '%s' names command '%s', which does not document it"
+                % (opt_hlp.name, cmd_hlp.name, opt_hlp.command),
+            )
+
+            check(
+                opt_hlp.title is None and opt_hlp.summary is None and opt_hlp.description is None and opt_hlp.example_list is None,
+                "option '%s' for command '%s' names command '%s' and may not document anything else"
+                % (opt_hlp.name, cmd_hlp.name, opt_hlp.command),
+            )
+
+            opt_hlp.title = opt_hlp_from.title
+            opt_hlp.summary = opt_hlp_from.summary
+            opt_hlp.description = xml_node_dup(opt_hlp_from.description)
+            opt_hlp.example_list = opt_hlp_from.example_list
+
+
+####################################################################################################################################
+def _option_command_resolve(bld_hlp):
+    """Complete command-specific option help from the general option help.
+
+    The name, summary, and examples left out are those of the general help. The description is the general description followed by
+    the command-specific description."""
+
+    for cmd_hlp in bld_hlp.cmd_list:
+        for opt_hlp in cmd_hlp.opt_list or []:
+            opt_hlp.description_command = opt_hlp.description
+            opt_hlp_all = _find(bld_hlp.opt_list, opt_hlp.name)
+
+            # Without general option help the command-specific help has the name and summary
+            if opt_hlp_all is None:
+                check(
+                    opt_hlp.title is not None and opt_hlp.summary is not None,
+                    "option '%s' for command '%s' must have a name and summary" % (opt_hlp.name, cmd_hlp.name),
+                )
+
+                continue
+
+            if opt_hlp.title is None:
+                opt_hlp.title = opt_hlp_all.title
+
+            if opt_hlp.summary is None:
+                opt_hlp.summary = opt_hlp_all.summary
+
+            if opt_hlp.example_list is None:
+                opt_hlp.example_list = opt_hlp_all.example_list
+
+            if opt_hlp_all.description is not None:
+                opt_hlp.description = xml_document_new("text")
+                xml_node_child_add(opt_hlp.description, opt_hlp_all.description)
+                xml_node_child_add(opt_hlp.description, opt_hlp.description_command)
 
 
 ####################################################################################################################################
@@ -422,6 +500,8 @@ def bld_hlp_parse(path_help, bld_cfg, detail):
     result.opt_list = _help_option_list(xml)
 
     _validate(result, bld_cfg)
+    _option_command_inherit(result)
     _allow_list(result, bld_cfg)
+    _option_command_resolve(result)
 
     return result

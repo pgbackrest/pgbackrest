@@ -243,7 +243,7 @@ def test_job_command_option():
 
 ####################################################################################################################################
 def test_job_valgrind():
-    """A C test runs under valgrind, with the suppressions for its vm when there are any."""
+    """A C test runs under valgrind, with the suppressions for every vm and for its vm when there are any."""
 
     with tempfile.TemporaryDirectory() as path:
         config = Config(path)
@@ -271,6 +271,19 @@ def test_job_valgrind():
         _capture(job, lambda job: job.begin())
 
         assert_in("--gen-suppressions=all --suppressions=%s --exit-on-first-error" % path_suppress, job.exec.command)
+
+        # The suppressions for every vm are used before the suppressions for the vm
+        path_suppress_all = os.path.join(path, "repo/test/src/valgrind.suppress")
+        file_write(path_suppress_all, "")
+
+        job = _job(config)
+
+        _capture(job, lambda job: job.begin())
+
+        assert_in(
+            "--gen-suppressions=all --suppressions=%s --suppressions=%s --exit-on-first-error" % (path_suppress_all, path_suppress),
+            job.exec.command,
+        )
 
 
 ####################################################################################################################################

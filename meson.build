@@ -46,18 +46,18 @@ endif
 ####################################################################################################################################
 # OS-specific settings
 ####################################################################################################################################
-os_args = []
-
+# Feature macros
 if host_machine.system() == 'linux'
-    os_args = ['-D_POSIX_C_SOURCE=200809L']
-    add_project_arguments('-D_GNU_SOURCE', language: 'c')
+    feature_args = ['-D_GNU_SOURCE']
 elif host_machine.system() == 'darwin'
-    os_args = ['-D_DARWIN_C_SOURCE']
+    feature_args = ['-D_DARWIN_C_SOURCE']
 elif host_machine.system() == 'sunos'
-    os_args = ['-D_POSIX_C_SOURCE=200809L', '-D__EXTENSIONS__']
+    feature_args = ['-D_POSIX_C_SOURCE=200809L', '-D__EXTENSIONS__']
+else
+    feature_args = []
 endif
 
-add_global_arguments(os_args, language: 'c')
+add_global_arguments(feature_args, language: 'c')
 
 ####################################################################################################################################
 # Enable/disable warnings
@@ -188,15 +188,9 @@ dist = run_command(
 ####################################################################################################################################
 configuration = configuration_data()
 
-# Check for filesystem synchronization support. _GNU_SOURCE exposes the declaration on Linux.
-if host_machine.system() == 'linux' and cc.has_function('syncfs', prefix: '#include <unistd.h>', args: '-D_GNU_SOURCE')
+# Check for filesystem synchronization support
+if host_machine.system() == 'linux' and cc.has_function('syncfs', prefix: '#include <unistd.h>', args: feature_args)
     configuration.set('HAVE_SYNCFS', true, description: 'Is syncfs present?')
-endif
-
-# GNU headers declare environ, while some other platforms require an explicit declaration.
-if cc.has_header_symbol(
-        'unistd.h', 'environ', args: os_args + (host_machine.system() == 'linux' ? ['-D_GNU_SOURCE'] : []))
-    configuration.set('HAVE_DECL_ENVIRON', true, description: 'Is environ declared in unistd.h?')
 endif
 
 # Ensure the C compiler supports __builtin_clzl()
@@ -246,6 +240,9 @@ lib_z = dependency('zlib')
 
 configuration.set('ZLIB_CONST', true, description: 'Require zlib const input buffer')
 
+# Find required zstd library
+lib_zstd = dependency('libzstd', version: '>=1.0')
+
 # Find socket library on illumos/Solaris, where sockets are not in libc
 lib_socket = dependency('', required: false)
 
@@ -267,11 +264,9 @@ if lib_ssh2.found()
     configuration.set('HAVE_LIBSSH2', true, description: 'Is libssh2 present?')
 endif
 
-# Find optional zstd library
-lib_zstd = dependency('libzstd', version: '>=1.0', required: get_option('libzstd'))
-
-if lib_zstd.found()
-    configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
+# Check for direct I/O support
+if cc.has_header_symbol('fcntl.h', 'O_DIRECT', args: feature_args)
+    configuration.set('HAVE_O_DIRECT', true, description: 'Is O_DIRECT present?')
 endif
 
 # Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros

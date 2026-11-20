@@ -726,9 +726,14 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteSeek(bufferWrite, 3), "seek to current position");
         TEST_RESULT_VOID(ioWriteSeek(bufferWrite, 4), "seek to new position");
         TEST_RESULT_VOID(ioWrite(bufferWrite, BUFSTRDEF("XXX")), "write");
+        TEST_RESULT_VOID(ioWrite(bufferWrite, BUFSTRDEF("A")), "write buffered");
+        TEST_RESULT_VOID(ioWriteSeek(bufferWrite, 8), "seek to end of buffered output");
+        TEST_RESULT_VOID(ioWrite(bufferWrite, BUFSTRDEF("B")), "write buffered");
+        TEST_RESULT_VOID(ioWriteSeek(bufferWrite, 7), "seek to start of buffered output");
+        TEST_RESULT_VOID(ioWrite(bufferWrite, BUFSTRDEF("C")), "write");
         TEST_RESULT_VOID(ioWriteClose(bufferWrite), "close");
 
-        TEST_RESULT_STR_Z(strNewBuf(buffer), "XXXSEEKXXX", "check buffer");
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "XXXSEEKXXXABSEEKC", "check buffer");
     }
 
     // *****************************************************************************************************************************

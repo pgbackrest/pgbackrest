@@ -129,7 +129,6 @@ manifestNewBuild(
                 .checksumPage = checksumPage,
                 .tablespaceList = tablespaceList,
                 .linkCheck = &linkCheck,
-                .manifestWalName = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(pgWalPath(pgVersion))),
                 .blockIncrMap = blockIncrMap,
             };
 
@@ -541,9 +540,17 @@ manifestBuildIncr(
                     file.checksumPageErrorList = filePrior.checksumPageErrorList;
                     file.bundleId = filePrior.bundleId;
                     file.bundleOffset = filePrior.bundleOffset;
-                    file.blockIncrSize = filePrior.blockIncrSize;
-                    file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
-                    file.blockIncrMapSize = filePrior.blockIncrMapSize;
+
+                    // Preserve block incremental values when the prior file has a map
+                    if (filePrior.blockIncrMapSize != 0)
+                    {
+                        file.blockIncrSize = filePrior.blockIncrSize;
+                        file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
+                        file.blockIncrMapSize = filePrior.blockIncrMapSize;
+                    }
+                    // Else zero block incremental values when the file will not be copied
+                    else if (!file.copy)
+                        file.blockIncrSize = file.blockIncrChecksumSize = 0;
 
                     ASSERT(file.checksumSha1 != NULL);
                     ASSERT(
@@ -555,7 +562,7 @@ manifestBuildIncr(
                     ASSERT(file.bundleId != 0 || file.bundleOffset == 0);
                     ASSERT(
                         (file.blockIncrSize == 0 && file.blockIncrChecksumSize == 0 && file.blockIncrMapSize == 0) ||
-                        (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && file.blockIncrMapSize > 0));
+                        (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && (file.blockIncrMapSize > 0 || file.copy)));
                 }
 
                 // Update by index since we already have it from the enclosing loop. Avoids by-name search of manifestFileUpdate().

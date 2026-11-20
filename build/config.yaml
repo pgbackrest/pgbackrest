@@ -145,6 +145,14 @@ command:
     lock-required: true
     lock-type: all
 
+  stanza-rekey:
+    command-role:
+      remote: {}
+    internal: true
+    lock-remote-required: true
+    lock-required: true
+    lock-type: all
+
   stanza-upgrade:
     command-role:
       remote: {}
@@ -449,6 +457,7 @@ option:
       restore: {}
       stanza-create: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade: {}
       start:
         required: false
@@ -595,6 +604,7 @@ option:
       expire: {}
       stanza-create: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade: {}
     command-role:
       remote: {}
@@ -792,7 +802,7 @@ option:
       - bz2
       - gz
       - lz4
-      - zst: HAVE_LIBZST
+      - zst
     command: compress
     command-role:
       async: {}
@@ -854,6 +864,7 @@ option:
       restore: {}
       stanza-create: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade: {}
       start: {}
       stop: {}
@@ -1436,6 +1447,21 @@ option:
       db-path: {}
       db?-path: {}
 
+  pg-io-mode:
+    section: stanza
+    group: pg
+    type: string-id
+    sequence: true
+    default: default
+    # Keep synced with StoragePosixIoMode enum
+    allow-list:
+      - default
+      - direct: HAVE_O_DIRECT
+    command:
+      +inherit: pg-path
+    depend:
+      option: pg-path
+
   # PostgreSQL host options
   #---------------------------------------------------------------------------------------------------------------------------------
   pg-local:
@@ -1699,6 +1725,7 @@ option:
         command-role:
           remote: {}
       stanza-delete: {}
+      stanza-rekey: {}
       stanza-upgrade:
         command-role:
           remote: {}
@@ -1729,6 +1756,23 @@ option:
     command: repo-type
     deprecate:
       repo-path: {}
+
+  repo-io-mode:
+    section: global
+    group: repo
+    type: string-id
+    sequence: true
+    default: default
+    # Keep synced with StoragePosixIoMode enum
+    allow-list:
+      - default
+      - direct: HAVE_O_DIRECT
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - cifs
+        - posix
 
   # Command-line only so that a format left in a configuration file cannot upgrade a repository as a side effect of an unrelated
   # stanza-upgrade. This does not cover the environment, which can set any option that is valid for the command, so a format left
@@ -1772,6 +1816,19 @@ option:
     group: repo
     deprecate:
       repo-cipher-pass: {}
+
+  repo-cipher-pass-old:
+    section: global
+    type: string
+    secure: true
+    internal: true
+    required: false
+    command: repo-type
+    depend:
+      option: repo-cipher-type
+      list:
+        - aes-256-cbc
+    group: repo
 
   repo-cipher-rotate:
     section: global
@@ -2462,6 +2519,13 @@ option:
     inherit: repo-s3-key
     deprecate:
       repo-s3-key-secret: {}
+
+  repo-s3-kms-context:
+    inherit: repo-s3-bucket
+    type: hash
+    required: false
+    depend:
+      option: repo-s3-kms-key-id
 
   repo-s3-kms-key-id:
     inherit: repo-s3-bucket

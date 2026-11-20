@@ -197,7 +197,7 @@
             </release-item>
 
             <release-item>
-                <p>Restore index menu url default lost in b85e51d6.</p>
+                <p>Restore index menu url default lost in <commit-link subject="Base menu ordering on natural ordering in the manifest."/>.</p>
             </release-item>
         </release-development-list>
     </release-doc-list>

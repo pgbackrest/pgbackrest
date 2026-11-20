@@ -17,6 +17,8 @@ Test S3 Storage
 Constants
 ***********************************************************************************************************************************/
 #define S3_TEST_HOST                                                "s3.amazonaws.com"
+#define S3_TEST_KMS_CONTEXT                                                                                                        \
+    "eyJjbHVzdGVyX2lkIjoicGctcHJvZC0wMSIsInRlbmFudF9pZCI6InRlbmFudC0wMSJ9"
 
 /***********************************************************************************************************************************
 Calculate splitMax. This defines the point at which the maximum chunk size must be used in order to be able to upload the maximum
@@ -78,6 +80,7 @@ typedef struct TestRequestParam
     const char *authorization;
     const char *range;
     const char *kms;
+    const char *kmsContext;
     const char *sseC;
     const char *ttl;
     const char *token;
@@ -135,6 +138,9 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
 
         if (param.kms != NULL)
             strCatZ(request, ";x-amz-server-side-encryption;x-amz-server-side-encryption-aws-kms-key-id");
+
+        if (param.kmsContext != NULL)
+            strCatZ(request, ";x-amz-server-side-encryption-context");
 
         if (param.sseC != NULL)
         {
@@ -205,6 +211,9 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
         strCatZ(request, "x-amz-server-side-encryption:aws:kms\r\n");
         strCatFmt(request, "x-amz-server-side-encryption-aws-kms-key-id:%s\r\n", param.kms);
     }
+
+    if (param.kmsContext != NULL)
+        strCatFmt(request, "x-amz-server-side-encryption-context:%s\r\n", param.kmsContext);
 
     // Add sseC key
     if (param.sseC != NULL)
@@ -371,6 +380,7 @@ testRun(void)
         TEST_RESULT_STR(driver->accessKey, accessKey, "check access key");
         TEST_RESULT_STR(driver->secretAccessKey, secretAccessKey, "check secret access key");
         TEST_RESULT_STR(driver->securityToken, NULL, "check security token");
+        TEST_RESULT_STR(driver->kmsContext, NULL, "check encryption context is unset");
 
         TEST_RESULT_VOID(
             FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
@@ -778,6 +788,8 @@ testRun(void)
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, "auto");
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KmsKeyId, "kmskey1");
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KmsContext, "tenant_id=tenant-01");
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KmsContext, "cluster_id=pg-prod-01");
                 hrnCfgEnvRawZ(cfgOptRepoS3SseCustomerKey, "rA1P");
                 hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, "Key1=Value1");
                 hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, " Key 2= Value 2");
@@ -1004,7 +1016,8 @@ testRun(void)
 
                 testRequestP(
                     service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD", .accessKey = "xx", .securityToken = "zz",
-                    .kms = "kmskey1", .sseC = "rA1P", .tag = "%20Key%202=%20Value%202&Key1=Value1");
+                    .kms = "kmskey1", .kmsContext = S3_TEST_KMS_CONTEXT, .sseC = "rA1P",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service);
 
                 // Make a copy of the signing key to verify that it gets changed when the keys are updated
@@ -1037,8 +1050,8 @@ testRun(void)
                 TEST_TITLE("write zero-length file");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_PUT, "/file.txt", .content = "", .kms = "kmskey1", .sseC = "rA1P",
-                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
+                    service, s3, HTTP_VERB_PUT, "/file.txt", .content = "", .kms = "kmskey1", .kmsContext = S3_TEST_KMS_CONTEXT,
+                    .sseC = "rA1P", .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service);
 
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
@@ -1048,8 +1061,8 @@ testRun(void)
                 TEST_TITLE("write file in chunks with nothing left over on close");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1", .sseC = "rA1P",
-                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
+                    service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1", .kmsContext = S3_TEST_KMS_CONTEXT,
+                    .sseC = "rA1P", .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(
                     service,
                     .content =
@@ -1089,6 +1102,8 @@ testRun(void)
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error in success response of multipart upload");
+
+                driver->kmsContext = NULL;
 
                 // Stop writing tags
                 driver->tag = NULL;

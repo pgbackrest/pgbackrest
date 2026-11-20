@@ -82,9 +82,12 @@ Test load file callback
 static String *testInfoLoadFileContent = NULL;
 
 static void *
-testInfoLoadFileNew(IoRead *const read, const CipherSpec *const cipherSpec)
+testInfoLoadFileNew(IoRead *const read, const CipherSpec *const cipherSpec, const bool prior)
 {
-    return infoNewLoad(read, cipherSpec, harnessInfoLoadNewCallback, testInfoLoadFileContent);
+    Info *const result = infoNewLoad(read, cipherSpec, harnessInfoLoadNewCallback, testInfoLoadFileContent);
+    infoCipherPriorSet(result, prior);
+
+    return result;
 }
 
 /***********************************************************************************************************************************
@@ -547,8 +550,32 @@ testRun(void)
 
         HRN_INFO_PUT(storageTest, "test.info.copy", "[c]\nkey=\"copy\"\n");
 
-        TEST_RESULT_PTR_NE(
-            infoLoadFile(storageTest, STRDEF("test.info"), cipherSpecNewNone(), testInfoLoadFileNew), NULL, "load copy");
+        Info *infoLoaded;
+
+        TEST_ASSIGN(
+            infoLoaded, infoLoadFile(storageTest, STRDEF("test.info"), cipherSpecNewNone(), testInfoLoadFileNew), "load copy");
         TEST_RESULT_STR_Z(testInfoLoadFileContent, "[c] key=\"copy\"\n", "copy content");
+        TEST_RESULT_BOOL(infoCipherPrior(infoLoaded), false, "not decrypted with old passphrase");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("infoLoadFile() with the old passphrase");
+
+        const CipherSpec *const cipherSpecOld = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"));
+        const CipherSpec *const cipherSpecRekey = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("new"), .prior = cipherSpecOld);
+
+        TEST_ERROR(
+            infoLoadFile(storageTest, STRDEF("missing.info"), cipherSpecRekey, testInfoLoadFileNew), FileMissingError,
+            "unable to load info file '" TEST_PATH "/missing.info' or '" TEST_PATH "/missing.info.copy':\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info' for read\n"
+            "FileMissingError: unable to open missing file '" TEST_PATH "/missing.info.copy' for read");
+
+        HRN_INFO_PUT(storageTest, "test.info", "[c]\nkey=\"old\"\n", .header = true, .cipherSpec = cipherSpecOld);
+        testInfoLoadFileContent = strNew();
+
+        TEST_ASSIGN(
+            infoLoaded, infoLoadFile(storageTest, STRDEF("test.info"), cipherSpecRekey, testInfoLoadFileNew),
+            "load with old passphrase");
+        TEST_RESULT_STR_Z(testInfoLoadFileContent, "[c] key=\"old\"\n", "old passphrase content");
+        TEST_RESULT_BOOL(infoCipherPrior(infoLoaded), true, "decrypted with old passphrase");
     }
 }

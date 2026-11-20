@@ -81,7 +81,7 @@
 
                 <p>Fix use-after-free of parallel protocol client.</p>
 
-                <p>A client that ran out of work was freed but left in the client list and freed again on a later call. With debug or trace logging this read freed memory and could crash, e.g. a parallel backup with <br-option>log-level-file=trace</br-option>.</p>
+                <p>A client that ran out of work was freed but left in the client list and freed again on a later call. With debug or trace logging this read freed memory and could crash, e.g. a parallel backup with <br-option>log-level-file=trace</br-option>. The crash was introduced in <commit-link subject="Refactor protocol helper."/>.</p>
             </release-item>
 
             <release-item>

@@ -17,6 +17,7 @@ Manifest Command
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "config/config.h"
+#include "info/helper.h"
 #include "info/manifest/manifest.h"
 #include "storage/helper.h"
 
@@ -376,7 +377,7 @@ cmdManifestFileRender(const Manifest *const manifest, const ManifestFile *const 
             if (file->bundleId != 0)
                 strCatFmt(result, ",\"bundle\":{\"id\":%" PRIu64 ",\"offset\":%" PRIu64 "}", file->bundleId, file->bundleOffset);
 
-            if (file->blockIncrSize != 0)
+            if (file->blockIncrMapSize != 0)
             {
                 strCatFmt(
                     result, ",\"block\":{\"size\":%zu,\"map\":{\"size\":%" PRIu64, file->blockIncrSize, file->blockIncrMapSize);
@@ -404,7 +405,7 @@ cmdManifestFileRender(const Manifest *const manifest, const ManifestFile *const 
             if (file->bundleId != 0)
                 strCatFmt(result, "      bundle: %" PRIu64 "\n", file->bundleId);
 
-            if (file->blockIncrSize != 0)
+            if (file->blockIncrMapSize != 0)
             {
                 strCatFmt(
                     result, "      block: size %s, map size %s, checksum size %s\n",
@@ -439,11 +440,8 @@ cmdManifestRender(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the repo storage in case it is remote and encryption settings need to be pulled down
-        storageRepo();
-
         // Load backup.info and cipher
-        const InfoBackup *const infoBackup = infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
+        const InfoBackup *const infoBackup = infoBackupRepoIdxP(cfgOptionGroupIdxDefault(cfgOptGrpRepo));
 
         // The latest backup is the newest in backup.info
         const String *backupLabel = cfgOptionStr(cfgOptSet);

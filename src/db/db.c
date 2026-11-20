@@ -278,7 +278,7 @@ dbOpen(Db *const this)
                     DbQueryError,
                     "unable to select some rows from pg_settings\n"
                     "HINT: is the backup running as the postgres user?\n"
-                    "HINT: is the pg_read_all_settings role assigned for " PG_NAME " >= " PG_VERSION_10_Z "?");
+                    "HINT: is the pg_read_all_settings role assigned?");
             }
         }
 
@@ -304,8 +304,7 @@ dbOpen(Db *const this)
         // Set application name to help identify the backup session
         dbExec(this, strNewFmt("set application_name = '%s'", strZ(this->applicationName)));
 
-        // There is no need to have parallelism enabled in a backup session. In particular, 9.6 marks pg_stop_backup() as
-        // parallel-safe but an error will be thrown if pg_stop_backup() is run in a worker.
+        // There is no need to have parallelism enabled in a backup session
         dbExec(this, STRDEF("set max_parallel_workers_per_gather = 0"));
 
         // Is the cluster a standby?
@@ -333,9 +332,9 @@ dbBackupStartQuery(const unsigned int pgVersion, const bool startFast)
     String *result = strCatFmt(
         strNew(),
         "select lsn::text as lsn,\n"
-        "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name\n"
+        "       pg_catalog.pg_walfile_name(lsn)::text as wal_segment_name\n"
         "  from pg_catalog.pg_%s('" PROJECT_NAME " backup started at ' || current_timestamp::text",
-        strZ(pgWalName(pgVersion)), pgVersion >= PG_VERSION_15 ? "backup_start" : "start_backup");
+        pgVersion >= PG_VERSION_15 ? "backup_start" : "start_backup");
 
     // Start backup after immediate checkpoint
     if (startFast)
@@ -389,12 +388,7 @@ dbBackupStart(Db *const this, const bool startFast, const bool archiveCheck)
         if (archiveCheck)
         {
             walSegmentCheck = pckReadStrP(
-                dbQueryColumn(
-                    this,
-                    strNewFmt(
-                        "select pg_catalog.pg_%sfile_name(pg_catalog.pg_current_%s_insert_%s())::text",
-                        strZ(pgWalName(dbPgVersion(this))), strZ(pgWalName(dbPgVersion(this))),
-                        strZ(pgLsnName(dbPgVersion(this))))));
+                dbQueryColumn(this, STRDEF("select pg_catalog.pg_walfile_name(pg_catalog.pg_current_wal_insert_lsn())::text")));
         }
 
         // Start backup
@@ -455,24 +449,21 @@ dbBackupStopQuery(const unsigned int pgVersion)
     String *const result = strCatFmt(
         strNew(),
         "select lsn::text as lsn,\n"
-        "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name,\n"
+        "       pg_catalog.pg_walfile_name(lsn)::text as wal_segment_name,\n"
         "       labelfile::text as backuplabel_file,\n"
         "       spcmapfile::text as tablespacemap_file\n"
         "  from pg_catalog.pg_%s(",
-        strZ(pgWalName(pgVersion)), pgVersion >= PG_VERSION_15 ? "backup_stop" : "stop_backup");
+        pgVersion >= PG_VERSION_15 ? "backup_stop" : "stop_backup");
 
     // Use non-exclusive backup mode when available
     if (pgVersion <= PG_VERSION_14)
         strCatZ(result, FALSE_Z);
 
     // Disable archive checking since we do this elsewhere
-    if (pgVersion >= PG_VERSION_10)
-    {
-        if (pgVersion <= PG_VERSION_14)
-            strCatZ(result, ", ");
+    if (pgVersion <= PG_VERSION_14)
+        strCatZ(result, ", ");
 
-        strCatZ(result, FALSE_Z);
-    }
+    strCatZ(result, FALSE_Z);
 
     // Complete query
     strCatZ(result, ")");
@@ -570,9 +561,7 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
         // Loop until lsn has been reached or timeout
         Wait *wait = waitNew(timeout);
         bool targetReached = false;
-        const char *const lsnName = strZ(pgLsnName(dbPgVersion(this)));
-        const String *const replayLsnFunction = strNewFmt(
-            "pg_catalog.pg_last_%s_replay_%s()", strZ(pgWalName(dbPgVersion(this))), lsnName);
+        const String *const replayLsnFunction = STRDEF("pg_catalog.pg_last_wal_replay_lsn()");
         const String *replayLsn = NULL;
 
         do
@@ -647,10 +636,10 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
         {
             // Build the query
             const String *const query = strNewFmt(
-                "select (checkpoint_%s >= '%s')::bool as targetReached,\n"
-                "       checkpoint_%s::text as checkpointLsn\n"
+                "select (checkpoint_lsn >= '%s')::bool as targetReached,\n"
+                "       checkpoint_lsn::text as checkpointLsn\n"
                 "  from pg_catalog.pg_control_checkpoint()",
-                lsnName, strZ(targetLsn), lsnName);
+                strZ(targetLsn));
 
             // Execute the query and get checkpointLsn
             PackRead *const read = dbQueryRow(this, query);
@@ -774,9 +763,8 @@ dbWalSwitch(Db *const this)
         dbQueryColumn(this, STRDEF("select pg_catalog.pg_create_restore_point('" PROJECT_NAME " Archive Check')::text"));
 
         // Request a WAL segment switch
-        const char *const walName = strZ(pgWalName(dbPgVersion(this)));
         const String *const walFileName = pckReadStrP(
-            dbQueryColumn(this, strNewFmt("select pg_catalog.pg_%sfile_name(pg_catalog.pg_switch_%s())::text", walName, walName)));
+            dbQueryColumn(this, STRDEF("select pg_catalog.pg_walfile_name(pg_catalog.pg_switch_wal())::text")));
 
         // Copy WAL segment name to the prior context
         MEM_CONTEXT_PRIOR_BEGIN()

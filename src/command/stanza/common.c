@@ -161,33 +161,52 @@ cipherPassGenerated(const CipherSpec *const cipherSpec)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-stanzaCipherPassCheck(const unsigned int repoIdx, const unsigned int format)
+stanzaCipherPassCheck(const unsigned int repoIdx, const unsigned int format, const char *const action)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, repoIdx);
         FUNCTION_TEST_PARAM(UINT, format);
+        FUNCTION_TEST_PARAM(STRINGZ, action);
     FUNCTION_TEST_END();
 
     if (cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx) != cipherTypeNone)
     {
-        // Error when the passphrase is a documentation example
+        // Error or warn when the passphrase is a documentation example
         if (strBeginsWithZ(cfgOptionIdxStr(cfgOptRepoCipherPass, repoIdx), CIPHER_PASS_EXAMPLE_PREFIX))
         {
-            THROW_FMT(
-                OptionInvalidValueError,
-                "option '%s' must not be the example passphrase from the documentation\n"
-                "HINT: generate a passphrase with 'openssl rand -base64 32'.",
+            if (action != NULL)
+            {
+                THROW_FMT(
+                    OptionInvalidValueError,
+                    "option '%s' must not be the example passphrase from the documentation\n"
+                    "HINT: generate a passphrase from at least 256 random bits, e.g. with 'openssl rand -base64 32'.",
+                    cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
+            }
+
+            LOG_WARN_FMT(
+                "option '%s' should not be the example passphrase from the documentation\n"
+                "HINT: generate a passphrase from at least 256 random bits, e.g. with 'openssl rand -base64 32', and change it"
+                " with " CFGCMD_STANZA_REKEY ".",
                 cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
         }
-
         // Format >= 6 requires the passphrase to look generated
-        if (format >= REPOSITORY_FORMAT_6 && !cipherPassGenerated(cfgCipherSpecMainIdx(repoIdx)))
+        else if (format >= REPOSITORY_FORMAT_6 && !cipherPassGenerated(cfgCipherSpecMainIdx(repoIdx)))
         {
-            THROW_FMT(
-                OptionInvalidValueError,
-                "option '%s' must be at least 256 random bits encoded as hex, base64, or base64url to create a stanza at repository"
-                " format " STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
-                "HINT: generate a passphrase with 'openssl rand -base64 32'.",
+            if (action != NULL)
+            {
+                THROW_FMT(
+                    OptionInvalidValueError,
+                    "option '%s' must be at least 256 random bits encoded as hex, base64, or base64url to %s at repository format "
+                    STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
+                    "HINT: generate a passphrase from at least 256 random bits, e.g. with 'openssl rand -base64 32'.",
+                    cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx), action);
+            }
+
+            LOG_WARN_FMT(
+                "option '%s' should be at least 256 random bits encoded as hex, base64, or base64url at repository format "
+                STRINGIFY(REPOSITORY_FORMAT_6) " or higher\n"
+                "HINT: generate a passphrase from at least 256 random bits, e.g. with 'openssl rand -base64 32', and change it"
+                " with " CFGCMD_STANZA_REKEY ".",
                 cfgOptionIdxName(cfgOptRepoCipherPass, repoIdx));
         }
     }

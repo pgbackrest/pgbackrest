@@ -1129,6 +1129,11 @@
     <contributor-id type="github">pritammobisoft</contributor-id>
 </contributor>
 
+<contributor id="qinru.yao">
+    <contributor-name-display>Qinru Yao</contributor-name-display>
+    <contributor-id type="github">qinruyao</contributor-id>
+</contributor>
+
 <contributor id="rachid.braum">
     <contributor-name-display>Rachid Broum</contributor-name-display>
     <contributor-id type="github">rachid-casa</contributor-id>
@@ -1390,6 +1395,11 @@
 <contributor id="uspen">
     <contributor-name-display>uspen</contributor-name-display>
     <contributor-id type="github">uspen</contributor-id>
+</contributor>
+
+<contributor id="vasiliy.koshkin">
+    <contributor-name-display>Vasiliy Koshkin</contributor-name-display>
+    <contributor-id type="github">melancholictheory</contributor-id>
 </contributor>
 
 <contributor id="victor.gdalevich">

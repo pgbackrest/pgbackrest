@@ -14,9 +14,6 @@ PostgreSQL name
 /***********************************************************************************************************************************
 Version where various PostgreSQL capabilities were introduced
 ***********************************************************************************************************************************/
-// xlog was renamed to wal
-#define PG_VERSION_WAL_RENAME                                       PG_VERSION_10
-
 // recovery settings are implemented as GUCs (recovery.conf is no longer valid)
 #define PG_VERSION_RECOVERY_GUC                                     PG_VERSION_12
 

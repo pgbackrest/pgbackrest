@@ -4,8 +4,6 @@ Parse Configuration
 #ifndef CONFIG_PARSE_H
 #define CONFIG_PARSE_H
 
-#include <unistd.h>
-
 #include "common/ini.h"
 #include "config/config.h"
 #include "storage/storage.h"
@@ -24,7 +22,7 @@ Prefix for environment variables
 /***********************************************************************************************************************************
 In some environments this will not be extern'd
 ***********************************************************************************************************************************/
-#ifndef HAVE_DECL_ENVIRON
+#ifndef _GNU_SOURCE
 extern char **environ;
 #endif
 

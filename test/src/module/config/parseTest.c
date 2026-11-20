@@ -88,6 +88,7 @@ testRun(void)
         TEST_TITLE("config command defaults to none before cfgInit()");
 
         TEST_RESULT_BOOL(cfgInited(), false, "config is not inited");
+        TEST_RESULT_UINT(cfgInitTotal(), 0, "config init total");
     }
 
     // config and config-include-path options
@@ -1899,6 +1900,9 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 1, "test");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 1, cipherTypeAes256Cbc);
         hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 1, "xxx-cipher");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPassOld, 1, "xxx-cipher-old");
+        hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, "yyy-cipher");
         strLstAddZ(argList, TEST_COMMAND_BACKUP);
         hrnCfgEnvKeyRawZ(cfgOptRepoS3Key, 1, "xxx");
         hrnCfgEnvKeyRawZ(cfgOptRepoS3KeySecret, 1, "xxx");
@@ -1944,10 +1948,14 @@ testRun(void)
         TEST_RESULT_UINT(cipherSpecType(cipherSpecMain), cipherTypeAes256Cbc, "repo1 cipher spec type");
         TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecMain)), "xxx-cipher", "repo1 cipher spec pass");
         TEST_RESULT_PTR(cfgCipherSpecMainIdx(0), cipherSpecMain, "repo1 cipher spec is cached");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(cipherSpecPrior(cipherSpecMain))), "xxx-cipher-old", "repo1 cipher spec prior");
+        TEST_RESULT_PTR(cipherSpecPrior(cfgCipherSpecMainIdx(1)), NULL, "repo2 cipher spec has no prior");
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPassOld, 1);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("global is a valid stanza prefix");
@@ -1964,7 +1972,10 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptConfig, configFile);
         strLstAddZ(argList, TEST_COMMAND_BACKUP);
 
+        const unsigned int initTotal = cfgInitTotal();
+
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "parse config");
+        TEST_RESULT_UINT(cfgInitTotal(), initTotal + 1, "config init total incremented");
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptPgPath), "/path/to/global/stanza", "default pg-path");
         TEST_RESULT_UINT(cipherSpecType(cfgCipherSpecMainIdx(0)), cipherTypeNone, "no cipher spec when repo is not encrypted");

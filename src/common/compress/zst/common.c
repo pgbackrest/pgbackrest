@@ -3,8 +3,6 @@ ZST Common
 ***********************************************************************************************************************************/
 #include <build.h>
 
-#ifdef HAVE_LIBZST
-
 #include <zstd.h>
 
 // Check the version -- this is done in configure but it makes sense to be sure
@@ -28,5 +26,3 @@ zstError(const size_t error)
 
     FUNCTION_TEST_RETURN(SIZE, error);
 }
-
-#endif // HAVE_LIBZST

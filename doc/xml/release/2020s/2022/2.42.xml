@@ -14,7 +14,7 @@
 
                 <p>Fix memory leak in file bundle <cmd>backup</cmd>/<cmd>restore</cmd>.</p>
 
-                <p>Restore freed some I/O objects for bundled files only after every file in the bundle was restored. With many small files in a bundle, memory use grew until restore failed with <quote>unable to allocate</quote>. Backup had a similar, smaller leak when resuming.</p>
+                <p>Restore freed some I/O objects for bundled files only after every file in the bundle was restored. With many small files in a bundle, memory use grew until restore failed with <quote>unable to allocate</quote>. Backup had a similar, smaller leak when resuming. The restore leak was introduced in <commit-link subject="Bundle files in the repository during backup."/>.</p>
             </release-item>
 
             <release-item>
@@ -45,7 +45,7 @@
 
                 <p>Do not store references for zero-length files when bundling.</p>
 
-                <p>Bundled diff/incr backups stored a reference to a prior backup for zero-length files, which are not stored in any backup. The reference was ignored on restore but used space in the manifest.</p>
+                <p>Bundled diff/incr backups stored a reference to a prior backup for zero-length files, which are not stored in any backup. The reference was ignored on restore but used space in the manifest. These references were introduced in <commit-link subject="Bundle files in the repository during backup."/>.</p>
             </release-item>
 
             <release-item>
