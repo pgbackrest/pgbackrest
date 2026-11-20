@@ -200,6 +200,9 @@ OPTION = """  annotation:
   target:
     type: string
     command:
+      backup:
+        command-role:
+          async: {}
       restore: {}
 
   target-action:
@@ -403,38 +406,45 @@ def test_config_render_option():
         parse,
     )
 
-    # All commands with a role, less help and version
+    # All commands with each role, less help and version
     assert_in(
-        "\n".join(
-            line.ljust(131) + "\\"
-            for line in (
-                "#define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL",
-                "    PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST",
-                "    (",
-                "        PARSE_RULE_OPTION_COMMAND(Backup)",
-                "        PARSE_RULE_OPTION_COMMAND(Restore)",
-            )
-        )
-        + "\n    )\n",
+        """typedef enum
+{
+    parseRuleCommandRoleAllMain = 0
+        PARSE_RULE_OPTION_COMMAND(Backup)
+        PARSE_RULE_OPTION_COMMAND(Restore),
+
+    parseRuleCommandRoleAllAsync = 0
+        PARSE_RULE_OPTION_COMMAND(Backup),
+""",
         parse,
     )
 
     # A role no command has
-    assert_not_in(
-        "PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL",
-        _render(command=COMMAND.replace("      async: {}\n", ""))[1],
+    assert_not_in("parseRuleCommandRoleAllAsync", _render(command=COMMAND.replace("      async: {}\n", ""))[1])
+
+    # Role lists equal to all commands with the role
+    assert_in(
+        """        PARSE_RULE_OPTION_SECTION(Global),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Main),
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),""",
+        parse,
     )
 
-    # Role lists equal to all commands with the role, after a role list that is not
+    # A role list equal to all commands with another role
+    assert_in("PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Async),", parse)
+
+    # A role list equal to all commands with the role, after a role list that is not
     assert_in(
         """        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
         (
-            PARSE_RULE_OPTION_COMMAND(Backup)
+            PARSE_RULE_OPTION_COMMAND(Restore)
         ),
 
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,""",
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),""",
         parse,
     )
 
@@ -454,7 +464,7 @@ def test_config_render_option():
     # A role list that differs from the option the command list is inherited from
     assert_in(
         """        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_OPT(StartFast),
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),
 
         PARSE_RULE_OPTIONAL""",
         parse,

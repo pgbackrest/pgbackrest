@@ -465,12 +465,17 @@ def _command_role_all(bld_cfg, role):
 
 
 ####################################################################################################################################
-def _define_multi(define, line_list):
-    """Format a #define over several lines with the line continuations at the right margin."""
+def _command_role_all_find(bld_cfg, role, cmd_role):
+    """Role whose commands are the commands given, checking the role given first, or None."""
 
-    line_list = ["#define %s" % define] + line_list
-
-    return "\n".join(line.ljust(LINE_LENGTH - 1) + "\\" for line in line_list[:-1]) + "\n" + line_list[-1]
+    return next(
+        (
+            role_all
+            for role_all in sorted(CMD_ROLE_LIST, key=lambda role_all: role_all != role)
+            if cmd_role == _command_role_all(bld_cfg, role_all)
+        ),
+        None,
+    )
 
 
 ####################################################################################################################################
@@ -539,7 +544,7 @@ def _render_option(opt, bld_cfg, rule_val_map, dynamic_default_list):
 
     # Commands the option is valid for, per role, since a role only gets the options its part of the command needs. A role list
     # equal to the role list of the option the command list is inherited from references that option. A role list equal to all
-    # commands with the role references all of them.
+    # commands with a role references that role.
     opt_inherit = opt.cmd_list_inherit
     line_prior = False  # Was the prior role list rendered on one line?
 
@@ -549,10 +554,12 @@ def _render_option(opt, bld_cfg, rule_val_map, dynamic_default_list):
         if cmd_role == []:
             continue
 
+        role_all = _command_role_all_find(bld_cfg, role, cmd_role)
+
         if opt_inherit is not None and cmd_role == _option_command_role(opt_inherit, role):
             line = "PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_OPT(%s)" % (role.upper(), bld_enum("", opt_inherit.name))
-        elif cmd_role == _command_role_all(bld_cfg, role):
-            line = "PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_ALL" % role.upper()
+        elif role_all is not None:
+            line = "PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_ALL(%s)" % (role.upper(), bld_enum("", role_all))
         else:
             line = None
 
@@ -736,29 +743,30 @@ def _render_parse_auto_c(bld_cfg, label):
 
     result += "};\n"
 
+    # All commands with each role
+    cmd_role_all = []
+
+    for role in CMD_ROLE_LIST:
+        cmd_role = _command_role_all(bld_cfg, role)
+
+        if cmd_role != []:
+            cmd_role_all.append(
+                "    %s = 0\n%s,\n"
+                % (
+                    bld_enum("parseRuleCommandRoleAll", role),
+                    "\n".join("        PARSE_RULE_OPTION_COMMAND(%s)" % bld_enum("", cmd) for cmd in cmd_role),
+                )
+            )
+
+    result += "\n" + bld_comment_block("All commands with each role")
+    result += "typedef enum\n{\n%s} ParseRuleCommandRoleAll;\n" % "\n".join(cmd_role_all)
+
     # Option rules
     result += "\n" + bld_comment_block("Option parse data")
     result += (
         bld_define("PARSE_RULE_VAL_OPT(value)", "PARSE_RULE_U32_%u(cfgOpt##value)" % _var_128_size(len(bld_cfg.opt_list) - 1))
         + "\n"
     )
-
-    # Role lists of all commands with the role
-    for role in CMD_ROLE_LIST:
-        cmd_role = _command_role_all(bld_cfg, role)
-
-        if cmd_role != []:
-            result += (
-                "\n"
-                + _define_multi(
-                    "PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_ALL" % role.upper(),
-                    ["    PARSE_RULE_OPTION_COMMAND_ROLE_%s_VALID_LIST" % role.upper(), "    ("]
-                    + ["        PARSE_RULE_OPTION_COMMAND(%s)" % bld_enum("", cmd) for cmd in cmd_role]
-                    + ["    )"],
-                )
-                + "\n"
-            )
-
     result += "\nstatic const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =\n{\n"
 
     for opt_idx, opt in enumerate(bld_cfg.opt_list):

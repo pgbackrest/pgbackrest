@@ -906,74 +906,68 @@ static const ParseRuleOptionGroup parseRuleOptionGroup[CFG_OPTION_GROUP_TOTAL] =
 };
 
 /***********************************************************************************************************************************
+All commands with each role
+***********************************************************************************************************************************/
+typedef enum
+{
+    parseRuleCommandRoleAllMain = 0
+        PARSE_RULE_OPTION_COMMAND(Annotate)
+        PARSE_RULE_OPTION_COMMAND(ArchiveGet)
+        PARSE_RULE_OPTION_COMMAND(ArchivePush)
+        PARSE_RULE_OPTION_COMMAND(Backup)
+        PARSE_RULE_OPTION_COMMAND(Check)
+        PARSE_RULE_OPTION_COMMAND(Expire)
+        PARSE_RULE_OPTION_COMMAND(Info)
+        PARSE_RULE_OPTION_COMMAND(Manifest)
+        PARSE_RULE_OPTION_COMMAND(RepoGet)
+        PARSE_RULE_OPTION_COMMAND(RepoLs)
+        PARSE_RULE_OPTION_COMMAND(RepoRm)
+        PARSE_RULE_OPTION_COMMAND(Restore)
+        PARSE_RULE_OPTION_COMMAND(Server)
+        PARSE_RULE_OPTION_COMMAND(ServerPing)
+        PARSE_RULE_OPTION_COMMAND(StanzaCreate)
+        PARSE_RULE_OPTION_COMMAND(StanzaDelete)
+        PARSE_RULE_OPTION_COMMAND(StanzaRekey)
+        PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)
+        PARSE_RULE_OPTION_COMMAND(Start)
+        PARSE_RULE_OPTION_COMMAND(Stop)
+        PARSE_RULE_OPTION_COMMAND(Verify),
+
+    parseRuleCommandRoleAllAsync = 0
+        PARSE_RULE_OPTION_COMMAND(ArchiveGet)
+        PARSE_RULE_OPTION_COMMAND(ArchivePush),
+
+    parseRuleCommandRoleAllLocal = 0
+        PARSE_RULE_OPTION_COMMAND(ArchiveGet)
+        PARSE_RULE_OPTION_COMMAND(ArchivePush)
+        PARSE_RULE_OPTION_COMMAND(Backup)
+        PARSE_RULE_OPTION_COMMAND(Restore)
+        PARSE_RULE_OPTION_COMMAND(Verify),
+
+    parseRuleCommandRoleAllRemote = 0
+        PARSE_RULE_OPTION_COMMAND(Annotate)
+        PARSE_RULE_OPTION_COMMAND(ArchiveGet)
+        PARSE_RULE_OPTION_COMMAND(ArchivePush)
+        PARSE_RULE_OPTION_COMMAND(Backup)
+        PARSE_RULE_OPTION_COMMAND(Check)
+        PARSE_RULE_OPTION_COMMAND(Expire)
+        PARSE_RULE_OPTION_COMMAND(Info)
+        PARSE_RULE_OPTION_COMMAND(Manifest)
+        PARSE_RULE_OPTION_COMMAND(RepoGet)
+        PARSE_RULE_OPTION_COMMAND(RepoLs)
+        PARSE_RULE_OPTION_COMMAND(RepoRm)
+        PARSE_RULE_OPTION_COMMAND(Restore)
+        PARSE_RULE_OPTION_COMMAND(StanzaCreate)
+        PARSE_RULE_OPTION_COMMAND(StanzaDelete)
+        PARSE_RULE_OPTION_COMMAND(StanzaRekey)
+        PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)
+        PARSE_RULE_OPTION_COMMAND(Verify),
+} ParseRuleCommandRoleAll;
+
+/***********************************************************************************************************************************
 Option parse data
 ***********************************************************************************************************************************/
 #define PARSE_RULE_VAL_OPT(value)                                   PARSE_RULE_U32_2(cfgOpt##value)
-
-#define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL                                                                              \
-    PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                                 \
-    (                                                                                                                              \
-        PARSE_RULE_OPTION_COMMAND(Annotate)                                                                                        \
-        PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                                      \
-        PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                                     \
-        PARSE_RULE_OPTION_COMMAND(Backup)                                                                                          \
-        PARSE_RULE_OPTION_COMMAND(Check)                                                                                           \
-        PARSE_RULE_OPTION_COMMAND(Expire)                                                                                          \
-        PARSE_RULE_OPTION_COMMAND(Info)                                                                                            \
-        PARSE_RULE_OPTION_COMMAND(Manifest)                                                                                        \
-        PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                                         \
-        PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                                          \
-        PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                                          \
-        PARSE_RULE_OPTION_COMMAND(Restore)                                                                                         \
-        PARSE_RULE_OPTION_COMMAND(Server)                                                                                          \
-        PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                                      \
-        PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                                    \
-        PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                                    \
-        PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                                     \
-        PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                                   \
-        PARSE_RULE_OPTION_COMMAND(Start)                                                                                           \
-        PARSE_RULE_OPTION_COMMAND(Stop)                                                                                            \
-        PARSE_RULE_OPTION_COMMAND(Verify)                                                                                          \
-    )
-
-#define PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL                                                                             \
-    PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                                                \
-    (                                                                                                                              \
-        PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                                      \
-        PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                                     \
-    )
-
-#define PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL                                                                             \
-    PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                                                \
-    (                                                                                                                              \
-        PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                                      \
-        PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                                     \
-        PARSE_RULE_OPTION_COMMAND(Backup)                                                                                          \
-        PARSE_RULE_OPTION_COMMAND(Restore)                                                                                         \
-        PARSE_RULE_OPTION_COMMAND(Verify)                                                                                          \
-    )
-
-#define PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL                                                                            \
-    PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                                               \
-    (                                                                                                                              \
-        PARSE_RULE_OPTION_COMMAND(Annotate)                                                                                        \
-        PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                                      \
-        PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                                     \
-        PARSE_RULE_OPTION_COMMAND(Backup)                                                                                          \
-        PARSE_RULE_OPTION_COMMAND(Check)                                                                                           \
-        PARSE_RULE_OPTION_COMMAND(Expire)                                                                                          \
-        PARSE_RULE_OPTION_COMMAND(Info)                                                                                            \
-        PARSE_RULE_OPTION_COMMAND(Manifest)                                                                                        \
-        PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                                         \
-        PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                                          \
-        PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                                          \
-        PARSE_RULE_OPTION_COMMAND(Restore)                                                                                         \
-        PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                                    \
-        PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                                    \
-        PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                                     \
-        PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                                   \
-        PARSE_RULE_OPTION_COMMAND(Verify)                                                                                          \
-    )
 
 static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 {
@@ -986,10 +980,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                          // opt/allow-root
         PARSE_RULE_OPTION_SECTION(Global),                                                                         // opt/allow-root
                                                                                                                    // opt/allow-root
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL,                                                             // opt/allow-root
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                            // opt/allow-root
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                            // opt/allow-root
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                           // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Main),                                                       // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                     // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                     // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                   // opt/allow-root
                                                                                                                    // opt/allow-root
         PARSE_RULE_OPTIONAL                                                                                        // opt/allow-root
         (                                                                                                          // opt/allow-root
@@ -1054,25 +1048,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                       // opt/archive-async
         PARSE_RULE_OPTION_SECTION(Global),                                                                      // opt/archive-async
                                                                                                                 // opt/archive-async
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                          // opt/archive-async
-        (                                                                                                       // opt/archive-async
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                               // opt/archive-async
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                              // opt/archive-async
-        ),                                                                                                      // opt/archive-async
-                                                                                                                // opt/archive-async
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                         // opt/archive-async
-                                                                                                                // opt/archive-async
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                         // opt/archive-async
-        (                                                                                                       // opt/archive-async
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                               // opt/archive-async
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                              // opt/archive-async
-        ),                                                                                                      // opt/archive-async
-                                                                                                                // opt/archive-async
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                        // opt/archive-async
-        (                                                                                                       // opt/archive-async
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                               // opt/archive-async
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                              // opt/archive-async
-        ),                                                                                                      // opt/archive-async
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Async),                                                   // opt/archive-async
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                  // opt/archive-async
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Async),                                                  // opt/archive-async
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Async),                                                 // opt/archive-async
                                                                                                                 // opt/archive-async
         PARSE_RULE_OPTIONAL                                                                                     // opt/archive-async
         (                                                                                                       // opt/archive-async
@@ -1511,10 +1490,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                                // opt/beta
         PARSE_RULE_OPTION_SECTION(Global),                                                                               // opt/beta
                                                                                                                          // opt/beta
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL,                                                                   // opt/beta
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                                  // opt/beta
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                                  // opt/beta
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                                 // opt/beta
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Main),                                                             // opt/beta
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                           // opt/beta
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                           // opt/beta
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                         // opt/beta
                                                                                                                          // opt/beta
         PARSE_RULE_OPTIONAL                                                                                              // opt/beta
         (                                                                                                                // opt/beta
@@ -1559,9 +1538,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/buffer-size
         ),                                                                                                        // opt/buffer-size
                                                                                                                   // opt/buffer-size
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                           // opt/buffer-size
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                           // opt/buffer-size
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                          // opt/buffer-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                    // opt/buffer-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                    // opt/buffer-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                  // opt/buffer-size
                                                                                                                   // opt/buffer-size
         PARSE_RULE_OPTIONAL                                                                                       // opt/buffer-size
         (                                                                                                         // opt/buffer-size
@@ -1661,17 +1640,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                                 // opt/cmd
         PARSE_RULE_OPTION_SECTION(Global),                                                                                // opt/cmd
                                                                                                                           // opt/cmd
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                    // opt/cmd
-        (                                                                                                                 // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                         // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                        // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                             // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                            // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                             // opt/cmd
-        ),                                                                                                                // opt/cmd
-                                                                                                                          // opt/cmd
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                                   // opt/cmd
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                                   // opt/cmd
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Local),                                                             // opt/cmd
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                            // opt/cmd
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                            // opt/cmd
                                                                                                                           // opt/cmd
         PARSE_RULE_OPTIONAL                                                                                               // opt/cmd
         (                                                                                                                 // opt/cmd
@@ -1693,29 +1664,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                             // opt/cmd-ssh
         PARSE_RULE_OPTION_SECTION(Global),                                                                            // opt/cmd-ssh
                                                                                                                       // opt/cmd-ssh
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                // opt/cmd-ssh
-        (                                                                                                             // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                       // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                     // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                    // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                         // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(Check)                                                                          // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                         // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(Info)                                                                           // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                       // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                        // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                         // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                         // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                        // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                   // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                   // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                    // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                  // opt/cmd-ssh
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                         // opt/cmd-ssh
-        ),                                                                                                            // opt/cmd-ssh
-                                                                                                                      // opt/cmd-ssh
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                               // opt/cmd-ssh
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                               // opt/cmd-ssh
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Remote),                                                        // opt/cmd-ssh
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                        // opt/cmd-ssh
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                        // opt/cmd-ssh
                                                                                                                       // opt/cmd-ssh
         PARSE_RULE_OPTIONAL                                                                                           // opt/cmd-ssh
         (                                                                                                             // opt/cmd-ssh
@@ -1830,29 +1781,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                              // opt/compress-level-network
         PARSE_RULE_OPTION_SECTION(Global),                                                             // opt/compress-level-network
                                                                                                        // opt/compress-level-network
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                 // opt/compress-level-network
-        (                                                                                              // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(Annotate)                                                        // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                      // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                     // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                          // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(Check)                                                           // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                          // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(Info)                                                            // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(Manifest)                                                        // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                         // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                          // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                          // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                    // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                    // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                     // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                   // opt/compress-level-network
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/compress-level-network
-        ),                                                                                             // opt/compress-level-network
-                                                                                                       // opt/compress-level-network
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                // opt/compress-level-network
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                // opt/compress-level-network
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Remote),                                         // opt/compress-level-network
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                         // opt/compress-level-network
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                         // opt/compress-level-network
                                                                                                        // opt/compress-level-network
         PARSE_RULE_OPTIONAL                                                                            // opt/compress-level-network
         (                                                                                              // opt/compress-level-network
@@ -1916,10 +1847,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                              // opt/config
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                        // opt/config
                                                                                                                        // opt/config
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL,                                                                 // opt/config
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                                // opt/config
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                                // opt/config
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                               // opt/config
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Main),                                                           // opt/config
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                         // opt/config
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                         // opt/config
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                       // opt/config
                                                                                                                        // opt/config
         PARSE_RULE_OPTIONAL                                                                                            // opt/config
         (                                                                                                              // opt/config
@@ -1940,10 +1871,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                 // opt/config-include-path
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                           // opt/config-include-path
                                                                                                           // opt/config-include-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL,                                                    // opt/config-include-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                   // opt/config-include-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                   // opt/config-include-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                  // opt/config-include-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Main),                                              // opt/config-include-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                            // opt/config-include-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                            // opt/config-include-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                          // opt/config-include-path
                                                                                                           // opt/config-include-path
         PARSE_RULE_OPTIONAL                                                                               // opt/config-include-path
         (                                                                                                 // opt/config-include-path
@@ -1964,10 +1895,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                         // opt/config-path
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                   // opt/config-path
                                                                                                                   // opt/config-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL,                                                            // opt/config-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                           // opt/config-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                           // opt/config-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                          // opt/config-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Main),                                                      // opt/config-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                    // opt/config-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                    // opt/config-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                  // opt/config-path
                                                                                                                   // opt/config-path
         PARSE_RULE_OPTIONAL                                                                                       // opt/config-path
         (                                                                                                         // opt/config-path
@@ -2146,10 +2077,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),                                                                            // opt/exec-id
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                       // opt/exec-id
                                                                                                                       // opt/exec-id
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL,                                                                // opt/exec-id
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                               // opt/exec-id
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                               // opt/exec-id
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                              // opt/exec-id
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Main),                                                          // opt/exec-id
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                        // opt/exec-id
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                        // opt/exec-id
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                      // opt/exec-id
     ),                                                                                                                // opt/exec-id
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                             // opt/expire-auto
@@ -2332,17 +2263,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                           // opt/job-retry
         PARSE_RULE_OPTION_SECTION(Global),                                                                          // opt/job-retry
                                                                                                                     // opt/job-retry
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                              // opt/job-retry
-        (                                                                                                           // opt/job-retry
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                   // opt/job-retry
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                  // opt/job-retry
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                       // opt/job-retry
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/job-retry
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                       // opt/job-retry
-        ),                                                                                                          // opt/job-retry
-                                                                                                                    // opt/job-retry
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                             // opt/job-retry
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                             // opt/job-retry
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Local),                                                       // opt/job-retry
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                      // opt/job-retry
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                      // opt/job-retry
                                                                                                                     // opt/job-retry
         PARSE_RULE_OPTIONAL                                                                                         // opt/job-retry
         (                                                                                                           // opt/job-retry
@@ -2391,17 +2314,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                  // opt/job-retry-interval
         PARSE_RULE_OPTION_SECTION(Global),                                                                 // opt/job-retry-interval
                                                                                                            // opt/job-retry-interval
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/job-retry-interval
-        (                                                                                                  // opt/job-retry-interval
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                          // opt/job-retry-interval
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                         // opt/job-retry-interval
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                              // opt/job-retry-interval
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/job-retry-interval
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/job-retry-interval
-        ),                                                                                                 // opt/job-retry-interval
-                                                                                                           // opt/job-retry-interval
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                    // opt/job-retry-interval
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                    // opt/job-retry-interval
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Local),                                              // opt/job-retry-interval
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                             // opt/job-retry-interval
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                             // opt/job-retry-interval
                                                                                                            // opt/job-retry-interval
         PARSE_RULE_OPTIONAL                                                                                // opt/job-retry-interval
         (                                                                                                  // opt/job-retry-interval
@@ -2509,7 +2424,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Stop)                                                                         // opt/lock-path
         ),                                                                                                          // opt/lock-path
                                                                                                                     // opt/lock-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                             // opt/lock-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                      // opt/lock-path
                                                                                                                     // opt/lock-path
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                             // opt/lock-path
         (                                                                                                           // opt/lock-path
@@ -2555,10 +2470,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                   // opt/log-level-console
         PARSE_RULE_OPTION_SECTION(Global),                                                                  // opt/log-level-console
                                                                                                             // opt/log-level-console
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL,                                                      // opt/log-level-console
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                     // opt/log-level-console
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                     // opt/log-level-console
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                    // opt/log-level-console
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Main),                                                // opt/log-level-console
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                              // opt/log-level-console
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                              // opt/log-level-console
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                            // opt/log-level-console
                                                                                                             // opt/log-level-console
         PARSE_RULE_OPTIONAL                                                                                 // opt/log-level-console
         (                                                                                                   // opt/log-level-console
@@ -2667,10 +2582,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                            // opt/log-path
         PARSE_RULE_OPTION_SECTION(Global),                                                                           // opt/log-path
                                                                                                                      // opt/log-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL,                                                               // opt/log-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                              // opt/log-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                              // opt/log-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                             // opt/log-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Main),                                                         // opt/log-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                       // opt/log-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                       // opt/log-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                     // opt/log-path
                                                                                                                      // opt/log-path
         PARSE_RULE_OPTIONAL                                                                                          // opt/log-path
         (                                                                                                            // opt/log-path
@@ -2693,30 +2608,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                      // opt/log-subprocess
         PARSE_RULE_OPTION_SECTION(Global),                                                                     // opt/log-subprocess
                                                                                                                // opt/log-subprocess
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/log-subprocess
-        (                                                                                                      // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                              // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                             // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                  // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(Check)                                                                   // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                  // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(Info)                                                                    // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                 // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                  // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                  // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                             // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/log-subprocess
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/log-subprocess
-        ),                                                                                                     // opt/log-subprocess
-                                                                                                               // opt/log-subprocess
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                        // opt/log-subprocess
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                        // opt/log-subprocess
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                       // opt/log-subprocess
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Remote),                                                 // opt/log-subprocess
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                 // opt/log-subprocess
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                 // opt/log-subprocess
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                               // opt/log-subprocess
                                                                                                                // opt/log-subprocess
         PARSE_RULE_OPTIONAL                                                                                    // opt/log-subprocess
         (                                                                                                      // opt/log-subprocess
@@ -2817,8 +2712,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/neutral-umask
         ),                                                                                                      // opt/neutral-umask
                                                                                                                 // opt/neutral-umask
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                         // opt/neutral-umask
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                         // opt/neutral-umask
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                  // opt/neutral-umask
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                  // opt/neutral-umask
                                                                                                                 // opt/neutral-umask
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                        // opt/neutral-umask
         (                                                                                                       // opt/neutral-umask
@@ -3491,7 +3386,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/pg-io-mode
         ),                                                                                                         // opt/pg-io-mode
                                                                                                                    // opt/pg-io-mode
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                            // opt/pg-io-mode
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                     // opt/pg-io-mode
                                                                                                                    // opt/pg-io-mode
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                            // opt/pg-io-mode
         (                                                                                                          // opt/pg-io-mode
@@ -3564,7 +3459,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                 // opt/pg-local
         ),                                                                                                           // opt/pg-local
                                                                                                                      // opt/pg-local
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                              // opt/pg-local
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                       // opt/pg-local
                                                                                                                      // opt/pg-local
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                              // opt/pg-local
         (                                                                                                            // opt/pg-local
@@ -3608,7 +3503,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                  // opt/pg-path
         ),                                                                                                            // opt/pg-path
                                                                                                                       // opt/pg-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                               // opt/pg-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                        // opt/pg-path
                                                                                                                       // opt/pg-path
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                               // opt/pg-path
         (                                                                                                             // opt/pg-path
@@ -3767,8 +3662,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/pg-version-force
         ),                                                                                                   // opt/pg-version-force
                                                                                                              // opt/pg-version-force
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                      // opt/pg-version-force
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                      // opt/pg-version-force
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                               // opt/pg-version-force
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                               // opt/pg-version-force
                                                                                                              // opt/pg-version-force
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                     // opt/pg-version-force
         (                                                                                                    // opt/pg-version-force
@@ -3793,10 +3688,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),                                                                           // opt/priority
         PARSE_RULE_OPTION_SECTION(Global),                                                                           // opt/priority
                                                                                                                      // opt/priority
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL,                                                               // opt/priority
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                              // opt/priority
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                              // opt/priority
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                             // opt/priority
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Main),                                                         // opt/priority
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                       // opt/priority
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                       // opt/priority
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                     // opt/priority
                                                                                                                      // opt/priority
         PARSE_RULE_OPTIONAL                                                                                          // opt/priority
         (                                                                                                            // opt/priority
@@ -3819,8 +3714,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),                                                                            // opt/process
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                       // opt/process
                                                                                                                       // opt/process
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                               // opt/process
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                              // opt/process
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                        // opt/process
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                      // opt/process
                                                                                                                       // opt/process
         PARSE_RULE_OPTIONAL                                                                                           // opt/process
         (                                                                                                             // opt/process
@@ -3843,16 +3738,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                         // opt/process-max
         PARSE_RULE_OPTION_SECTION(Global),                                                                        // opt/process-max
                                                                                                                   // opt/process-max
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                            // opt/process-max
-        (                                                                                                         // opt/process-max
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                 // opt/process-max
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/process-max
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                     // opt/process-max
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/process-max
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/process-max
-        ),                                                                                                        // opt/process-max
-                                                                                                                  // opt/process-max
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                           // opt/process-max
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Local),                                                     // opt/process-max
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                    // opt/process-max
                                                                                                                   // opt/process-max
         PARSE_RULE_OPTIONAL                                                                                       // opt/process-max
         (                                                                                                         // opt/process-max
@@ -3902,9 +3789,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/protocol-timeout
         ),                                                                                                   // opt/protocol-timeout
                                                                                                              // opt/protocol-timeout
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                      // opt/protocol-timeout
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                      // opt/protocol-timeout
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                     // opt/protocol-timeout
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                               // opt/protocol-timeout
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                               // opt/protocol-timeout
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                             // opt/protocol-timeout
                                                                                                              // opt/protocol-timeout
         PARSE_RULE_OPTIONAL                                                                                  // opt/protocol-timeout
         (                                                                                                    // opt/protocol-timeout
@@ -4027,8 +3914,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),                                                                        // opt/remote-type
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                   // opt/remote-type
                                                                                                                   // opt/remote-type
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                           // opt/remote-type
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                          // opt/remote-type
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                    // opt/remote-type
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                  // opt/remote-type
                                                                                                                   // opt/remote-type
         PARSE_RULE_OPTIONAL                                                                                       // opt/remote-type
         (                                                                                                         // opt/remote-type
@@ -4080,7 +3967,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                            // opt/repo
         ),                                                                                                               // opt/repo
                                                                                                                          // opt/repo
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                                 // opt/repo
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                         // opt/repo
                                                                                                                          // opt/repo
         PARSE_RULE_OPTIONAL                                                                                              // opt/repo
         (                                                                                                                // opt/repo
@@ -5332,29 +5219,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(Global),                                                                         // opt/repo-local
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                          // opt/repo-local
                                                                                                                    // opt/repo-local
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/repo-local
-        (                                                                                                          // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                    // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(Check)                                                                       // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                      // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(Info)                                                                        // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                    // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                      // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                      // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                 // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/repo-local
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/repo-local
-        ),                                                                                                         // opt/repo-local
-                                                                                                                   // opt/repo-local
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                            // opt/repo-local
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                            // opt/repo-local
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Remote),                                                     // opt/repo-local
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                     // opt/repo-local
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                     // opt/repo-local
                                                                                                                    // opt/repo-local
         PARSE_RULE_OPTIONAL                                                                                        // opt/repo-local
         (                                                                                                          // opt/repo-local
@@ -6766,30 +6633,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                           // opt/repo-type
         PARSE_RULE_OPTION_DEPRECATE_MATCH(true),                                                                    // opt/repo-type
                                                                                                                     // opt/repo-type
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                              // opt/repo-type
-        (                                                                                                           // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                     // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                   // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                  // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                       // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(Check)                                                                        // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                       // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(Info)                                                                         // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                     // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                      // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                       // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                       // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                 // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(StanzaRekey)                                                                  // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                // opt/repo-type
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                       // opt/repo-type
-        ),                                                                                                          // opt/repo-type
-                                                                                                                    // opt/repo-type
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                             // opt/repo-type
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                             // opt/repo-type
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                            // opt/repo-type
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Remote),                                                      // opt/repo-type
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                      // opt/repo-type
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                      // opt/repo-type
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                    // opt/repo-type
                                                                                                                     // opt/repo-type
         PARSE_RULE_OPTIONAL                                                                                         // opt/repo-type
         (                                                                                                           // opt/repo-type
@@ -7033,7 +6880,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/spool-path
         ),                                                                                                         // opt/spool-path
                                                                                                                    // opt/spool-path
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                            // opt/spool-path
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                     // opt/spool-path
                                                                                                                    // opt/spool-path
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                            // opt/spool-path
         (                                                                                                          // opt/spool-path
@@ -7111,9 +6958,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                          // opt/stanza
         ),                                                                                                             // opt/stanza
                                                                                                                        // opt/stanza
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL,                                                                // opt/stanza
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL,                                                                // opt/stanza
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL,                                                               // opt/stanza
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),                                                         // opt/stanza
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),                                                         // opt/stanza
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),                                                       // opt/stanza
                                                                                                                        // opt/stanza
         PARSE_RULE_OPTIONAL                                                                                            // opt/stanza
         (                                                                                                              // opt/stanza
