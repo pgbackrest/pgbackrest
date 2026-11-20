@@ -795,6 +795,18 @@
                         <example>auto</example>
                     </config-key>
 
+                    <config-key id="repo-gcs-kms-key-name" name="GCS Repository KMS Key Name">
+                        <summary>GCS repository KMS key name.</summary>
+
+                        <text>
+                            <p>Full resource name of the Cloud KMS key used to encrypt objects written to the repository. If not set, the bucket's default encryption is used.</p>
+
+                            <p>The Cloud Storage service agent for the bucket's project must have permission to encrypt and decrypt with the key.</p>
+                        </text>
+
+                        <example>projects/my-project/locations/us-east1/keyRings/my-ring/cryptoKeys/my-key</example>
+                    </config-key>
+
                     <config-key id="repo-gcs-user-project" name="GCS Repository Project ID">
                         <summary>GCS project ID.</summary>
 
