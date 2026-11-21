@@ -25,9 +25,17 @@ typedef struct ArchivePushFileRepoData
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+typedef struct ArchivePushFileRepoError
+{
+    unsigned int repoIdx;                                           // Repo index
+    const String *message;                                          // Error message
+} ArchivePushFileRepoError;
+
 typedef struct ArchivePushFileResult
 {
     StringList *warnList;                                           // Warnings from a successful operation
+    String *error;                                                  // Prior errors and repo errors, NULL when there are none
+    List *repoErrorList;                                            // Errors from repos that failed (ArchivePushFileRepoError)
 } ArchivePushFileResult;
 
 // Copy a file from the source to the archive

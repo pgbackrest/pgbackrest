@@ -1268,29 +1268,31 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_wal/archive_status/00000001000000010000000%u.ready", walIdx));
         }
 
-        // Make the repo archive path read-only so each push errors when it writes, simulating an unavailable repository
+        // Make the repo archive paths read-only so each push errors when it writes, simulating unavailable repositories
         HRN_STORAGE_MODE(storageTest, "repo/archive/test/18-1/0000000100000001", .mode = 0500);
+        HRN_STORAGE_MODE(storageTest, "repo3/archive/test/18-1/0000000100000001", .mode = 0500);
 
         argListTemp = strLstDup(argList);
         HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
 
-        // The job that errors and the one already in flight (process-max is 1) both complete, then scheduling stops
+        // The job that errors on all repos and the one already in flight (process-max is 1) both complete, then scheduling stops
         TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
         TEST_RESULT_LOG_FMT(
             "P00   INFO: push 6 WAL file(s) to archive: 000000010000000100000004...000000010000000100000009\n"
             "P01   WARN: could not push WAL file '000000010000000100000004' to the archive (will be retried): "
-            "[104] raised from local-1 shim protocol: archive-push command encountered error(s):\n"
+            "[104] archive-push command encountered error(s):\n"
             "            repo1: [FileOpenError] unable to open file '" TEST_PATH
             "/repo/archive/test/18-1/0000000100000001/000000010000000100000004-%s' for write: [13] Permission denied\n"
+            "            repo3: [FileOpenError] unable to open file '" TEST_PATH
+            "/repo3/archive/test/18-1/0000000100000001/000000010000000100000004-%s' for write: [13] Permission denied\n"
             "P01   WARN: could not push WAL file '000000010000000100000005' to the archive (will be retried): "
-            "[104] raised from local-1 shim protocol: archive-push command encountered error(s):\n"
+            "[104] archive-push command encountered error(s):\n"
             "            repo1: [FileOpenError] unable to open file '" TEST_PATH
             "/repo/archive/test/18-1/0000000100000001/000000010000000100000005-%s' for write: [13] Permission denied\n"
+            "            repo3: [FileOpenError] unable to open file '" TEST_PATH
+            "/repo3/archive/test/18-1/0000000100000001/000000010000000100000005-%s' for write: [13] Permission denied\n"
             "P00   WARN: stopped archive-push after an error, remaining WAL will be processed on the next run",
-            walBufferBatchSha1, walBufferBatchSha1);
-
-        // Restore the repo mode so later tests can write
-        HRN_STORAGE_MODE(storageTest, "repo/archive/test/18-1/0000000100000001");
+            walBufferBatchSha1, walBufferBatchSha1, walBufferBatchSha1, walBufferBatchSha1);
 
         // Only the segments processed before stopping have status files; the rest are left for the next run
         TEST_STORAGE_LIST(
@@ -1298,6 +1300,58 @@ testRun(void)
             "000000010000000100000004.error\n"
             "000000010000000100000005.error\n",
             .comment = "check status files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("push to remaining repos after a repo errors");
+
+        HRN_STORAGE_MODE(storageTest, "repo3/archive/test/18-1/0000000100000001");
+
+        // Later jobs push only to repo3 and report repo1 as skipped after the error on WAL 4
+        TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
+        TEST_RESULT_LOG_FMT(
+            "P00   INFO: push 6 WAL file(s) to archive: 000000010000000100000004...000000010000000100000009\n"
+            "P01   WARN: could not push WAL file '000000010000000100000004' to the archive (will be retried): "
+            "[104] archive-push command encountered error(s):\n"
+            "            repo1: [FileOpenError] unable to open file '" TEST_PATH
+            "/repo/archive/test/18-1/0000000100000001/000000010000000100000004-%s' for write: [13] Permission denied\n"
+            "P01   WARN: could not push WAL file '000000010000000100000005' to the archive (will be retried): "
+            "[104] archive-push command encountered error(s):\n"
+            "            repo1: [FileOpenError] unable to open file '" TEST_PATH
+            "/repo/archive/test/18-1/0000000100000001/000000010000000100000005-%s' for write: [13] Permission denied\n"
+            "P01   WARN: could not push WAL file '000000010000000100000006' to the archive (will be retried): "
+            "[104] archive-push command encountered error(s):\n"
+            "            repo1: skipped after error pushing WAL file '000000010000000100000004'\n"
+            "P01   WARN: could not push WAL file '000000010000000100000007' to the archive (will be retried): "
+            "[104] archive-push command encountered error(s):\n"
+            "            repo1: skipped after error pushing WAL file '000000010000000100000004'\n"
+            "P01   WARN: could not push WAL file '000000010000000100000008' to the archive (will be retried): "
+            "[104] archive-push command encountered error(s):\n"
+            "            repo1: skipped after error pushing WAL file '000000010000000100000004'\n"
+            "P01   WARN: could not push WAL file '000000010000000100000009' to the archive (will be retried): "
+            "[104] archive-push command encountered error(s):\n"
+            "            repo1: skipped after error pushing WAL file '000000010000000100000004'",
+            walBufferBatchSha1, walBufferBatchSha1);
+
+        for (unsigned int walIdx = 4; walIdx <= 9; walIdx++)
+        {
+            TEST_STORAGE_EXISTS(
+                storageTest,
+                zNewFmt("repo3/archive/test/18-1/0000000100000001/00000001000000010000000%u-%s", walIdx, walBufferBatchSha1),
+                .comment = "check repo3 for WAL file");
+        }
+
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT,
+            "000000010000000100000004.error\n"
+            "000000010000000100000005.error\n"
+            "000000010000000100000006.error\n"
+            "000000010000000100000007.error\n"
+            "000000010000000100000008.error\n"
+            "000000010000000100000009.error\n",
+            .comment = "check status files");
+
+        // Restore the repo mode so later tests can write
+        HRN_STORAGE_MODE(storageTest, "repo/archive/test/18-1/0000000100000001");
 
         // Uninstall local command handler shim
         hrnProtocolLocalShimUninstall();
