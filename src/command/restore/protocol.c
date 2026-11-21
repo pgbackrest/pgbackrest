@@ -60,6 +60,7 @@ restoreFileProtocol(PackRead *const param)
             file.timeModified = pckReadTimeP(param);
             file.mode = pckReadModeP(param);
             file.zero = pckReadBoolP(param);
+            file.noSyncFile = pckReadBoolP(param);
             file.user = pckReadStrP(param);
             file.group = pckReadStrP(param);
 

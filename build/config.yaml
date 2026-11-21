@@ -1316,6 +1316,19 @@ option:
     command-role:
       main: {}
 
+  restore-sync-method:
+    section: global
+    type: string-id
+    default: fsync
+    allow-list:
+      - fsync
+      - syncfs: HAVE_SYNCFS
+    beta: true
+    command:
+      restore: {}
+    command-role:
+      main: {}
+
   tablespace-map:
     section: global
     type: hash

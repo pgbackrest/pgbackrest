@@ -352,6 +352,7 @@ typedef struct RestoreJobData
     const CipherSpec *cipherSpecBackup;                             // Cipher spec used to decrypt files in the backup
     const String *rootReplaceUser;                                  // User to replace invalid users when root
     const String *rootReplaceGroup;                                 // Group to replace invalid group when root
+    bool syncFileSystem;                                            // Sync filesystems instead of files
 } RestoreJobData;
 
 // Helper to calculate the next queue to scan based on the client index
@@ -454,6 +455,11 @@ restoreJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteTimeP(param, file.timestamp);
                 pckWriteModeP(param, file.mode);
                 pckWriteBoolP(param, restoreFileZeroed(file.name, jobData->zeroExp));
+
+                // Skip file sync when filesystems are synced, except for file links
+                pckWriteBoolP(
+                    param, jobData->syncFileSystem && manifestTargetFindDefault(jobData->manifest, file.name, NULL) == NULL);
+
                 pckWriteStrP(param, restoreManifestOwnerReplace(file.user, jobData->rootReplaceUser));
                 pckWriteStrP(param, restoreManifestOwnerReplace(file.group, jobData->rootReplaceGroup));
 

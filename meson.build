@@ -188,6 +188,11 @@ dist = run_command(
 ####################################################################################################################################
 configuration = configuration_data()
 
+# Check for filesystem synchronization support
+if host_machine.system() == 'linux' and cc.has_function('syncfs', prefix: '#include <unistd.h>', args: feature_args)
+    configuration.set('HAVE_SYNCFS', true, description: 'Is syncfs present?')
+endif
+
 # Ensure the C compiler supports __builtin_clzl()
 if not cc.links('''int main(void) {__builtin_clzl(1);}''')
     error('compiler must support __builtin_clzl()')
