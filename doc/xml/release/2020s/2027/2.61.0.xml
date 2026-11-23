@@ -130,6 +130,21 @@
 
                 <p>Set <br-option>repo-s3-kms-context</br-option> to add an encryption context to objects encrypted with <br-option>repo-s3-kms-key-id</br-option>, e.g. when a <proper>KMS</proper> key policy or grant requires a context. The context of existing objects is not changed so set this option before running <cmd>stanza-create</cmd>.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2892"/>
+                <github-pull-request id="2897"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="qinru.yao"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Support per-repository <proper>KMS</proper> keys for <proper>GCS</proper>.</p>
+
+                <p>Set <br-option>repo-gcs-kms-key-name</br-option> to encrypt objects with a specific <proper>Cloud KMS</proper> key, e.g. when repositories that share a bucket require different keys. Existing objects are not re-encrypted.</p>
+            </release-item>
         </release-feature-list>
 
         <release-improvement-list>
