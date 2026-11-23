@@ -4701,6 +4701,32 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                  // opt/repo-gcs-key-type
     ),                                                                                                      // opt/repo-gcs-key-type
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                   // opt/repo-gcs-kms-key-name
+    (                                                                                                   // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_NAME("repo-gcs-kms-key-name"),                                                // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_TYPE(String),                                                                 // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_RESET(true),                                                                  // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_REQUIRED(false),                                                              // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_SECTION(Global),                                                              // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                               // opt/repo-gcs-kms-key-name
+                                                                                                        // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_OPT(RepoType),                                        // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_OPT(RepoType),                                       // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_OPT(RepoType),                                       // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_OPT(RepoType),                                      // opt/repo-gcs-kms-key-name
+                                                                                                        // opt/repo-gcs-kms-key-name
+        PARSE_RULE_OPTIONAL                                                                             // opt/repo-gcs-kms-key-name
+        (                                                                                               // opt/repo-gcs-kms-key-name
+            PARSE_RULE_OPTIONAL_GROUP                                                                   // opt/repo-gcs-kms-key-name
+            (                                                                                           // opt/repo-gcs-kms-key-name
+                PARSE_RULE_OPTIONAL_DEPEND                                                              // opt/repo-gcs-kms-key-name
+                (                                                                                       // opt/repo-gcs-kms-key-name
+                    PARSE_RULE_VAL_OPT(RepoGcsKeyType),                                                 // opt/repo-gcs-kms-key-name
+                ),                                                                                      // opt/repo-gcs-kms-key-name
+            ),                                                                                          // opt/repo-gcs-kms-key-name
+        ),                                                                                              // opt/repo-gcs-kms-key-name
+    ),                                                                                                  // opt/repo-gcs-kms-key-name
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                   // opt/repo-gcs-user-project
     (                                                                                                   // opt/repo-gcs-user-project
         PARSE_RULE_OPTION_NAME("repo-gcs-user-project"),                                                // opt/repo-gcs-user-project
@@ -7946,6 +7972,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoCipherPassOld,                                                                                    // opt-resolve-order
     cfgOptRepoCipherRotate,                                                                                     // opt-resolve-order
     cfgOptRepoGcsKeyType,                                                                                       // opt-resolve-order
+    cfgOptRepoGcsKmsKeyName,                                                                                    // opt-resolve-order
     cfgOptRepoHost,                                                                                             // opt-resolve-order
     cfgOptRepoHostConfig,                                                                                       // opt-resolve-order
     cfgOptRepoHostConfigIncludePath,                                                                            // opt-resolve-order
