@@ -78,12 +78,13 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
             if (error)
                 THROW(ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
         }
-        // Notify that online backups will be skipped when run against this standby
-        else if (cfgOptionSeq(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_SKIP)
+
+        // Notify that online backups will be skipped when run on this host since the standby is local
+        if (cfgOptionSeq(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_SKIP && pgIsLocal(dbGroup.standbyIdx))
         {
             LOG_INFO(
-                "standby cluster found and " CFGOPT_BACKUP_STANDBY "=skip is set - online backups using this configuration will"
-                " be skipped");
+                "local standby cluster found and " CFGOPT_BACKUP_STANDBY "=skip is set - online backups run on this host will be"
+                " skipped");
         }
 
         // Check the user configured path and version against the database
@@ -103,8 +104,10 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
         // Free the standby connection
         dbFree(dbGroup.standby);
     }
-    // If backup from standby is true then warn when a standby not found
-    else if (cfgOptionSeq(cfgOptBackupStandby) != CFGOPTVAL_BACKUP_STANDBY_N)
+    // If backup from standby is true then warn when a standby not found. A standby is not expected when backup-standby=skip since
+    // the backup is made from the primary unless run on a standby host.
+    else if (cfgOptionSeq(cfgOptBackupStandby) != CFGOPTVAL_BACKUP_STANDBY_N &&
+             cfgOptionSeq(cfgOptBackupStandby) != CFGOPTVAL_BACKUP_STANDBY_SKIP)
     {
         LOG_WARN("option '" CFGOPT_BACKUP_STANDBY "' is enabled but standby is not properly configured");
     }

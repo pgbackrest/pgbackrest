@@ -4,6 +4,7 @@ Test Database
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/type/json.h"
+#include "config/protocol.h"
 #include "storage/remote/protocol.h"
 
 #include "harness/config.h"
@@ -12,6 +13,7 @@ Test Database
 #include "harness/pack.h"
 #include "harness/postgres.h"
 #include "harness/pq.h"
+#include "harness/protocol.h"
 
 /***********************************************************************************************************************************
 Macro to check that replay is making progress -- this does not seem useful enough to be included in the pq harness header
@@ -41,6 +43,20 @@ Macro to check that replay is making progress -- this does not seem useful enoug
     {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,2]", .resultZ = cvtBoolToConstZ(replayProgressParam)},     \
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
+
+/***********************************************************************************************************************************
+Open a standby in the remote shim. The pq script is set here because the remote shim is forked from the test process so a script
+set in the test process is not visible to the remote.
+***********************************************************************************************************************************/
+static ProtocolServerResult *
+testDbOpenStandbyProtocol(PackRead *const param)
+{
+    HRN_PQ_SCRIPT_SET(
+        HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg2", true, NULL, NULL),
+        HRN_PQ_SCRIPT_CLOSE(1));
+
+    return dbOpenProtocol(param);
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -841,6 +857,78 @@ testRun(void)
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup-standby=skip, remote standby ignored and primary found");
+
+        // Install a remote shim so a connection to a remote standby can be scripted
+        static const ProtocolServerHandler testRemoteHandlerList[] =
+        {
+            {.command = PROTOCOL_COMMAND_DB, .open = testDbOpenStandbyProtocol, .processSession = dbQueryProtocol},
+            PROTOCOL_SERVER_HANDLER_OPTION_LIST
+            PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
+        };
+
+        hrnProtocolRemoteShimInstall(LSTDEF(testRemoteHandlerList));
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "localhost");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        // Create control file for the standby. This also starts the remote before any pq script is set in the test process, which
+        // is required for the remote to be able to set a script when opening the standby.
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_18);
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), "get primary, remote standby ignored");
+
+        TEST_RESULT_INT(result.primaryIdx, 0, "check primary idx");
+        TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
+        TEST_RESULT_BOOL(result.standby == NULL, true, "check remote standby was ignored");
+
+        TEST_RESULT_VOID(dbFree(result.primary), "free primary");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup-standby=skip, remote standby ignored and primary not found");
+
+        HRN_PQ_SCRIPT_SET(
+            {.session = 1, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
+            {.session = 1, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+            {.session = 1, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
+            {.session = 1, .function = HRN_PQ_FINISH});
+
+        TEST_ERROR(
+            dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), DbConnectError,
+            "unable to find primary cluster - cannot proceed\n"
+            "HINT: are all available clusters in recovery?");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup-standby=prefer, remote standby found");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_PREFER), "get primary and remote standby");
+
+        TEST_RESULT_INT(result.primaryIdx, 0, "check primary idx");
+        TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
+        TEST_RESULT_INT(result.standbyIdx, 1, "check standby idx");
+        TEST_RESULT_BOOL(result.standby != NULL, true, "check remote standby");
+
+        TEST_RESULT_VOID(dbFree(result.primary), "free primary");
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
+        hrnProtocolRemoteShimUninstall();
     }
 
     protocolFree();

@@ -3087,7 +3087,7 @@ testRun(void)
             // Create standby pg_control (dbOpen() reads it after the mocked connection succeeds)
             HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_10);
 
-            // Primary is unreachable, standby responds and reports itself as a standby
+            // Primary is unreachable, local standby responds and reports itself as a standby
             HRN_PQ_SCRIPT_SET(
                 {.session = 1, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
                 {.session = 1, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
@@ -3099,7 +3099,7 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error\n"
-                "P00   WARN: unable to find primary cluster but standby cluster found, skipping backup since"
+                "P00   WARN: unable to find primary cluster but local standby cluster found, skipping backup since"
                 " backup-standby=skip");
 
             TEST_RESULT_BOOL(cfgOptionBool(cfgOptExpireAuto), false, "expire-auto disabled since backup was skipped");
@@ -3111,7 +3111,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("online 10 backup-standby=skip exits without a backup when a standby is found");
+        TEST_TITLE("online 10 backup-standby=skip exits without a backup when a local standby is found");
 
         {
             // Load options
@@ -3128,14 +3128,14 @@ testRun(void)
             // Create standby pg_control (dbOpen() reads it after the mocked connection succeeds)
             HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_10);
 
-            // Both primary and standby respond, standby reports itself as a standby
+            // Both primary and local standby respond, standby reports itself as a standby
             HRN_PQ_SCRIPT_SET(
                 HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_10, strZ(pg1Path), false, NULL, NULL),
                 HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", PG_VERSION_10, strZ(pg2Path), true, NULL, NULL));
 
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
-            TEST_RESULT_LOG("P00   WARN: standby cluster found, skipping backup since backup-standby=skip");
+            TEST_RESULT_LOG("P00   WARN: local standby cluster found, skipping backup since backup-standby=skip");
 
             TEST_RESULT_BOOL(cfgOptionBool(cfgOptExpireAuto), false, "expire-auto disabled since backup was skipped");
 

@@ -104,17 +104,18 @@ backupInit(const InfoBackup *const infoBackup)
     {
         const DbGetResult dbInfo = dbGet(backupStandby == CFGOPTVAL_BACKUP_STANDBY_N, true, backupStandby);
 
-        // If backup-standby=skip and a standby was found, skip the backup entirely
+        // If backup-standby=skip and a local standby was found, skip the backup entirely. A remote standby is never returned by
+        // dbGet() in this case so the backup proceeds from the primary, or errors when the primary cannot be found.
         if (backupStandby == CFGOPTVAL_BACKUP_STANDBY_SKIP && dbInfo.standby != NULL)
         {
             if (dbInfo.primary == NULL)
             {
                 LOG_WARN(
-                    "unable to find primary cluster but standby cluster found, skipping backup since " CFGOPT_BACKUP_STANDBY
+                    "unable to find primary cluster but local standby cluster found, skipping backup since " CFGOPT_BACKUP_STANDBY
                     "=skip");
             }
             else
-                LOG_WARN("standby cluster found, skipping backup since " CFGOPT_BACKUP_STANDBY "=skip");
+                LOG_WARN("local standby cluster found, skipping backup since " CFGOPT_BACKUP_STANDBY "=skip");
 
             // Disable auto-expire since no backup was taken
             cfgOptionSet(cfgOptExpireAuto, cfgSourceParam, BOOL_FALSE_VAR);
