@@ -832,7 +832,7 @@ testRun(void)
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup-standby=skip, remote standby ignored");
+        TEST_TITLE("backup-standby=skip, remote standby ignored and local standby found");
 
         static const ProtocolServerHandler testRemoteHandlerList[] =
         {
@@ -848,13 +848,22 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "localhost");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        // The backup is not skipped for a remote standby so the primary is still required
-        TEST_ERROR(
-            dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), DbConnectError,
-            "unable to find primary cluster - cannot proceed\n"
-            "HINT: are all available clusters in recovery?");
+        // Create control files. Writing to pg1 starts the remote, which must be running before the script below is set.
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_18);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_18);
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg2", true, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(2));
+
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), "get local standby");
+
+        TEST_RESULT_INT(result.standbyIdx, 1, "check standby is the local one");
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
 
         hrnProtocolRemoteShimUninstall();
     }

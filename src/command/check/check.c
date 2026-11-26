@@ -60,9 +60,8 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
     // If a standby is defined, check the configuration
     if (dbGroup.standby != NULL)
     {
-        // Online backups run on this host will be skipped when backup-standby=skip and the standby is local
-        const bool backupSkip =
-            cfgOptionSeq(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_SKIP && pgIsLocal(dbGroup.standbyIdx);
+        // Online backups run on this host will be skipped when backup-standby=skip since the standby is always local in this case
+        const bool backupSkip = cfgOptionSeq(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_SKIP;
 
         // If primary was not found (only have 1 pg configured locally, and we want to still run because this is a standby). The
         // primary is not required when backups will be skipped.
@@ -258,8 +257,12 @@ cmdCheck(void)
                     cfgLoadStanza(stanza);
                 }
 
-                // Get the primary/standby connections (standby is only required if backup from standby is enabled)
-                DbGetResult dbGroup = dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_N);
+                // Get the primary/standby connections (standby is only required if backup from standby is enabled). When
+                // backup-standby=skip remote standbys are ignored, as they are for backup, so any standby found is local.
+                DbGetResult dbGroup = dbGet(
+                    false, false,
+                    cfgOptionSeq(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_SKIP ?
+                        CFGOPTVAL_BACKUP_STANDBY_SKIP : CFGOPTVAL_BACKUP_STANDBY_N);
 
                 if (dbGroup.standby == NULL && dbGroup.primary == NULL)
                     THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
