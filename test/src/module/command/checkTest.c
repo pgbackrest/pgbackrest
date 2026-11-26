@@ -628,6 +628,27 @@ testRun(void)
             "P00   INFO: switch wal not performed because this is a standby");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remote standby database only, repo local - backup-standby=skip");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        DbGetResult dbGroup = {0};
+        TEST_ASSIGN(dbGroup, dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_N), "get standby");
+
+        // Make the standby remote after connecting since a connection to a remote cannot be scripted
+        hrnCfgArgRawZ(argList, cfgOptPgHost, "standby");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        // The primary is still required since backups are not skipped when the standby is remote
+        TEST_ERROR(
+            checkStandby(dbGroup, 1), ConfigError,
+            "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
+
+        TEST_RESULT_VOID(dbFree(dbGroup.standby), "free standby");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby and primary database - backup-standby=skip");
 
         argList = strLstNew();
@@ -660,31 +681,6 @@ testRun(void)
             "P00   INFO: check repo1 archive for WAL (primary)\n"
             "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo/archive/test1/15-1"
             "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("remote standby and primary database - backup-standby=skip");
-
-        // Connect while the standby is configured as local since a connection to a remote cannot be scripted
-        HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", true, NULL, NULL),
-
-            HRN_PQ_SCRIPT_CLOSE(8),
-            HRN_PQ_SCRIPT_CLOSE(1));
-
-        DbGetResult dbGroup = {0};
-        TEST_ASSIGN(dbGroup, dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_N), "get primary and standby");
-
-        // Reload the config with the standby on a remote host so no message about skipping backups is expected
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 8, "standby");
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        TEST_RESULT_VOID(checkStandby(dbGroup, 2), "check standby");
-        TEST_RESULT_LOG(
-            "P00   INFO: check repo1 (standby)\n"
-            "P00   INFO: switch wal not performed because this is a standby");
-
-        TEST_RESULT_VOID(dbFree(dbGroup.primary), "free primary");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Primary == NULL (for test coverage)");

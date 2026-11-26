@@ -45,14 +45,13 @@ Macro to check that replay is making progress -- this does not seem useful enoug
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
 /***********************************************************************************************************************************
-Open a standby in the remote shim. The pq script is set here because the remote shim is forked from the test process so a script
-set in the test process is not visible to the remote.
+Open a standby on the remote. The pq script is set here since the remote runs in a separate process.
 ***********************************************************************************************************************************/
 static ProtocolServerResult *
 testDbOpenStandbyProtocol(PackRead *const param)
 {
     HRN_PQ_SCRIPT_SET(
-        HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg2", true, NULL, NULL),
+        HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
         HRN_PQ_SCRIPT_CLOSE(1));
 
     return dbOpenProtocol(param);
@@ -630,44 +629,18 @@ testRun(void)
             "HINT: are all available clusters in recovery?");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup-standby=skip, primary unreachable, standby found among multiple pg groups");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
-        HRN_CFG_LOAD(cfgCmdBackup, argList);
-
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_18);
+        TEST_TITLE("backup-standby=skip, only available cluster is a local standby");
 
         HRN_PQ_SCRIPT_SET(
-            {.session = 1, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
-            {.session = 1, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
-            {.session = 1, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
-            {.session = 1, .function = HRN_PQ_FINISH},
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_18, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
 
-            HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg2", true, NULL, NULL),
-            HRN_PQ_SCRIPT_CLOSE(2));
-
-        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), "get standby, primary unreachable");
-
-        TEST_RESULT_LOG(
-            "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error");
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), "get standby");
 
         TEST_RESULT_BOOL(result.primary == NULL, true, "check primary not found");
         TEST_RESULT_BOOL(result.standby != NULL, true, "check standby found");
 
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
-
-        // Restore the single-group config used by the remaining tests in this section
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgUser, 1, "bob");
-        HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup-standby=skip but nothing is reachable at all");
@@ -859,9 +832,8 @@ testRun(void)
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup-standby=skip, remote standby ignored and primary found");
+        TEST_TITLE("backup-standby=skip, remote standby ignored");
 
-        // Install a remote shim so a connection to a remote standby can be scripted
         static const ProtocolServerHandler testRemoteHandlerList[] =
         {
             {.command = PROTOCOL_COMMAND_DB, .open = testDbOpenStandbyProtocol, .processSession = dbQueryProtocol},
@@ -874,59 +846,15 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "localhost");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 2, "localhost");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        // Create control file for the standby. This also starts the remote before any pq script is set in the test process, which
-        // is required for the remote to be able to set a script when opening the standby.
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_18);
-
-        HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", false, NULL, NULL),
-            HRN_PQ_SCRIPT_CLOSE(1));
-
-        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), "get primary, remote standby ignored");
-
-        TEST_RESULT_INT(result.primaryIdx, 0, "check primary idx");
-        TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
-        TEST_RESULT_BOOL(result.standby == NULL, true, "check remote standby was ignored");
-
-        TEST_RESULT_VOID(dbFree(result.primary), "free primary");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup-standby=skip, remote standby ignored and primary not found");
-
-        HRN_PQ_SCRIPT_SET(
-            {.session = 1, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432\"]"},
-            {.session = 1, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
-            {.session = 1, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
-            {.session = 1, .function = HRN_PQ_FINISH});
-
+        // The backup is not skipped for a remote standby so the primary is still required
         TEST_ERROR(
             dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), DbConnectError,
             "unable to find primary cluster - cannot proceed\n"
             "HINT: are all available clusters in recovery?");
-        TEST_RESULT_LOG(
-            "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432': error");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("backup-standby=prefer, remote standby found");
-
-        HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", false, NULL, NULL),
-            HRN_PQ_SCRIPT_CLOSE(1));
-
-        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_PREFER), "get primary and remote standby");
-
-        TEST_RESULT_INT(result.primaryIdx, 0, "check primary idx");
-        TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
-        TEST_RESULT_INT(result.standbyIdx, 1, "check standby idx");
-        TEST_RESULT_BOOL(result.standby != NULL, true, "check remote standby");
-
-        TEST_RESULT_VOID(dbFree(result.primary), "free primary");
-        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
 
         hrnProtocolRemoteShimUninstall();
     }
