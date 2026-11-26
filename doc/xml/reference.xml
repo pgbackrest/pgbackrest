@@ -1630,7 +1630,7 @@
                             <allow-list caption="modes">
                                 <allow-item id="y">Standby is required for backup.</allow-item>
                                 <allow-item id="prefer">Backup from standby if available otherwise backup from primary.</allow-item>
-                                <allow-item id="skip">Skip the backup and exit successfully if the local cluster is a standby otherwise backup from primary only.</allow-item>
+                                <allow-item id="skip">Skip the backup and exit successfully if the local cluster is a standby, even when the primary cannot be found, otherwise backup from primary only. Standbys on other hosts are ignored.</allow-item>
                                 <allow-item id="n">Backup from primary only.</allow-item>
                             </allow-list>
 
