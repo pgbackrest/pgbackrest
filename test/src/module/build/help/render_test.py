@@ -33,11 +33,23 @@ option:
   force:
     type: boolean
     internal: true
+    depend:
+      option: online
+      list:
+        - true
     command:
       backup:
         internal: false
+        depend:
+          option: online
+          list:
+            - false
       restore:
         internal: false
+
+  online:
+    type: boolean
+    default: true
 
   pg-path:
     section: global
@@ -85,6 +97,14 @@ HELP = """<doc title="Reference">
 
                     <text>
                         <p>Force description.</p>
+                    </text>
+                </option>
+
+                <option id="online" name="Online">
+                    <summary>Online.</summary>
+
+                    <text>
+                        <p>Online description.</p>
                     </text>
                 </option>
 
@@ -146,6 +166,89 @@ HELP = """<doc title="Reference">
 """
 
 
+# Each form of dependency
+CONFIG_DEPEND = """command:
+  backup: {}
+
+optionGroup: {}
+
+option:
+  archive-check:
+    type: boolean
+    default: true
+    depend:
+      option: online
+      default: false
+      list:
+        - true
+
+  archive-copy:
+    type: boolean
+    default: false
+    depend:
+      option: archive-check
+
+  compress-level:
+    type: integer
+    depend:
+      option: compress-type
+      list:
+        - gz
+        - zst
+
+  compress-type:
+    type: string-id
+    default: gz
+
+  online:
+    type: boolean
+    default: true
+
+  pg-host:
+    type: string
+    depend:
+      option: pg-local
+      list:
+        - false
+
+  pg-local:
+    type: boolean
+    default: false
+
+  repo-gcs-bucket:
+    type: string
+    depend:
+      option: repo-gcs-key-type
+
+  repo-gcs-key-type:
+    type: string-id
+    default: service
+    depend:
+      option: repo-type
+      list:
+        - gcs
+
+  repo-s3-bucket:
+    type: string
+    depend:
+      option: repo-type
+      list:
+        - s3
+
+  repo-type:
+    type: string-id
+    default: posix
+
+  set:
+    type: string
+    depend:
+      option: stanza
+
+  stanza:
+    type: string
+"""
+
+
 ####################################################################################################################################
 def _xml(content):
     """Build a node from the markup a summary or a description would hold."""
@@ -199,6 +302,36 @@ def test_help_render_xml_error():
         bld_hlp_render_xml(etree.fromstring("<text>bogus\n    text<p>One.</p></text>"))
 
     assert_equal(str(error.exception), "text 'bogus\n    text' is invalid")
+
+
+####################################################################################################################################
+def test_help_render_depend():
+    """What an option is valid with is rendered as the option and values that resolve the dependency."""
+
+    with tempfile.TemporaryDirectory() as path:
+        file_write(os.path.join(path, "build/config.yaml"), CONFIG_DEPEND)
+        bld_cfg = bld_cfg_parse(path)
+
+    def depend(name):
+        return bld_hlp_render_depend(next(opt for opt in bld_cfg.opt_list if opt.name == name).depend)
+
+    # No dependency
+    assert_equal(depend("stanza"), None)
+
+    # One value, several values, and a boolean written the way it is given in the configuration file
+    assert_equal(depend("repo-s3-bucket"), "repo-type=s3")
+    assert_equal(depend("compress-level"), "compress-type in (gz, zst)")
+    assert_equal(depend("archive-check"), "online=y")
+    assert_equal(depend("pg-host"), "pg-local=n")
+
+    # The option being set
+    assert_equal(depend("set"), "stanza")
+
+    # The option being set when that option has a default and a dependency is what resolves the dependency of that option
+    assert_equal(depend("repo-gcs-bucket"), "repo-type=gcs")
+
+    # Not when the dependency of that option has a default, since that option is then always set
+    assert_equal(depend("archive-copy"), "archive-check")
 
 
 ####################################################################################################################################
@@ -267,6 +400,10 @@ def test_help_render():
     assert_in(b"Backup summary.", pack)
     assert_in(b"Set summary.", pack)
     assert_in(b"Pg path description.", pack)
+
+    # What an option is valid with is packed, and what a command declares when it differs
+    assert_in(b"online=y", pack)
+    assert_in(b"online=n", pack)
 
     # A deprecated name is packed, but not one that is the option name itself since that is not a name to report
     assert_in(b"db-path", pack)

@@ -21,7 +21,7 @@ Archive Push Command
 #include "config/config.h"
 #include "config/exec.h"
 #include "config/load.h"
-#include "info/infoArchive.h"
+#include "info/helper.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
@@ -227,12 +227,8 @@ archivePushCheck(const bool pgPathSet)
         {
             TRY_BEGIN()
             {
-                // Get the repo storage in case it is remote and encryption settings need to be pulled down
-                storageRepoIdx(repoIdx);
-
                 // Attempt to load the archive info file
-                const InfoArchive *const info = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                const InfoArchive *const info = infoArchiveRepoIdx(repoIdx);
 
                 // Get archive id for the most recent version -- archive-push will only operate against the most recent version
                 const String *const archiveId = infoPgArchiveId(infoArchivePg(info), infoPgDataCurrentId(infoArchivePg(info)));
@@ -255,6 +251,13 @@ archivePushCheck(const bool pgPathSet)
                     }
                 }
 
+                // Get the current archive key. Format >= 6 also requires the key id.
+                const CipherSpecMap *const archiveCipherSpecMap = infoArchiveCipherSpecMap(info);
+                const String *const archiveCipherId = cipherSpecMapIdCurrent(archiveCipherSpecMap);
+                const CipherSpec *const archiveCipherSpec =
+                    archiveCipherId == NULL ?
+                        infoArchiveCipherSpec(info) : cipherSpecMapGet(archiveCipherSpecMap, archiveCipherId);
+
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
                     result.pgVersion = archiveInfo.version;
@@ -264,7 +267,9 @@ archivePushCheck(const bool pgPathSet)
                     {
                         .repoIdx = repoIdx,
                         .archiveId = strDup(archiveId),
-                        .cipherSpecArchive = cipherSpecDup(infoArchiveCipherSpec(info)),
+                        .format = infoArchiveFormat(info),
+                        .cipherSpecArchive = cipherSpecDupP(archiveCipherSpec),
+                        .cipherIdArchive = strDup(archiveCipherId),
                     };
 
                     lstAdd(result.repoList, &archivePushFileRepoData);
@@ -432,7 +437,7 @@ cmdArchivePush(void)
 /**********************************************************************************************************************************/
 typedef struct ArchivePushAsyncData
 {
-    const String *walPath;                                          // Path to pg_wal/pg_xlog
+    const String *walPath;                                          // Path to pg_wal
     StringList *walFileList;                                        // List of wal files to process
     unsigned int walFileIdx;                                        // Current index in the list to be processed
     CompressType compressType;                                      // Type of compression for WAL segments
@@ -488,7 +493,9 @@ archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
                 pckWriteObjBeginP(param);
                 pckWriteU32P(param, data->repoIdx);
                 pckWriteStrP(param, data->archiveId);
+                pckWriteU32P(param, data->format);
                 cipherSpecPack(param, data->cipherSpecArchive);
+                pckWriteStrP(param, data->cipherIdArchive);
                 pckWriteObjEndP(param);
             }
 
@@ -553,18 +560,38 @@ cmdArchivePushAsync(void)
 
             // If not dropping then limit the number of WAL files pushed in a single run to archive-push-batch-size. The queue is
             // only rechecked at the start of each run so this bounds how large it can grow before the next run rechecks it. Convert
-            // the size to a segment count using the size of the first ready segment and always push at least one segment. A ready
-            // WAL segment should never be missing or zero size, so error immediately if it is.
+            // the size to a segment count using the size of the first ready segment and always push at least one file. Files that
+            // are not segments also count against the batch, so a run may push only those files when the batch size is small, but
+            // they are acknowledged and drop out of the list for the next run.
             if (!drop)
             {
-                const uint64_t segmentSize = storageInfoP(
-                    storagePg(), strNewFmt("%s/%s", strZ(jobData.walPath), strZ(strLstGet(jobData.walFileList, 0)))).size;
-                CHECK_FMT(FormatError, segmentSize != 0, "size of WAL segment '%s' is 0", strZ(strLstGet(jobData.walFileList, 0)));
+                // Find the first ready WAL segment. The ready list also contains backup and timeline history files, which are
+                // smaller than a segment and may even be zero size when PostgreSQL did not sync them before the cluster was
+                // copied, so they cannot be used to determine the segment size.
+                const String *walSegment = NULL;
 
-                const uint64_t batchMax = cfgOptionUInt64(cfgOptArchivePushBatchSize) / segmentSize;
+                for (unsigned int walFileIdx = 0; walFileIdx < strLstSize(jobData.walFileList); walFileIdx++)
+                {
+                    if (walIsSegment(strLstGet(jobData.walFileList, walFileIdx)))
+                    {
+                        walSegment = strLstGet(jobData.walFileList, walFileIdx);
+                        break;
+                    }
+                }
 
-                while (strLstSize(jobData.walFileList) > 1 && strLstSize(jobData.walFileList) > batchMax)
-                    strLstRemoveIdx(jobData.walFileList, strLstSize(jobData.walFileList) - 1);
+                // Apply the batch size when a segment is ready. When none is ready every file is small so there is nothing to
+                // limit. A ready WAL segment should never be missing or zero size, so error immediately if it is.
+                if (walSegment != NULL)
+                {
+                    const uint64_t segmentSize = storageInfoP(
+                        storagePg(), strNewFmt("%s/%s", strZ(jobData.walPath), strZ(walSegment))).size;
+                    CHECK_FMT(FormatError, segmentSize != 0, "size of WAL segment '%s' is 0", strZ(walSegment));
+
+                    const uint64_t batchMax = cfgOptionUInt64(cfgOptArchivePushBatchSize) / segmentSize;
+
+                    while (strLstSize(jobData.walFileList) > 1 && strLstSize(jobData.walFileList) > batchMax)
+                        strLstRemoveIdx(jobData.walFileList, strLstSize(jobData.walFileList) - 1);
+                }
             }
 
             LOG_INFO_FMT(

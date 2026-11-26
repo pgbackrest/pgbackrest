@@ -28,18 +28,18 @@ testRun(void)
         // File with section to ignore
         const Buffer *contentLoad = harnessInfoChecksumZ(
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
             "\n"
             "[ignore-section]\n"
             "key1=\"value1\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"10\"}\n");
 
         InfoBackup *infoBackup = NULL;
 
@@ -64,7 +64,7 @@ testRun(void)
 
         TEST_ASSIGN(
             infoBackup, infoBackupNew(
-                PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96), REPOSITORY_FORMAT_DEFAULT, NULL),
+                PG_VERSION_10, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_DEFAULT, NULL),
             "infoBackupNew() - no cipher sub");
         TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentCompare)), "save backup info from new");
         TEST_RESULT_STR(strNewBuf(contentCompare), strNewBuf(contentSave), "check save");
@@ -81,6 +81,16 @@ testRun(void)
         TEST_RESULT_UINT(infoBackupFormat(infoBackup), REPOSITORY_FORMAT_6, "format updated");
         TEST_RESULT_BOOL(infoBackup->pub.updated, true, "updated after format set");
 
+        // Backup set key with no shared key
+        TEST_RESULT_VOID(
+            infoBackupCipherSpecAdd(
+                infoBackup, STRDEF("20261017-120000F"),
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("setkey"), .digest = hashTypeSha256)),
+            "add backup set key");
+        TEST_ERROR(
+            infoBackupCipherSpecManifest(infoBackup, STRDEF("20261016-120000F")), CryptoError,
+            "unable to find key for backup set '20261016-120000F'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check cipher pass");
 
@@ -88,7 +98,9 @@ testRun(void)
             infoBackup,
             infoBackupNew(
                 PG_VERSION_10, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_10), REPOSITORY_FORMAT_6,
-                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"))),
+                cipherSpecNewP(
+                    cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"),
+                    .digest = hashTypeSha256)),
             "infoBackupNew() - cipher sub");
 
         const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
@@ -96,7 +108,7 @@ testRun(void)
         contentSave = bufNew(0);
 
         IoWrite *write = ioBufferWriteNew(contentSave);
-        cipherBlockFormatFilterGroupWriteAdd(contentSave, ioWriteFilterGroup(write), cipherSpec, REPOSITORY_FORMAT_6);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, REPOSITORY_FORMAT_6);
 
         TEST_RESULT_VOID(infoBackupSave(infoBackup, write), "save new with cipher sub");
         TEST_RESULT_STR_Z(
@@ -114,18 +126,30 @@ testRun(void)
             "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "cipher sub set");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 1, "history set");
 
+        TEST_RESULT_VOID(
+            infoBackupCipherSpecAdd(
+                infoBackup, STRDEF("20261017-120000F"),
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("setkey"), .digest = hashTypeSha256)),
+            "add backup set key");
+        TEST_RESULT_STR_Z(
+            strNewBuf(cipherSpecPass(infoBackupCipherSpecManifest(infoBackup, STRDEF("20261017-120000F_20261018-120000I")))),
+            "setkey", "backup set key");
+        TEST_RESULT_STR_Z(
+            strNewBuf(cipherSpecPass(infoBackupCipherSpecManifest(infoBackup, STRDEF("20261016-120000F")))),
+            "zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO", "shared key");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("add pg info");
 
         InfoPgData infoPgData = {0};
         TEST_RESULT_VOID(
-            infoBackupPgSet(infoBackup, PG_VERSION_96, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_96)),
+            infoBackupPgSet(infoBackup, PG_VERSION_11, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_11)),
             "add another infoPg");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 2, "history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoBackupPg(infoBackup)), "get current infoPgData");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_96, "version set");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_11, "version set");
         TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "systemId set");
-        TEST_RESULT_UINT(infoPgData.catalogVersion, 201608131, "catalogVersion set");
+        TEST_RESULT_UINT(infoPgData.catalogVersion, 201809051, "catalogVersion set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("object free");
@@ -164,15 +188,15 @@ testRun(void)
             "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "\n"
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"10\"}\n");
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad), cipherSpecNewNone()), "new backup info");
 
@@ -285,11 +309,11 @@ testRun(void)
         #define TEST_MANIFEST_BACKUPDB                                                                                             \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201608131\n"                                                                                       \
-            "db-control-version=960\n"                                                                                             \
+            "db-catalog-version=201707211\n"                                                                                       \
+            "db-control-version=1002\n"                                                                                            \
             "db-id=1\n"                                                                                                            \
             "db-system-id=6569239123849665679\n"                                                                                   \
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
 
         #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
             "\n"                                                                                                                   \
@@ -503,7 +527,7 @@ testRun(void)
                 infoBackup, STRDEF("20190818-084502F_20190820-084502I"), annotationKV), "add annotations");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("infoBackupLoadFileReconstruct - skip/add backups");
+        TEST_TITLE("infoBackupReconstruct() - skip/add backups");
 
         // Load configuration to set repo-path and stanza
         StringList *argList = strLstNew();
@@ -753,10 +777,8 @@ testRun(void)
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 2, "backup list contains backups to be removed");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 2, "multiple DB history");
 
-        TEST_ASSIGN(
-            infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
-            "reconstruct");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()), "load");
+        TEST_RESULT_VOID(infoBackupReconstruct(infoBackup, storageRepo()), "reconstruct");
         TEST_RESULT_INT(infoBackupDataTotal(infoBackup), 1, "backup list contains 1 backup");
         TEST_ASSIGN(backupData, infoBackupData(infoBackup, 0), "get the backup");
         TEST_RESULT_STR_Z(
@@ -771,15 +793,14 @@ testRun(void)
             "P00   WARN: backup '20190923-164324F' found in repository added to backup.info");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("infoBackupLoadFileReconstruct() - missing dependent not added");
+        TEST_TITLE("infoBackupReconstruct() - missing dependent not added");
 
         HRN_STORAGE_PATH_REMOVE(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/20190818-084502F_20190820-084502I", .recurse = true,
             .comment = "remove dependent backup from disk");
-        TEST_ASSIGN(
-            infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
-            "reconstruct does not attempt to add back dependent backup");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()), "load");
+        TEST_RESULT_VOID(
+            infoBackupReconstruct(infoBackup, storageRepo()), "reconstruct does not attempt to add back dependent backup");
         TEST_RESULT_LOG(
             "P00   WARN: backup '20190818-084502F_20190820-084502I' missing manifest removed from backup.info\n"
             "P00   WARN: backup '20190818-084502F' missing manifest removed from backup.info\n"
@@ -789,7 +810,7 @@ testRun(void)
             "P00   WARN: backup '20190923-164324F' found in repository added to backup.info");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("infoBackupLoadFileReconstruct() - valid dependent added");
+        TEST_TITLE("infoBackupReconstruct() - valid dependent added");
 
         HRN_STORAGE_COPY(
             storageRepo(), STORAGE_REPO_BACKUP "/20190818-084444F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
@@ -882,10 +903,8 @@ testRun(void)
             "save updated backup info");
 
         infoBackup = NULL;
-        TEST_ASSIGN(
-            infoBackup,
-            infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()),
-            "reconstruct");
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherSpecNewNone()), "load");
+        TEST_RESULT_VOID(infoBackupReconstruct(infoBackup, storageRepo()), "reconstruct");
         TEST_RESULT_STRLST_Z(
             infoBackupDataLabelList(infoBackup, NULL),
             "20190818-084444F\n20190818-084444F_20190924-084502D\n20190923-164324F\n",
@@ -932,6 +951,35 @@ testRun(void)
             infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecNewNone()),
             "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoBackupPg(infoBackup)).systemId, 6569239123849665999, "check file loaded");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("save backup info file with the old and new passphrases");
+
+        const CipherSpec *const cipherSpecOld = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"));
+        const CipherSpec *const cipherSpecRekey = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("new"), .prior = cipherSpecOld);
+
+        TEST_RESULT_BOOL(infoBackup->pub.updated, false, "not updated after load");
+        TEST_RESULT_VOID(infoBackupCipherPriorClear(infoBackup), "clear prior");
+        TEST_RESULT_BOOL(infoBackup->pub.updated, true, "updated");
+        TEST_RESULT_VOID(infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecOld), "save backup info");
+        TEST_RESULT_BOOL(storageExistsP(storageTest, STRDEF(INFO_BACKUP_FILE)), true, "main saved");
+
+        TEST_ASSIGN(infoBackup, infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey), "load old passphrase");
+        TEST_RESULT_BOOL(infoBackupCipherPrior(infoBackup), true, "decrypted with old passphrase");
+
+        infoBackupFormatSet(infoBackup, infoBackupFormat(infoBackup));
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey), "save backup info");
+        TEST_RESULT_BOOL(
+            infoBackupCipherPrior(infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey)), true,
+            "encrypted with old passphrase");
+
+        TEST_RESULT_VOID(infoBackupCipherPriorClear(infoBackup), "clear prior");
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackup, storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey), "save backup info");
+        TEST_RESULT_BOOL(
+            infoBackupCipherPrior(infoBackupLoadFile(storageTest, STRDEF(INFO_BACKUP_FILE), cipherSpecRekey)), false,
+            "encrypted with new passphrase");
     }
 
     // *****************************************************************************************************************************
@@ -998,15 +1046,15 @@ testRun(void)
             "\"option-online\":true}\n"
             "\n"
             "[db]\n"
-            "db-catalog-version=201608131\n"
-            "db-control-version=960\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.6\"}\n");
+            "1={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"10\"}\n");
 
         InfoBackup *infoBackup;
         StringList *dependencyList;

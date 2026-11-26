@@ -1,0 +1,126 @@
+header:
+  schema-version: 2.2.0
+  last-updated: '2026-10-25'
+  last-reviewed: '2026-10-25'
+  url: https://raw.githubusercontent.com/pgbackrest/pgbackrest/refs/heads/main/.github/security-insights.yml
+project:
+  name: pgBackRest
+  homepage: https://pgbackrest.org/
+  funding: https://github.com/sponsors/dwsteele
+  administrators:
+    - name: David Steele
+      primary: true
+      email: david@pgbackrest.org
+    - name: Stefan Fercot
+      primary: false
+      email: pgstef@fercot.be
+  repositories:
+    - name: pgBackRest
+      comment: Main repository of pgBackRest
+      url: https://github.com/pgbackrest/pgbackrest
+    - name: website
+      comment: pgbackrest.org website, generated from the documentation in the main repository
+      url: https://github.com/pgbackrest/website
+  vulnerability-reporting:
+    reports-accepted: true
+    bug-bounty-available: false
+    contact:
+      name: pgBackRest Security
+      primary: true
+      email: security@pgbackrest.org
+    policy: https://github.com/pgbackrest/pgbackrest/blob/main/SECURITY.md
+    comment: >-
+      Report security issues privately on GitHub under Security Advisories at https://github.com/pgbackrest/pgbackrest/security/advisories/new or by email to security@pgbackrest.org. Do not report security issues in public issues.
+  documentation:
+    detailed-guide: https://pgbackrest.org/user-guide-index.html
+    quickstart-guide: https://pgbackrest.org/user-guide.html#quickstart
+    release-process: https://github.com/pgbackrest/pgbackrest/blob/main/doc/RELEASE.md
+repository:
+  status: active
+  url: https://github.com/pgbackrest/pgbackrest
+  accepts-change-request: true
+  accepts-automated-change-request: false
+  core-team:
+    - name: David Steele
+      primary: true
+      email: david@pgbackrest.org
+    - name: Stefan Fercot
+      primary: false
+      email: pgstef@fercot.be
+  license:
+    url: https://raw.githubusercontent.com/pgbackrest/pgbackrest/refs/heads/main/LICENSE
+    expression: MIT
+  documentation:
+    contributing-guide: https://github.com/pgbackrest/pgbackrest/blob/main/CONTRIBUTING.md
+    security-policy: https://github.com/pgbackrest/pgbackrest/blob/main/SECURITY.md
+  release:
+    automated-pipeline: false
+    distribution-points:
+      - uri: https://github.com/pgbackrest/pgbackrest/releases
+        comment: >-
+          Source tarball with a published SHA-256 checksum. The tarball is built and smoke tested by the CI workflow from the release commit, not on a maintainer's machine. Releases are immutable: the tag and assets are locked once the release is published.
+    changelog: https://pgbackrest.org/release.html
+  security:
+    tools:
+      - name: Coverity Scan
+        type: SAST
+        comment: Runs on the release candidate before each release. Issues found are fixed before the release.
+        rulesets:
+          - default
+        integration:
+          adhoc: false
+          ci: false
+          release: true
+        results:
+          release:
+            name: Coverity Scan project
+            predicate-uri: https://scan.coverity.com/
+            location: https://scan.coverity.com/projects/pgbackrest-pgbackrest
+      - name: libFuzzer with AddressSanitizer and UndefinedBehaviorSanitizer
+        type: fuzzing
+        comment: >-
+          Fuzz targets for the ini, json, and pack parsers, built with the OSS-Fuzz sanitizer flags and run from a seed corpus on every push and pull request.
+        rulesets:
+          - default
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+        results:
+          ci:
+            name: fuzz CI job
+            predicate-uri: https://llvm.org/docs/LibFuzzer.html
+            location: https://github.com/pgbackrest/pgbackrest/actions/workflows/test.yml
+      - name: Valgrind (Memcheck)
+        type: other
+        comment: >-
+          Dynamic memory error detection (invalid accesses, use-after-free, uninitialized memory, leaks) over the unit tests on x86_64 and aarch64 on every push and pull request.
+        rulesets:
+          - default
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+        results:
+          ci:
+            name: linux and arch CI jobs
+            predicate-uri: https://valgrind.org/docs/manual/mc-manual.html
+            location: https://github.com/pgbackrest/pgbackrest/actions/workflows/test.yml
+      - name: Fil-C
+        type: other
+        comment: >-
+          Memory-safe implementation of C. An out-of-bounds access, a use-after-free, or a type confusion panics at runtime. The unit tests run on a Fil-C build on every push and pull request.
+        rulesets:
+          - default
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+        results:
+          ci:
+            name: compile CI job
+            predicate-uri: https://github.com/pizlonator/fil-c
+            location: https://github.com/pgbackrest/pgbackrest/actions/workflows/test.yml
+    assessments:
+      self:
+        comment: Self assessment has not yet been completed.

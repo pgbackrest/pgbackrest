@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doc title="{[project]}" subtitle="Security Policy" toc="n">
+    <description>{[project]} Security Policy.</description>
+
+    <!-- ======================================================================================================================= -->
+    <section id="reporting">
+        <title>Reporting a Vulnerability</title>
+
+        <p>Please do not report security vulnerabilities in public issues.</p>
+
+        <p>Report vulnerabilities privately on GitHub using <link url="{[github-url-base]}/security/advisories/new">Report a vulnerability</link> or by email to <link url="mailto:security@pgbackrest.org">security@pgbackrest.org</link>.</p>
+
+        <p>Please provide as much information as possible, including the <backrest/> version, the configuration, steps to reproduce, and the impact.</p>
+    </section>
+</doc>

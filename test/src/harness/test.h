@@ -26,7 +26,7 @@ Make sure ASSERT() always exists for tests to use, even when DEBUG is disabled f
 #define ASSERT(condition)                                                                                                          \
     do                                                                                                                             \
     {                                                                                                                              \
-        if (!(condition))                                                                                                          \
+        if (UNLIKELY(!(condition)))                                                                                                \
             THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                           \
     }                                                                                                                              \
     while (0)

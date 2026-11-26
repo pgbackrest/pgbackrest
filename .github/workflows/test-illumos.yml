@@ -1,0 +1,80 @@
+# Selected unit tests and the smoke test on illumos. OmniOS runs in a VM hosted on a Linux runner.
+name: illumos
+
+on: workflow_call
+
+# Limit permissions on the repository
+permissions:
+  contents: read
+
+jobs:
+  # Selected unit tests and the smoke test on OmniOS
+  omnios:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Start VM
+        uses: cross-platform-actions/action@v1.3.0
+        with:
+          operating_system: omnios
+          version: r151058
+
+      # The custom shell runs the commands in the VM started above. Do not set this as a job default since the checkout step must
+      # run on the host.
+      - name: Install
+        shell: cpa.sh {0}
+        run: |
+          uname -a
+          sudo pkg refresh
+
+          # The PostgreSQL versions supported by pgBackRest, oldest first, read from the generated header so the list never needs to
+          # be updated here. OmniOS leaves the dot out of the package name, e.g. 9.6 is postgresql-96.
+          pgSupport=$(sed -n 's/^#define PG_VERSION_[0-9_]*_Z  *"\([0-9.]*\)".*/\1/p' \
+              ${GITHUB_WORKSPACE?}/src/postgres/version.auto.h | tr -d . | sed 's/^/ooce\/database\/postgresql-/')
+
+          # The versions that are both supported and available. The order comes from the supported list since these do not sort
+          # naturally, e.g. postgresql-96 is not greater than postgresql-10.
+          pgAvail=$(echo "${pgSupport}" | grep -xF "$(pkg list -aH 'ooce/database/postgresql-*' | awk '{print $1}')")
+          echo "postgresql available: $(echo ${pgAvail})"
+
+          # Each PostgreSQL version installs into its own prefix, so the oldest and newest are installed together
+          pgOldest=$(echo "${pgAvail}" | head -1)
+          pgNewest=$(echo "${pgAvail}" | tail -1)
+
+          # pkg exits with 4 when everything is already installed
+          sudo pkg install developer/build-essential developer/pkg-config developer/versioning/git library/python-3/meson-313 \
+            library/python-3/pyyaml-313 ooce/developer/ninja library/libxml2 library/zlib library/security/openssl-3 \
+            compress/bzip2 compress/lz4 compress/zstd ${pgOldest} ${pgNewest} || test $? -eq 4
+
+          # meson and ninja are not in the default path. /usr/bin/pkg-config is 32-bit and searches the 32-bit libraries, so the
+          # 64-bit pkgconfig directories are set explicitly, including the one for the libpq of the newest PostgreSQL.
+          echo "export PATH=/usr/lib/python3.13/bin:/opt/ooce/bin:${PATH?}" > ${HOME?}/omnios.env
+          echo "export PKG_CONFIG_PATH=/usr/lib/amd64/pkgconfig:/opt/ooce/pgsql-${pgNewest##*-}/lib/amd64/pkgconfig" \
+            >> ${HOME?}/omnios.env
+
+          . ${HOME?}/omnios.env
+          gcc --version | head -1
+          meson --version
+          ninja --version
+          pkg-config --modversion libpq libxml-2.0 openssl zlib liblz4 libzstd
+          python3 -c 'import sys, yaml; print("python %s, PyYAML %s" % (sys.version.split()[0], yaml.__version__))'
+
+      - name: Run Test
+        shell: cpa.sh {0}
+        run: |
+          . ${HOME?}/omnios.env
+          cd .. && ${GITHUB_WORKSPACE?}/test/test.py --vm-max=2 --no-coverage --no-valgrind --module=command/backup \
+            --module=command/info --module=command/archive/push
+
+      # The integration tests cannot run here because there are no containers, but the smoke test drives a backup/restore cycle
+      # against each PostgreSQL installed above, which covers the basics
+      - name: Run Smoke Test
+        shell: cpa.sh {0}
+        run: |
+          . ${HOME?}/omnios.env
+          cd ..
+          meson setup build ${GITHUB_WORKSPACE?}
+          ninja -C build src/pgbackrest
+          meson test -C build --suite smoke -v

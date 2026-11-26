@@ -3,6 +3,7 @@ Storage Test Harness
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,6 +18,7 @@ Storage Test Harness
 #include "storage/storage.h"
 
 #include "harness/config.h"
+#include "harness/debug.h"
 #include "harness/storage.h"
 #include "harness/test.h"
 
@@ -24,6 +26,145 @@ Storage Test Harness
 Include shimmed C modules
 ***********************************************************************************************************************************/
 {[SHIM_MODULE]}
+
+/***********************************************************************************************************************************
+Shim install state
+***********************************************************************************************************************************/
+static struct
+{
+    int localShimStoragePosixFileOpenOneErrNo;                      // errno for open shim (0 when not set)
+    int localShimStorageReadPosixDirectOneErrNo;                    // errno for read shim (0 when not set)
+    int localShimStorageWritePosixOneErrNo;                         // errno for write shim (0 when not set)
+} hrnStorageStatic;
+
+/***********************************************************************************************************************************
+Shim storagePosixFileOpenInternal()
+***********************************************************************************************************************************/
+static int
+storagePosixFileOpenInternal(const char *const file, const int flags, const mode_t mode)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, file);
+        FUNCTION_HARNESS_PARAM(INT, flags);
+        FUNCTION_HARNESS_PARAM(MODE, mode);
+    FUNCTION_HARNESS_END();
+
+    int result;
+
+    // If shim will run once then fail with the requested errno
+    if (hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo != 0)
+    {
+        errno = hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo;
+        hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo = 0;
+        result = -1;
+    }
+    // Else call normal function
+    else
+        result = storagePosixFileOpenInternal_SHIMMED(file, flags, mode);
+
+    FUNCTION_HARNESS_RETURN(INT, result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStoragePosixFileOpenShimOne(const int errNo)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, errNo);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(errNo != 0);
+
+    hrnStorageStatic.localShimStoragePosixFileOpenOneErrNo = errNo;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Shim storageReadPosixDirectInternal()
+***********************************************************************************************************************************/
+static ssize_t
+storageReadPosixDirectInternal(const int fd, void *const buffer, const size_t size)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, fd);
+        FUNCTION_HARNESS_PARAM_P(VOID, buffer);
+        FUNCTION_HARNESS_PARAM(SIZE, size);
+    FUNCTION_HARNESS_END();
+
+    ssize_t result;
+
+    // If shim will run once then fail with the requested errno
+    if (hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo != 0)
+    {
+        errno = hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo;
+        hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo = 0;
+        result = -1;
+    }
+    // Else call normal function
+    else
+        result = storageReadPosixDirectInternal_SHIMMED(fd, buffer, size);
+
+    FUNCTION_HARNESS_RETURN(SSIZE, result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStorageReadPosixDirectShimOne(const int errNo)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, errNo);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(errNo != 0);
+
+    hrnStorageStatic.localShimStorageReadPosixDirectOneErrNo = errNo;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Shim storageWritePosixInternal()
+***********************************************************************************************************************************/
+static ssize_t
+storageWritePosixInternal(const int fd, const void *const buffer, const size_t size)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, fd);
+        FUNCTION_HARNESS_PARAM_P(VOID, buffer);
+        FUNCTION_HARNESS_PARAM(SIZE, size);
+    FUNCTION_HARNESS_END();
+
+    ssize_t result;
+
+    // If shim will run once then fail with the requested errno
+    if (hrnStorageStatic.localShimStorageWritePosixOneErrNo != 0)
+    {
+        errno = hrnStorageStatic.localShimStorageWritePosixOneErrNo;
+        hrnStorageStatic.localShimStorageWritePosixOneErrNo = 0;
+        result = -1;
+    }
+    // Else call normal function
+    else
+        result = storageWritePosixInternal_SHIMMED(fd, buffer, size);
+
+    FUNCTION_HARNESS_RETURN(SSIZE, result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnStorageWritePosixShimOne(const int errNo)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, errNo);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(errNo != 0);
+
+    hrnStorageStatic.localShimStorageWritePosixOneErrNo = errNo;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Dummy interface for constructing test storage drivers
@@ -69,17 +210,10 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     // Add decrypt filter
     if (param.cipherSpec != NULL && cipherSpecType(param.cipherSpec) != cipherTypeNone)
     {
-        // Derive with SHA-1 since the harness reads and writes files the way a repository at the format these tests build stores
-        // them, which is the format that had no header to define anything else. A caller that asked for a digest would not get
-        // it, so only a spec at the default is accepted.
-        ASSERT(cipherSpecDigest(param.cipherSpec) == hashTypeSha256);
-
+        // A key with no digest of its own derives with SHA-1, the digest of format 5
         ioFilterGroupAdd(
             filterGroup,
-            cipherBlockNewP(
-                cipherModeDecrypt,
-                cipherSpecNewP(
-                    cipherSpecType(param.cipherSpec), cipherSpecPass(param.cipherSpec), .digest = hashTypeSha1)));
+            cipherBlockNewP(cipherModeDecrypt, cipherSpecDupP(param.cipherSpec, .digestDefault = hashTypeSha1)));
 
         strCatFmt(
             filter, "enc[%s,%s] ", zNewStrId(cipherSpecType(param.cipherSpec)),
@@ -88,10 +222,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
 
     // Add decompress filter
     if (param.compressType != compressTypeNone)
-    {
-        ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
         ioFilterGroupAdd(filterGroup, decompressFilterP(param.compressType));
-    }
 
     printf("test content of %s'%s'", strEmpty(filter) ? "" : strZ(filter), strZ(fileFull));
     hrnTestResultComment(param.comment);
@@ -395,7 +526,6 @@ hrnStoragePut(
     // Add compression filter
     if (param.compressType != compressTypeNone)
     {
-        ASSERT(param.compressType == compressTypeGz || param.compressType == compressTypeBz2);
         ioFilterGroupAdd(filterGroup, compressFilterP(param.compressType, 1));
 
         strCatFmt(filter, "%scmp[%s]", strEmpty(filter) ? "" : "/", strZ(compressTypeStr(param.compressType)));
@@ -404,16 +534,10 @@ hrnStoragePut(
     // Add encrypted filter
     if (param.cipherSpec != NULL && cipherSpecType(param.cipherSpec) != cipherTypeNone)
     {
-        // Derive with SHA-1 to match how the harness reads these files back. A caller that asked for a digest would not get it,
-        // so only a spec at the default is accepted.
-        ASSERT(cipherSpecDigest(param.cipherSpec) == hashTypeSha256);
-
+        // A key with no digest of its own derives with SHA-1, the digest of format 5
         ioFilterGroupAdd(
             filterGroup,
-            cipherBlockNewP(
-                cipherModeEncrypt,
-                cipherSpecNewP(
-                    cipherSpecType(param.cipherSpec), cipherSpecPass(param.cipherSpec), .digest = hashTypeSha1)));
+            cipherBlockNewP(cipherModeEncrypt, cipherSpecDupP(param.cipherSpec, .digestDefault = hashTypeSha1)));
     }
 
     // Add file name

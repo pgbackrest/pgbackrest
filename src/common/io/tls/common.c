@@ -6,6 +6,7 @@ TLS Common
 #include <string.h>
 #include <sys/stat.h>
 
+#include <openssl/err.h>
 #include <openssl/ssl.h>
 
 #include "common/crypto/common.h"
@@ -23,7 +24,8 @@ static struct TlsCommonLocal
 
     String *tlsCipher12;                                            // Allowed ciphers for TLSv1.2
     String *tlsCipher13;                                            // Allowed ciphers for TLSv1.3
-} tlsCommonLocal;
+    int tlsMinVersion;                                              // Minimum TLS version
+} tlsCommonLocal = {.tlsMinVersion = TLS1_2_VERSION};
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
@@ -86,10 +88,15 @@ tlsCertCommonName(X509 *const certificate)                                      
         FUNCTION_TEST_PARAM_P(VOID, certificate);                                                                   // {vm_covered}
     FUNCTION_TEST_END();                                                                                            // {vm_covered}
 
-    X509_NAME *const subjectName = X509_get_subject_name(certificate);                                              // {vm_covered}
+    const X509_NAME *const subjectName = X509_get_subject_name(certificate);                                        // {vm_covered}
     CHECK(FormatError, subjectName != NULL, "subject name is missing");                                             // {vm_covered}
 
-    const int commonNameIndex = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);                        // {vm_covered}
+    // OpenSSL < 3 requires a non-const name
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+    const int commonNameIndex = X509_NAME_get_index_by_NID(                                                         // {vm_covered}
+        UNCONSTIFY(X509_NAME *, subjectName), NID_commonName, -1);                                                  // {vm_covered}
+#pragma GCC diagnostic pop
     CHECK(FormatError, commonNameIndex >= 0, "common name is missing");                                             // {vm_covered}
 
     String *result = tlsAsn1ToStr(X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subjectName, commonNameIndex)));     // {vm_covered}
@@ -185,12 +192,15 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-tlsInit(const String *const tlsCipher12, const String *const tlsCipher13)                                           // {vm_covered}
+tlsInit(const String *const tlsCipher12, const String *const tlsCipher13, const String *const tlsMinVersion)        // {vm_covered}
 {
     FUNCTION_TEST_BEGIN();                                                                                          // {vm_covered}
         FUNCTION_TEST_PARAM(STRING, tlsCipher12);                                                                   // {vm_covered}
         FUNCTION_TEST_PARAM(STRING, tlsCipher13);                                                                   // {vm_covered}
+        FUNCTION_TEST_PARAM(STRING, tlsMinVersion);                                                                 // {vm_covered}
     FUNCTION_TEST_END();                                                                                            // {vm_covered}
+
+    ASSERT(tlsMinVersion != NULL);                                                                                  // {vm_covered}
 
     // Free old mem context (if any)
     if (tlsCommonLocal.memContext != NULL)                                                                          // {vm_covered}
@@ -204,6 +214,7 @@ tlsInit(const String *const tlsCipher12, const String *const tlsCipher13)       
             tlsCommonLocal.memContext = MEM_CONTEXT_NEW();                                                          // {vm_covered}
             tlsCommonLocal.tlsCipher12 = strDup(tlsCipher12);                                                       // {vm_covered}
             tlsCommonLocal.tlsCipher13 = strDup(tlsCipher13);                                                       // {vm_covered}
+            tlsCommonLocal.tlsMinVersion = strEqZ(tlsMinVersion, "1.3") ? TLS1_3_VERSION : TLS1_2_VERSION;          // {vm_covered}
         }
         MEM_CONTEXT_NEW_END();                                                                                      // {vm_covered}
     }
@@ -229,6 +240,9 @@ tlsContext(const bool verifyPeer)
     SSL_CTX *const result = SSL_CTX_new(method);
     cryptoError(result == NULL, "unable to create TLS context");
 
+    // Clear errors queued while applying the OpenSSL config to the context
+    ERR_clear_error();
+
     // Disable compression
     SSL_CTX_set_options(result, SSL_OP_NO_COMPRESSION);
 
@@ -238,8 +252,12 @@ tlsContext(const bool verifyPeer)
     // Enhance security when verifyPeer is enabled
     if (verifyPeer)
     {
-        // Set minimum TLS version to 1.2
-        cryptoError(SSL_CTX_set_min_proto_version(result, TLS1_2_VERSION) != 1, "unable to set minumum TLS version to 1.2");
+        // Set minimum TLS version when the minimum from the OpenSSL config is lower
+        if (SSL_CTX_get_min_proto_version(result) < tlsCommonLocal.tlsMinVersion)
+        {
+            cryptoError(
+                SSL_CTX_set_min_proto_version(result, tlsCommonLocal.tlsMinVersion) != 1, "unable to set minimum TLS version");
+        }
 
         // Set allowed ciphers for TLSv1.2 when configured
         if (tlsCommonLocal.tlsCipher12 != NULL)                                                                     // {vm_covered}

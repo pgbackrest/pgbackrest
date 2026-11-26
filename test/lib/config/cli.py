@@ -13,8 +13,7 @@ the help shows them without being asked for the command.
 The unit command is not in the command list the help shows since a test run is what calls it, in a container where only the
 repository copy is available, rather than something to run by hand.
 
-A command parses into the same configuration as the test run, so an option belongs after the command, which replaces whatever was
-given before it."""
+Options may be given before or after the command. The command parser parses all of them."""
 
 ####################################################################################################################################
 import argparse
@@ -158,6 +157,37 @@ def _parser_vm_build(command, parent):
 
 
 ####################################################################################################################################
+def _command_first(arg_list, parser, command_map):
+    """Move the command to the front of the argument list.
+
+    The command is the first argument that is not an option or an option value. The argument list is unchanged when there is no
+    command."""
+
+    # Options that take a value in the main parser or any command parser
+    option_value = set()
+
+    for parser_option in [parser, *command_map.values()]:
+        for action in parser_option._actions:
+            if action.nargs != 0:
+                option_value.update(action.option_strings)
+
+    index = 0
+
+    while index < len(arg_list):
+        arg = arg_list[index]
+
+        if not arg.startswith("-"):
+            if arg in command_map:
+                return [arg] + arg_list[:index] + arg_list[index + 1 :]
+
+            break
+
+        index += 2 if arg in option_value else 1
+
+    return arg_list
+
+
+####################################################################################################################################
 def cli_parse(arg_list, version):
     """Build the parser and parse the command line."""
 
@@ -191,7 +221,8 @@ def cli_parse(arg_list, version):
     )
     code_format.add_argument("--check", action="store_true", help="check the formatting rather than changing it")
 
-    result = parser.parse_args(arg_list)
+    # The command parser parses every option, including those given before the command
+    result = parser.parse_args(_command_first(arg_list, parser, command.choices))
 
     # Fill in the command a command line with no command was asking for, so nothing downstream has to know it was left out
     if result.command is None:

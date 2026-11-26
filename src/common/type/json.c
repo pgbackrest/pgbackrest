@@ -11,7 +11,13 @@ Convert JSON to/from KeyValue
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/type/json.h"
+
+/***********************************************************************************************************************************
+Maximum depth of nested containers when reading
+***********************************************************************************************************************************/
+#define JSON_READ_DEPTH_MAX                                         32
 
 /***********************************************************************************************************************************
 Object types
@@ -264,6 +270,10 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
     {
         ASSERT(!key);
 
+        // No comma before a value outside a container
+        if (*this->json == ',')
+            THROW_FMT(JsonFormatError, "unexpected comma at: %s", this->json);
+
         // If a scalar then no need to create the stack since the read is complete
         if (jsonTypeScalar(type))
         {
@@ -317,12 +327,23 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
             jsonReadConsumeWhiteSpace(this);
         }
         else
+        {
+            // No comma before the first value in a container or before an object value
+            if (*this->json == ',')
+                THROW_FMT(JsonFormatError, "unexpected comma at: %s", this->json);
+
             item->first = true;
+        }
     }
 
     // Add container to the stack
     if (jsonTypeContainer(type))
+    {
+        if (lstSize(this->stack) >= JSON_READ_DEPTH_MAX)
+            THROW_FMT(JsonFormatError, "maximum depth of " STRINGIFY(JSON_READ_DEPTH_MAX) " exceeded at: %s", this->json);
+
         lstAdd(this->stack, &(JsonReadStack){.type = type});
+    }
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -815,22 +836,27 @@ jsonReadSkipStr(JsonRead *const this)
                 {
                     this->json++;
 
-                    // Expect four digits
+                    // Expect four hex digits
                     unsigned int digitIdx = 0;
 
                     for (; digitIdx < 4; digitIdx++)
                     {
-                        if (!isdigit(this->json[digitIdx]))
+                        if (!isxdigit((unsigned char)this->json[digitIdx]))
                             break;
                     }
 
                     if (digitIdx != 4)
                         THROW_FMT(JsonFormatError, "unable to decode at: %s", this->json - 2);
 
-                    this->json += 4;
+                    // Move to the last digit
+                    this->json += 3;
 
                     break;
                 }
+
+                // End of string after the escape
+                case '\0':
+                    THROW(JsonFormatError, "expected '\"' but found null delimiter");
 
                 // Any other escape
                 default:
@@ -1015,12 +1041,20 @@ jsonReadStr(JsonRead *const this)
                     this->json++;
 
                     // We don't know how to decode anything except ASCII so fail if it looks like Unicode
-                    if (strncmp(this->json, "00", 2) != 0)
+                    if (strncmp(this->json, "00", 2) != 0 || !isxdigit((unsigned char)this->json[2]) ||
+                        !isxdigit((unsigned char)this->json[3]))
+                    {
                         THROW_FMT(JsonFormatError, "unable to decode at: %s", this->json - 2);
+                    }
 
-                    // Decode char
+                    // Decode char. A null character cannot be stored in a string.
                     this->json += 2;
-                    strCatChr(result, (char)cvtZSubNToUIntBase(this->json, 0, 2, 16));
+                    const char decode = (char)cvtZSubNToUIntBase(this->json, 0, 2, 16);
+
+                    if (decode == '\0')
+                        THROW_FMT(JsonFormatError, "unable to decode at: %s", this->json - 4);
+
+                    strCatChr(result, decode);
                     this->json++;
 
                     break;

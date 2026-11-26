@@ -108,6 +108,31 @@ testRun(void)
 
         sleepMSec(500);
         TEST_RESULT_VOID(execFree(exec), "sleep exited as expected");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exec one with output");
+
+        TEST_RESULT_STR_Z(execOne(strLstNewSplitZ(STRDEF("echo output"), " ")), "output", "exec echo");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exec one exits with error");
+
+        StringList *command = strLstNew();
+        strLstAddZ(command, "sh");
+        strLstAddZ(command, "-c");
+        strLstAddZ(command, "echo error; exit 1");
+
+        TEST_ERROR(execOne(command), UnknownError, "sh terminated unexpectedly [1]: error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exec one exits from signal");
+
+        command = strLstNew();
+        strLstAddZ(command, "sh");
+        strLstAddZ(command, "-c");
+        strLstAddZ(command, "kill -9 $$");
+
+        TEST_ERROR(execOne(command), ExecuteError, "sh terminated unexpectedly on signal 9");
     }
 
     // *****************************************************************************************************************************

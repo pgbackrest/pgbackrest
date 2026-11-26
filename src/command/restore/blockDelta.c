@@ -81,7 +81,7 @@ blockDeltaNew(
             },
             .blockSize = blockSize,
             .checksumSize = checksumSize,
-            .cipherSpecBackup = cipherSpecDup(cipherSpecBackup),
+            .cipherSpecBackup = cipherSpecDupP(cipherSpecBackup),
             .compressType = compressType,
             .write =
             {

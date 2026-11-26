@@ -19,6 +19,8 @@ Backup Command
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
+#include "common/format/format.h"
 #include "common/io/filter/size.h"
 #include "common/log.h"
 #include "common/regExp.h"
@@ -29,6 +31,7 @@ Backup Command
 #include "config/config.h"
 #include "config/parse.h"
 #include "db/helper.h"
+#include "info/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/manifest/manifest.h"
@@ -65,6 +68,7 @@ typedef struct BackupData
     unsigned int version;                                           // PostgreSQL version
     unsigned int walSegmentSize;                                    // PostgreSQL wal segment size
     PgPageSize pageSize;                                            // PostgreSQL page size
+    unsigned int segmentPageTotal;                                  // PostgreSQL total pages in a relation segment
 } BackupData;
 
 static BackupData *
@@ -152,6 +156,7 @@ backupInit(const InfoBackup *const infoBackup)
     result->version = pgControl.version;
     result->walSegmentSize = pgControl.walSegmentSize;
     result->pageSize = pgControl.pageSize;
+    result->segmentPageTotal = pgControl.segmentPageTotal;
 
     // Validate pg_control info against the stanza
     if (result->version != infoPg.version || pgControl.systemId != infoPg.systemId)
@@ -186,7 +191,7 @@ backupInit(const InfoBackup *const infoBackup)
     // Get archive info
     if (cfgOptionBool(cfgOptArchiveCheck))
     {
-        result->archiveInfo = infoArchiveLoadFile(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMain());
+        result->archiveInfo = infoArchiveRepoIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo));
         result->archiveId = infoArchiveId(result->archiveInfo);
 
         // Error if the info files do not agree with each other. A stanza left half migrated by an interrupted upgrade should be
@@ -226,13 +231,9 @@ cmdBackup(void)
                 cfgOptionGroupName(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
         }
 
-        // Get the repo storage in case it is remote and encryption settings need to be pulled down
-        storageRepo();
-
         // Load backup.info
-        InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMain());
+        InfoBackup *const infoBackup = infoBackupRepoIdxP(cfgOptionGroupIdxDefault(cfgOptGrpRepo), .reconstruct = true);
         const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
-        const CipherSpec *const cipherSpecManifest = infoBackupCipherSpec(infoBackup);
 
         // Get pg storage and database objects
         BackupData *const backupData = backupInit(infoBackup);
@@ -271,13 +272,27 @@ cmdBackup(void)
                 cfgOptionSet(cfgOptDelta, cfgSourceParam, BOOL_TRUE_VAR);
 
             // Resume a backup when possible
-            if (!backupResume(manifest, cipherSpecManifest))
+            if (!backupResume(manifest, infoBackup))
             {
                 manifestBackupLabelSet(
                     manifest,
                     backupLabelCreate(
                         (BackupType)cfgOptionStrId(cfgOptType), manifestData(manifest)->backupLabelPrior, timestampStart));
+
+                // Format >= 6 stores a manifest key for a new backup set in backup.info before a manifest is encrypted with it
+                if (manifestFormat(manifest) >= REPOSITORY_FORMAT_6 && manifestData(manifest)->backupType == backupTypeFull &&
+                    cfgOptionStrId(cfgOptRepoCipherType) != cipherTypeNone)
+                {
+                    infoBackupCipherSpecAdd(
+                        infoBackup, manifestData(manifest)->backupLabel,
+                        cipherSpecGen(cfgOptionStrId(cfgOptRepoCipherType), manifestFormat(manifest)));
+                    infoBackupRepoIdxSave(cfgOptionGroupIdxDefault(cfgOptGrpRepo));
+                }
             }
+
+            // Key for the manifest of the backup
+            const CipherSpec *const cipherSpecManifest = infoBackupCipherSpecManifest(
+                infoBackup, manifestData(manifest)->backupLabel);
 
             // Save the manifest before processing starts
             backupManifestSaveCopy(manifest, cipherSpecManifest, false);

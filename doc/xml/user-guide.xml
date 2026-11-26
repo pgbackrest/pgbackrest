@@ -84,7 +84,9 @@
 
         <variable key="backrest-repo-path">/var/lib/pgbackrest</variable>
         <variable key="backrest-repo-cipher-type">aes-256-cbc</variable>
-        <variable key="backrest-repo-cipher-pass">zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</variable>
+        <variable key="backrest-repo-cipher-pass">6Y2m6+6mgf7Z8qboYyEIk48keXTx2Sjs3X1/7SFSRMk=</variable>
+        <!-- Passphrase shown in place of the installed passphrase. stanza-create rejects a passphrase that begins with CIPHER_PASS_EXAMPLE_PREFIX in src/command/stanza/create.c. -->
+        <variable key="backrest-repo-cipher-pass-display">zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGi=</variable>
         <variable key="br-bin">/usr/bin/pgbackrest</variable>
         <variable key="br-user">pgbackrest</variable>
         <variable key="br-group">{[br-user]}</variable>
@@ -447,7 +449,7 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="setup-ssh-intro">
-        <p><backrest/> can use passwordless SSH to enable communication between the hosts. It is also possible to use TLS, see <link url="user-guide-rhel.html#repo-host/config">Setup TLS</link>.</p>
+        <p><backrest/> can use passwordless SSH to enable communication between the hosts. It is also possible to use TLS. See <link url="user-guide-rhel.html#repo-host/config">Setup TLS</link>.</p>
     </block-define>
 
     <block-define id="setup-tls">
@@ -591,6 +593,10 @@
 
         <execute-list host="{[br-install-host]}">
             <title>Install dependencies</title>
+
+            <execute if="{[os-type-is-debian]}" user="root" show="n" pre="y">
+                <exe-cmd>apt-get update</exe-cmd>
+            </execute>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
@@ -837,7 +843,7 @@
 
     <!-- ======================================================================================================================= -->
     <block-define id="sftp-setup">
-        <p><backrest/> supports locating repositories on <proper>SFTP</proper> hosts. SFTP file transfer is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file transfer.</p>
+        <p><backrest/> supports locating repositories on <proper>SFTP</proper> hosts. SFTP file transfer is relatively slow so commands benefit from increasing <br-option>process-max</br-option> to parallelize file transfer.</p>
 
         <backrest-config host="{[sftp-setup-host]}" file="{[backrest-config-demo]}" owner="{[sftp-setup-config-owner]}">
             <title>Configure <proper>SFTP</proper></title>
@@ -853,7 +859,7 @@
             <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
 
-        <p>When utilizing <proper>SFTP</proper>, if libssh2 is compiled against OpenSSH then <br-option>repo{[sftp-setup-repo-id]}-sftp-public-key-file</br-option> is optional.</p>
+        <p>When utilizing <proper>SFTP</proper>, if libssh2 is compiled against OpenSSL then <br-option>repo{[sftp-setup-repo-id]}-sftp-public-key-file</br-option> is optional.</p>
 
         <execute-list host="{[sftp-setup-host]}">
             <title>Generate SSH keypair for SFTP backup</title>
@@ -955,9 +961,9 @@
 
             <p><b>Full Backup</b>: <backrest/> copies the entire contents of the database cluster to the backup. The first backup of the database cluster is always a Full Backup. <backrest/> is always able to restore a full backup directly. The full backup does not depend on any files outside of the full backup for consistency.</p>
 
-            <p><b>Differential Backup</b>: <backrest/> copies only those database cluster files that have changed since the last full backup. <backrest/> restores a differential backup by copying all of the files in the chosen differential backup and the appropriate unchanged files from the previous full backup. The advantage of a differential backup is that it requires less disk space than a full backup, however, the differential backup and the full backup must both be valid to restore the differential backup.</p>
+            <p><b>Differential Backup</b>: <backrest/> copies only those database cluster files that have changed since the last full backup. <backrest/> restores a differential backup by copying all of the files in the chosen differential backup and the appropriate unchanged files from the previous full backup. The advantage of a differential backup is that it requires less disk space than a full backup. However, the differential backup and the full backup must both be valid to restore the differential backup.</p>
 
-            <p><b>Incremental Backup</b>: <backrest/> copies only those database cluster files that have changed since the last backup (which can be another incremental backup, a differential backup, or a full backup). As an incremental backup only includes those files changed since the prior backup, they are generally much smaller than full or differential backups. As with the differential backup, the incremental backup depends on other backups to be valid to restore the incremental backup. Since the incremental backup includes only those files since the last backup, all prior incremental backups back to the prior differential, the prior differential backup, and the prior full backup must all be valid to perform a restore of the incremental backup. If no differential backup exists then all prior incremental backups back to the prior full backup, which must exist, and the full backup itself must be valid to restore the incremental backup.</p>
+            <p><b>Incremental Backup</b>: <backrest/> copies only those database cluster files that have changed since the last backup (which can be another incremental backup, a differential backup, or a full backup). As an incremental backup only includes those files changed since the prior backup, it is generally much smaller than full or differential backups. As with the differential backup, the incremental backup depends on other backups to be valid to restore the incremental backup. Since the incremental backup includes only those files changed since the last backup, all prior incremental backups back to the prior differential, the prior differential backup, and the prior full backup must all be valid to perform a restore of the incremental backup. If no differential backup exists then all prior incremental backups back to the prior full backup, which must exist, and the full backup itself must be valid to restore the incremental backup.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -995,7 +1001,7 @@
         <section id="v2.x">
             <title>From v2.x to v2.y</title>
 
-            <p>Upgrading from <proper>v2.x</proper> to <proper>v2.y</proper> is straight-forward. The repository format has not changed, so for most installations it is simply a matter of installing binaries for the new version. It is also possible to downgrade if you have not used new features that are unsupported by the older version.</p>
+            <p>Upgrading from <proper>v2.x</proper> to <proper>v2.y</proper> is straightforward. The repository format has not changed, so for most installations it is simply a matter of installing binaries for the new version. It is also possible to downgrade if you have not used new features that are unsupported by the older version.</p>
 
             <admonition type="important">The local and remote <backrest/> versions must match exactly so they should be upgraded together. If there is a mismatch, WAL archiving and backups will not function until the versions match. In such a case, the following error will be reported: <id>[ProtocolError] expected value '2.x' for greeting key 'version' but got '2.y'</id>.</admonition>
         </section>
@@ -1227,7 +1233,7 @@
             <list>
                 <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are default: the default config file will be loaded, if it exists, and <file>*.conf</file> files in the default config include path will be appended, if they exist.</list-item>
                 <list-item><br-option>config</br-option> option is specified: only the specified config file will be loaded and is expected to exist.</list-item>
-                <list-item><br-option>config-include-path</br-option> is specified: <file>*.conf</file> files in the config include path will be loaded and the path is required to exist. The default config file will be be loaded if it exists. If it is desirable to load only the files in the specified config include path, then the <br-option>--no-config</br-option> option can also be passed.</list-item>
+                <list-item><br-option>config-include-path</br-option> is specified: <file>*.conf</file> files in the config include path will be loaded and the path is required to exist. The default config file will be loaded if it exists. If it is desirable to load only the files in the specified config include path, then the <br-option>--no-config</br-option> option can also be passed.</list-item>
                 <list-item><br-option>config</br-option> and <br-option>config-include-path</br-option> are specified: using the user-specified values, the config file will be loaded and <file>*.conf</file> files in the config include path will be appended. The files are expected to exist.</list-item>
                 <list-item><br-option>config-path</br-option> is specified: this setting will override the base path for the default location of the config file and/or the base path of the default config-include-path setting unless the config and/or config-include-path option is explicitly set.</list-item>
             </list>
@@ -1263,7 +1269,7 @@
 
             <option-description key="repo-path"/>
 
-            <p>For this demonstration the repository will be stored on the same host as the <postgres/> server. This is the simplest configuration and is useful in cases where traditional backup software is employed to backup the database host.</p>
+            <p>For this demonstration the repository will be stored on the same host as the <postgres/> server. This is the simplest configuration and is useful in cases where traditional backup software is employed to back up the database host.</p>
 
             <block id="br-install-repo">
                 <block-variable-replace key="br-install-host">{[host-pg1]}</block-variable-replace>
@@ -1378,12 +1384,12 @@
 
             <p>The <pg-option>hot_standby</pg-option> setting is enabled by default and should be left that way on every cluster. Any cluster may be restored as a standby later, e.g. a primary that is rebuilt as a standby after failover, and a standby will not accept read-only connections without it.</p>
 
-            <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) to reach the <backrest/> repository, then the <backrest/> <br-option>archive-timeout</br-option> option should be increased. Note that this option is not the same as the <postgres/> <pg-option>archive_timeout</pg-option> option which is used to force a WAL segment switch; useful for databases where there are long periods of inactivity. For more information on the <postgres/> <pg-option>archive_timeout</pg-option> option, see <postgres/> <link url="https://www.postgresql.org/docs/current/static/runtime-config-wal.html">Write Ahead Log</link>.</p>
+            <p>When archiving a WAL segment is expected to take more than 60 seconds (the default) to reach the <backrest/> repository, then the <backrest/> <br-option>archive-timeout</br-option> option should be increased. Note that this option is not the same as the <postgres/> <pg-option>archive_timeout</pg-option> option which is used to force a WAL segment switch and is useful for databases where there are long periods of inactivity. For more information on the <postgres/> <pg-option>archive_timeout</pg-option> option, see <postgres/> <link url="https://www.postgresql.org/docs/current/static/runtime-config-wal.html">Write Ahead Log</link>.</p>
 
             <p>The <cmd>archive-push</cmd> command can be configured with its own options. For example, a lower compression level may be set to speed archiving without affecting the compression used for backups.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
-                <title>Config <cmd>archive-push</cmd> to use a lower compression level</title>
+                <title>Configure <cmd>archive-push</cmd> to use a lower compression level</title>
 
                 <backrest-config-option section="global:archive-push" key="compress-level">3</backrest-config-option>
             </backrest-config>
@@ -1412,13 +1418,13 @@
 
             <p>The repository will be configured with a cipher type and key to demonstrate encryption. Encryption is always performed client-side even if the repository type (e.g. <proper>S3</proper> or other object store) supports encryption.</p>
 
-            <p>It is important to use a long, random passphrase for the cipher key. A good way to generate one is to run: <code>openssl rand -base64 48</code>.</p>
+            <p>It is important to use a long, random passphrase for the cipher key. A good way to generate one is to run: <code>openssl rand -base64 32</code>.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <backrest/> repository encryption</title>
 
                 <backrest-config-option section="global" key="repo1-cipher-type">{[backrest-repo-cipher-type]}</backrest-config-option>
-                <backrest-config-option section="global" key="repo1-cipher-pass">{[backrest-repo-cipher-pass]}</backrest-config-option>
+                <backrest-config-option section="global" key="repo1-cipher-pass" display="{[backrest-repo-cipher-pass-display]}">{[backrest-repo-cipher-pass]}</backrest-config-option>
             </backrest-config>
 
             <admonition type="note">Encryption settings are placed in the <id>[global]</id> section, above, so the <cmd>info</cmd> command can read all stanzas. Without the <br-option>stanza</br-option> option the <cmd>info</cmd> command reads encryption settings only from the <id>[global]</id> section, so encryption settings configured per stanza require the <br-option>stanza</br-option> option to read an encrypted stanza.</admonition>
@@ -1507,7 +1513,7 @@
             <p>To perform a backup of the <postgres/> cluster run <backrest/> with the <cmd>backup</cmd> command.</p>
 
             <execute-list host="{[host-pg1]}">
-                <title>Backup the {[postgres-cluster-demo]} cluster</title>
+                <title>Back up the {[postgres-cluster-demo]} cluster</title>
 
                 <execute user="postgres" output="y">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]}
@@ -1553,7 +1559,7 @@
                 30 06  *   *   1-6   pgbackrest --type=diff --stanza=demo backup
             </code-block>
 
-            <p>Once backups are scheduled it's important to configure retention so backups are expired on a regular schedule, see <link section="/retention">Retention</link>.</p>
+            <p>Once backups are scheduled it's important to configure retention so backups are expired on a regular schedule. See <link section="/retention">Retention</link>.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -1862,7 +1868,7 @@
         <section id="full">
             <title>Full Backup Retention</title>
 
-            <p>The <br-option>repo1-retention-full-type</br-option> determines how the option <br-option>repo1-retention-full</br-option> is interpreted; either as the count of full backups to be retained or how many days to retain full backups. New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>repo1-retention-full-type=count</br-setting> and <br-setting>repo1-retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired, or if <br-setting>repo1-retention-full-type=time</br-setting> and <br-setting>repo1-retention-full=20</br-setting> then there must be one full backup that is at least 20 days old before expiration can occur.</p>
+            <p>The <br-option>repo1-retention-full-type</br-option> determines how the option <br-option>repo1-retention-full</br-option> is interpreted: either as the count of full backups to be retained or how many days to retain full backups. New backups must be completed before expiration will occur &amp;mdash; that means if <br-setting>repo1-retention-full-type=count</br-setting> and <br-setting>repo1-retention-full=2</br-setting> then there will be three full backups stored before the oldest one is expired, or if <br-setting>repo1-retention-full-type=time</br-setting> and <br-setting>repo1-retention-full=20</br-setting> then there must be one full backup that is at least 20 days old before expiration can occur.</p>
 
             <p><br-setting>repo1-retention-full=2</br-setting> was set in <link section="/quickstart/retention">Configure Retention</link> but currently there is only one full backup so the next full backup to run will not expire any full backups.</p>
 
@@ -1907,7 +1913,7 @@
                 <backrest-config-option section="global" key="repo1-retention-diff">1</backrest-config-option>
             </backrest-config>
 
-            <p>Backup <br-setting>repo1-retention-diff=1</br-setting> so two differentials will need to be performed before one is expired. An incremental backup is added to demonstrate incremental expiration, which in this case depends on the differential expiration.</p>
+            <p>With <br-setting>repo1-retention-diff=1</br-setting> two differentials will need to be performed before one is expired. An incremental backup is added to demonstrate incremental expiration, which in this case depends on the differential expiration.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Perform differential and incremental backups</title>
@@ -1944,7 +1950,7 @@
 
             <p>Although <backrest/> automatically removes archived WAL segments when expiring backups (the default expires WAL for full backups based on the <br-option>repo1-retention-full</br-option> option), it may be useful to expire archive more aggressively to save disk space. Note that full backups are treated as differential backups for the purpose of differential archive retention.</p>
 
-            <p>Expiring archive will never remove WAL segments that are required to make a backup consistent. However, since Point-in-Time-Recovery (PITR) only works on a continuous WAL stream, care should be taken when aggressively expiring archive outside of the normal backup expiration process. To determine what will be expired without actually expiring anything, the <br-option>dry-run</br-option> option can be provided on the command line with the <cmd>expire</cmd> command.</p>
+            <p>Expiring archive will never remove WAL segments that are required to make a backup consistent. However, since Point-in-Time Recovery (PITR) only works on a continuous WAL stream, care should be taken when aggressively expiring archive outside of the normal backup expiration process. To determine what will be expired without actually expiring anything, the <br-option>dry-run</br-option> option can be provided on the command line with the <cmd>expire</cmd> command.</p>
 
             <backrest-config host="{[host-pg1]}" file="{[backrest-config-demo]}">
                 <title>Configure <br-option>repo1-retention-diff</br-option></title>
@@ -2465,7 +2471,7 @@
 
         <p>Some commands, e.g. <cmd>stanza-create</cmd>/<cmd>stanza-upgrade</cmd>, will automatically work with all configured repositories while others, e.g. <link section="/delete-stanza">stanza-delete</link>, will require a repository to be specified using the <br-option>repo</br-option> option. See the <link url="command.html">command reference</link> for details on which commands require the repository to be specified.</p>
 
-        <p>Note that the <br-option>repo</br-option> option is not required when only <br-option>repo1</br-option> is configured in order to maintain backward compatibility. However, the <br-option>repo</br-option> option <i>is</i> required when a single repo is configured as, e.g. <br-option>repo2</br-option>. This is to prevent command breakage if a new repository is added later.</p>
+        <p>Note that the <br-option>repo</br-option> option is not required when only <br-option>repo1</br-option> is configured in order to maintain backward compatibility. However, the <br-option>repo</br-option> option <i>is</i> required when a single repo is configured as e.g. <br-option>repo2</br-option>. This is to prevent command breakage if a new repository is added later.</p>
 
         <p>The <cmd>archive-push</cmd> command will always push WAL to the archive in all configured repositories. When a repository cannot be reached, WAL will still be pushed to other repositories. However, for this to work effectively, <br-setting>archive-async=y</br-setting> must be enabled; otherwise, the other repositories can only get one WAL segment ahead of the unreachable repository. Also, note that if WAL cannot be pushed to any repository, then <postgres/> will not remove it from the <path>pg_wal</path> directory, which may cause the volume to run out of space.</p>
 
@@ -2498,7 +2504,7 @@
         <p>File creation time in Azure is relatively slow so <cmd>backup</cmd>/<cmd>restore</cmd> performance is improved by enabling <link section="/backup/bundle">file bundling</link>.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Backup the {[postgres-cluster-demo]} cluster</title>
+            <title>Back up the {[postgres-cluster-demo]} cluster</title>
 
             <execute user="postgres" output="y">
                 <exe-cmd>
@@ -2597,7 +2603,7 @@
         <p>File creation time in S3 is relatively slow so <cmd>backup</cmd>/<cmd>restore</cmd> performance is improved by enabling <link section="/backup/bundle">file bundling</link>.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Backup the {[postgres-cluster-demo]} cluster</title>
+            <title>Back up the {[postgres-cluster-demo]} cluster</title>
 
             <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=3
@@ -2642,7 +2648,7 @@
         </execute-list>
 
         <execute-list host="{[host-pg1]}">
-            <title>Backup the {[postgres-cluster-demo]} cluster</title>
+            <title>Back up the {[postgres-cluster-demo]} cluster</title>
 
             <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=4
@@ -2757,7 +2763,7 @@
     <section id="repo-host" depend="/quickstart/configure-archiving">
         <title>Dedicated Repository Host</title>
 
-        <p>The configuration described in <link section="/quickstart">Quickstart</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>repository</host> host where the backups and WAL archive files are stored. This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact. It is still a good idea to employ traditional backup software to backup the <host>repository</host> host.</p>
+        <p>The configuration described in <link section="/quickstart">Quick Start</link> is suitable for simple installations but for enterprise configurations it is more typical to have a dedicated <host>repository</host> host where the backups and WAL archive files are stored. This separates the backups and WAL archive from the database server so <host>database</host> host failures have less impact. It is still a good idea to employ traditional backup software to back up the <host>repository</host> host.</p>
 
         <p>On <postgres/> hosts, <br-option>pg1-path</br-option> is required to be the path of the local PostgreSQL cluster and no <br-option>pg1-host</br-option> should be configured. When configuring a repository host, the pgbackrest configuration file must have the <br-option>pg-host</br-option> option configured to connect to the primary and standby (if any) hosts. The repository host has the only pgbackrest configuration that should be aware of more than one <postgres/> host. Order does not matter, e.g. pg1-path/pg1-host, pg2-path/pg2-host can be primary or standby.</p>
 
@@ -2842,7 +2848,7 @@
         <section id="config">
             <title>Configuration</title>
 
-            <p if="{[protocol-tls]}"><backrest/> can use TLS with client certificates to enable communication between the hosts. It is also possible to use SSH, see <link url="user-guide.html#repo-host/setup-ssh">Setup SSH</link>.</p>
+            <p if="{[protocol-tls]}"><backrest/> can use TLS with client certificates to enable communication between the hosts. It is also possible to use SSH. See <link url="user-guide.html#repo-host/setup-ssh">Setup SSH</link>.</p>
 
             <p if="{[protocol-tls]}"><backrest/> expects client/server certificates to be generated in the same way as <postgres/>. See <link url="https://www.postgresql.org/docs/current/ssl-tcp.html">Secure TCP/IP Connections with TLS</link> for detailed instructions on generating certificates.</p>
 
@@ -3022,7 +3028,7 @@
             <p>To perform a backup of the <postgres/> cluster run <backrest/> with the <cmd>backup</cmd> command on the <host>repository</host> host.</p>
 
             <execute-list host="{[host-repo1]}">
-                <title>Backup the {[postgres-cluster-demo]} cluster</title>
+                <title>Back up the {[postgres-cluster-demo]} cluster</title>
 
                 <execute user="{[br-user]}" output="y" filter="n">
                     <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} backup</exe-cmd>
@@ -3187,7 +3193,7 @@
     <section id="replication" depend="/repo-host/perform-backup">
         <title>Replication</title>
 
-        <p>Replication allows multiple copies of a <postgres/> cluster (called standbys) to be created from a single primary. The standbys are useful for balancing reads and to provide redundancy in case the primary host fails.</p>
+        <p>Replication allows multiple copies of a <postgres/> cluster (called standbys) to be created from a single primary. The standbys are useful for balancing reads and providing redundancy in case the primary host fails.</p>
 
         <!-- =================================================================================================================== -->
         <section id="installation">
@@ -3850,7 +3856,7 @@
 
             <p>The asynchronous <cmd>archive-get</cmd> command maintains a local queue of WAL to improve throughput. If a WAL segment is not found in the queue it is fetched from the repository along with enough consecutive WAL to fill the queue. The maximum size of the queue is defined by <br-option>archive-get-queue-max</br-option>. Whenever the queue is less than half full more WAL will be fetched to fill it.</p>
 
-            <p>Asynchronous operation is most useful in environments that generate a lot of WAL or have a high latency connection to the repository storage (i.e., <proper>S3</proper> or other object stores). In the case of a high latency connection it may be a good idea to increase <br-option>process-max</br-option>.</p>
+            <p>Asynchronous operation is most useful in environments that generate a lot of WAL or have a high latency connection to the repository storage (e.g. <proper>S3</proper> or other object stores). In the case of a high latency connection it may be a good idea to increase <br-option>process-max</br-option>.</p>
 
             <p>The <file>[stanza]-archive-get-async.log</file> file can be used to monitor the activity of the asynchronous process.</p>
 
@@ -3903,7 +3909,7 @@
         <p>Both the primary and standby databases are required to perform the backup, though the vast majority of the files will be copied from the standby to reduce load on the primary. The database hosts can be configured in any order. <backrest/> will automatically determine which is the primary and which is the standby.</p>
 
         <execute-list host="{[host-repo1]}">
-            <title>Backup the {[postgres-cluster-demo]} cluster from <host>pg2</host></title>
+            <title>Back up the {[postgres-cluster-demo]} cluster from <host>pg2</host></title>
 
             <execute user="{[br-user]}" output="y" filter="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --log-level-console=detail backup</exe-cmd>
@@ -4238,7 +4244,7 @@
         <title>Upgrading <postgres/></title>
         <cmd-description key="stanza-upgrade"/>
 
-        <p>The following instructions are not meant to be a comprehensive guide for upgrading <postgres/>, rather they outline the general process for upgrading a primary and standby with the intent of demonstrating the steps required to reconfigure <backrest/>. It is recommended that a backup be taken prior to upgrading.</p>
+        <p>The following instructions are not meant to be a comprehensive guide for upgrading <postgres/>. Rather, they outline the general process for upgrading a primary and standby with the intent of demonstrating the steps required to reconfigure <backrest/>. It is recommended that a backup be taken prior to upgrading.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Stop old cluster</title>
@@ -4472,7 +4478,7 @@
         <p>Backup from standby can be enabled now that the standby is restored.</p>
 
         <backrest-config host="{[host-repo1]}" owner="{[br-user]}:{[br-group]}" file="{[backrest-config-demo]}">
-            <title>Reenable backup from standby</title>
+            <title>Re-enable backup from standby</title>
 
             <backrest-config-option section="global" key="backup-standby">y</backrest-config-option>
         </backrest-config>

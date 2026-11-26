@@ -496,8 +496,8 @@ protocolRemoteParam(const ProtocolStorageType protocolStorageType, const unsigne
         // Update/remove repo/pg options that are sent to the remote
         for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
         {
-            // Skip options that are not part of a group
-            if (!cfgOptionGroup(optionId))
+            // Skip options that are not part of a group or not passed to the remote
+            if (!cfgOptionGroup(optionId) || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleRemote, optionId))
                 continue;
 
             bool remove = false;
@@ -832,6 +832,7 @@ protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned 
                 VariantList *const param = varLstNew();
                 varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherType, hostIdx)));
                 varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherPass, hostIdx)));
+                varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherPassOld, hostIdx)));
 
                 const VariantList *const optionList = configOptionRemote(protocolHelperClient->client, param);
 
@@ -839,6 +840,7 @@ protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned 
                 {
                     cfgOptionIdxSet(cfgOptRepoCipherType, hostIdx, cfgSourceConfig, varLstGet(optionList, 0));
                     cfgOptionIdxSet(cfgOptRepoCipherPass, hostIdx, cfgSourceConfig, varLstGet(optionList, 1));
+                    cfgOptionIdxSet(cfgOptRepoCipherPassOld, hostIdx, cfgSourceConfig, varLstGet(optionList, 2));
                 }
             }
         }

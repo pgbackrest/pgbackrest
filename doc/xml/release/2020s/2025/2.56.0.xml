@@ -12,6 +12,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix issue with adhoc expiration when no backups in a repository.</p>
+
+                <p>Adhoc expiration failed with <quote>cannot get index 0 from list with 0 value(s)</quote> when a repository had no backups.</p>
             </release-item>
         </release-bug-list>
 
@@ -27,6 +29,8 @@
                 </release-item-contributor-list>
 
                 <p>Add restore progress to <cmd>info</cmd> command output.</p>
+
+                <p>The <cmd>restore</cmd> command now records its progress, which the <cmd>info</cmd> command reports alongside backup progress. A restore is also no longer terminated by the <cmd>stop</cmd> command.</p>
             </release-item>
 
             <release-item>
@@ -39,6 +43,8 @@
                 </release-item-contributor-list>
 
                 <p>Add progress-only detail level for <cmd>info</cmd> command output.</p>
+
+                <p>Set <br-option>--detail-level=progress</br-option> to report only progress, which is faster because the repository is not read. The default is <id>full</id>.</p>
             </release-item>
         </release-feature-list>
 
@@ -52,6 +58,8 @@
                 </release-item-contributor-list>
 
                 <p>Retry failed reads on object stores.</p>
+
+                <p>A read from an object store that failed after it started was fatal, which could restart an expensive job, e.g. during restore. A failed read is now retried from where it left off.</p>
             </release-item>
 
             <release-item>
@@ -64,6 +72,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix defaults in command-line help.</p>
+
+                <p>When an option has more than one default, e.g. <setting>repo-storage-upload-chunk-size</setting> with an <proper>S3</proper> and an <proper>Azure</proper> repository, the option list shows <id>&lt;multi&gt;</id> and the help for the option lists each default. Defaults are not shown for options that are not valid in the current configuration.</p>
             </release-item>
         </release-improvement-list>
 
@@ -77,6 +87,36 @@
                 </release-item-contributor-list>
 
                 <p>Improve the predictability of floating point numbers formatted as strings.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove context wrapper when processing defaults during config parsing."/>
+                <commit subject="Flag pg-host-config-include-path and pg-host-config-path as required."/>
+                <commit subject="Rename cfgExe() to cfgBin()."/>
+                <commit subject="Add default type for current pgbackrest binary."/>
+                <commit subject="Make default-literal option configuration with default-type."/>
+                <commit subject="Improve defaults and allow lists with option value dependencies."/>
+                <commit subject="Remove cfgParseOptionDefault() and cfgParseOptionRequired()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve option defaults and dependencies.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix typo in comment."/>
+                <commit subject="Rename unsigned char to uint8_t."/>
+                <commit subject="Fix issue with calling lstClear() twice."/>
+                <commit subject="Add VR_NON_STRING macro for nonstring attribute."/>
+                <commit subject="Move variable to scope where it is used."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code.</p>
             </release-item>
         </release-development-list>
     </release-core-list>
@@ -92,6 +132,8 @@
                 </release-item-contributor-list>
 
                 <p>Describe discrete option values in a list where appropriate.</p>
+
+                <p>The values of options such as <setting>output</setting> for the <cmd>verify</cmd> and <cmd>version</cmd> commands are now described as a list, as for other options.</p>
             </release-item>
 
             <release-item>
@@ -105,5 +147,59 @@
                 <p>Fix <quote>less than</quote> in help output for <setting>archive-mode</setting> option.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Add details about notifying packagers to release instructions."/>
+                <commit subject="Update support and recognition documentation."/>
+                <commit subject="Add funding information."/>
+                <commit subject="Update contributing guide to Ubuntu 22.04."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update the contributing, release, and support documentation.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="New CI container build for PostgreSQL 18 beta1."/>
+                <commit subject="Use &#x27;x86_64&#x27; instead of &#x27;amd64&#x27; for container testing."/>
+                <commit subject="Fix architecture labeling for multi-architecture container builds."/>
+                <commit subject="Update Fedora test image to Fedora 42."/>
+                <commit subject="New CI container build for PostgreSQL 18 beta2."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Use dup2() to redirect stderr in the common/error unit test."/>
+                <commit subject="Update invalid address check in common/io-tls unit test."/>
+                <commit subject="Add TEST_ERROR_MULTI() macro."/>
+                <commit subject="Update unit tests to work with Alpine Linux and musl libc."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+
+    <release-backpatch-list>
+        <release-backpatch version="2.55.1">
+            <commit subject="Fix lower bounds checking for option keys."/>
+            <commit subject="Revert &quot;calculate content-md5 on S3 only when required&quot;."/>
+            <commit subject="Merge v2.55.1 release."/>
+        </release-backpatch>
+    </release-backpatch-list>
 </release>

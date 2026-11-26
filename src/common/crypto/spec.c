@@ -23,10 +23,12 @@ cipherSpecNew(const CipherType type, const Buffer *const pass, const CipherSpecN
         FUNCTION_TEST_PARAM(STRING_ID, type);
         FUNCTION_TEST_PARAM(BUFFER, pass);
         FUNCTION_TEST_PARAM(STRING_ID, param.digest);
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, param.prior);
     FUNCTION_TEST_END();
 
     ASSERT((type == cipherTypeNone) == (pass == NULL));
     ASSERT(pass == NULL || !bufEmpty(pass));
+    ASSERT(param.prior == NULL || (type != cipherTypeNone && cipherSpecType(param.prior) == type));
 
     OBJ_NEW_BEGIN(CipherSpec, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -34,8 +36,11 @@ cipherSpecNew(const CipherType type, const Buffer *const pass, const CipherSpecN
 
         if (this->pub.type != cipherTypeNone)
         {
-            this->pub.digest = param.digest == 0 ? hashTypeSha256 : param.digest;
+            this->pub.digest = param.digest;
             this->pub.pass = bufDup(pass);
+
+            if (param.prior != NULL)
+                this->pub.prior = cipherSpecDupP(param.prior);
         }
     }
     OBJ_NEW_END();
@@ -71,6 +76,24 @@ cipherSpecNewPack(PackRead *const packRead)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN CipherSpec *
+cipherSpecDup(const CipherSpec *const this, const CipherSpecDupParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(CIPHER_SPEC, this);
+        FUNCTION_TEST_PARAM(STRING_ID, param.digestDefault);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(
+        CIPHER_SPEC,
+        cipherSpecNewP(
+            cipherSpecType(this), cipherSpecPass(this),
+            .digest = cipherSpecDigest(this) == 0 ? param.digestDefault : cipherSpecDigest(this), .prior = cipherSpecPrior(this)));
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN void
 cipherSpecPack(PackWrite *const packWrite, const CipherSpec *const this)
 {
@@ -101,14 +124,16 @@ cipherSpecToLog(const CipherSpec *const this, StringStatic *const debugLog)
     char typeZ[STRID_MAX + 1];
     strIdToZ(cipherSpecType(this), typeZ);
 
-    // There is no digest when there is no cipher. The pass is never logged.
-    if (cipherSpecType(this) == cipherTypeNone)
-        strStcFmt(debugLog, "{type: %s}", typeZ);
-    else
+    strStcFmt(debugLog, "{type: %s", typeZ);
+
+    // There is no digest when there is no cipher or when the format decides it. The pass is never logged.
+    if (cipherSpecDigest(this) != 0)
     {
         char digestZ[STRID_MAX + 1];
         strIdToZ(cipherSpecDigest(this), digestZ);
 
-        strStcFmt(debugLog, "{type: %s, digest: %s}", typeZ, digestZ);
+        strStcFmt(debugLog, ", digest: %s", digestZ);
     }
+
+    strStcCatChr(debugLog, '}');
 }

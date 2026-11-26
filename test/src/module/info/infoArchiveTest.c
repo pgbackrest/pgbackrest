@@ -28,10 +28,10 @@ testRun(void)
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.6\"\n"
+            "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n");
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"10\"}\n");
 
         InfoArchive *info = NULL;
 
@@ -43,7 +43,7 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR_Z(infoArchiveId(info), "9.6-1", "archiveId set");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
         TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(info)), cipherTypeNone, "no cipher sub");
 
@@ -62,8 +62,8 @@ testRun(void)
         // Create the same content by creating a new object
         TEST_ASSIGN(
             info, infoArchiveNew(
-                PG_VERSION_96, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, NULL), "infoArchiveNew() - no sub cipher");
-        TEST_RESULT_STR_Z(infoArchiveId(info), "9.6-1", "archiveId set");
+                PG_VERSION_10, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, NULL), "infoArchiveNew() - no sub cipher");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "10-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
         TEST_RESULT_UINT(cipherSpecType(infoArchiveCipherSpec(info)), cipherTypeNone, "no cipher sub");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "history set");
@@ -83,13 +83,16 @@ testRun(void)
         TEST_TITLE("create with cipher");
 
         // Recreate from scratch with cipher
+        CipherSpecMap *const cipherSpecMapSub = cipherSpecMapNew();
+        cipherSpecMapAdd(
+            cipherSpecMapSub, CIPHER_SPEC_MAP_ID_DEFAULT_STR,
+            cipherSpecNewP(
+                cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"),
+                .digest = hashTypeSha1));
+
         TEST_ASSIGN(
             info,
-            infoArchiveNew(
-                PG_VERSION_10, 6569239123849665999, REPOSITORY_FORMAT_DEFAULT,
-                cipherSpecNewP(
-                    cipherTypeAes256Cbc, BUFSTRDEF("zWa/6Xtp-IVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO"),
-                    .digest = hashTypeSha1)),
+            infoArchiveNew(PG_VERSION_10, 6569239123849665999, REPOSITORY_FORMAT_DEFAULT, cipherSpecMapSub),
             "infoArchiveNew() - cipher sub");
 
         const CipherSpec *const cipherSpec = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("x"));
@@ -97,7 +100,7 @@ testRun(void)
         contentSave = bufNew(0);
 
         IoWrite *write = ioBufferWriteNew(contentSave);
-        cipherBlockFormatFilterGroupWriteAdd(contentSave, ioWriteFilterGroup(write), cipherSpec, REPOSITORY_FORMAT_DEFAULT);
+        cipherBlockFormatFilterGroupWriteAddP(ioWriteFilterGroup(write), cipherSpec, REPOSITORY_FORMAT_DEFAULT);
 
         TEST_RESULT_VOID(infoArchiveSave(info, write), "save new with cipher");
         TEST_RESULT_BOOL(
@@ -118,11 +121,31 @@ testRun(void)
         TEST_TITLE("increment history");
 
         InfoPgData infoPgData = {0};
-        TEST_RESULT_VOID(infoArchivePgSet(info, PG_VERSION_96, 6569239123849665679), "add another infoPg");
+        TEST_RESULT_VOID(infoArchivePgSet(info, PG_VERSION_11, 6569239123849665679), "add another infoPg");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 2, "history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoArchivePg(info)), "get current infoPgData");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_96, "version set");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_11, "version set");
         TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "systemId set");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("rotate cipher key");
+
+        const CipherSpec *const cipherSpecRotate = cipherSpecNewP(
+            cipherTypeAes256Cbc, BUFSTRDEF("rotate"), .digest = hashTypeSha256);
+
+        TEST_RESULT_VOID(infoArchiveFormatSet(info, REPOSITORY_FORMAT_6), "set format 6");
+        TEST_RESULT_INT(infoArchiveCipherRotateTime(info), 0, "no rotation time");
+
+        TEST_RESULT_VOID(infoArchiveCipherRotate(info, cipherSpecRotate, 1700000000), "rotate after migrated key");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(info)), "1", "first key id");
+        TEST_RESULT_INT(infoArchiveCipherRotateTime(info), 1700000000, "rotation time");
+
+        // Ids increment as numbers rather than as text
+        TEST_RESULT_VOID(infoCipherSpecAdd(infoPgInfo(infoArchivePg(info)), STRDEF("9"), cipherSpecRotate), "add key 9");
+        TEST_RESULT_VOID(infoArchiveCipherRotate(info, cipherSpecRotate, 1700086400), "rotate after key 9");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(info)), "10", "key id after 9");
+        TEST_RESULT_UINT(cipherSpecMapSize(infoArchiveCipherSpecMap(info)), 4, "all keys kept");
+        TEST_RESULT_INT(infoArchiveCipherRotateTime(info), 1700086400, "rotation time");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("object free");
@@ -190,5 +213,31 @@ testRun(void)
             infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecNewNone()),
             "load copy");
         TEST_RESULT_UINT(infoPgDataCurrent(infoArchivePg(infoArchive)).systemId, 6569239123849665999, "check file loaded");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("save archive info file with the old and new passphrases");
+
+        const CipherSpec *const cipherSpecOld = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("old"));
+        const CipherSpec *const cipherSpecRekey = cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("new"), .prior = cipherSpecOld);
+
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecOld), "save archive info");
+
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecRekey), "load old passphrase");
+        TEST_RESULT_BOOL(infoArchiveCipherPrior(infoArchive), true, "decrypted with old passphrase");
+
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecRekey), "save archive info");
+        TEST_RESULT_BOOL(
+            infoArchiveCipherPrior(infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecRekey)), true,
+            "encrypted with old passphrase");
+
+        TEST_RESULT_VOID(infoArchiveCipherPriorClear(infoArchive), "clear prior");
+        TEST_RESULT_VOID(
+            infoArchiveSaveFile(infoArchive, storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecRekey), "save archive info");
+        TEST_RESULT_BOOL(
+            infoArchiveCipherPrior(infoArchiveLoadFile(storageTest, STRDEF(INFO_ARCHIVE_FILE), cipherSpecRekey)), false,
+            "encrypted with new passphrase");
     }
 }

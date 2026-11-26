@@ -151,7 +151,7 @@ static List *
 backupFile(
     const String *const repoFile, const uint64_t bundleId, const bool bundleRaw, const unsigned int blockIncrReference,
     const CompressType repoFileCompressType, const int repoFileCompressLevel, const CipherSpec *const cipherSpecBackup,
-    const String *const pgVersionForce, const PgPageSize pageSize, const List *const fileList)
+    const String *const pgVersionForce, const PgPageSize pageSize, const unsigned int segmentPageTotal, const List *const fileList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, repoFile);                       // Repo file
@@ -162,6 +162,7 @@ backupFile(
         FUNCTION_LOG_PARAM(INT, repoFileCompressLevel);             // Compression level for repo file
         FUNCTION_LOG_PARAM(CIPHER_SPEC, cipherSpecBackup);          // Cipher spec to encrypt the backup file
         FUNCTION_LOG_PARAM(ENUM, pageSize);                         // Page size
+        FUNCTION_LOG_PARAM(UINT, segmentPageTotal);                 // Total pages in a relation segment
         FUNCTION_LOG_PARAM(STRING, pgVersionForce);                 // Force pg version
         FUNCTION_LOG_PARAM(LIST, fileList);                         // List of files to backup
     FUNCTION_LOG_END();
@@ -170,6 +171,7 @@ backupFile(
     ASSERT(cipherSpecBackup != NULL);
     ASSERT(fileList != NULL && !lstEmpty(fileList));
     ASSERT(pgPageSizeValid(pageSize));
+    ASSERT(segmentPageTotal > 0);
 
     // Backup file results
     List *const result = lstNewP(sizeof(BackupFileResult));
@@ -356,8 +358,8 @@ backupFile(
                         ioFilterGroupAdd(
                             ioReadFilterGroup(readIo),
                             pageChecksumNew(
-                                segmentNumber(file->pgFile), PG_SEGMENT_SIZE_DEFAULT / pageSize, pageSize,
-                                file->pgFilePageHeaderCheck, storagePathP(storagePg(), file->pgFile)));
+                                segmentNumber(file->pgFile), segmentPageTotal, pageSize, file->pgFilePageHeaderCheck,
+                                storagePathP(storagePg(), file->pgFile)));
                     }
 
                     // Compress filter
@@ -454,12 +456,10 @@ backupFile(
                                 // If checksum is also equal then no need to copy the file
                                 if (bufEq(file->pgFileChecksum, copyChecksum))
                                 {
-                                    // If block incremental make sure no map was returned but a prior map was provided
+                                    // If a prior map was provided make sure no map was returned
                                     ASSERT(
-                                        file->blockIncrSize == 0 ||
-                                        (pckReadU64P(
-                                             ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE)) == 0 &&
-                                         file->blockIncrMapPriorFile != NULL));
+                                        file->blockIncrMapPriorFile == NULL ||
+                                        pckReadU64P(ioFilterGroupResultP(ioReadFilterGroup(readIo), BLOCK_INCR_FILTER_TYPE)) == 0);
 
                                     fileResult->backupCopyResult = backupCopyResultNoOp;
                                     fileResult->copyChecksum = file->pgFileChecksum;

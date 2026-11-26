@@ -6,9 +6,17 @@ If there have been PostgreSQL minor releases since the last pgBackRest release t
 
 ## Create a branch to test the release
 
+For a minor release (x.y.0) create the test branch from `integration`:
 ```
-git checkout -b release-ci
+git checkout -b release-ci integration
 ```
+
+For a patch release (x.y.z where z > 0) do not run the command above. A patch release is made on `integration-x.y.z-ci`, e.g. `integration-2.60.1-ci`. This branch is created from the prior release, contains the begin commit, the backported commits, and the final release commit, and is pushed to the project repository for testing. Create the test branch from it and push the test branch to a fork for testing until it is merged to `integration-x.y.z-ci`:
+```
+git checkout -b release-x.y.z-ci integration-x.y.z-ci
+```
+
+The release notes of a patch release are checked against the git history that ends at the newest commit also in the local `integration-x.y.z-ci` branch, so commits made only on the test branch are not included. Every commit in that history must be claimed by a release note item. Without a local `integration-x.y.z-ci` branch the history ends at HEAD and the claim check is skipped.
 
 ## Update the date, version, and release title
 
@@ -138,7 +146,7 @@ Documentation Features:
 * Add user guide for Debian.
 ```
 
-Commit to integration with the above message and push to CI.
+Commit to integration (`integration-x.y.z-ci` for a patch release) with the above message and push to CI.
 
 Wait for CI testing to complete before proceeding to the next step.
 
@@ -146,9 +154,9 @@ Wait for CI testing to complete before proceeding to the next step.
 
 Set the release variables. `GITHUB_TOKEN` needs the `contents: write` permission to create the release and `actions: read` to download the tarball artifact (a classic token with the `repo` scope covers both):
 ```
-export GITHUB_TOKEN=?
 export GITHUB_REPO=pgbackrest/pgbackrest
 export GIT_BRANCH=integration
+export GITHUB_TOKEN=?
 ```
 
 Release the distribution tarball that CI built and tested for the release commit rather than building one locally. Every push to the release branch builds the tarball, checks it for missing files, and smoke tests it on a range of distributions, so the most recent run's artifact is the exact tested bytes to release. Run the commands below from an empty directory.
@@ -308,11 +316,6 @@ to:
 #define PROJECT_VERSION_MINOR                                       59
 #define PROJECT_VERSION_PATCH                                       0
 #define PROJECT_VERSION_SUFFIX                                      "dev"
-```
-
-Run deploy to generate git history (ctrl-c as soon as the file is generated):
-```
-pgbackrest/doc/release.py --build
 ```
 
 Commit and push to integration:

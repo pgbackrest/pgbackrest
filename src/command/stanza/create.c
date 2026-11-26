@@ -6,17 +6,18 @@ Stanza Create Command
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "command/check/common.h"
 #include "command/control/common.h"
 #include "command/stanza/common.h"
 #include "command/stanza/create.h"
 #include "common/debug.h"
+#include "common/format/format.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
-#include "info/infoArchive.h"
-#include "info/infoBackup.h"
+#include "info/helper.intern.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -77,31 +78,44 @@ cmdStanzaCreate(void)
                 // Format for the new stanza
                 const unsigned int format = cfgOptionIdxUInt(cfgOptRepoFormat, repoIdx);
 
-                // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent archive files
+                // Check the passphrase of a new encrypted stanza
+                stanzaCipherPassCheck(repoIdx, format, "create a stanza");
+
+                // If the repo is encrypted, generate a cipher passphrase for encrypting archive files. Format >= 6 adds it by
+                // rotating to the first key id and earlier formats store it as the default key with no id.
                 const CipherSpec *const cipherSpecArchive = cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), format);
+                CipherSpecMap *const cipherSpecMapArchive = cipherSpecMapNew();
+
+                if (cipherSpecType(cipherSpecArchive) != cipherTypeNone && format < REPOSITORY_FORMAT_6)
+                    cipherSpecMapAdd(cipherSpecMapArchive, CIPHER_SPEC_MAP_ID_DEFAULT_STR, cipherSpecArchive);
 
                 // Create and save archive info
-                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, format, cipherSpecArchive);
+                infoArchive = infoArchiveNew(pgControl.version, pgControl.systemId, format, cipherSpecMapArchive);
 
-                infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                if (cipherSpecType(cipherSpecArchive) != cipherTypeNone && format >= REPOSITORY_FORMAT_6)
+                    infoArchiveCipherRotate(infoArchive, cipherSpecArchive, time(NULL));
 
-                // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent manifests
-                const CipherSpec *const cipherSpecManifest = cipherSpecGen(
-                    cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), format);
+                infoArchiveRepoIdxSet(repoIdx, infoArchive);
+                infoArchiveRepoIdxSave(repoIdx);
+
+                // If the repo is encrypted, generate a cipher passphrase for encrypting subsequent manifests. Format >= 6 adds a
+                // key for each backup set when the full backup is created.
+                const CipherSpec *const cipherSpecManifest =
+                    format < REPOSITORY_FORMAT_6 ? cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), format) : NULL;
 
                 // Create and save backup info
                 infoBackup = infoBackupNew(
                     pgControl.version, pgControl.systemId, pgControl.catalogVersion, format, cipherSpecManifest);
 
-                infoBackupSaveFile(infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoBackupRepoIdxSet(repoIdx, infoBackup);
+                infoBackupRepoIdxSave(repoIdx);
             }
             // Else if at least one archive and one backup info file exists, then ensure both are valid
             else if ((archiveInfoFileExists || archiveInfoFileCopyExists) && (backupInfoFileExists || backupInfoFileCopyExists))
             {
                 // Error if there is a mismatch between the archive and backup info files or the database version/system Id matches
                 // current database
-                checkStanzaInfoPg(
-                    repoIdx, storageRepoReadStanza, pgControl.version, pgControl.systemId, cfgCipherSpecMainIdx(repoIdx));
+                checkStanzaInfoPg(repoIdx, pgControl.version, pgControl.systemId);
 
                 // The files are valid - upgrade
                 const String *sourceFile = NULL;

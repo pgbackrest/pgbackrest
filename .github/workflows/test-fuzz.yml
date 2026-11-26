@@ -1,0 +1,77 @@
+# Build the fuzz targets in test/fuzz with clang and libFuzzer, instrumented for AddressSanitizer and UndefinedBehaviorSanitizer,
+# and run each one from its seed corpus for a fixed number of runs. A crash, a sanitizer report, or a failed assert fails the job
+# and the inputs that caused them are uploaded.
+name: fuzz
+
+on: workflow_call
+
+# Limit permissions on the repository
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          path: pgbackrest
+
+      - name: Update Apt
+        uses: ./pgbackrest/.github/action/apt
+
+      - name: Install
+        run: |
+          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y clang libclang-rt-dev zip unzip \
+            pkg-config meson ninja-build python3-yaml zlib1g-dev libssl-dev libxml2-dev libpq-dev libbz2-dev liblz4-dev libzstd-dev
+
+      # The flags are the ones OSS-Fuzz uses for each sanitizer, combined into a single build
+      - name: Build
+        env:
+          CC: clang
+          CFLAGS: >-
+            -O1 -fno-omit-frame-pointer -gline-tables-only -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -fsanitize=address,undefined
+            -fno-sanitize-recover=undefined -fsanitize=fuzzer-no-link
+          LIB_FUZZING_ENGINE: -fsanitize=fuzzer
+        run: |
+          mkdir -p fuzz/out fuzz/work
+          OUT=${GITHUB_WORKSPACE?}/fuzz/out WORK=${GITHUB_WORKSPACE?}/fuzz/work ${GITHUB_WORKSPACE?}/pgbackrest/test/fuzz/build.sh
+
+      # Run each target with a seed from the commit hash and a fixed number of runs, with ASLR and corpus reloading disabled. The
+      # same commit generates the same inputs. Every target runs even when one fails.
+      - name: Run
+        run: |
+          cd fuzz
+          mkdir crash
+          seed=$((16#${GITHUB_SHA:0:7} + 1))
+          result=0
+
+          # Target and number of runs, about a minute each
+          for fuzz in ini:100000 json:200000 pack:500000; do
+              name=fuzz-${fuzz%%:*}
+              runs=${fuzz##*:}
+              option="-seed=${seed} -runs=${runs} -reload=0 -timeout=25 -rss_limit_mb=2560"
+
+              mkdir -p corpus/${name}
+
+              if test -f out/${name}_seed_corpus.zip; then
+                  unzip -q out/${name}_seed_corpus.zip -d corpus/${name}
+              fi
+
+              if ! setarch -R out/${name} ${option} -artifact_prefix=crash/${name}- corpus/${name}; then
+                  echo "reproduce from the seed corpus with: setarch -R ${name} ${option}"
+                  result=1
+              fi
+          done
+
+          exit ${result}
+
+      - name: Upload Crash
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fuzz-crash
+          path: fuzz/crash
+          if-no-files-found: ignore

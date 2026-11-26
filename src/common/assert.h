@@ -5,6 +5,7 @@ Assert Routines
 #define COMMON_ASSERT_H
 
 #include "common/error/error.h"
+#include "common/macro.h"
 
 /***********************************************************************************************************************************
 Asserts are used in test code to ensure that certain conditions are true. They are omitted from production builds.
@@ -14,7 +15,7 @@ Asserts are used in test code to ensure that certain conditions are true. They a
 #define ASSERT(condition)                                                                                                          \
     do                                                                                                                             \
     {                                                                                                                              \
-        if (!(condition))                                                                                                          \
+        if (UNLIKELY(!(condition)))                                                                                                \
             THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                           \
     }                                                                                                                              \
     while (0)
@@ -26,7 +27,7 @@ Asserts are used in test code to ensure that certain conditions are true. They a
 #define ASSERT_INLINE(condition)                                                                                                   \
     do                                                                                                                             \
     {                                                                                                                              \
-        if (!(condition))                                                                                                          \
+        if (UNLIKELY(!(condition)))                                                                                                \
             THROW_FMT(AssertError, "assertion '%s' failed", #condition);                                                           \
     }                                                                                                                              \
     while (0)
@@ -63,7 +64,7 @@ Checks are used in production builds to test very important conditions. Be sure 
 #define CHECK(type, condition, message)                                                                                            \
     do                                                                                                                             \
     {                                                                                                                              \
-        if (!(condition))                                                                                                          \
+        if (UNLIKELY(!(condition)))                                                                                                \
             THROW(type, message);                                                                                                  \
     }                                                                                                                              \
     while (0)
@@ -71,7 +72,7 @@ Checks are used in production builds to test very important conditions. Be sure 
 #define CHECK_FMT(type, condition, message, ...)                                                                                   \
     do                                                                                                                             \
     {                                                                                                                              \
-        if (!(condition))                                                                                                          \
+        if (UNLIKELY(!(condition)))                                                                                                \
             THROW_FMT(type, message, __VA_ARGS__);                                                                                 \
     }                                                                                                                              \
     while (0)

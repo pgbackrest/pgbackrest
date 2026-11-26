@@ -5,13 +5,16 @@ Expire Command
 
 #include "command/archive/common.h"
 #include "command/backup/common.h"
+#include "command/check/common.h"
 #include "command/control/common.h"
 #include "command/expire/expire.h"
+#include "command/stanza/common.h"
 #include "common/debug.h"
 #include "common/regExp.h"
 #include "common/time.h"
 #include "common/type/list.h"
 #include "config/config.h"
+#include "info/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "protocol/helper.h"
@@ -640,8 +643,7 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                 (!strLstEmpty(globalBackupRetentionList) && archiveRetention <= strLstSize(globalBackupRetentionList)))
             {
                 // Attempt to load the archive info file
-                const InfoArchive *const infoArchive = infoArchiveLoadFile(
-                    storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                const InfoArchive *const infoArchive = infoArchiveRepoIdx(repoIdx);
                 const InfoPg *const infoArchivePgData = infoArchivePg(infoArchive);
 
                 // Get a list of archive directories (e.g. 9.6-1, 10-2, etc) sorted by the db-id (number after the dash).
@@ -952,7 +954,8 @@ removeExpiredBackup(const InfoBackup *const infoBackup, const String *const adho
                 if (adhocBackupLabel != NULL && strBeginsWith(strLstGet(backupList, 0), strSubN(adhocBackupLabel, 0, 16)))
                 {
                     const Manifest *const manifestResume = manifestLoadFile(
-                        storageRepoIdx(repoIdx), manifestFileName, infoBackupCipherSpec(infoBackup));
+                        storageRepoIdx(repoIdx), manifestFileName,
+                        infoBackupCipherSpecManifest(infoBackup, strLstGet(backupList, 0)));
 
                     // If the ancestor of the resumable backup no longer exists in backup.info then it can be removed
                     if (!infoBackupLabelExists(infoBackup, manifestData(manifestResume)->backupLabelPrior))
@@ -1081,6 +1084,45 @@ removeExpiredHistory(const InfoBackup *const infoBackup, const unsigned int repo
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Rotate the archive key when it is older than the rotation period
+***********************************************************************************************************************************/
+static void
+expireArchiveCipherRotate(const unsigned int repoIdx)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
+    FUNCTION_LOG_END();
+
+    if (cfgOptionIdxTest(cfgOptRepoCipherRotate, repoIdx))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            InfoArchive *const infoArchive = infoArchiveRepoIdx(repoIdx);
+            const time_t timeNow = time(NULL);
+
+            if (infoArchiveCipherRotateTime(infoArchive) <
+                timeNow - (time_t)(cfgOptionIdxUInt64(cfgOptRepoCipherRotate, repoIdx) / MSEC_PER_SEC))
+            {
+                infoArchiveCipherRotate(
+                    infoArchive, cipherSpecGen(cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), infoArchiveFormat(infoArchive)),
+                    timeNow);
+
+                // Store the new archive info only if the dry-run mode is disabled
+                if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                    infoArchiveRepoIdxSave(repoIdx);
+
+                LOG_INFO_FMT(
+                    "%s: rotate archive key to id %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
+                    strZ(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive))));
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN void
 cmdExpire(void)
@@ -1139,8 +1181,6 @@ cmdExpire(void)
 
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            const Storage *const storageRepo = storageRepoIdx(repoIdx);
             InfoBackup *infoBackup = NULL;
 
             // Is full retention time-based?
@@ -1150,7 +1190,10 @@ cmdExpire(void)
             TRY_BEGIN()
             {
                 // Load backup.info for this repo
-                infoBackup = infoBackupLoadFileReconstruct(storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoBackup = infoBackupRepoIdxP(repoIdx, .reconstruct = true);
+
+                // Check that archive.info is at the same format as backup.info
+                checkStanzaInfoFormat(repoIdx, infoArchivePg(infoArchiveRepoIdx(repoIdx)), infoBackupPg(infoBackup));
 
                 // When expire oldest requested, expire the oldest full backup by lowering retention for this execution
                 if (expireOldest)
@@ -1230,15 +1273,15 @@ cmdExpire(void)
 
                 // Store the new backup info only if the dry-run mode is disabled
                 if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
-                {
-                    infoBackupSaveFile(
-                        infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
-                }
+                    infoBackupRepoIdxSave(repoIdx);
 
                 // Remove all files on disk that are now expired
                 removeExpiredBackup(infoBackup, adhocBackupLabel, repoIdx);
                 removeExpiredArchive(infoBackup, timeBasedFullRetention, repoIdx);
                 removeExpiredHistory(infoBackup, repoIdx);
+
+                // Rotate the archive key when it is due
+                expireArchiveCipherRotate(repoIdx);
 
                 // Check the oldest retained backup for page checksum errors and issue a warning if any
                 if (infoBackupDataTotal(infoBackup) > 0)

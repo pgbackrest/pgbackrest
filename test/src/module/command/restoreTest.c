@@ -8,6 +8,7 @@ Test Restore Command
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferRead.h"
+#include "info/infoArchive.intern.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
@@ -710,6 +711,17 @@ testRun(void)
             restoreManifestValidate(manifest, STRDEF("20161219-212741F_20161219-212918I")), FormatError,
             "requested backup '20161219-212741F_20161219-212918I' and manifest label '20161219-212741F' do not match\n"
             "HINT: this indicates some sort of corruption (at the very least paths have been renamed).");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on unsupported version");
+
+        manifest = testManifestMinimal(STRDEF("20161219-212741F"), 90600, STRDEF("/pg"));
+
+        TEST_ERROR(
+            restoreManifestValidate(manifest, STRDEF("20161219-212741F")), VersionNotSupportedError,
+            "invalid PostgreSQL version 9.6\n"
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
     }
 
     // *****************************************************************************************************************************
@@ -1017,7 +1029,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is not root and all ownership is good");
 
-        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
         const String *rootReplaceUser = NULL;
         const String *rootReplaceGroup = NULL;
 
@@ -1026,7 +1038,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is not root but has no user name");
 
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275I"), PG_VERSION_96, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275I"), PG_VERSION_10, pgPath);
 
         userLocalData.groupName = NULL;
         userLocalData.userName = NULL;
@@ -1045,7 +1057,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is not root and some ownership is bad");
 
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
 
         ManifestPath path = {.name = STRDEF("pg_data/bogus_path"), .user = STRDEF("path-user-bogus")};
         manifestPathAdd(manifest, &path);
@@ -1075,7 +1087,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
         userLocalData.userRoot = true;
 
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), NULL, .mode = 0700);
@@ -1100,7 +1112,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("owner is root and group is bad");
 
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
 
         manifestFileAdd(manifest, &file);
         manifestLinkAdd(manifest, &link);
@@ -1118,7 +1130,7 @@ testRun(void)
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_TITLE("owner is root and ownership of pg_data is bad");
 
-        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
 
         manifestPathAdd(manifest, &path);
         manifestFileAdd(manifest, &file);
@@ -1178,7 +1190,7 @@ testRun(void)
 
         const String *pgPath = STRDEF(TEST_PATH "/pg");
         const String *repoPath = STRDEF(TEST_PATH "/repo");
-        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_10, pgPath);
 
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -2072,44 +2084,44 @@ testRun(void)
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, NULL, CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             "follow current timeline because of version");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, STRDEF("latest"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             "follow latest timeline as requested");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, NULL, CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             "follow latest timeline because of version");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("current"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             "follow current timeline as requested");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("1"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             "follow requested timeline (same as current)");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("0x10"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             "follow requested hex timeline (same as current)");
         TEST_ERROR(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("bogus"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             DbMismatchError, "invalid target timeline 'bogus'");
 
         HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/00000009.history", "8");
         TEST_ERROR(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 8, 0xA1, STRDEF("9"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             FormatError,
             "invalid timeline '9' at '" TEST_PATH "/repo/archive/test1/17-1/00000009.history':"
             " invalid history line format '8'");
@@ -2122,27 +2134,27 @@ testRun(void)
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 10, 0x4FFFFFF, NULL, CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             "follow current timeline");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, NULL, CFGOPTVAL_RESTORE_TYPE_IMMEDIATE,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             "follow current timeline (based on type immediate)");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, NULL, CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             "follow latest timeline");
         TEST_RESULT_VOID(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, STRDEF("10"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             "target timeline found");
         TEST_ERROR(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x6000000, STRDEF("10"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             DbMismatchError,
             "target timeline A forked from backup timeline 9 at 0/5000000 which is before backup lsn of 0/6000000\n"
             "HINT: was the target timeline created by accidentally promoting a standby?\n"
@@ -2156,7 +2168,7 @@ testRun(void)
         TEST_ERROR(
             timelineVerify(
                 storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 6, 0x4FFFFFF, STRDEF("11"), CFGOPTVAL_RESTORE_TYPE_DEFAULT,
-                cipherSpecNewNone()),
+                cipherSpecMapNew()),
             DbMismatchError, "backup timeline 6, lsn 0/4ffffff is not in the history of target timeline B\n"
             "HINT: was the target timeline created by promoting from a timeline < latest?");
     }
@@ -2334,9 +2346,13 @@ testRun(void)
             TEST_CIPHER_PASS_MANIFEST "\"\n\n" TEST_RESTORE_BACKUP_INFO_DB, .cipherSpec = TEST_CIPHER_SPEC);
 
         // Write archive.info to the encrypted repo
-        InfoArchive *infoArchive = infoArchiveNew(
-            PG_VERSION_11, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT,
+        CipherSpecMap *const cipherSpecMapArchive = cipherSpecMapNew();
+        cipherSpecMapAdd(
+            cipherSpecMapArchive, CIPHER_SPEC_MAP_ID_DEFAULT_STR,
             cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS_ARCHIVE), .digest = hashTypeSha1));
+
+        InfoArchive *infoArchive = infoArchiveNew(
+            PG_VERSION_11, 6569239123849665679, REPOSITORY_FORMAT_DEFAULT, cipherSpecMapArchive);
         infoArchiveSaveFile(
             infoArchive, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR,
             cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF(TEST_CIPHER_PASS)));
@@ -2712,7 +2728,7 @@ testRun(void)
             // PG_VERSION
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA PG_FILE_PGVERSION, .size = 3, .sizeRepo = 3, .timestamp = 1482182860,
-                .bundleId = 1, .checksumSha1 = "f5b7e6d36dc0113f61b36c700817d42b96f7b037");
+                .bundleId = 1, .checksumSha1 = "4143d3a341877154d6e95211464e1df1015b74bd");
 
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "yyy", .size = 3, .sizeRepo = 3, .timestamp = 1482182860, .bundleId = 1,
@@ -2729,7 +2745,7 @@ testRun(void)
                 .bundleId = 1, .bundleOffset = 17, .checksumSha1 = "d7dacae2c968388960bf8970080a980ed5c5dcb7");
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/bundle/1",
-                PG_VERSION_96_Z "\n" PG_VERSION_96_Z "\nyyyxxxxxAzzA");
+                PG_VERSION_10_Z "\n\n" PG_VERSION_10_Z "\n\nyyyxxxxxAzzA");
 
             // base directory
             HRN_MANIFEST_PATH_ADD(manifest, .name = TEST_PGDATA PG_PATH_BASE);
@@ -2741,7 +2757,7 @@ testRun(void)
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "base/1/" PG_FILE_PGVERSION, .size = 3, .sizeRepo = 3,
                 .timestamp = 1482182860, .bundleId = 1, .bundleOffset = 4,
-                .checksumSha1 = "f5b7e6d36dc0113f61b36c700817d42b96f7b037");
+                .checksumSha1 = "4143d3a341877154d6e95211464e1df1015b74bd");
 
             // base/1/2
             fileBuffer = bufNew(8192);
@@ -3017,9 +3033,9 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 (bundle 20161219-212741F/1/1, 8KB, [PCT])"
             " checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (bundle 1/0, 3B, [PCT]) checksum"
-            " f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
+            " 4143d3a341877154d6e95211464e1df1015b74bd\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (bundle 1/4, 3B, [PCT]) checksum"
-            " f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
+            " 4143d3a341877154d6e95211464e1df1015b74bd\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
             " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx (bundle 1/11, 5B, [PCT]) checksum"
@@ -3211,9 +3227,9 @@ testRun(void)
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 - exists and matches backup (bundle 20161219-212741F/1/1, 8KB,"
             " [PCT]) checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (bundle 1/0, 3B, [PCT])"
-            " checksum f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
+            " checksum 4143d3a341877154d6e95211464e1df1015b74bd\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (bundle 1/4, 3B, [PCT])"
-            " checksum f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
+            " checksum 4143d3a341877154d6e95211464e1df1015b74bd\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
             " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx - exists and matches backup (bundle 1/11, 5B, [PCT]) checksum"
@@ -3578,6 +3594,12 @@ testRun(void)
 
         // Make sure restore fails with the invalid file
         TEST_ERROR(hrnCmdRestore(), CryptoError, "raised from local-1 shim protocol: cipher header missing");
+
+        TEST_RESULT_UINT(
+            cipherSpecType(
+                manifestCipherSpec(
+                    manifestNewLoad(storageReadIo(storageNewReadP(storagePg(), BACKUP_MANIFEST_FILE_STR)), TEST_CIPHER_SPEC))),
+            cipherTypeNone, "manifest in data directory has no file passphrase");
 
         // Use detail log level to catch block incremental restore message
         harnessLogLevelSet(logLevelDetail);

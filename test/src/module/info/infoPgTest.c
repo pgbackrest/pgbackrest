@@ -38,15 +38,17 @@ testRun(void)
 
         TEST_ASSIGN(infoPg, infoPgNew(infoPgBackup, REPOSITORY_FORMAT_DEFAULT, NULL), "infoPgNew(cipherTypeNone, NULL)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
-        TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(infoPgInfo(infoPg))), cipherTypeNone, "  cipher spec none");
+        TEST_RESULT_UINT(cipherSpecType(infoPgCipherSpec(infoPg)), cipherTypeNone, "  cipher spec none");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
 
         TEST_ASSIGN(
             infoPg,
-            infoPgNew(infoPgArchive, REPOSITORY_FORMAT_DEFAULT, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
+            infoPgNew(
+                infoPgArchive, REPOSITORY_FORMAT_DEFAULT,
+                cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"), .digest = hashTypeSha1)),
             "infoPgNew(cipherTypeAes256Cbc, 123xyz)");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 0, "  0 history");
-        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(infoPgInfo(infoPg)))), "123xyz", "  cipherPass set");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoPgCipherSpec(infoPg))), "123xyz", "  cipherPass set");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -74,13 +76,15 @@ testRun(void)
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665999, "  system-id updated");
         TEST_RESULT_UINT(pgData.version, PG_VERSION_18, "  version updated");
         TEST_RESULT_UINT(pgData.catalogVersion, 0, "  catalog version not set for archive");
-        TEST_RESULT_UINT(cipherSpecType(infoCipherSpec(infoPgInfo(infoPg))), cipherTypeNone, "  cipher spec none");
+        TEST_RESULT_UINT(cipherSpecType(infoPgCipherSpec(infoPg)), cipherTypeNone, "  cipher spec none");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(infoPgBackup, REPOSITORY_FORMAT_DEFAULT, cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"))),
+                infoPgNew(
+                    infoPgBackup, REPOSITORY_FORMAT_DEFAULT,
+                    cipherSpecNewP(cipherTypeAes256Cbc, BUFSTRDEF("123xyz"), .digest = hashTypeSha1)),
                 PG_VERSION_18, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgBackup");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
@@ -90,7 +94,7 @@ testRun(void)
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "  system-id set");
         TEST_RESULT_UINT(pgData.version, PG_VERSION_18, "  version set");
         TEST_RESULT_UINT(pgData.catalogVersion, 202506291, "  catalog version updated");
-        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoCipherSpec(infoPgInfo(infoPg)))), "123xyz", "  cipherPass set");
+        TEST_RESULT_STR_Z(strNewBuf(cipherSpecPass(infoPgCipherSpec(infoPg))), "123xyz", "  cipherPass set");
     }
 
     // *****************************************************************************************************************************
@@ -198,14 +202,14 @@ testRun(void)
         // infoPgAdd
         // -------------------------------------------------------------------------------------------------------------------------
         pgData.id = 3;
-        pgData.version = PG_VERSION_96;
-        pgData.systemId = HRN_PG_SYSTEMID_96;
+        pgData.version = PG_VERSION_10;
+        pgData.systemId = HRN_PG_SYSTEMID_10;
         TEST_RESULT_VOID(infoPgAdd(infoPg, &pgData), "infoPgAdd");
 
         InfoPgData pgDataTest = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(pgDataTest.id, 3, "    id set");
-        TEST_RESULT_INT(pgDataTest.version, PG_VERSION_96, "    version set");
-        TEST_RESULT_UINT(pgDataTest.systemId, HRN_PG_SYSTEMID_96, "    system-id set");
+        TEST_RESULT_INT(pgDataTest.version, PG_VERSION_10, "    version set");
+        TEST_RESULT_UINT(pgDataTest.systemId, HRN_PG_SYSTEMID_10, "    system-id set");
 
         // infoPgDataToLog
         // -------------------------------------------------------------------------------------------------------------------------

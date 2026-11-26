@@ -139,11 +139,19 @@ class TestJob:
             valgrind = ""
 
             if config.valgrind and not run.performance:
-                path_suppress = os.path.join(self.path_repo, "test/src/valgrind.suppress.%s" % vm)
+                # Suppressions for every vm and then for this vm
+                suppress = ""
+
+                for path_suppress in (
+                    os.path.join(self.path_repo, "test/src/valgrind.suppress"),
+                    os.path.join(self.path_repo, "test/src/valgrind.suppress.%s" % vm),
+                ):
+                    if os.path.exists(path_suppress):
+                        suppress += " --suppressions=%s" % path_suppress
 
                 valgrind = (
                     "valgrind -q --gen-suppressions=all"
-                    + (" --suppressions=%s" % path_suppress if os.path.exists(path_suppress) else "")
+                    + suppress
                     + " --exit-on-first-error=yes --leak-check=full --leak-resolution=high --error-exitcode=25 "
                 )
 

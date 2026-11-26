@@ -23,6 +23,8 @@
             </release-item>
 
             <release-item>
+                <commit subject="Simplify info command text message when no stanza are present."/>
+
                 <p>Simplify <cmd>info</cmd> command text message when no stanzas are present.</p>
 
                 <p>Replace the repository path with <quote>the repository</quote>.</p>

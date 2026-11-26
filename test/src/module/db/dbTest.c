@@ -18,15 +18,14 @@ Macro to check that replay is making progress -- this does not seem useful enoug
 ***********************************************************************************************************************************/
 #define                                                                                                                            \
     HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(                                                                                  \
-        sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam,          \
-        replayProgressParam, sleepParam)                                                                                           \
+        sessionParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam, sleepParam)     \
     {.session = sessionParam,                                                                                                      \
         .function = HRN_PQ_SENDQUERY,                                                                                              \
         .param =                                                                                                                   \
             "[\"select replayLsn::text,\\n"                                                                                        \
             "       (replayLsn > '" targetLsnParam "')::bool as targetReached,\\n"                                                 \
             "       (replayLsn > '" replayLastLsnParam "')::bool as replayProgress\\n"                                             \
-            "  from pg_catalog.pg_last_" walNameParam "_replay_" lsnNameParam "() as replayLsn\"]",                                \
+            "  from pg_catalog.pg_last_wal_replay_lsn() as replayLsn\"]",                                                          \
         .resultInt = 1, .sleep = sleepParam},                                                                                      \
     {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
     {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
@@ -42,13 +41,6 @@ Macro to check that replay is making progress -- this does not seem useful enoug
     {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,2]", .resultZ = cvtBoolToConstZ(replayProgressParam)},     \
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
-
-#define                                                                                                                            \
-    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(                                                                            \
-        sessionParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam, sleepParam)     \
-    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(                                                                                  \
-        sessionParam, "wal", "lsn", targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam,   \
-        sleepParam)
 
 /***********************************************************************************************************************************
 Test Run
@@ -85,7 +77,7 @@ testRun(void)
 
                     HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
                     HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "2/3"),
-                    HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", "000000030000000200000003"),
+                    HRN_PQ_SCRIPT_WAL_SWITCH(1, "000000030000000200000003"),
                     HRN_PQ_SCRIPT_CLOSE(1));
 
                 // Create server
@@ -244,16 +236,16 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   WARN: unable to check pg1: [DbQueryError] unable to select some rows from pg_settings\n"
             "            HINT: is the backup running as the postgres user?\n"
-            "            HINT: is the pg_read_all_settings role assigned for PostgreSQL >= 10?");
+            "            HINT: is the pg_read_all_settings role assigned?");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("PostgreSQL 9.6 start/stop backup");
+        TEST_TITLE("PostgreSQL 10 start/stop backup");
 
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_96, .checkpoint = pgLsnFromStr(STRDEF("3/3")));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_10, .checkpoint = pgLsnFromStr(STRDEF("3/3")));
 
         // Connect to primary
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN(1, "dbname='backupdb' port=5432", PG_VERSION_96, TEST_PATH "/pg1", false, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='backupdb' port=5432", PG_VERSION_10, TEST_PATH "/pg1", false, NULL, NULL));
 
         DbGetResult db = {0};
         TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
@@ -264,16 +256,16 @@ testRun(void)
 
         // Start backup with timeline error
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000020000000300000002"),
-            HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "3/3", "000000020000000300000003"));
+            HRN_PQ_SCRIPT_CURRENT_WAL(1, "000000020000000300000002"),
+            HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, false, "3/3", "000000020000000300000003"));
 
         TEST_ERROR(
             dbBackupStart(db.primary, false, true), DbMismatchError, "WAL timeline 2 does not match pg_control timeline 1");
 
         // Start backup with checkpoint error
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000010000000400000003"),
-            HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "4/4", "000000010000000400000004"));
+            HRN_PQ_SCRIPT_CURRENT_WAL(1, "000000010000000400000003"),
+            HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, false, "4/4", "000000010000000400000004"));
 
         TEST_ERROR(
             dbBackupStart(db.primary, false, true), DbMismatchError,
@@ -281,8 +273,8 @@ testRun(void)
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000010000000300000002"),
-            HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "3/3", "000000010000000300000003"));
+            HRN_PQ_SCRIPT_CURRENT_WAL(1, "000000010000000300000002"),
+            HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, false, "3/3", "000000010000000300000003"));
 
         DbBackupStartResult backupStartResult = {0};
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true), "start backup");
@@ -299,7 +291,7 @@ testRun(void)
         TEST_RESULT_STR_Z(hrnPackToStr(dbTablespaceList(db.primary)), "", "check tablespace list");
 
         // Stop backup
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_STOP_BACKUP_96(1, "3/4", "000000010000000300000004", false));
+        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_STOP_BACKUP_GE_10(1, "3/4", "000000010000000300000004", false));
 
         DbBackupStopResult backupStopResult = {.lsn = NULL};
         TEST_ASSIGN(backupStopResult, dbBackupStop(db.primary), "stop backup");
@@ -341,7 +333,7 @@ testRun(void)
         TEST_RESULT_STR_Z(dbBackupStart(db.primary, true, false).lsn, "5/4", "start backup");
 
         // Wait for standby to sync
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_REPLAY_WAIT_GE_10(2, "5/4"));
+        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_REPLAY_WAIT(2, "5/4"));
 
         TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/4"), dbPgControl(db.primary).timeline, 1000), "sync standby");
 
@@ -399,12 +391,12 @@ testRun(void)
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000050000000500000005"),
+            HRN_PQ_SCRIPT_CURRENT_WAL(1, "000000050000000500000005"),
             HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
 
             // Switch WAL segment so it can be checked
             HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "5/5"),
-            HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", "000000050000000500000005"));
+            HRN_PQ_SCRIPT_WAL_SWITCH(1, "000000050000000500000005"));
 
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "5/5", "check lsn");
@@ -443,9 +435,9 @@ testRun(void)
 
         // Timeout waiting for sync
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 100),
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 100));
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED(2, "5/5", false, "5/3"),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(2, "5/5", false, "5/3", "5/3", false, 100),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(2, "5/5", false, "5/3", "5/3", false, 100));
 
         TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 200), ArchiveTimeoutError,
@@ -455,11 +447,11 @@ testRun(void)
 
         // Checkpoint target timeout waiting for sync
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(2, "5/5", true, "5/5"),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED(2, "5/5", true, "5/5"),
             HRN_PQ_SCRIPT_CHECKPOINT(2),
-            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 100),
-            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 100),
-            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", false, "5/4", 100));
+            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED(2, "5/5", false, "5/4", 100),
+            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED(2, "5/5", false, "5/4", 100),
+            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED(2, "5/5", false, "5/4", 100));
 
         TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 200), ArchiveTimeoutError,
@@ -467,12 +459,12 @@ testRun(void)
 
         // Wait for standby to sync
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", true, "5/5", "5/4", true, 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED(2, "5/5", false, "5/3"),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(2, "5/5", false, "5/3", "5/3", false, 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(2, "5/5", false, "5/4", "5/3", true, 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(2, "5/5", true, "5/5", "5/4", true, 0),
             HRN_PQ_SCRIPT_CHECKPOINT(2),
-            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X", 0));
+            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED(2, "5/5", true, "X/X", 0));
 
         TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/5"), dbPgControl(db.primary).timeline, 1000), "sync standby");
 
@@ -481,12 +473,12 @@ testRun(void)
 
         // Fail on timeline mismatch
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_GE_10(2, "5/5", false, "5/3"),
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/3", "5/3", false, 0),
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", false, "5/4", "5/3", true, 0),
-            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(2, "5/5", true, "5/5", "5/4", true, 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED(2, "5/5", false, "5/3"),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(2, "5/5", false, "5/3", "5/3", false, 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(2, "5/5", false, "5/4", "5/3", true, 0),
+            HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(2, "5/5", true, "5/5", "5/4", true, 0),
             HRN_PQ_SCRIPT_CHECKPOINT(2),
-            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED_GE_10(2, "5/5", true, "X/X", 0));
+            HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED(2, "5/5", true, "X/X", 0));
 
         TEST_ERROR(
             dbReplayWait(db.standby, STRDEF("5/5"), 77, 1000), DbMismatchError, "standby is on timeline 6 but expected 77");
@@ -522,7 +514,7 @@ testRun(void)
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000050000000500000004"),
+            HRN_PQ_SCRIPT_CURRENT_WAL(1, "000000050000000500000004"),
             HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"));
 
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true), "start backup");
@@ -554,7 +546,7 @@ testRun(void)
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000060000000600000005"),
+            HRN_PQ_SCRIPT_CURRENT_WAL(1, "000000060000000600000005"),
             HRN_PQ_SCRIPT_START_BACKUP_GE_15(1, false, "6/6", "000000060000000600000006"));
 
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true), "start backup");
@@ -792,7 +784,7 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5434", PG_VERSION_12, TEST_PATH "/pg8", false, NULL, NULL),
 
             HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(8, "2/3"),
-            HRN_PQ_SCRIPT_WAL_SWITCH(8, "wal", "000000010000000200000003"),
+            HRN_PQ_SCRIPT_WAL_SWITCH(8, "000000010000000200000003"),
 
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));

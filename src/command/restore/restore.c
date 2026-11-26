@@ -13,8 +13,7 @@ Restore Command
 #include "common/user.h"
 #include "config/config.h"
 #include "config/exec.h"
-#include "info/infoArchive.h"
-#include "info/infoBackup.h"
+#include "info/helper.h"
 #include "info/manifest/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -65,15 +64,14 @@ cmdRestore(void)
         if (manifestData(jobData.manifest)->backupOptionOnline)
         {
             const ManifestData *const data = manifestData(jobData.manifest);
-            const InfoArchive *const archiveInfo = infoArchiveLoadFile(
-                storageRepoIdx(backupData.repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(backupData.repoIdx));
+            const InfoArchive *const archiveInfo = infoArchiveRepoIdx(backupData.repoIdx);
 
             timelineVerify(
                 storageRepoIdx(backupData.repoIdx),
                 strNewFmt("%s-%u", strZ(pgVersionToStr(data->pgVersion)), data->pgId), data->pgVersion,
                 cvtZToUIntBase(strZ(strSubN(data->archiveStart, 0, 8)), 16), pgLsnFromStr(data->lsnStart),
                 cfgOptionStrNull(cfgOptTargetTimeline), cfgOptionSeq(cfgOptType),
-                infoArchiveCipherSpec(archiveInfo));
+                infoArchiveCipherSpecMap(archiveInfo));
         }
 
         // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
@@ -90,7 +88,7 @@ cmdRestore(void)
         manifestValidate(jobData.manifest, false);
 
         // Get the cipher spec used to decrypt files in the backup
-        jobData.cipherSpecBackup = manifestCipherSpec(jobData.manifest);
+        jobData.cipherSpecBackup = cipherSpecDupP(manifestCipherSpec(jobData.manifest));
 
         // Validate the manifest
         restoreManifestValidate(jobData.manifest, backupData.backupSet);
@@ -127,7 +125,9 @@ cmdRestore(void)
         // Generate processing queues
         const uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
 
-        // Save manifest to the data directory so we can restart a delta restore even if the PG_VERSION file is missing
+        // Save manifest to the data directory without the passphrase for the files so we can restart a delta restore even if the
+        // PG_VERSION file is missing
+        manifestCipherSpecSet(jobData.manifest, NULL);
         manifestSave(jobData.manifest, storageWriteIo(storageNewWriteP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR)));
 
         // Create the parallel executor

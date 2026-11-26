@@ -7,9 +7,9 @@ Archive Push File
 #include "command/archive/find.h"
 #include "command/archive/push/file.h"
 #include "command/control/common.h"
-#include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/format/cipherBlockFormat.h"
 #include "common/io/filter/group.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -265,13 +265,10 @@ archivePushFile(
                         strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(repoData->archiveId), strZ(archiveDestination)),
                         .compressible = compressible);
 
-                    // If there is a cipher then add the encrypt filter
-                    if (cipherSpecType(repoData->cipherSpecArchive) != cipherTypeNone)
-                    {
-                        ioFilterGroupAdd(
-                            ioWriteFilterGroup(storageWriteIo(destination[repoListIdx])),
-                            cipherBlockNewP(cipherModeEncrypt, repoData->cipherSpecArchive));
-                    }
+                    // Add the encrypt filter to write the format header when required
+                    cipherBlockFormatFilterGroupWriteAddP(
+                        ioWriteFilterGroup(storageWriteIo(destination[repoListIdx])), repoData->cipherSpecArchive,
+                        repoData->format, .keyId = repoData->cipherIdArchive);
                 }
             }
 

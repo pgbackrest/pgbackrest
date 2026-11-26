@@ -5,7 +5,6 @@
                 <commit subject="Fix error thrown from FINALLY() causing an infinite loop.">
                     <github-pull-request id="1732"/>
                 </commit>
-                <commit subject="Remove unnecessary TRY() block in common/regExp module."/>
                 <commit subject="Use variable instead of function to track FINALLY() state.">
                     <github-pull-request id="1744"/>
                 </commit>
@@ -16,6 +15,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix error thrown from <code>FINALLY()</code> causing an infinite loop.</p>
+
+                <p>An error thrown in a <code>FINALLY()</code> block returned to the same block, where the error was likely thrown again and caused an infinite loop. <code>FINALLY()</code> now runs only once.</p>
             </release-item>
 
             <release-item>
@@ -26,11 +27,12 @@
                     <release-item-ideator id="geir.raness"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="reid.thompson"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="geir.raness"/>
+                    <release-item-tester id="geir.raness"/>
                 </release-item-contributor-list>
 
                 <p>Error on all lock failures except another process holding the lock.</p>
+
+                <p><cmd>archive-get</cmd>/<cmd>archive-push</cmd> did not error when the lock could not be taken for another reason, e.g. permissions, and the async process was not launched. The user got a generic failure message and there was no async log. These failures are now errors.</p>
             </release-item>
         </release-bug-list>
 
@@ -60,6 +62,8 @@
                 </release-item-contributor-list>
 
                 <p>Backup file bundling for improved small file support.</p>
+
+                <p>Bundling stores small files together in the repository to save time and space during backup, especially on object stores where creating each file is expensive. Enable it with <br-option>repo-bundle</br-option> and tune it with <br-option>repo-bundle-size</br-option> and <br-option>repo-bundle-limit</br-option>. Restore reads adjacent files in a bundle with a single read.</p>
             </release-item>
 
             <release-item>
@@ -75,6 +79,8 @@
                 </release-item-contributor-list>
 
                 <p>Verify command to validate the contents of a repository.</p>
+
+                <p>The <cmd>verify</cmd> command checks that the backups and WAL in the repository are valid. Set <br-option>output=text</br-option> to print the results and <br-option>verbose</br-option> to include what was verified successfully along with errors.</p>
             </release-item>
 
             <release-item>
@@ -91,10 +97,12 @@
                 </release-item-contributor-list>
 
                 <p><postgres/> 15 support.</p>
+
+                <p><postgres/> 15 removes exclusive backup, renames the backup start/stop functions, and drops <id>pg_database.datlastsysoid</id>, which <backrest/> no longer uses.</p>
             </release-item>
 
             <release-item>
-                <commit subject="Remove dependency on pg_database.datlastsysoid.">
+                <commit subject="Show backup percent complete in info output.">
                     <github-issue id="1490"/>
                     <github-pull-request id="1621"/>
                 </commit>
@@ -106,6 +114,8 @@
                 </release-item-contributor-list>
 
                 <p>Show backup percent complete in <cmd>info</cmd> output.</p>
+
+                <p><cmd>info</cmd> shows the percent complete of a running backup on the host where the backup is running. JSON output reports it as an integer, the percent times 100.</p>
             </release-item>
 
             <release-item>
@@ -122,6 +132,8 @@
                 </release-item-contributor-list>
 
                 <p>Auto-select backup for <cmd>restore</cmd> command <br-option>--type=lsn</br-option>.</p>
+
+                <p>With <br-option>type=lsn</br-option>, restore now selects the most recent backup that stopped at or before the <br-option>target</br-option> LSN.</p>
             </release-item>
 
             <release-item>
@@ -133,6 +145,8 @@
                 </release-item-contributor-list>
 
                 <p>Suppress existing WAL warning when <br-option>archive-mode-check</br-option> is disabled.</p>
+
+                <p>With <br-option>archive-mode-check=n</br-option> and WAL pushed from multiple hosts, a WAL file already in the archive with the same checksum is expected and no longer logs a warning. A different checksum is still an error.</p>
             </release-item>
 
             <release-item>
@@ -145,6 +159,8 @@
                 </release-item-contributor-list>
 
                 <p>Add <proper>AWS</proper> <proper>IMDSv2</proper> support.</p>
+
+                <p><proper>IMDSv2</proper> protects the instance metadata that provides credentials for <br-option>repo-s3-key-type=auto</br-option>. <backrest/> falls back to <proper>IMDSv1</proper> when the <proper>IMDSv2</proper> token request fails.</p>
             </release-item>
         </release-feature-list>
 
@@ -158,6 +174,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow <br-option>repo-hardlink</br-option> option to be changed after full backup.</p>
+
+                <p>Changing <br-option>repo-hardlink</br-option> required a new full backup. It can now be changed at any time, e.g. to disable it for file bundling.</p>
             </release-item>
 
             <release-item>
@@ -169,6 +187,8 @@
                 </release-item-contributor-list>
 
                 <p>Increase precision of percent complete logging for <cmd>backup</cmd> and <cmd>restore</cmd>.</p>
+
+                <p>Percent complete is now logged with hundredths, which gives more frequent updates for large backups and restores.</p>
             </release-item>
 
             <release-item>
@@ -185,6 +205,8 @@
                 </release-item-contributor-list>
 
                 <p>Improve path validation for <cmd>repo-*</cmd> commands.</p>
+
+                <p>A path may not contain <id>//</id>, a trailing <id>/</id> is removed, and an absolute path must be in the repository path.</p>
             </release-item>
 
             <release-item>
@@ -198,6 +220,8 @@
                 </release-item-contributor-list>
 
                 <p>Improve <cmd>stop</cmd> command to honor <br-option>stanza</br-option> option.</p>
+
+                <p><cmd>stop</cmd> with <br-option>force</br-option> and <br-option>stanza</br-option> now terminates only the processes holding locks for that stanza. Before, it terminated processes for all stanzas.</p>
             </release-item>
 
             <release-item>
@@ -211,6 +235,8 @@
                 </release-item-contributor-list>
 
                 <p>Improve error message for invalid <br-option>repo-azure-key</br-option>.</p>
+
+                <p>With <br-option>repo-azure-key-type=shared</br-option>, <br-option>repo-azure-key</br-option> is now checked for valid base64.</p>
             </release-item>
 
             <release-item>
@@ -222,6 +248,8 @@
                 </release-item-contributor-list>
 
                 <p>Add hint to check the log on <cmd>archive-get</cmd>/<cmd>archive-push</cmd> async error.</p>
+
+                <p>When the async process cannot write its status files, <cmd>archive-get</cmd>/<cmd>archive-push</cmd> times out with a generic error. The error now includes a hint with the path of the async log, which contains the actual error.</p>
             </release-item>
 
             <release-item>
@@ -246,6 +274,8 @@
                 </release-item-contributor-list>
 
                 <p>Strip extensions from history manifest before showing in error message.</p>
+
+                <p>When a new backup label was not later than the latest label from the backup history, the error showed the history manifest name, e.g. <id>20220504-222042F_20220504-222141I.manifest.gz</id>. It now shows only the label.</p>
             </release-item>
 
             <release-item>
@@ -257,6 +287,16 @@
                 </release-item-contributor-list>
 
                 <p>Add user:group to lock permission error.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add hint when unable to find the primary cluster.</p>
+
+                <p>The <quote>unable to find primary cluster</quote> error now includes a hint asking whether all available clusters are in recovery.</p>
             </release-item>
         </release-improvement-list>
 
@@ -298,7 +338,7 @@
                 <commit subject="Add lockRead*() functions for reading locks from another process.">
                     <github-pull-request id="1712"/>
                 </commit>
-                <commit subject="Throw error when unable to read process from lock file.">
+                <commit subject="Throw error when unable to read lock process.">
                     <github-pull-request id="1715"/>
                 </commit>
 
@@ -336,6 +376,161 @@
 
                 <p>Refactor <code>PgClient</code> to return results in <code>Pack</code> format.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Fix incorrect struct type in list initialization."/>
+                <commit subject="Use strNewZ() in cases where STRDEF() assignment goes out of scope."/>
+                <commit subject="Align checksum page error list in manifest file packs."/>
+                <commit subject="Do not pass NULL to bsearch()/qsort() in List object."/>
+                <commit subject="Do not pass NULL to memcpy() in Buffer/String objects."/>
+                <commit subject="Prevent signed integer overflow in cfgParseSize()."/>
+                <commit subject="Check that sha1 checksum is not empty in manifestFileUpdate()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix undefined behavior found by sanitizers.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove unnecessary mem contexts in the Manifest object."/>
+                <commit subject="Remove unnecessary TRY() block in common/regExp module."/>
+                <commit subject="Add temporary mem context to removeExpiredBackup()."/>
+                <commit subject="Add temporary mem contexts and fix a leak in the command/restore module."/>
+                <commit subject="Add temporary mem contexts in the command/help module."/>
+                <commit subject="Fix memory leak in archiveAsyncErrorClear()."/>
+                <commit subject="Fix memory leaks in archivePushDrop()."/>
+                <commit subject="Fix memory leaks in archivePushFile()."/>
+                <commit subject="Improve result declaration in backupRegExp()."/>
+                <commit subject="Remove useless context switches in archiveGetFile()/archivePushFile()."/>
+                <commit subject="Combine functions in the command/stanza module into one function."/>
+                <commit subject="Mem allocation cleanup in command/verify module."/>
+                <commit subject="Fix leak in cipherBlockNew()."/>
+                <commit subject="Fix leak in httpHeaderPutRange()."/>
+                <commit subject="Fix leak in ioFilterGroupResultAllSet()."/>
+                <commit subject="Fix leak in pckReadStrLst()."/>
+                <commit subject="Improved memory management in the common/exit module."/>
+                <commit subject="Refactor httpRequestNew()."/>
+                <commit subject="Fix object allocations in incorrect mem context in execOpen()."/>
+                <commit subject="Fix leak in cfgCommandJobRetry()."/>
+                <commit subject="Fix leak in configOptionRemote()."/>
+                <commit subject="Fix leaks in db module."/>
+                <commit subject="Fix leaks in info module."/>
+                <commit subject="Refactor functions in postgres/interface module and fix leak."/>
+                <commit subject="Fix leaks in protocol module."/>
+                <commit subject="Fix leaks in the storage/azure module."/>
+                <commit subject="Refactor and fix leak in storageRepoPathExpression()."/>
+                <commit subject="Use OBJ_NEW*() macros in SocketServer object."/>
+                <commit subject="Fix leak in varLstNewStrLst()."/>
+                <commit subject="Fix leaks in common/json, common/keyValue, and common/variantList."/>
+                <commit subject="Reuse Strings in iniLoad()."/>
+                <commit subject="Fix leaked String in cfgParseSize()."/>
+                <commit subject="Fix leaks in the storage/gcs module."/>
+                <commit subject="Fix leaks in the storage/posix module."/>
+                <commit subject="Fix leaks in the storage/remote module."/>
+                <commit subject="Fix leaks in the storage/s3 module."/>
+                <commit subject="Exclude mem context name from production builds."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix memory leaks and improve memory context usage.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add LENGTH_OF() macro."/>
+                <commit subject="Add FUNCTION_TEST_NO_RETURN() macro."/>
+                <commit subject="Add STR_SIZE() macro."/>
+                <commit subject="Add ASSERT_DECLARE() macro."/>
+                <commit subject="Allow *RETURN*() macros to accept struct initializers."/>
+                <commit subject="Add SIZE_OF_STRUCT_MEMBER() macro."/>
+                <commit subject="Require type for FUNCTION_TEST_RETURN*() macros."/>
+                <commit subject="Add ASSERT_PARAM() macro."/>
+                <commit subject="Add MEM_CONTEXT_OBJ_*() macros."/>
+                <commit subject="Remove THIS_MEM_CONTEXT() macro."/>
+                <commit subject="Add missing FUNCTION_TEST*() macros."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add and improve macros.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Use bufUsed() instead of struct member in Buffer object."/>
+                <commit subject="Replace strCatFmt() with strCat()/strCatZ() where appropriate."/>
+                <commit subject="Fix instances where STRDEF() was used instead of STR()."/>
+                <commit subject="Use STRDEF() instead of STR() in command/help module."/>
+                <commit subject="Add strLstNewFmt()."/>
+                <commit subject="Add strLstAddSub*() and strLstAddSubZ*() functions."/>
+                <commit subject="Use strLstAddZ() instead of strLstAdd() where possible."/>
+                <commit subject="Add cvtZSubNTo*() functions."/>
+                <commit subject="Remove COLON_STR and separator parameter from cfgParseCommandRoleName()."/>
+                <commit subject="Remove most _Z constants."/>
+                <commit subject="Convert strNewFmt() to THROW_FMT() in config/parse module."/>
+                <commit subject="Add zNewFmt()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add and improve string functions.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor remote storage protocol to use Packs instead of JSON.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix reported error line number when ini key length is zero.</p>
+            </release-item>
+
+            <release-item>
+                <commit id="91b718bd4" subject="Fix comment typo."/>
+                <commit subject="Fix incorrect comment."/>
+                <commit subject="Remove extraneous double spaces in code and comments."/>
+                <commit id="d4954fcbf" subject="Fix comment typo."/>
+                <commit subject="Fix whitespace."/>
+                <commit subject="Add static keywords."/>
+                <commit subject="Update comment in pack module to cover a more common use case."/>
+                <commit id="e699402f9" subject="Remove extra linefeed."/>
+                <commit subject="Fix formatting in common/string module."/>
+                <commit subject="Fix outdated comment."/>
+                <commit subject="Fix spacing."/>
+                <commit subject="Fix comment formatting."/>
+                <commit id="ceb303f9e" subject="Fix comment typo."/>
+                <commit subject="Remove unused header."/>
+                <commit id="302e0c092" subject="Remove extra linefeed."/>
+                <commit subject="Fix comment wrapping."/>
+                <commit subject="Use uint8_t for optionResolveOrder."/>
+                <commit subject="Remove excessive const usage in build module."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code and comments.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess and config.sub to latest versions.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -357,6 +552,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix example for <br-option>repo-gcs-key-type</br-option> option in configuration reference.</p>
+
+                <p>The example was <id>none</id>, which is not a valid value. It is now <id>auto</id>.</p>
             </release-item>
 
             <release-item>
@@ -366,6 +563,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix <br-option>tls-server-auth</br-option> example and add clarifications.</p>
+
+                <p>The example was missing the client CN and is now <id>client-cn=stanza1</id>. The help also states that wildcards are not allowed for the client CN.</p>
             </release-item>
         </release-bug-list>
 
@@ -381,6 +580,8 @@
                 </release-item-contributor-list>
 
                 <p>Simplify messaging around supported versions in the documentation.</p>
+
+                <p>The user guides listed <postgres/> version ranges, which made it look like other versions were not supported, e.g. <postgres/> 12 on RHEL. The ranges were removed and the introduction now explains which versions the user guides cover.</p>
             </release-item>
 
             <release-item>
@@ -392,6 +593,8 @@
                 </release-item-contributor-list>
 
                 <p>Add option type descriptions.</p>
+
+                <p>The configuration reference now describes each option type, e.g. the units for size options, rather than repeating the description for each option.</p>
             </release-item>
 
             <release-item>
@@ -403,10 +606,12 @@
                 </release-item-contributor-list>
 
                 <p>Add FAQ about backup types and restore speed.</p>
+
+                <p>A new FAQ explains that the backup type affects only the backup and not how fast a restore runs.</p>
             </release-item>
 
             <release-item>
-                <github-pull-request id="1722"/>
+                <github-pull-request id="1733"/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.christensen"/>
@@ -414,8 +619,30 @@
                 </release-item-contributor-list>
 
                 <p>Document required base branch for pull requests.</p>
+
+                <p>The contributing guide now states that pull requests must be based on the <id>integration</id> branch.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Fix typo in db-timeout help."/>
+                <commit subject="Fix URL for apt.p.o archives."/>
+                <commit subject="Clean up dividers in the documentation."/>
+                <commit subject="Remove key dividers in help.xml."/>
+                <commit subject="Add br tag for documentation."/>
+                <commit subject="Fix &quot;that that&quot; typos."/>
+                <commit subject="Fix typos in help."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-contributor id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix typos and formatting in the documentation and help.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
 
     <release-test-list>
@@ -429,6 +656,51 @@
                 </release-item-contributor-list>
 
                 <p>Remove integration expect log testing.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Replace percentage and size with a constant in restore test logs."/>
+                <commit subject="Cleanup output to stderr in unit tests."/>
+                <commit subject="Show Docker output when building containers if --log-level=detail."/>
+                <commit subject="Handle NULL path in TEST_STORAGE_LIST when remove is specified."/>
+                <commit subject="Fix incorrect test param."/>
+                <commit subject="Improvements to test harness memory debugging."/>
+                <commit subject="Fix leaked String and Variant in harnessPqScriptRun()."/>
+                <commit subject="Fix leaks in common/io unit test."/>
+                <commit subject="Fix obsolete variable naming."/>
+                <commit subject="Replace strNewFmt() with TEST_ERROR_FMT() in command/archive-push module."/>
+                <commit subject="Use TEST_ERROR_FMT() rather than strNewFmt() in common/lock module."/>
+                <commit subject="Fix indentation."/>
+                <commit subject="Remove useless test in config/parse unit test."/>
+                <commit subject="Remove obsolete test in common/memContext."/>
+                <commit subject="Fix typo."/>
+                <commit subject="Move some PostgreSQL integration tests to rh7."/>
+                <commit subject="Reduce encrypted WAL segments sizes in command tests."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests and test tools.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Disable FreeBSD builds on Cirrus CI."/>
+                <commit subject="Update FreeBSD and MacOS images for Cirrus CI."/>
+                <commit subject="Move issue locking to Github actions."/>
+                <commit subject="Add PRs to thread locking on Github actions."/>
+                <commit subject="Remove legacy Travis-CI configuration."/>
+                <commit subject="Update Docker test image for Debian 9."/>
+                <commit subject="Split 32-bit CI tests."/>
+                <commit subject="Add limited CI for ppc64le/s390x using emulation."/>
+                <commit subject="Move 32-bit CI testing from Debian 9 to Ubuntu 18.04."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
             </release-item>
         </release-development-list>
     </release-test-list>

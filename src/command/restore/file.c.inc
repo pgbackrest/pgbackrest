@@ -313,6 +313,7 @@ restoreFile(
                                 deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
                             }
 
+                            ioReadClose(storageReadIo(superBlockRead));
                             storageReadFree(superBlockRead);
                         }
 

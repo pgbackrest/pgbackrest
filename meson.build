@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.60.0dev',
+    version: '2.61.0dev',
     license: 'MIT',
     meson_version: '>=0.55.3',
     default_options: [
@@ -46,11 +46,18 @@ endif
 ####################################################################################################################################
 # OS-specific settings
 ####################################################################################################################################
+# Feature macros
 if host_machine.system() == 'linux'
-    add_global_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
+    feature_args = ['-D_GNU_SOURCE']
 elif host_machine.system() == 'darwin'
-    add_global_arguments('-D_DARWIN_C_SOURCE', language: 'c')
+    feature_args = ['-D_DARWIN_C_SOURCE']
+elif host_machine.system() == 'sunos'
+    feature_args = ['-D_POSIX_C_SOURCE=200809L', '-D__EXTENSIONS__']
+else
+    feature_args = []
 endif
+
+add_global_arguments(feature_args, language: 'c')
 
 ####################################################################################################################################
 # Enable/disable warnings
@@ -196,6 +203,11 @@ if cc.compiles('''int main(void) {__builtin_types_compatible_p(char *, const cha
     configuration.set('HAVE_BUILTIN_TYPES_COMPATIBLE_P', true, description: 'Is __builtin_types_compatible_p present?')
 endif
 
+# Check C compiler support for __builtin_expect()
+if cc.links('''int main(void) {__builtin_expect(0, 0);}''')
+    configuration.set('HAVE_BUILTIN_EXPECT', true, description: 'Is __builtin_expect present?')
+endif
+
 # Find optional backtrace library
 lib_backtrace = cc.find_library('backtrace', required: false, has_headers: 'backtrace.h')
 
@@ -223,6 +235,16 @@ lib_z = dependency('zlib')
 
 configuration.set('ZLIB_CONST', true, description: 'Require zlib const input buffer')
 
+# Find required zstd library
+lib_zstd = dependency('libzstd', version: '>=1.0')
+
+# Find socket library on illumos/Solaris, where sockets are not in libc
+lib_socket = dependency('', required: false)
+
+if host_machine.system() == 'sunos'
+    lib_socket = cc.find_library('socket')
+endif
+
 # Find optional systemd library
 lib_systemd = dependency('libsystemd', required: get_option('libsystemd'))
 
@@ -237,11 +259,9 @@ if lib_ssh2.found()
     configuration.set('HAVE_LIBSSH2', true, description: 'Is libssh2 present?')
 endif
 
-# Find optional zstd library
-lib_zstd = dependency('libzstd', version: '>=1.0', required: get_option('libzstd'))
-
-if lib_zstd.found()
-    configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
+# Check for direct I/O support
+if cc.has_header_symbol('fcntl.h', 'O_DIRECT', args: feature_args)
+    configuration.set('HAVE_O_DIRECT', true, description: 'Is O_DIRECT present?')
 endif
 
 # Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros

@@ -161,8 +161,10 @@ def test_config_parse_option():
 
   repo-cipher-type:
     section: global
+    group: repo
     type: string-id
     sequence: true
+    format: 6
 
   start-fast:
     section: global
@@ -212,8 +214,14 @@ def test_config_parse_option():
     assert_true(opt.negate)
     assert_equal(opt.default_type, "literal")
 
-    # An option whose values are numbered
-    assert_true(_find(cfg.opt_list, "repo-cipher-type").sequence)
+    # An option whose values are numbered and that has a minimum repository format
+    opt = _find(cfg.opt_list, "repo-cipher-type")
+
+    assert_true(opt.sequence)
+    assert_equal(opt.format, 6)
+
+    # An option with no minimum repository format
+    assert_equal(_find(cfg.opt_list, "pg-path").format, None)
 
     # An option that does not say where it can be configured can only be given on the command line, so it cannot be reset
     opt = _find(cfg.opt_list, "force")
@@ -248,6 +256,22 @@ def test_config_parse_option_error():
         _error(OPTION_STANZA + "  bogus:\n    type: string\n    group: bogus\n"), "option 'bogus' has invalid group 'bogus'"
     )
     assert_equal(
+        _error(OPTION_STANZA + "  bogus:\n    type: string\n    group: repo\n    format: 5\n"),
+        "option 'bogus' has invalid format '5'",
+    )
+    assert_equal(
+        _error(OPTION_STANZA + "  bogus:\n    type: string\n    group: repo\n    format: x\n"),
+        "option 'bogus' has invalid format 'x'",
+    )
+    assert_equal(
+        _error(OPTION_STANZA + "  bogus:\n    type: string\n    group: pg\n    format: 6\n"),
+        "option 'bogus' with a format must be in group 'repo'",
+    )
+    assert_equal(
+        _error(OPTION_STANZA + "  bogus:\n    type: string\n    format: 6\n"),
+        "option 'bogus' with a format must be in group 'repo'",
+    )
+    assert_equal(
         _error(OPTION_STANZA + "  bogus:\n    type: string\n    command:\n      bogus: {}\n"),
         "invalid command 'bogus' in option 'bogus' command list",
     )
@@ -280,6 +304,7 @@ def test_config_parse_inherit():
     default: /var/lib/pgbackrest
     command:
       backup: {}
+      -command: restore
     deprecate:
       repo-path: {}
 
@@ -300,6 +325,15 @@ def test_config_parse_inherit():
       - 1
       - 2
     command: repo-path
+
+  repo-retention-diff:
+    inherit: repo-retention-full
+    command: repo-host
+
+  repo-storage-host:
+    inherit: repo-host
+    command:
+      restore: {}
 """
     )
 
@@ -324,6 +358,17 @@ def test_config_parse_inherit():
 
     # A command list can be taken from another option on its own
     assert_equal([cmd.name for cmd in _find(cfg.opt_list, "repo-retention-full").cmd_list], ["backup"])
+
+    # Commands excluded from the command list, inherited with it
+    assert_equal(_find(cfg.opt_list, "repo-retention-full").cmd_list_exclude, ["restore"])
+
+    # Option the command list is inherited from, followed to the option that declares it
+    assert_is_none(_find(cfg.opt_list, "repo-path").cmd_list_inherit)
+    assert_equal(_find(cfg.opt_list, "repo-host").cmd_list_inherit.name, "repo-path")
+    assert_equal(_find(cfg.opt_list, "repo-host-user").cmd_list_inherit.name, "repo-path")
+    assert_equal(_find(cfg.opt_list, "repo-retention-full").cmd_list_inherit.name, "repo-path")
+    assert_equal(_find(cfg.opt_list, "repo-retention-diff").cmd_list_inherit.name, "repo-path")
+    assert_is_none(_find(cfg.opt_list, "repo-storage-host").cmd_list_inherit)
 
 
 ####################################################################################################################################
@@ -526,6 +571,8 @@ def test_config_parse_option_command():
 
     # Every command that has any role, less the ones removed, and never the commands that take no options
     assert_equal([cmd.name for cmd in opt.cmd_list], ["backup"])
+    assert_equal(opt.cmd_list_exclude, ["restore", "missing"])
+    assert_is_none(_find(cfg.opt_list, "type").cmd_list_exclude)
 
     cmd = _find(opt.cmd_list, "backup")
 

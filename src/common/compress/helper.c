@@ -85,12 +85,10 @@ static const struct CompressHelperLocal
         .typeId = STRID5("zst", 0x527a0),
         .type = STRDEF(ZST_EXT),
         .ext = STRDEF("." ZST_EXT),
-#ifdef HAVE_LIBZST
         .compressType = ZST_COMPRESS_FILTER_TYPE,
         .compressNew = zstCompressNew,
         .decompressType = ZST_DECOMPRESS_FILTER_TYPE,
         .decompressNew = zstDecompressNew,
-#endif
     },
     [compressTypeXz] =
     {

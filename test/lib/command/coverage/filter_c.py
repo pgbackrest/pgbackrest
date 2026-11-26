@@ -25,12 +25,17 @@ def _module_match(path, module):
 
     A module is normally compiled from the repository so the path ends with the module file name. A shimmed .c.inc is compiled from
     the copy the build writes to the unit include path, which has no src prefix so that it resolves ahead of the repository, and is
-    matched on the rest of the name."""
+    matched on the rest of the name. A harness module with the rest of the name under test/src/harness is not the module."""
 
     if path.endswith(module):
         return True
 
-    return module.startswith("src/") and module.endswith(".c.inc") and path.endswith(module[len("src/") :])
+    if not module.startswith("src/") or not module.endswith(".c.inc"):
+        return False
+
+    name = module[len("src/") :]
+
+    return path.endswith(name) and not path.endswith("test/src/harness/" + name)
 
 
 ####################################################################################################################################

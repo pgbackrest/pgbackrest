@@ -26,13 +26,14 @@ Command constants
 #define CFGCMD_SERVER_PING                                          "server-ping"
 #define CFGCMD_STANZA_CREATE                                        "stanza-create"
 #define CFGCMD_STANZA_DELETE                                        "stanza-delete"
+#define CFGCMD_STANZA_REKEY                                         "stanza-rekey"
 #define CFGCMD_STANZA_UPGRADE                                       "stanza-upgrade"
 #define CFGCMD_START                                                "start"
 #define CFGCMD_STOP                                                 "stop"
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           22
+#define CFG_COMMAND_TOTAL                                           23
 
 /***********************************************************************************************************************************
 Option group constants
@@ -136,6 +137,7 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
 #define CFGOPT_TLS_CIPHER_12                                        "tls-cipher-12"
 #define CFGOPT_TLS_CIPHER_13                                        "tls-cipher-13"
+#define CFGOPT_TLS_MIN_VERSION                                      "tls-min-version"
 #define CFGOPT_TLS_SERVER_ADDRESS                                   "tls-server-address"
 #define CFGOPT_TLS_SERVER_AUTH                                      "tls-server-auth"
 #define CFGOPT_TLS_SERVER_CA_FILE                                   "tls-server-ca-file"
@@ -146,7 +148,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            201
+#define CFG_OPTION_TOTAL                                            208
 
 /***********************************************************************************************************************************
 Option value constants
@@ -281,6 +283,13 @@ Option value constants
 #define CFGOPTVAL_PG_HOST_TYPE_TLS                                  STRID5("tls", 0x4d940)
 #define CFGOPTVAL_PG_HOST_TYPE_TLS_Z                                "tls"
 
+#define CFGOPTVAL_PG_IO_MODE_DEFAULT                                0
+#define CFGOPTVAL_PG_IO_MODE_DEFAULT_STRID                          STRID5S("default", 0, 0x5195098a42)
+#define CFGOPTVAL_PG_IO_MODE_DEFAULT_Z                              "default"
+#define CFGOPTVAL_PG_IO_MODE_DIRECT                                 1
+#define CFGOPTVAL_PG_IO_MODE_DIRECT_STRID                           STRID5S("direct", 1, 0x2832c9244)
+#define CFGOPTVAL_PG_IO_MODE_DIRECT_Z                               "direct"
+
 #define CFGOPTVAL_REMOTE_TYPE_PG                                    STRID5("pg", 0xf00)
 #define CFGOPTVAL_REMOTE_TYPE_PG_Z                                  "pg"
 #define CFGOPTVAL_REMOTE_TYPE_REPO                                  STRID5("repo", 0x7c0b20)
@@ -317,11 +326,21 @@ Option value constants
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO                            2
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO_STRID                      STRID5S("auto", 2, 0x7d2a16)
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO_Z                          "auto"
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_WEB_ID                          3
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_WEB_ID_STRID                    STRID5S("web-id", 3, 0x89d88b78)
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_WEB_ID_Z                        "web-id"
 
 #define CFGOPTVAL_REPO_HOST_TYPE_SSH                                STRID5("ssh", 0x22730)
 #define CFGOPTVAL_REPO_HOST_TYPE_SSH_Z                              "ssh"
 #define CFGOPTVAL_REPO_HOST_TYPE_TLS                                STRID5("tls", 0x4d940)
 #define CFGOPTVAL_REPO_HOST_TYPE_TLS_Z                              "tls"
+
+#define CFGOPTVAL_REPO_IO_MODE_DEFAULT                              0
+#define CFGOPTVAL_REPO_IO_MODE_DEFAULT_STRID                        STRID5S("default", 0, 0x5195098a42)
+#define CFGOPTVAL_REPO_IO_MODE_DEFAULT_Z                            "default"
+#define CFGOPTVAL_REPO_IO_MODE_DIRECT                               1
+#define CFGOPTVAL_REPO_IO_MODE_DIRECT_STRID                         STRID5S("direct", 1, 0x2832c9244)
+#define CFGOPTVAL_REPO_IO_MODE_DIRECT_Z                             "direct"
 
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF                  STRID5("diff", 0x319240)
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_DIFF_Z                "diff"
@@ -463,6 +482,7 @@ typedef enum
     cfgCmdServerPing,
     cfgCmdStanzaCreate,
     cfgCmdStanzaDelete,
+    cfgCmdStanzaRekey,
     cfgCmdStanzaUpgrade,
     cfgCmdStart,
     cfgCmdStop,
@@ -558,6 +578,7 @@ typedef enum
     cfgOptPgHostPort,
     cfgOptPgHostType,
     cfgOptPgHostUser,
+    cfgOptPgIoMode,
     cfgOptPgLocal,
     cfgOptPgPath,
     cfgOptPgPort,
@@ -590,12 +611,15 @@ typedef enum
     cfgOptRepoBundleLimit,
     cfgOptRepoBundleSize,
     cfgOptRepoCipherPass,
+    cfgOptRepoCipherPassOld,
+    cfgOptRepoCipherRotate,
     cfgOptRepoCipherType,
     cfgOptRepoFormat,
     cfgOptRepoGcsBucket,
     cfgOptRepoGcsEndpoint,
     cfgOptRepoGcsKey,
     cfgOptRepoGcsKeyType,
+    cfgOptRepoGcsKmsKeyName,
     cfgOptRepoGcsUserProject,
     cfgOptRepoHardlink,
     cfgOptRepoHost,
@@ -610,6 +634,7 @@ typedef enum
     cfgOptRepoHostPort,
     cfgOptRepoHostType,
     cfgOptRepoHostUser,
+    cfgOptRepoIoMode,
     cfgOptRepoLocal,
     cfgOptRepoPath,
     cfgOptRepoRetentionArchive,
@@ -623,6 +648,7 @@ typedef enum
     cfgOptRepoS3Key,
     cfgOptRepoS3KeySecret,
     cfgOptRepoS3KeyType,
+    cfgOptRepoS3KmsContext,
     cfgOptRepoS3KmsKeyId,
     cfgOptRepoS3ProcessCmd,
     cfgOptRepoS3Region,
@@ -676,6 +702,7 @@ typedef enum
     cfgOptTcpKeepAliveInterval,
     cfgOptTlsCipher12,
     cfgOptTlsCipher13,
+    cfgOptTlsMinVersion,
     cfgOptTlsServerAddress,
     cfgOptTlsServerAuth,
     cfgOptTlsServerCaFile,

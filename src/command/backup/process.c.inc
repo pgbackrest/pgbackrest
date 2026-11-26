@@ -175,6 +175,14 @@ backupJobResult(
                 // If the file is in a prior backup and nothing changed, just log it
                 if (copyResult == backupCopyResultNoOp)
                 {
+                    // If the file was not copied then no block map was written so block incremental values must be cleared
+                    if (file.blockIncrSize != 0 && file.blockIncrMapSize == 0)
+                    {
+                        file.blockIncrSize = 0;
+                        file.blockIncrChecksumSize = 0;
+                        manifestFileUpdate(manifest, &file);
+                    }
+
                     LOG_DETAIL_PID_FMT(
                         processId, "match file from prior backup %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
                 }
@@ -304,6 +312,10 @@ backupJobResult(
                     file.bundleOffset = bundleOffset;
                     file.blockIncrMapSize = blockIncrMapSize;
 
+                    // Zero block incremental values for a truncated file
+                    if (copyResult == backupCopyResultTruncate)
+                        file.blockIncrSize = file.blockIncrChecksumSize = 0;
+
                     manifestFileUpdate(manifest, &file);
                 }
             }
@@ -340,6 +352,7 @@ typedef struct BackupJobData
     RegExp *standbyExp;                                             // Identify files that may be copied from the standby
     const CipherSpec *const cipherSpecBackup;                       // Cipher spec used to encrypt files in the backup
     const PgPageSize pageSize;                                      // Page size
+    const unsigned int segmentPageTotal;                            // Total pages in a relation segment
     const CompressType compressType;                                // Backup compression type
     const int compressLevel;                                        // Compress level if backup is compressed
     const bool delta;                                               // Is this a checksum delta backup?
@@ -692,6 +705,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                     pckWriteI32P(param, jobData->compressLevel);
                     cipherSpecPack(param, jobData->cipherSpecBackup);
                     pckWriteU32P(param, jobData->pageSize);
+                    pckWriteU32P(param, jobData->segmentPageTotal);
                     pckWriteStrP(param, cfgOptionStrNull(cfgOptPgVersionForce));
                 }
 
@@ -806,6 +820,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherSpecBackup = manifestCipherSpec(manifest),
             .pageSize = backupData->pageSize,
+            .segmentPageTotal = backupData->segmentPageTotal,
             .delta = cfgOptionBool(cfgOptDelta),
             .bundle = cfgOptionBool(cfgOptRepoBundle),
             .bundleId = 1,
@@ -813,10 +828,9 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
 
             // Build expression to identify files that can be copied from the standby when standby backup is supported
             .standbyExp = regExpNew(
-                strNewFmt(
-                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|%s|" PG_PATH_PGMULTIXACT "))"
-                    "|" MANIFEST_TARGET_PGTBLSPC ")/",
-                    strZ(pgXactPath(backupData->version)))),
+                STRDEF(
+                    "^((" MANIFEST_TARGET_PGDATA "/(" PG_PATH_BASE "|" PG_PATH_GLOBAL "|" PG_PATH_PGXACT "|"
+                    PG_PATH_PGMULTIXACT "))|" MANIFEST_TARGET_PGTBLSPC ")/")),
         };
 
         if (jobData.bundle)

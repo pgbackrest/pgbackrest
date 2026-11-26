@@ -14,11 +14,18 @@
                 </release-item-contributor-list>
 
                 <p><proper>OpenSSL 3</proper> support.</p>
+
+                <p><backrest/> now builds with <proper>OpenSSL 3</proper>. Deprecation warnings are suppressed, and an unexpected EOF is detected with the error codes that <proper>OpenSSL 3</proper> reports.</p>
             </release-item>
 
             <release-item>
-                <github-issue id="1754"/>
-                <github-pull-request id="1805"/>
+                <commit subject="Replace hrnStorageInfoListCallback() with TEST_STORAGE_LIST() in tests."/>
+                <commit subject="Reorder null user/group checks in remote protocol and add tests."/>
+                <commit subject="Rename strTrunc() to strTruncIdx() and add strTrunc()."/>
+                <commit subject="Create snapshot when listing contents of a path.">
+                    <github-issue id="1754"/>
+                    <github-pull-request id="1805"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -27,6 +34,8 @@
                 </release-item-contributor-list>
 
                 <p>Create snapshot when listing contents of a path.</p>
+
+                <p>A path listed without sorting was read while its entries were processed. When files were deleted during the listing, some filesystems skipped files that still existed and the path could not be removed. Listings now always use a snapshot of the path.</p>
             </release-item>
 
             <release-item>
@@ -38,6 +47,8 @@
                 </release-item-contributor-list>
 
                 <p>Force <br-option>target-timeline=current</br-option> when restore <br-option>type=immediate</br-option>.</p>
+
+                <p>On <postgres/> &gt;= 12 the default target timeline is <id>latest</id>, and recovery could fail when the latest timeline in the repository cannot be reached from the backup. Restore with <br-option>type=immediate</br-option> does not change timelines, so it now sets the target timeline to <id>current</id>.</p>
             </release-item>
 
             <release-item>
@@ -49,6 +60,8 @@
                 </release-item-contributor-list>
 
                 <p>Truncate files during delta <cmd>restore</cmd> when they are larger than expected.</p>
+
+                <p>Delta restore copied a file from the repository whenever its size differed from the manifest. A larger file is now truncated to the size in the manifest and copied only when its checksum does not match. Files that were only appended to, e.g. logs, are no longer copied.</p>
             </release-item>
 
             <release-item>
@@ -60,6 +73,8 @@
                 </release-item-contributor-list>
 
                 <p>Disable incremental manifest save when <br-option>resume=n</br-option>.</p>
+
+                <p>During a backup the manifest is saved periodically for use by resume. These saves are now skipped when <br-option>resume=n</br-option>.</p>
             </release-item>
 
             <release-item>
@@ -71,6 +86,8 @@
                 </release-item-contributor-list>
 
                 <p>Set backup percent complete to zero before copy start.</p>
+
+                <p>The progress of a running backup was not reported until the first file was copied. It is now set to zero when copying starts.</p>
             </release-item>
 
             <release-item>
@@ -81,11 +98,12 @@
                     <release-item-ideator id="christian.montagne"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="john.morris"/>
-                    <!-- Actually tester, but we don't have a tag for that yet -->
-                    <release-item-reviewer id="soulou"/>
+                    <release-item-tester id="soulou"/>
                 </release-item-contributor-list>
 
                 <p>Use <proper>S3</proper> <id>IsTruncated</id> flag to determine list continuation.</p>
+
+                <p>Recent versions of <proper>Scality</proper> send an empty <id>NextContinuationToken</id> when a list is not truncated, which caused an infinite loop. The <id>IsTruncated</id> flag now determines whether a list continues, and a missing or empty token for a truncated list is an error.</p>
             </release-item>
         </release-improvement-list>
 
@@ -144,6 +162,77 @@
 
                 <p>Fix hard-coded WAL size assertion in <code>walSegmentNext()</code>.</p>
             </release-item>
+
+            <release-item>
+                <commit subject="Add labels in parse.auto.c to make diffs easier to read."/>
+                <commit subject="Udpate parse.auto.c with labels from 4dcc9df2."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add labels in parse.auto.c to make diffs easier to read.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Make all repo-* options visible for stanza create/update/delete."/>
+                <commit subject="Remote repo options should not be valid for the backup command."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix repository option definitions for the backup and stanza commands.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Use storagePathP() instead of cfgOptionStr() to get base repo path.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add additional detail to warnings when delta checksum is auto-enabled.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix comment indentation."/>
+                <commit subject="Add missing static keywords."/>
+                <commit subject="Remove unused errors."/>
+                <commit subject="Use StringId for type in cryptoHash() and cryptoHmacOne()."/>
+                <commit subject="Add missing build.auto.h includes."/>
+                <commit subject="Fix continuation character spacing."/>
+                <commit subject="Add comment to indicate that type is in a different info level."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code and comments.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Replace AC_PROG_CC_C99 configure macro with AC_PROG_CC.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update config.guess to latest version.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -156,11 +245,15 @@
                 </release-item-contributor-list>
 
                 <p>Skip internal options in the configuration reference.</p>
+
+                <p>Options that are internal only for some commands were listed in the configuration reference. The command-line help was not affected.</p>
             </release-item>
         </release-bug-list>
 
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="1809"/>
+
                 <release-item-contributor-list>
                     <release-item-ideator id="julien.cigar"/>
                     <release-item-contributor id="david.steele"/>
@@ -170,12 +263,40 @@
                 <p>Add link to <postgres/> configuration in repository host section.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix RHEL container build for documentation.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update contributor name."/>
+                <commit subject="Fix typo."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update release notes.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
 
     <release-test-list>
         <release-improvement-list>
             <release-item>
-                <github-pull-request id="1765"/>
+                <commit subject="Add .inc extension to C files included in other C files."/>
+                <commit subject="Add experimental Meson build.">
+                    <github-pull-request id="1765"/>
+                </commit>
+                <commit subject="Update meson.build include comment to be more general."/>
+                <commit subject="Disable meson for all but debug builds."/>
+                <commit subject="Generate -fmacro-prefix-map to strip relative path from __FILE__."/>
+                <commit subject="Meson builds work on version 0.45."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -184,6 +305,8 @@
                 </release-item-contributor-list>
 
                 <p>Add experimental <proper>Meson</proper> build.</p>
+
+                <p><proper>Meson</proper> has simpler syntax and better performance than <proper>autoconf</proper>/<proper>make</proper>. It is used for code generation and test builds, and errors on anything but a debug build. Packagers should continue to use <proper>autoconf</proper>/<proper>make</proper>.</p>
             </release-item>
 
             <release-item>
@@ -206,7 +329,53 @@
                 </release-item-contributor-list>
 
                 <p>Fix compile error when <code>DEBUG_EXEC_TIME</code> is defined without <code>DEBUG</code>.</p>
+
+                <p>Without <code>DEBUG</code> the <code>ASSERT()</code> that used the start time expanded to nothing, and the unused variable caused a compile error. The check now uses <code>CHECK()</code>.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Move bldEnum() to the build/common/render module."/>
+                <commit subject="Remove storageLocal() dependency from common/lock module."/>
+                <commit subject="Move protocol module from common to command."/>
+                <commit subject="Add higher level YAML functions."/>
+                <commit subject="Add strReplace()."/>
+                <commit subject="Use constants rather than replacements when possible in test.c."/>
+                <commit subject="Used DEBUG instead of NDEBUG in common/stackTrace module."/>
+                <commit subject="Add experimental unit test harness written in C."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add experimental unit test harness written in C.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Skip stopping PostgreSQL 9.1 in real/all integration test."/>
+                <commit subject="Remove useless command/check unit test."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit and integration tests.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="New CI container builds for PostgreSQL 15 beta1 and minor releases."/>
+                <commit subject="Run remaining Github Actions CI on Ubuntu 20.04."/>
+                <commit subject="Update CodeQL to version 2."/>
+                <commit subject="Update CI to use Ubuntu 22.04 and Fedora 36."/>
+                <commit subject="Add valgrind to Dockerfile missed in a16cf5ea."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
     </release-test-list>
 </release>

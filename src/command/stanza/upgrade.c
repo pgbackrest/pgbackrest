@@ -6,17 +6,18 @@ Stanza Upgrade Command
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "command/check/common.h"
 #include "command/control/common.h"
 #include "command/stanza/common.h"
 #include "command/stanza/upgrade.h"
 #include "common/debug.h"
+#include "common/format/format.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
-#include "info/infoArchive.h"
-#include "info/infoBackup.h"
+#include "info/helper.h"
 #include "info/infoPg.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -44,18 +45,14 @@ cmdStanzaUpgrade(void)
                 CFGCMD_STANZA_UPGRADE " for stanza '%s' on %s", strZ(cfgOptionDisplay(cfgOptStanza)),
                 cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
-            const Storage *const storageRepoReadStanza = storageRepoIdx(repoIdx);
-            const Storage *const storageRepoWriteStanza = storageRepoIdxWrite(repoIdx);
             bool infoArchiveUpgrade = false;
             bool infoBackupUpgrade = false;
 
             // Load the info files (errors if missing)
-            InfoArchive *const infoArchive = infoArchiveLoadFile(
-                storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+            InfoArchive *const infoArchive = infoArchiveRepoIdx(repoIdx);
             InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
-            InfoBackup *const infoBackup = infoBackupLoadFile(
-                storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+            InfoBackup *const infoBackup = infoBackupRepoIdxP(repoIdx);
             InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));
 
             // Determine the format to write. An upgrade interrupted between the two info file saves leaves them at different
@@ -117,6 +114,15 @@ cmdStanzaUpgrade(void)
                 infoArchiveFormatSet(infoArchive, format);
                 infoBackupFormatSet(infoBackup, format);
 
+                // A stanza migrated to format 6 keeps the key it already has as id 0 and adds a key for new WAL using rotation
+                if (formatArchive < REPOSITORY_FORMAT_6)
+                {
+                    const CipherType cipherType = cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx);
+
+                    if (cipherType != cipherTypeNone)
+                        infoArchiveCipherRotate(infoArchive, cipherSpecGen(cipherType, format), time(NULL));
+                }
+
                 infoArchiveUpgrade = true;
                 infoBackupUpgrade = true;
             }
@@ -126,11 +132,11 @@ cmdStanzaUpgrade(void)
 
             // Save archive info
             if (infoArchiveUpgrade)
-                infoArchiveSaveFile(infoArchive, storageRepoWriteStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoArchiveRepoIdxSave(repoIdx);
 
             // Save backup info
             if (infoBackupUpgrade)
-                infoBackupSaveFile(infoBackup, storageRepoWriteStanza, INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoBackupRepoIdxSave(repoIdx);
 
             if (!(infoArchiveUpgrade || infoBackupUpgrade))
             {
@@ -138,6 +144,10 @@ cmdStanzaUpgrade(void)
                     "stanza '%s' on %s is already up to date", strZ(cfgOptionDisplay(cfgOptStanza)),
                     cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
             }
+
+            // Warn about the passphrase unless repo-cipher-pass-old is set
+            if (!cfgOptionIdxTest(cfgOptRepoCipherPassOld, repoIdx))
+                stanzaCipherPassCheck(repoIdx, format, NULL);
         }
     }
     MEM_CONTEXT_TEMP_END();

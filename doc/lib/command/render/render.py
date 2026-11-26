@@ -30,7 +30,7 @@ SECTION_ANCHOR = "anchor"
 SECTION_ANCHOR_NO_INHERIT = "no-inherit"
 
 # Tags whose content is text and markup rather than markup alone, so what they hold is rendered as text
-_TAG_TEXT = ("admonition", "code-block", "list-item", "p", "summary", "title")
+_TAG_TEXT = ("admonition", "code-block", "list-detail-ref-item", "list-detail-text", "list-item", "p", "summary", "title")
 
 # Tags that are content however little they hold, so they are never read as a property of the node holding them
 _TAG_CONTENT = _TAG_TEXT + ("table-cell", "table-column")
@@ -102,6 +102,13 @@ _TAG_RENDER = {
         "i": ("<i>", "</i>"),
         "id": ('<span class="id">', "</span>"),
         "list": ('<ul class="list-unordered">', "</ul>"),
+        "list-detail": (
+            '\n<details class="list-detail"><summary class="list-detail-toggle" title="Details" aria-label="Details"></summary>',
+            "</details>",
+        ),
+        "list-detail-ref": ('\n<div class="list-detail-ref">', "</div>"),
+        "list-detail-ref-item": ('<span class="list-detail-ref-item">', "</span>"),
+        "list-detail-text": ('\n<div class="list-detail-text">', "</div>"),
         "list-item": ('<li class="list-unordered">', "</li>"),
         "p": ("", ""),
         "param": ('<span class="br-option">', "</span>"),

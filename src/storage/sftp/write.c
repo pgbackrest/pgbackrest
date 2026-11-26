@@ -27,6 +27,7 @@ struct StorageWriteSftp
     const String *nameTmp;                                          // Temporary filename utilized for atomic ops
     const String *path;                                             // Utilized for path operations
     LIBSSH2_SFTP_HANDLE *sftpHandle;                                // LibSsh2 session sftp handle
+    unsigned int connId;                                            // Id of the connection the handle was opened on
 };
 
 /***********************************************************************************************************************************
@@ -48,7 +49,7 @@ storageWriteSftpOpen(THIS_VOID)
 
     // Retry the open once if the connection was lost (e.g. the server dropped an idle connection) and reopened successfully
     unsigned int retry = 0;
-    int connErrno;
+    int connErrno = LIBSSH2_ERROR_NONE;
 
     do
     {
@@ -59,8 +60,10 @@ storageWriteSftpOpen(THIS_VOID)
                 storageSftpSessionSftp(this->storage), strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), flags,
                 (int)this->modeFile, LIBSSH2_SFTP_OPENFILE);
         }
-        while (this->sftpHandle == NULL &&
-               storageSftpWaitFd(this->storage, (connErrno = libssh2_session_last_errno(storageSftpSession(this->storage)))));
+        while (storageSftpWaitFd(
+                   this->storage,
+                   this->sftpHandle != NULL ?
+                       LIBSSH2_ERROR_NONE : (connErrno = libssh2_session_last_errno(storageSftpSession(this->storage)))));
 
         // Attempt to create the path if it is missing
         if (this->sftpHandle == NULL && libssh2_session_last_errno(storageSftpSession(this->storage)) == LIBSSH2_ERROR_SFTP_PROTOCOL
@@ -76,8 +79,10 @@ storageWriteSftpOpen(THIS_VOID)
                     storageSftpSessionSftp(this->storage), strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), flags,
                     (int)this->modeFile, LIBSSH2_SFTP_OPENFILE);
             }
-            while (this->sftpHandle == NULL &&
-                   storageSftpWaitFd(this->storage, (connErrno = libssh2_session_last_errno(storageSftpSession(this->storage)))));
+            while (storageSftpWaitFd(
+                       this->storage,
+                       this->sftpHandle != NULL ?
+                           LIBSSH2_ERROR_NONE : (connErrno = libssh2_session_last_errno(storageSftpSession(this->storage)))));
         }
     }
     while (this->sftpHandle == NULL && retry++ == 0 && storageSftpReconnect(this->storage, connErrno));
@@ -100,6 +105,8 @@ storageWriteSftpOpen(THIS_VOID)
             storageSftpEvalLibSsh2Error(rc, sftpErr, &FileOpenError, strNewFmt(STORAGE_ERROR_WRITE_OPEN, strZ(this->name)), NULL);
     }
 
+    this->connId = storageSftpConnId(this->storage);
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
@@ -119,6 +126,10 @@ storageWriteSftp(THIS_VOID, const Buffer *const buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
     ASSERT(this->sftpHandle != NULL);
+
+    // Error when the connection the handle was opened on has been lost
+    if (this->connId != storageSftpConnId(this->storage))
+        THROW_FMT(FileWriteError, "unable to write '%s': connection was lost", strZ(this->nameTmp));
 
     ssize_t rc;
     size_t remains = bufUsed(buffer);                               // Amount left to write
@@ -249,6 +260,10 @@ storageWriteSftpClose(THIS_VOID)
     // Close if the file has not already been closed
     if (this->sftpHandle != NULL)
     {
+        // Error when the connection the handle was opened on has been lost
+        if (this->connId != storageSftpConnId(this->storage))
+            THROW_FMT(FileCloseError, STORAGE_ERROR_WRITE_CLOSE ": connection was lost", strZ(this->nameTmp));
+
         int rc;
 
         if (this->syncFile)

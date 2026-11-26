@@ -41,6 +41,8 @@ IMPORTANT: Never call return from within any of the error-handling blocks.
 #include <setjmp.h>
 #include <stdbool.h>
 
+#include "common/macro.h"
+
 /***********************************************************************************************************************************
 Error type object
 ***********************************************************************************************************************************/
@@ -270,28 +272,28 @@ Throw an error when a system call fails
 #define THROW_ON_SYS_ERROR(expression, errorType, message)                                                                         \
     do                                                                                                                             \
     {                                                                                                                              \
-        if (expression)                                                                                                            \
+        if (UNLIKELY(expression))                                                                                                  \
             errorInternalThrowSys(errno, &errorType, __FILE__, __func__, __LINE__, message);                                       \
     } while (0)
 
 #define THROW_ON_SYS_ERROR_FMT(expression, errorType, ...)                                                                         \
     do                                                                                                                             \
     {                                                                                                                              \
-        if (expression)                                                                                                            \
+        if (UNLIKELY(expression))                                                                                                  \
             errorInternalThrowSysFmt(errno, &errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                                \
     } while (0)
 
 #define THROWP_ON_SYS_ERROR(expression, errorType, message)                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
-        if (expression)                                                                                                            \
+        if (UNLIKELY(expression))                                                                                                  \
             errorInternalThrowSys(errno, errorType, __FILE__, __func__, __LINE__, message);                                        \
     } while (0)
 
 #define THROWP_ON_SYS_ERROR_FMT(expression, errorType, ...)                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
-        if (expression)                                                                                                            \
+        if (UNLIKELY(expression))                                                                                                  \
             errorInternalThrowSysFmt(errno, errorType, __FILE__, __func__, __LINE__, __VA_ARGS__);                                 \
     } while (0)
 

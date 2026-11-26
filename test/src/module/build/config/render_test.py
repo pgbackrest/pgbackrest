@@ -86,6 +86,9 @@ OPTION = """  annotation:
   db-include:
     section: global
     type: list
+    command:
+      +role: any
+      -command: restore
 
   force:
     type: boolean
@@ -105,6 +108,7 @@ OPTION = """  annotation:
     type: time
     default: 60
     allow-range: [100ms, 1h]
+    command: buffer-size
 
   online:
     section: global
@@ -145,6 +149,7 @@ OPTION = """  annotation:
     group: repo
     type: string
     default: pgbackrest
+    format: 6
     depend:
       option: repo-host
 
@@ -192,10 +197,15 @@ OPTION = """  annotation:
     type: boolean
     bool-like: true
     default: false
+    command-role:
+      main: {}
 
   target:
     type: string
     command:
+      backup:
+        command-role:
+          async: {}
       restore: {}
 
   target-action:
@@ -206,6 +216,10 @@ OPTION = """  annotation:
     allow-list:
       - pause
       - promote
+    command: start-fast
+    command-role:
+      async: {}
+      main: {}
 
   repo-storage-host:
     section: global
@@ -241,14 +255,14 @@ OPTION = """  annotation:
 
 
 ####################################################################################################################################
-def _render(option=OPTION, label=False):
+def _render(option=OPTION, label=False, command=COMMAND):
     """Render a declaration and return both generated files.
 
     Labels are off unless a test is checking them, since a label is appended to every line and would be in the way of reading the
     rules the rest of the tests check."""
 
     with tempfile.TemporaryDirectory() as path:
-        file_write(os.path.join(path, "build/config.yaml"), COMMAND + option)
+        file_write(os.path.join(path, "build/config.yaml"), command + option)
         bld_cfg_render(path, bld_cfg_parse(path), label)
 
         return (
@@ -371,6 +385,7 @@ def test_config_render_option():
         "PARSE_RULE_OPTION_NEGATE(true),",
         "PARSE_RULE_OPTION_RESET(true),",
         "PARSE_RULE_OPTION_GROUP_ID(Repo),",
+        "PARSE_RULE_OPTION_FORMAT(6),",
         "PARSE_RULE_OPTION_DEFAULT_TYPE(Dynamic),",
     ):
         assert_in(rule, parse)
@@ -394,9 +409,81 @@ def test_config_render_option():
         parse,
     )
 
-    # Commands the option is valid for, per role
-    assert_in("PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST", parse)
-    assert_in("PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST", parse)
+    # All commands with each role, less help and version
+    assert_in(
+        """typedef enum
+{
+    parseRuleCommandRoleAllMain = 0
+        PARSE_RULE_OPTION_COMMAND(Backup)
+        PARSE_RULE_OPTION_COMMAND(Restore),
+
+    parseRuleCommandRoleAllAsync = 0
+        PARSE_RULE_OPTION_COMMAND(Backup),
+""",
+        parse,
+    )
+
+    # A role no command has
+    assert_not_in("parseRuleCommandRoleAllAsync", _render(command=COMMAND.replace("      async: {}\n", ""))[1])
+
+    # Role lists equal to all commands with the role
+    assert_in(
+        """        PARSE_RULE_OPTION_SECTION(Global),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Main),
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(Local),
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(Remote),""",
+        parse,
+    )
+
+    # A role list equal to all commands with another role
+    assert_in("PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(Async),", parse)
+
+    # A role list equal to all commands with the role less the commands the option excludes
+    assert_in(
+        """        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL_EXCEPT
+        (
+            Main,
+            PARSE_RULE_OPTION_COMMAND(Restore)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),""",
+        parse,
+    )
+
+    # A role list equal to all commands with the role, after a role list that is not
+    assert_in(
+        """        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST
+        (
+            PARSE_RULE_OPTION_COMMAND(Restore)
+        ),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),""",
+        parse,
+    )
+
+    # Role lists equal to the option the command list is inherited from
+    assert_in(
+        """        PARSE_RULE_OPTION_SECTION(Global),
+
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_OPT(BufferSize),
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_OPT(BufferSize),
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_OPT(BufferSize),
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_OPT(BufferSize),
+
+        PARSE_RULE_OPTIONAL""",
+        parse,
+    )
+
+    # A role list that differs from the option the command list is inherited from
+    assert_in(
+        """        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_OPT(StartFast),
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(Async),
+
+        PARSE_RULE_OPTIONAL""",
+        parse,
+    )
 
 
 ####################################################################################################################################
@@ -517,7 +604,7 @@ def test_config_render_value():
     )
     assert_in("    parseRuleValStrQT_16KiB_QT,", parse)
     assert_in(
-        """static const unsigned int parseRuleValueTime[] =
+        """static const int64_t parseRuleValueTime[] =
 {
     100,""",
         parse,

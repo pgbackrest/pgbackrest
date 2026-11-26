@@ -10,6 +10,8 @@
                 </release-item-contributor-list>
 
                 <p>Remove support for <proper>PostgreSQL</proper> <id>9.0</id>/<id>9.1</id>/<id>9.2</id>.</p>
+
+                <p><backrest/> now supports ten versions of <postgres/>: the five supported versions and the last five EOL versions. As of <postgres/> 15 that excludes <id>9.0</id>, <id>9.1</id>, and <id>9.2</id>.</p>
             </release-item>
 
             <release-item>
@@ -23,6 +25,8 @@
                 </release-item-contributor-list>
 
                 <p>Restore errors when no backup matches the current version of <postgres/>.</p>
+
+                <p>After a <cmd>stanza-upgrade</cmd> with no new backup, restore used the latest backup, which was made from the prior <postgres/> version. Replicas built this way could fail. Restore now errors in this case unless <br-option>set</br-option> or <br-option>type=time</br-option>/<br-option>type=lsn</br-option> is specified.</p>
             </release-item>
 
             <release-item>
@@ -38,11 +42,14 @@
                 </release-item-contributor-list>
 
                 <p>Add <br-option>compress-level</br-option> range checking for each <br-option>compress-type</br-option>.</p>
+
+                <p>The <br-option>compress-level</br-option> range was <id>0-9</id> for every <br-option>compress-type</br-option>. This is the range for <id>gz</id> but a subset of what <id>lz4</id> and <id>zst</id> allow. Each type now has its own range, e.g. <id>-7</id> to <id>22</id> for <id>zst</id>.</p>
             </release-item>
         </release-improvement-list>
 
         <release-development-list>
             <release-item>
+                <release-note version="2.45" subject="Block incremental backup (BETA)."/>
                 <github-issue id="959"/>
                 <github-issue id="1806"/>
                 <github-issue id="1913"/>
@@ -91,6 +98,7 @@
                 <commit subject="Use memcpy() instead of strncpy when source size is known."/>
                 <commit subject="Put logging functions unused by release builds into DEBUG blocks."/>
                 <commit subject="Split VR_EXTERN/FN_EXTERN macros from FV_EXTERN."/>
+                <commit subject="Add meson unity build and tests."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -100,7 +108,10 @@
             </release-item>
 
             <release-item>
-                <github-pull-request id="1968"/>
+                <commit subject="Cleanup of common/ini module in preparation for a refactor."/>
+                <commit subject="Refactor common/ini module to remove callbacks and duplicated code.">
+                    <github-pull-request id="1968"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -108,6 +119,92 @@
                 </release-item-contributor-list>
 
                 <p>Refactor <id>common/ini</id> module to remove callbacks and duplicated code.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Audit mem contexts returned from functions into the calling context."/>
+                <commit subject="Refactor logging functions to never allocate memory."/>
+                <commit subject="Remove mostly useless mem context in storageRemoteInfoProtocolPut()."/>
+                <commit subject="Fix leak in protocolServer()."/>
+                <commit subject="Fix leaks in db module."/>
+                <commit subject="Fix leak in configOptionRemote()."/>
+                <commit subject="Fix leak in jsonReadVarRecurse()."/>
+                <commit subject="Fix leak in archivePushDropWarning()."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Audit memory contexts returned from functions and fix leaks.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Improve libbacktrace implementation."/>
+                <commit subject="Enhance libbacktrace to handle incomplete stack traces."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve libbacktrace implementation.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix error detail output to stderr.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove duplication from FUNCTION_LOG_BEGIN_BASE() macro definitions."/>
+                <commit subject="Revert macro changes from 38d32045."/>
+                <commit subject="Add CHECK_FMT() macros and tests for CHECK*() macros."/>
+                <commit subject="Add BUFFER_EXTERN() and cleanup hash zero constants."/>
+                <commit subject="Cleanup terminology in Buffer/Variant/String macros."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve debug, check, and buffer macros.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix comment indentation and wrapping."/>
+                <commit subject="Fix formatting of archiveGetFile()."/>
+                <commit subject="Remove extra linefeed."/>
+                <commit subject="Fix formatting of restoreFile() definition."/>
+                <commit subject="Fix formatting."/>
+                <commit subject="Clean up storage headers and move posix internal type."/>
+                <commit subject="Fix comment typo for strLower()."/>
+                <commit subject="Fix improper formatting in config/parse module."/>
+                <commit subject="Fix typo."/>
+                <commit subject="Improve comment on forced WAL switch at backup start."/>
+                <commit subject="Move function prototype to a better location in the header."/>
+                <commit subject="Add missing header in lock module."/>
+                <commit subject="Fix permissions on source files."/>
+                <commit subject="Fix incorrect return type in backupFile()."/>
+                <commit subject="Reduce log level of pgVersionFromStr() and pgVersionToStr()."/>
+                <commit subject="Simply return in pgVersionToStr()."/>
+                <commit subject="Minor optimizations on config/parse module."/>
+                <commit subject="Fix typos."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-contributor id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Clean up code and comments.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update LICENSE.txt and PostgreSQL copyright for 2023.</p>
             </release-item>
         </release-development-list>
     </release-core-list>
@@ -127,6 +224,8 @@
                 </release-item-contributor-list>
 
                 <p>Add warning about enabling <quote>hierarchical namespace</quote> on Azure storage.</p>
+
+                <p>With <quote>hierarchical namespace</quote> enabled, Azure requires directories to be deleted separately and <cmd>expire</cmd> fails. The user guide now warns not to enable it.</p>
             </release-item>
 
             <release-item>
@@ -142,6 +241,8 @@
                 </release-item-contributor-list>
 
                 <p>Add replacement for linefeeds in monitoring example.</p>
+
+                <p>The monitoring example failed when <cmd>info</cmd> output contained a linefeed, e.g. in some error messages, because <code>COPY</code> converts <id>\n</id> to a linefeed that <id>jsonb</id> rejects. The example now replaces linefeeds before converting to <id>jsonb</id>.</p>
             </release-item>
 
             <release-item>
@@ -159,6 +260,8 @@
                 </release-item-contributor-list>
 
                 <p>Clarify <br-option>target-action</br-option> behavior on various <postgres/> versions.</p>
+
+                <p>The effect of <id>pause</id> depends on <setting>hot_standby</setting> and the <postgres/> version. With <setting>hot_standby=off</setting>, <id>pause</id> acts like <id>shutdown</id> on <postgres/> &gt;= 12 and like <id>promote</id> on earlier versions.</p>
             </release-item>
 
             <release-item>
@@ -170,6 +273,8 @@
                 </release-item-contributor-list>
 
                 <p>Updates and clarifications to index page.</p>
+
+                <p>The section about other backup solutions not supporting parallel processing was no longer accurate and has been reworded. Other sections were updated for current terminology and clarity.</p>
             </release-item>
 
             <release-item>
@@ -179,7 +284,50 @@
                 </release-item-contributor-list>
 
                 <p>Add dark mode to the website.</p>
+
+                <p>The website uses dark colors when the browser prefers a dark color scheme.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update RHEL user guide to PostgreSQL 11/12.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Add manifest test harness."/>
+                <commit subject="Add backup test harness."/>
+                <commit subject="Fix incorrect FUNCTION_TEST_END() in hrnPgWalToBuffer()."/>
+                <commit subject="Update missing flag in storage/posix test."/>
+                <commit subject="Add unit tests for the unit test build code."/>
+                <commit subject="Add --no-back-trace option to test.pl."/>
+                <commit subject="Skip test modules in coverage report."/>
+                <commit subject="Do not output stderr on unit/integration test errors."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve unit tests and test tools.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove MacOS from CirrusCI."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>

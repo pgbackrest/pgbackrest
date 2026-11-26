@@ -10,6 +10,7 @@ Command and Option Parse
 #include <unistd.h>
 
 #include "common/debug.h"
+#include "common/format/format.h"
 #include "common/io/bufferRead.h"
 #include "common/log.h"
 #include "common/macro.h"
@@ -142,6 +143,7 @@ typedef struct ParseRuleOption
     bool group : 1;                                                 // In a group?
     unsigned int groupId : 1;                                       // Id if in a group
     bool deprecateMatch : 1;                                        // Does a deprecated name exactly match the option name?
+    unsigned int format : 2;                                        // Minimum repository format - REPOSITORY_FORMAT_5
     unsigned int packSize : 7;                                      // Size of optional data in pack format
     uint32_t commandRoleValid[CFG_COMMAND_ROLE_TOTAL];              // Valid for the command role?
 
@@ -216,6 +218,9 @@ typedef enum
 #define PARSE_RULE_OPTION_DEPRECATE_MATCH(deprecateMatchParam)                                                                     \
     .deprecateMatch = deprecateMatchParam
 
+#define PARSE_RULE_OPTION_FORMAT(formatParam)                                                                                      \
+    .format = formatParam - REPOSITORY_FORMAT_5
+
 #define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST(...)                                                                        \
     .commandRoleValid[cfgCmdRoleMain] = 0 __VA_ARGS__
 
@@ -230,6 +235,47 @@ typedef enum
 
 #define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
     | (1 << cfgCmd##commandParam)
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL(roleParam)                                                                   \
+    .commandRoleValid[cfgCmdRoleMain] = parseRuleCommandRoleAll##roleParam
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL(roleParam)                                                                  \
+    .commandRoleValid[cfgCmdRoleAsync] = parseRuleCommandRoleAll##roleParam
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL(roleParam)                                                                  \
+    .commandRoleValid[cfgCmdRoleLocal] = parseRuleCommandRoleAll##roleParam
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL(roleParam)                                                                 \
+    .commandRoleValid[cfgCmdRoleRemote] = parseRuleCommandRoleAll##roleParam
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_ALL_EXCEPT(roleParam, ...)                                                       \
+    .commandRoleValid[cfgCmdRoleMain] = parseRuleCommandRoleAll##roleParam & ~(0 __VA_ARGS__)
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_ALL_EXCEPT(roleParam, ...)                                                      \
+    .commandRoleValid[cfgCmdRoleAsync] = parseRuleCommandRoleAll##roleParam & ~(0 __VA_ARGS__)
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_ALL_EXCEPT(roleParam, ...)                                                      \
+    .commandRoleValid[cfgCmdRoleLocal] = parseRuleCommandRoleAll##roleParam & ~(0 __VA_ARGS__)
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_ALL_EXCEPT(roleParam, ...)                                                     \
+    .commandRoleValid[cfgCmdRoleRemote] = parseRuleCommandRoleAll##roleParam & ~(0 __VA_ARGS__)
+
+// Bit set when a command role valid list is the list of the option in the remaining bits
+#define PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT                    ((uint32_t)1 << 31)
+
+static_assert(CFG_COMMAND_TOTAL <= 31, "commands must fit in the bits below the option reference bit");
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_OPT(optionParam)                                                                 \
+    .commandRoleValid[cfgCmdRoleMain] = PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT | cfgOpt##optionParam
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_OPT(optionParam)                                                                \
+    .commandRoleValid[cfgCmdRoleAsync] = PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT | cfgOpt##optionParam
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_OPT(optionParam)                                                                \
+    .commandRoleValid[cfgCmdRoleLocal] = PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT | cfgOpt##optionParam
+
+#define PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_OPT(optionParam)                                                               \
+    .commandRoleValid[cfgCmdRoleRemote] = PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT | cfgOpt##optionParam
 
 #define PARSE_RULE_STRPUB(value)                                    {.buffer = (const char *)value, .size = sizeof(value) - 1}
 
@@ -1415,6 +1461,21 @@ cfgParseOptionGroupId(const ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN unsigned int
+cfgParseOptionFormat(const ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    const unsigned int format = parseRuleOption[optionId].format;
+
+    FUNCTION_TEST_RETURN(UINT, format == 0 ? 0 : format + REPOSITORY_FORMAT_5);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN bool
 cfgParseOptionSecure(const ConfigOption optionId)
 {
@@ -1453,7 +1514,17 @@ cfgParseOptionValid(const ConfigCommand commandId, const ConfigCommandRole comma
     ASSERT(commandId < CFG_COMMAND_TOTAL);
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
-    FUNCTION_TEST_RETURN(BOOL, parseRuleOption[optionId].commandRoleValid[commandRoleId] & ((uint32_t)1 << commandId));
+    uint32_t commandRoleValid = parseRuleOption[optionId].commandRoleValid[commandRoleId];
+
+    // Get the list from the option it references
+    if (commandRoleValid & PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT)
+    {
+        commandRoleValid =
+            parseRuleOption[commandRoleValid & ~PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT].commandRoleValid[commandRoleId];
+        ASSERT(!(commandRoleValid & PARSE_RULE_OPTION_COMMAND_ROLE_VALID_OPT));
+    }
+
+    FUNCTION_TEST_RETURN(BOOL, commandRoleValid & ((uint32_t)1 << commandId));
 }
 
 /***********************************************************************************************************************************
@@ -2282,6 +2353,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 config->option[optionId].dataType = cfgParseOptionDataType(optionId);
                 config->option[optionId].group = ruleOption->group;
                 config->option[optionId].groupId = ruleOption->groupId;
+                config->option[optionId].format = cfgParseOptionFormat(optionId);
             }
             else
             {
@@ -2722,6 +2794,10 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
                                     switch (ruleOption->type)
                                     {
+                                        case cfgOptTypeString:
+                                            allowListFound = strEq(PARSE_RULE_VAL_STR_IDX(valueIdx), configOptionValue->display);
+                                            break;
+
                                         case cfgOptTypeStringId:
                                         {
                                             if (strEq(PARSE_RULE_VAL_STR_IDX(valueIdx), configOptionValue->display))

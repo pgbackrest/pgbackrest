@@ -25,7 +25,7 @@ restoreBackupData(const String *const backupLabel, const unsigned int repoIdx, c
     {
         restoreBackup.backupSet = strDup(backupLabel);
         restoreBackup.repoIdx = repoIdx;
-        restoreBackup.cipherSpecManifest = cipherSpecDup(cipherSpecManifest);
+        restoreBackup.cipherSpecManifest = cipherSpecDupP(cipherSpecManifest);
     }
     MEM_CONTEXT_PRIOR_END();
 
@@ -93,15 +93,12 @@ restoreBackupSet(void)
         // Search through the repo list for a backup set to use for recovery
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
-            // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            storageRepoIdx(repoIdx);
-
             const InfoBackup *infoBackup = NULL;
 
             // Attempt to load backup.info
             TRY_BEGIN()
             {
-                infoBackup = infoBackupLoadFile(storageRepoIdx(repoIdx), INFO_BACKUP_PATH_FILE_STR, cfgCipherSpecMainIdx(repoIdx));
+                infoBackup = infoBackupRepoIdxP(repoIdx);
             }
             CATCH_ANY()
             {
@@ -156,7 +153,9 @@ restoreBackupSet(void)
                         {
                             found = true;
 
-                            result = restoreBackupData(backupData.backupLabel, repoIdx, infoBackupCipherSpec(infoBackup));
+                            result = restoreBackupData(
+                                backupData.backupLabel, repoIdx,
+                                infoBackupCipherSpecManifest(infoBackup, backupData.backupLabel));
                             break;
                         }
                     }
@@ -183,7 +182,8 @@ restoreBackupSet(void)
                             strZ(latestBackup.backupLabel));
                     }
 
-                    result = restoreBackupData(latestBackup.backupLabel, repoIdx, infoBackupCipherSpec(infoBackup));
+                    result = restoreBackupData(
+                        latestBackup.backupLabel, repoIdx, infoBackupCipherSpecManifest(infoBackup, latestBackup.backupLabel));
                     break;
                 }
             }
@@ -194,7 +194,8 @@ restoreBackupSet(void)
                 {
                     if (strEq(infoBackupData(infoBackup, backupIdx).backupLabel, backupSetRequested))
                     {
-                        result = restoreBackupData(backupSetRequested, repoIdx, infoBackupCipherSpec(infoBackup));
+                        result = restoreBackupData(
+                            backupSetRequested, repoIdx, infoBackupCipherSpecManifest(infoBackup, backupSetRequested));
                         break;
                     }
                 }

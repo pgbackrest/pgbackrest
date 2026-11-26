@@ -44,6 +44,13 @@ OPT_TYPE_TIME = "time"
 # Options that the rest of the build refers to by name
 OPT_STANZA = "stanza"
 
+# Option group that has a repository format
+OPT_GRP_REPO = "repo"
+
+# Repository format the parse rules store a minimum format as an offset from. Must match REPOSITORY_FORMAT_5 in
+# src/common/format/format.h.
+_FORMAT_BASE = 5
+
 # Sections an option can be configured in. An option in the command-line section cannot be set in the configuration file, which is
 # why it can be neither negated nor reset.
 SECTION_COMMAND_LINE = "command-line"
@@ -180,11 +187,14 @@ class BldCfgOption:
         self.default_type = DEFAULT_TYPE_QUOTE  # How the default is rendered
         self.default_value = None
         self.group = None  # Option group, if any
+        self.format = None  # Minimum repository format, if any
         self.secure = False  # Does the option contain a secret?
         self.depend = None
         self.allow_list = None
         self.allow_range = None
         self.cmd_list = None  # What the option means for each command it is valid for
+        self.cmd_list_inherit = None  # Option the command list is inherited from, if any
+        self.cmd_list_exclude = None  # Commands excluded from the command list, if any
         self.cmd_role_list = None  # Roles the option is valid for, before they are filtered per command
         self.deprecate_list = None
 
@@ -489,6 +499,28 @@ def _option_command_list(opt_cmd_raw, cmd_list, opt_list, name):
 
 
 ####################################################################################################################################
+def _option_command_list_inherit(opt_cmd_raw, opt_list):
+    """Name of the option that declares the command list a scalar inherits, or None for a list."""
+
+    if not isinstance(opt_cmd_raw, str):
+        return None
+
+    opt_inherit = _find(opt_list, opt_cmd_raw)
+
+    return opt_inherit.cmd_list_inherit or opt_inherit.name
+
+
+####################################################################################################################################
+def _option_command_list_exclude(opt_cmd_raw, opt_list):
+    """Commands a list excludes with -command, or the commands the option a scalar names excludes, or None."""
+
+    if isinstance(opt_cmd_raw, str):
+        return _find(opt_list, opt_cmd_raw).cmd_list_exclude
+
+    return [detail for opt_cmd, detail in opt_cmd_raw if opt_cmd == "-command"] or None
+
+
+####################################################################################################################################
 def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
     """Parse the options as declared, before any of them are resolved against each other."""
 
@@ -505,6 +537,8 @@ def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
                 opt.allow_range = _allow_range(value, "option '%s'" % name)
             elif key == "command":
                 opt.cmd_list = _option_command_list(value, cmd_list, result, "option '%s'" % name)
+                opt.cmd_list_inherit = _option_command_list_inherit(value, result)
+                opt.cmd_list_exclude = _option_command_list_exclude(value, result)
             elif key == "command-role":
                 opt.cmd_role_list = _command_role(value, "option '%s'" % name)
             elif key == "default":
@@ -516,6 +550,9 @@ def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
             elif key == "default-type":
                 check(value in _DEFAULT_TYPE_LIST, "option '%s' has invalid default type '%s'" % (name, value))
                 opt.default_type = value
+            elif key == "format":
+                check(value.isdigit() and int(value) > _FORMAT_BASE, "option '%s' has invalid format '%s'" % (name, value))
+                opt.format = int(value)
             elif key == "group":
                 check(_find(opt_grp_list, value) is not None, "option '%s' has invalid group '%s'" % (name, value))
                 opt.group = value
@@ -527,6 +564,7 @@ def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
                 # first. Deprecations are not inherited since they name the option they are a deprecation of.
                 opt = copy.copy(opt_inherit)
                 opt.name = name
+                opt.cmd_list_inherit = _option_command_list_inherit(value, result)
                 opt.deprecate_list = None
 
                 inherit_found = True
@@ -553,6 +591,10 @@ def _option_list_raw(opt_raw, cmd_list, opt_grp_list):
 
         if opt.type is None:
             raise ToolError("option '%s' requires 'type'" % name)
+
+        # Only an option in the repo group can have a format
+        if opt.format is not None:
+            check(opt.group == OPT_GRP_REPO, "option '%s' with a format must be in group '%s'" % (name, OPT_GRP_REPO))
 
         # An inherited option already has these set from the option it inherited from
         if not inherit_found:
@@ -628,6 +670,9 @@ def _option_list(opt_raw, cmd_list, opt_grp_list):
 
         result[idx].cmd_list = cmd_opt_list
         result[idx].depend = _depend_reconcile(opt_raw, opt_raw.depend, result)
+
+        if opt_raw.cmd_list_inherit is not None:
+            result[idx].cmd_list_inherit = _find(result, opt_raw.cmd_list_inherit)
 
     return result
 

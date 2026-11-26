@@ -7,6 +7,7 @@ NOTE: references to 9.4 are intentionally included in this test to ensure that e
 
 #include "command/backup/common.h"
 #include "common/io/bufferRead.h"
+#include "info/infoBackup.intern.h"
 #include "storage/posix/storage.h"
 
 #include "harness/config.h"
@@ -1164,10 +1165,6 @@ testRun(void)
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
             "            HINT: backup.info cannot be opened and is required to perform a backup.\n"
             "            HINT: has a stanza-create been performed?\n"
-            "P00   INFO: [DRY-RUN] repo2: expire diff backup set 20181119-152800F_20181119-152152D"
-            ", 20181119-152800F_20181119-152155I\n"
-            "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152155I\n"
-            "P00   INFO: [DRY-RUN] repo2: remove expired backup 20181119-152800F_20181119-152152D\n"
             "P00  ERROR: [055]: [DRY-RUN] repo2: unable to load info file '" TEST_PATH "/repo2/archive/db/archive.info' or"
             " '" TEST_PATH "/repo2/archive/db/archive.info.copy':\n"
             "            FileMissingError: unable to open missing file '" TEST_PATH "/repo2/archive/db/archive.info' for read\n"
@@ -2710,6 +2707,156 @@ testRun(void)
             storageInfoP(storageRepoIdx(1), STRDEF(STORAGE_REPO_BACKUP "/latest")).linkDestination, STRDEF("20181119-152850F"),
             "latest link updated, repo2");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive key rotation set at format 5");
+
+        StringList *argListRepo2 = strLstDup(argListAvoidWarn);
+        hrnCfgArgRawZ(argListRepo2, cfgOptRepo, "2");
+        hrnCfgArgKeyRawZ(argListRepo2, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawZ(argListRepo2, cfgOptRepoRetentionFull, 2, "1");
+        hrnCfgArgKeyRawStrId(argListRepo2, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
+
+        argList = strLstDup(argListRepo2);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherRotate, 2, "30d");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_ERROR(cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+        TEST_RESULT_LOG("P00  ERROR: [031]: repo2: option 'repo2-cipher-rotate' requires repository format 6 or higher");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive key not due for rotation");
+
+        const time_t timeRotate = time(NULL);
+
+        InfoBackup *infoBackupFormat6 = NULL;
+
+        TEST_ASSIGN(
+            infoBackupFormat6, infoBackupLoadFile(storageRepoIdx(1), INFO_BACKUP_PATH_FILE_STR, TEST_CIPHER_SPEC),
+            "load backup info");
+        TEST_RESULT_VOID(infoBackupFormatSet(infoBackupFormat6, REPOSITORY_FORMAT_6), "set backup info format 6");
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackupFormat6, storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE_STR, TEST_CIPHER_SPEC),
+            "save backup info");
+
+        #define TEST_ARCHIVE_INFO_FORMAT_6(rotateTime)                                                                             \
+            zNewFmt(                                                                                                               \
+                "[cipher]\n"                                                                                                       \
+                "cipher-pass={\"1\":{\"digest\":\"sha256\",\"key\":\"" TEST_CIPHER_PASS_ARCHIVE_BASE64 "\"}}\n"                    \
+                "cipher-pass-current=\"1\"\n"                                                                                      \
+                "cipher-pass-rotate=%" PRId64 "\n"                                                                                 \
+                "\n"                                                                                                               \
+                "[db]\n"                                                                                                           \
+                "db-id=2\n"                                                                                                        \
+                "db-system-id=6626363367545678089\n"                                                                               \
+                "db-version=\"12\"\n"                                                                                              \
+                "\n"                                                                                                               \
+                "[db:history]\n"                                                                                                   \
+                "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"                                                       \
+                "2={\"db-id\":6626363367545678089,\"db-version\":\"12\"}",                                                         \
+                (int64_t)(rotateTime))
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_FORMAT_6(timeRotate - 29 * SEC_PER_DAY),
+            .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC);
+        HRN_STORAGE_TIME(storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE, 967746268);
+
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
+            "P00   INFO: repo2: 12-2 no archive to remove");
+
+        TEST_RESULT_INT(
+            storageInfoP(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR).timeModified, 967746268, "archive info not saved");
+
+        InfoArchive *infoArchive = NULL;
+
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, TEST_CIPHER_SPEC), "load archive info");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive)), "1", "current key not rotated");
+        TEST_RESULT_INT(infoArchiveCipherRotateTime(infoArchive), timeRotate - 29 * SEC_PER_DAY, "rotation time unchanged");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive key due for rotation, dry run");
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_FORMAT_6(timeRotate - 31 * SEC_PER_DAY),
+            .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC);
+
+        StringList *argListDryRun = strLstDup(argList);
+        hrnCfgArgRawBool(argListDryRun, cfgOptDryRun, true);
+        HRN_CFG_LOAD(cfgCmdExpire, argListDryRun);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: [DRY-RUN] repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
+            "P00   INFO: [DRY-RUN] repo2: 12-2 no archive to remove\n"
+            "P00   INFO: [DRY-RUN] repo2: rotate archive key to id 2");
+
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, TEST_CIPHER_SPEC), "load archive info");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive)), "1", "current key not rotated");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive key due for rotation");
+
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
+            "P00   INFO: repo2: 12-2 no archive to remove\n"
+            "P00   INFO: repo2: rotate archive key to id 2");
+
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, TEST_CIPHER_SPEC), "load archive info");
+
+        const CipherSpecMap *const cipherSpecMapRotate = infoArchiveCipherSpecMap(infoArchive);
+
+        TEST_RESULT_UINT(cipherSpecMapSize(cipherSpecMapRotate), 2, "prior key kept");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(cipherSpecMapRotate), "2", "new key is current");
+        TEST_RESULT_UINT(
+            cipherSpecDigest(cipherSpecMapGet(cipherSpecMapRotate, STRDEF("2"))), hashTypeSha256, "new key derives with sha256");
+        TEST_RESULT_BOOL(infoArchiveCipherRotateTime(infoArchive) >= timeRotate, true, "rotation time updated");
+
+        // Rotate via the backup command
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_FORMAT_6(timeRotate - 31 * SEC_PER_DAY),
+            .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC);
+
+        StringList *argListBackup = strLstDup(argList);
+        hrnCfgArgRawZ(argListBackup, cfgOptPgPath, TEST_PATH "/pg");
+        HRN_CFG_LOAD(cfgCmdBackup, argListBackup);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire via backup command");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: repo2: 12-2 archive retention on backup 20181119-152850F, start = 000000010000000000000002\n"
+            "P00   INFO: repo2: 12-2 no archive to remove\n"
+            "P00   INFO: repo2: rotate archive key to id 2");
+
+        TEST_ASSIGN(
+            infoArchive, infoArchiveLoadFile(storageRepoIdx(1), INFO_ARCHIVE_PATH_FILE_STR, TEST_CIPHER_SPEC), "load archive info");
+        TEST_RESULT_STR_Z(cipherSpecMapIdCurrent(infoArchiveCipherSpecMap(infoArchive)), "2", "new key is current");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on info files at different formats");
+
+        // Upgrade interrupted after archive.info was saved at format 6 and before backup.info was saved at format 6
+        HRN_INFO_PUT(storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, strZ(backupInfoContent), .cipherSpec = TEST_CIPHER_SPEC);
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_FORMAT_6(timeRotate - 31 * SEC_PER_DAY),
+            .format = REPOSITORY_FORMAT_6, .header = true, .cipherSpec = TEST_CIPHER_SPEC);
+        HRN_CFG_LOAD(cfgCmdExpire, argListRepo2);
+
+        TEST_ERROR(cmdExpire(), CommandError, CFGCMD_EXPIRE " command encountered 1 error(s), check the log file for details");
+        TEST_RESULT_LOG(
+            "P00   WARN: backup '20181119-152850F_20181119-152252D' missing manifest removed from backup.info\n"
+            "P00  ERROR: [028]: repo2: backup info file and archive info file are at different repository formats\n"
+            "            archive: format = 6\n"
+            "            backup : format = 5\n"
+            "            HINT: run stanza-upgrade with --repo2-format=6 to complete an interrupted upgrade.");
+
         // Cleanup
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
         harnessLogLevelReset();
@@ -3060,6 +3207,16 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-catalog-version\":202506291,\"db-control-version\":1800,\"db-system-id\":7577015877005525116"
             ",\"db-version\":\"18\"}\n");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=7577015877005525116\n"
+            "db-version=\"18\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":7577015877005525116,\"db-version\":\"18\"}\n");
 
         TEST_RESULT_VOID(cmdExpire(), "no backups to expire using --oldest");
         TEST_RESULT_LOG(

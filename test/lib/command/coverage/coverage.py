@@ -7,14 +7,7 @@ warns about anything not fully covered, and writes the report."""
 import json
 import os
 
-from command.test.define import (
-    TEST_LANG_C,
-    TEST_LANG_PYTHON,
-    test_def_find,
-    test_def_parse,
-    test_lib_path,
-    test_lib_split,
-)
+from command.test.define import TEST_LANG_C, TEST_LANG_PYTHON, test_def_coverage_file, test_def_find, test_def_parse
 from common.error import check
 from common.log import *
 from common.storage import file_read, file_write, path_list
@@ -226,33 +219,6 @@ class Coverage:
 
 
 ####################################################################################################################################
-def coverage_module_file(name, lang=TEST_LANG_C):
-    """Map a code module name to the file name coverage reports it under.
-
-    For example "common/error/error" becomes "src/common/error/error.c", and the python module "test/common/string_id" becomes
-    "test/lib/common/string_id.py"."""
-
-    # The python each tool is written in lives in its library rather than beside the tests
-    if lang == TEST_LANG_PYTHON:
-        lib, module = test_lib_split(name)
-
-        return "%s/%s.py" % (test_lib_path(lib), module)
-
-    if name.startswith("test/"):
-        result = "test/src/" + name[len("test/") :] + ".c"
-    else:
-        result = "src/" + name + ".c"
-
-    # A vendored module is included rather than compiled, as is a module named .inc
-    if result.endswith(".vendor.c"):
-        result += ".inc"
-    elif result.endswith(".inc.c"):
-        result = result[: -len(".inc.c")] + ".c.inc"
-
-    return result
-
-
-####################################################################################################################################
 def _coverage_list_build(module_def_list, module_name_list):
     """Build the file names of the code modules that should be fully covered by the tests that ran.
 
@@ -265,7 +231,7 @@ def _coverage_list_build(module_def_list, module_name_list):
         module = test_def_find(module_def_list, module_name)
 
         for coverage in module.coverage_list:
-            file = coverage_module_file(coverage.name, module.lang)
+            file = test_def_coverage_file(coverage.name, module.lang)
 
             if coverage.coverable and file not in result:
                 result.append(file)
@@ -273,7 +239,7 @@ def _coverage_list_build(module_def_list, module_name_list):
     # Remove code modules that require a test that was not run for full coverage
     for module in module_def_list:
         for coverage in module.coverage_list:
-            file = coverage_module_file(coverage.name, module.lang)
+            file = test_def_coverage_file(coverage.name, module.lang)
 
             if file in result and module.name not in module_name_list:
                 log(WARN, "module '%s' did not have all tests run required for coverage" % coverage.name)

@@ -294,31 +294,6 @@ def test_coverage_merge_python_branch():
 
 
 ####################################################################################################################################
-def test_coverage_module_file():
-    """A code module is mapped to the file coverage reports it under, which depends on the language of the test."""
-
-    # Project source
-    assert_equal(coverage_module_file("common/error"), "src/common/error.c")
-
-    # The harness and the documentation tool live beside their own source
-    assert_equal(coverage_module_file("test/common/harnessLog"), "test/src/common/harnessLog.c")
-
-    # A module that is included rather than compiled
-    assert_equal(coverage_module_file("command/backup/process.inc"), "src/command/backup/process.c.inc")
-    assert_equal(coverage_module_file("common/regExp.vendor"), "src/common/regExp.vendor.c.inc")
-
-    # The python each tool is written in lives in its library rather than beside the tests, and the same module name in another
-    # language is another file
-    assert_equal(coverage_module_file("test/common/string_id", TEST_LANG_PYTHON), "test/lib/common/string_id.py")
-    assert_equal(coverage_module_file("build/common/render", TEST_LANG_PYTHON), "build/lib/common/render.py")
-
-    with assert_raises(ToolError) as error:
-        coverage_module_file("common/string_id", TEST_LANG_PYTHON)
-
-    assert_equal(str(error.exception), "python module 'common/string_id' must be in one of these libraries: build, doc, test")
-
-
-####################################################################################################################################
 def _cmd_coverage(path, module_list, raw_map, vm="none", coverage_summary=False, define=DEFINE):
     """Run the coverage command over a repository built from the raw coverage given.
 

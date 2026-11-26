@@ -7,9 +7,9 @@ Harness for Creating Test Backups
 
 #include "command/backup/backup.h"
 #include "common/compress/helper.h"
-#include "common/crypto/cipherBlock.h"
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
+#include "common/format/cipherBlockFormat.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/manifest/manifest.h"
@@ -240,9 +240,14 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
                     if (param.walCompressType != compressTypeNone)
                         ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(write)), compressFilterP(param.walCompressType, 1));
 
-                    // Encrypt with the archive passphrase, which is what archive-push writes WAL with
-                    cipherBlockFilterGroupAdd(
-                        ioWriteFilterGroup(storageWriteIo(write)), cipherModeEncrypt, infoArchiveCipherSpec(infoArchive));
+                    // Encrypt with the current archive key the way archive-push writes WAL. Format >= 6 also stores the key id.
+                    const CipherSpecMap *const cipherSpecMap = infoArchiveCipherSpecMap(infoArchive);
+                    const String *const cipherId = cipherSpecMapIdCurrent(cipherSpecMap);
+
+                    cipherBlockFormatFilterGroupWriteAddP(
+                        ioWriteFilterGroup(storageWriteIo(write)),
+                        cipherId == NULL ? infoArchiveCipherSpec(infoArchive) : cipherSpecMapGet(cipherSpecMap, cipherId),
+                        infoArchiveFormat(infoArchive), .keyId = cipherId);
 
                     storagePutP(write, walBuffer);
                 }
@@ -284,24 +289,18 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         {
             const char *const walSegment = param.walSwitch ? walSegmentStart : walSegmentPrior;
 
-            if (pgVersion <= PG_VERSION_96)
-                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, walSegment));
-            else
-                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, walSegment));
+            HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_CURRENT_WAL(1, walSegment));
         }
 
         // Start backup
-        if (pgVersion == PG_VERSION_96)
-            HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_START_BACKUP_96(1, param.startFast, lsnStartStr, walSegmentStart));
-        else
-            HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart));
+        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart));
 
         // Switch WAL segment so it can be checked
         if (param.walSwitch)
         {
             HRN_PQ_SCRIPT_ADD(
                 HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "X/X"),
-                HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", walSegmentStart));
+                HRN_PQ_SCRIPT_WAL_SWITCH(1, walSegmentStart));
         }
 
         // Get database list
@@ -315,7 +314,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
 
         // Wait for standby to sync
         if (param.backupStandby)
-            HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_REPLAY_WAIT_96(2, lsnStartStr));
+            HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_REPLAY_WAIT(2, lsnStartStr));
 
         // Continue if WAL check succeeds
         if (!param.noPriorWal)
@@ -343,10 +342,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
                         HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true));
 
                     // Stop backup
-                    if (pgVersion == PG_VERSION_96)
-                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, tablespace));
-                    else
-                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, tablespace));
+                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, tablespace));
 
                     // Get stop time
                     HRN_PQ_SCRIPT_ADD(

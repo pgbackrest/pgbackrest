@@ -52,13 +52,10 @@ STRING_DECLARE(PG_PATH_GLOBAL_STR);
 #define PG_PATH_PGSTATTMP                                           "pg_stat_tmp"
 #define PG_PATH_PGSUBTRANS                                          "pg_subtrans"
 #define PG_PATH_PGTBLSPC                                            "pg_tblspc"
+#define PG_PATH_PGWAL                                               "pg_wal"
+#define PG_PATH_PGXACT                                              "pg_xact"
 
 #define PG_PREFIX_PGSQLTMP                                          "pgsql_tmp"
-
-#define PG_NAME_WAL                                                 "wal"
-STRING_DECLARE(PG_NAME_WAL_STR);
-#define PG_NAME_XLOG                                                "xlog"
-STRING_DECLARE(PG_NAME_XLOG_STR);
 
 /***********************************************************************************************************************************
 Define allowed page sizes
@@ -72,13 +69,6 @@ typedef enum
     pgPageSize16 = 16 * 1024,
     pgPageSize32 = 32 * 1024,
 } PgPageSize;
-
-/***********************************************************************************************************************************
-Define default segment size and pages per segment
-
-Segment size can only be changed at compile time and is not known to be well-tested, so only the default segment size is supported.
-***********************************************************************************************************************************/
-#define PG_SEGMENT_SIZE_DEFAULT                                     ((unsigned int)(1 * 1024 * 1024 * 1024))
 
 /***********************************************************************************************************************************
 WAL header size. It doesn't seem worth tracking the exact size of the WAL header across versions of PostgreSQL so just set it to
@@ -104,6 +94,7 @@ typedef struct PgControl
     uint32_t timeline;                                              // Current timeline
 
     PgPageSize pageSize;
+    unsigned int segmentPageTotal;                                  // Total pages in a relation segment
     unsigned int walSegmentSize;
 
     unsigned int pageChecksumVersion;                               // Page checksum version (0 if no checksum, 1 if checksum)
@@ -141,6 +132,9 @@ FN_EXTERN void pgControlCheckpointInvalidate(Buffer *buffer, const String *pgVer
 // Get the control version for a PostgreSQL version
 FN_EXTERN uint32_t pgControlVersion(unsigned int pgVersion);
 
+// Throws an error if version is not supported
+FN_EXTERN void pgVersionCheck(unsigned int pgVersion);
+
 // Convert version string to version number and vice versa
 FN_EXTERN unsigned int pgVersionFromStr(const String *version);
 FN_EXTERN String *pgVersionToStr(unsigned int version);
@@ -166,9 +160,6 @@ FN_EXTERN uint32_t pgTimelineFromWalSegment(const String *walSegment);
 FN_EXTERN StringList *pgLsnRangeToWalSegmentList(
     uint32_t timeline, uint64_t lsnStart, uint64_t lsnStop, unsigned int walSegmentSize);
 
-// Get name used for lsn in functions (this was changed in PostgreSQL 10 for consistency since lots of names were changing)
-FN_EXTERN const String *pgLsnName(unsigned int pgVersion);
-
 // Calculate the checksum for a page. Page cannot be const because the page header is temporarily modified during processing.
 FN_EXTERN uint16_t pgPageChecksum(uint8_t *page, uint32_t blockNo, PgPageSize pageSize);
 
@@ -177,14 +168,6 @@ FN_EXTERN bool pgPageSizeValid(PgPageSize pageSize);
 
 // Throws an error if page size is not valid
 FN_EXTERN void pgPageSizeCheck(PgPageSize pageSize);
-
-FN_EXTERN const String *pgWalName(unsigned int pgVersion);
-
-// Get wal path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
-FN_EXTERN const String *pgWalPath(unsigned int pgVersion);
-
-// Get transaction commit log path (this was changed in PostgreSQL 10 to avoid including "log" in the name)
-FN_EXTERN const String *pgXactPath(unsigned int pgVersion);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -15,6 +15,8 @@
                 </release-item-contributor-list>
 
                 <p>Fix deadlock due to logging in signal handler.</p>
+
+                <p>A signal that arrived while a lock was held by <code>gmtime_r()</code>, e.g. the SIGTERM sent by <cmd>stop</cmd> with <br-option>--force</br-option>, could deadlock when the signal handler logged. The signal handler now logs with only async-signal-safe functions.</p>
             </release-item>
         </release-bug-list>
 
@@ -29,6 +31,8 @@
                 </release-item-contributor-list>
 
                 <p>HTTP support for <proper>S3</proper>, <proper>GCS</proper>, and <proper>Azure</proper>.</p>
+
+                <p>An object store endpoint can now begin with <id>http://</id> to connect without TLS. HTTPS is still used when the endpoint does not specify a protocol.</p>
             </release-item>
 
             <release-item>
@@ -42,6 +46,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow expiration of oldest full backup regardless of current retention.</p>
+
+                <p>The <cmd>expire</cmd> option <br-option>--oldest</br-option> expires the oldest full backup and the backups that depend on it regardless of the retention settings, e.g. when the repository is running out of space. WAL before the oldest remaining full backup is expired as well.</p>
             </release-item>
 
             <release-item>
@@ -55,6 +61,8 @@
                 </release-item-contributor-list>
 
                 <p>Support for <proper>Azure</proper> managed identities.</p>
+
+                <p>Set <br-option>repo-azure-key-type=auto</br-option> to fetch credentials automatically using managed identities instead of configuring them. The credentials are refreshed before they expire.</p>
             </release-item>
 
             <release-item>
@@ -69,6 +77,8 @@
                 </release-item-contributor-list>
 
                 <p><i><b>Experimental</b></i> support for <proper>S3</proper> EKS pod identity.</p>
+
+                <p>Set <br-option>repo-s3-key-type=pod-id</br-option> to fetch credentials automatically using EKS pod identity instead of configuring them. The credentials are refreshed before they expire.</p>
             </release-item>
 
             <release-item>
@@ -84,6 +94,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow configuration of TLS cipher suites.</p>
+
+                <p>Set <setting>tls-cipher-12</setting> for TLS 1.2 and <setting>tls-cipher-13</setting> for TLS 1.3, e.g. for compliance. The cipher suites apply to every connection a process makes.</p>
             </release-item>
 
             <release-item>
@@ -95,6 +107,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow process priority to be set.</p>
+
+                <p><setting>priority</setting> sets the scheduling priority of <backrest/> processes from -20 to 19, as with <file>nice</file>. A higher value makes <backrest/> less likely to interfere with <postgres/>.</p>
             </release-item>
         </release-feature-list>
 
@@ -108,6 +122,8 @@
                 </release-item-contributor-list>
 
                 <p>Allow dots in S3 bucket names when using path-style URIs.</p>
+
+                <p>Dots in a bucket name only cause a certificate host name mismatch with host-style URIs, so they are now allowed with <br-option>repo-s3-uri-style=path</br-option>, which most self-hosted <proper>S3</proper> services use.</p>
             </release-item>
 
             <release-item>
@@ -120,6 +136,8 @@
                 </release-item-contributor-list>
 
                 <p>Require TLS &gt;= 1.2 unless verification is disabled.</p>
+
+                <p>TLS 1.0 and 1.1 have been deprecated since 2021. Verification is always enabled for connections between <backrest/> hosts. When verification is disabled for an object store with <setting>repo-storage-verify-tls</setting>, e.g. for a self-signed certificate, every protocol version is allowed.</p>
             </release-item>
 
             <release-item>
@@ -133,6 +151,8 @@
                 </release-item-contributor-list>
 
                 <p>Dynamically size <proper>S3</proper>/<proper>GCS</proper>/<proper>Azure</proper> chunks for large uploads.</p>
+
+                <p>The number of chunks in an upload is limited, so with the default <setting>repo-storage-upload-chunk-size</setting> the largest file that could be uploaded was 50GiB to <proper>S3</proper>, 40GiB to <proper>GCS</proper>, and 200GiB to <proper>Azure</proper>. The chunk size now grows during an upload, so files up to 5TiB can be uploaded to <proper>S3</proper> and <proper>GCS</proper> and up to 45TiB to <proper>Azure</proper>.</p>
             </release-item>
 
             <release-item>
@@ -144,6 +164,8 @@
                 </release-item-contributor-list>
 
                 <p>Optimize <proper>S3</proper>/<proper>GCS</proper>/<proper>Azure</proper> chunk size for small files.</p>
+
+                <p>The whole chunk buffer was allocated when a file was opened, although many files are smaller than a chunk. The buffer now grows as data arrives, which saves memory when small files are uploaded.</p>
             </release-item>
 
             <release-item>
@@ -155,6 +177,8 @@
                 </release-item-contributor-list>
 
                 <p>Remove support for <proper>PostgreSQL</proper> <id>9.5</id>.</p>
+
+                <p><postgres/> 9.5 is no longer supported, per the policy of supporting five end-of-life versions of <postgres/>.</p>
             </release-item>
 
             <release-item>
@@ -167,8 +191,91 @@
                 </release-item-contributor-list>
 
                 <p>Improve logging of default for options with an unresolved dependency.</p>
+
+                <p>An option set in the configuration file was logged at the start of a command when its dependency was not resolved, although its default value was used. The option is no longer logged in this case.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Remove explicit versioning from macros using versioned PostgreSQL types."/>
+                <commit subject="Remove unused BlockNumber type."/>
+                <commit subject="Remove versioning from static types used by versioned PostgreSQL types."/>
+                <commit subject="Simplify macros in db/db unit test."/>
+                <commit subject="Fix incorrect pg_control struct used for PostgreSQL 9.5."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Simplify the versioned <postgres/> types.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Use get_option() for tasks supported by the new meson version.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Remove redundant command lists from src/build/config/config.yaml."/>
+                <commit subject="Remove overly verbose command role rules."/>
+                <commit subject="Remove unused start/stop commands on repo options."/>
+                <commit subject="Show internal state for commands/options in parse.auto.c.inc."/>
+                <commit subject="Add new defines to help with option command maintenance."/>
+                <commit subject="Cleanup pg-host options for unsupported remote restore."/>
+                <commit subject="Cleanup repo-host options for remote backup."/>
+                <commit subject="Move PostgreSQL connection options to the same section."/>
+                <commit subject="Rearrange options for clarity."/>
+                <commit subject="Use roles to simplify option command lists."/>
+                <commit subject="Simplify log-level options in config.yaml."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Simplify the option definitions in config.yaml.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Use JsonRead for all info JSON parsing.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Move constants required for debug logging."/>
+                <commit subject="Move object code out of StringId module."/>
+                <commit subject="Remove prefix functionality from StringId."/>
+                <commit subject="Add PARSE_RULE_VAL_STR_IDX() to simplify logic in config/parse.c."/>
+                <commit subject="Remove generated StringIds from parse.auto.c.inc."/>
+                <commit subject="Throw errors on invalid StringIds in config/parse.c."/>
+                <commit subject="Remove unused error parameter from strIdFromZN()."/>
+                <commit subject="Update strIdFromZN() comment missed in 6e11d650."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refactor StringId and option parsing.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix missing parameter logging in storageS3New()."/>
+                <commit subject="Fix test comment."/>
+                <commit subject="Fix minor formatting issue."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix logging, formatting, and comments.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 
     <release-doc-list>
@@ -182,6 +289,8 @@
                 </release-item-contributor-list>
 
                 <p>Remove explicit <setting>max_wal_senders</setting>/<setting>wal_level</setting> configuration from user guide.</p>
+
+                <p><pg-setting>max_wal_senders</pg-setting> and <pg-setting>wal_level</pg-setting> have defaulted to the values the user guide requires since <postgres/> 10.</p>
             </release-item>
 
             <release-item>
@@ -193,7 +302,62 @@
                 </release-item-contributor-list>
 
                 <p>Clarify that bundling is useful for filesystems with large block sizes.</p>
+
+                <p>Bundling saves space on filesystems with large block sizes, where each small file takes a whole block.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Move release notes to decade directories."/>
+                <commit subject="Migrate document command/option description preprocessing to C."/>
+                <commit subject="Remove PDF documentation output."/>
+                <commit subject="Removed redundant documentation variables and references."/>
+                <commit subject="Suppress Azurite API version checking in documentation builds."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve the documentation build.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix typo in bundling section of user guide."/>
+                <commit subject="Improve wording in performance tuning section of user guide."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve wording in the user guide.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix WAL segment numbering in command/expire unit test.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix 32-bit CI testing."/>
+                <commit subject="Removed unused code in test container build."/>
+                <commit subject="Update Cirrus-CI FreeBSD 14 runner version."/>
+                <commit subject="Use more generic expression to fetch container IP addresses."/>
+                <commit subject="New CI container builds."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>CI updates.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>
