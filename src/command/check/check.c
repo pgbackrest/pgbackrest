@@ -60,8 +60,13 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
     // If a standby is defined, check the configuration
     if (dbGroup.standby != NULL)
     {
-        // If primary was not found (only have 1 pg configured locally, and we want to still run because this is a standby)
-        if (dbGroup.primary == NULL)
+        // Online backups run on this host will be skipped when backup-standby=skip and the standby is local
+        const bool backupSkip =
+            cfgOptionSeq(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_SKIP && pgIsLocal(dbGroup.standbyIdx);
+
+        // If primary was not found (only have 1 pg configured locally, and we want to still run because this is a standby). The
+        // primary is not required when backups will be skipped.
+        if (dbGroup.primary == NULL && !backupSkip)
         {
             // If any repo is local or more than one pg-path is found then a primary should have been found so error
             bool error = pgPathDefinedTotal > 1;
@@ -79,8 +84,8 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
                 THROW(ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
         }
 
-        // Notify that online backups will be skipped when run on this host since the standby is local
-        if (cfgOptionSeq(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_SKIP && pgIsLocal(dbGroup.standbyIdx))
+        // Notify that online backups will be skipped when run on this host
+        if (backupSkip)
         {
             LOG_INFO(
                 "local standby cluster found and " CFGOPT_BACKUP_STANDBY "=skip is set - online backups run on this host will be"

@@ -298,26 +298,6 @@ testRun(void)
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("standby only, one pg database and remote repo - backup-standby=skip");
-
-        hrnCfgArgRawZ(argList, cfgOptBackupStandby, "skip");
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_10, "/pgdata", true, NULL, NULL),
-            HRN_PQ_SCRIPT_CLOSE(1));
-
-        // Only confirming that the skip message is logged when the primary is not found
-        TEST_ERROR(
-            cmdCheck(), DbMismatchError,
-            "version '10' and path '/pgdata' queried from cluster do not match version '10' and '" TEST_PATH "/pg' read from"
-            " '" TEST_PATH "/pg/global/pg_control'\n"
-            "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
-        TEST_RESULT_LOG(
-            "P00   INFO: local standby cluster found and backup-standby=skip is set - online backups run on this host will be"
-            " skipped");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup-standby set without standby");
 
         argList = strLstNew();
@@ -631,6 +611,21 @@ testRun(void)
             "P00   INFO: check repo1 archive for WAL (primary)\n"
             "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo/archive/test1/15-1"
             "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("standby database only, repo local - backup-standby=skip");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        // No error that the primary was not found, even though the repo is local, since backups run on this host will be skipped
+        TEST_RESULT_VOID(cmdCheck(), "check");
+        TEST_RESULT_LOG(
+            "P00   INFO: local standby cluster found and backup-standby=skip is set - online backups run on this host will be"
+            " skipped\n"
+            "P00   INFO: check repo1 (standby)\n"
+            "P00   INFO: switch wal not performed because this is a standby");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby and primary database - backup-standby=skip");
