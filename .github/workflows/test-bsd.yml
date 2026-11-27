@@ -47,7 +47,7 @@ jobs:
 
           # The PostgreSQL versions supported by pgBackRest, oldest first, read from the generated header so the list never needs to
           # be updated here
-          pgSupport=$(sed -n 's/^#define PG_VERSION_[0-9_]*_Z  *"\([0-9.]*\)".*/postgresql@\1/p' \
+          pgSupport=$(sed -n 's/^#define PG_VERSION_[0-9_]*_Z  *"\([0-9]*\)".*/postgresql@\1/p' \
               ${GITHUB_WORKSPACE?}/src/postgres/version.auto.h)
 
           # The PostgreSQL formulae that are safe to test against, i.e. keg-only and neither deprecated nor disabled. The binaries
@@ -57,8 +57,7 @@ jobs:
           pgSafe=$(brew info --json=v2 --formula $(brew search --formula '/^postgresql@[0-9.]*$/' | grep '^postgresql@') | \
               jq -r '.formulae[] | select(.keg_only and (.deprecated | not) and (.disabled | not)) | .name')
 
-          # Install the oldest and newest version that is both supported and safe. The order comes from the supported list since
-          # these do not sort naturally, e.g. postgresql@9.6 is not greater than postgresql@10.
+          # Install the oldest and newest version that is both supported and safe. The order comes from the supported list.
           pgInstall=$(echo "${pgSupport}" | grep -xF "${pgSafe}")
           echo "postgresql available: $(echo ${pgInstall})"
 
@@ -121,13 +120,12 @@ jobs:
           sudo pkg update && sudo pkg upgrade -y libiconv
 
           # The PostgreSQL versions supported by pgBackRest, oldest first, read from the generated header so the list never needs to
-          # be updated here. FreeBSD leaves the dot out of the package name, e.g. 9.6 is postgresql96-server.
-          pgSupport=$(sed -n 's/^#define PG_VERSION_[0-9_]*_Z  *"\([0-9.]*\)".*/\1/p' \
-              ${GITHUB_WORKSPACE?}/src/postgres/version.auto.h | tr -d . | sed 's/^/postgresql/;s/$/-server/')
+          # be updated here
+          pgSupport=$(sed -n 's/^#define PG_VERSION_[0-9_]*_Z  *"\([0-9]*\)".*/\1/p' \
+              ${GITHUB_WORKSPACE?}/src/postgres/version.auto.h | sed 's/^/postgresql/;s/$/-server/')
 
           # The versions that are both supported and released. A beta or release candidate has a letter after the dot in its package
-          # version, e.g. 19.b4 or 19.r2. FreeBSD removes a version once it is end-of-life. The order comes from the supported list
-          # since these do not sort naturally, e.g. postgresql96-server is not greater than postgresql10-server.
+          # version, e.g. 19.b4 or 19.r2. FreeBSD removes a version once it is end-of-life. The order comes from the supported list.
           pgRelease=$(pkg rquery -x '%n %v' '^postgresql[0-9]*-server$' | grep -v ' [0-9]*\.[a-z]' | cut -d' ' -f1)
           pgAvail=$(echo "${pgSupport}" | grep -xF "${pgRelease}")
           echo "postgresql available: $(echo ${pgAvail})"

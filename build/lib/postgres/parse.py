@@ -47,11 +47,9 @@ _BRANCH_ABSENT = object()
 
 ####################################################################################################################################
 def bld_pg_version_num(version):
-    """The version as the number the C compares, e.g. "9.6" becomes 90600 and "10" becomes 100000."""
+    """The version as the number the C compares, e.g. "10" becomes 100000."""
 
-    major, _, minor = version.partition(".")
-
-    return int(major) * 10000 + (int(minor) * 100 if minor != "" else 0)
+    return int(version) * 10000
 
 
 ####################################################################################################################################
@@ -338,7 +336,6 @@ def _branch_map(block):
             branch = _BRANCH_MAX
         elif line_strip.startswith("#elif") and "PG_VERSION >= PG_VERSION_" in line_strip:
             branch = line_strip.split("PG_VERSION_")[-1].strip()
-            branch = "9.6" if branch == "96" else branch
         elif line_strip.startswith("#endif"):
             branch = None
         else:

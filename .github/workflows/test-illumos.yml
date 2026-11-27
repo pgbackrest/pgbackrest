@@ -30,12 +30,11 @@ jobs:
           sudo pkg refresh
 
           # The PostgreSQL versions supported by pgBackRest, oldest first, read from the generated header so the list never needs to
-          # be updated here. OmniOS leaves the dot out of the package name, e.g. 9.6 is postgresql-96.
-          pgSupport=$(sed -n 's/^#define PG_VERSION_[0-9_]*_Z  *"\([0-9.]*\)".*/\1/p' \
-              ${GITHUB_WORKSPACE?}/src/postgres/version.auto.h | tr -d . | sed 's/^/ooce\/database\/postgresql-/')
+          # be updated here
+          pgSupport=$(sed -n 's/^#define PG_VERSION_[0-9_]*_Z  *"\([0-9]*\)".*/\1/p' \
+              ${GITHUB_WORKSPACE?}/src/postgres/version.auto.h | sed 's/^/ooce\/database\/postgresql-/')
 
-          # The versions that are both supported and available. The order comes from the supported list since these do not sort
-          # naturally, e.g. postgresql-96 is not greater than postgresql-10.
+          # The versions that are both supported and available. The order comes from the supported list.
           pgAvail=$(echo "${pgSupport}" | grep -xF "$(pkg list -aH 'ooce/database/postgresql-*' | awk '{print $1}')")
           echo "postgresql available: $(echo ${pgAvail})"
 

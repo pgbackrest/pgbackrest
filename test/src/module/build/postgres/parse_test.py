@@ -100,12 +100,12 @@ def _parse(version, vendor=VENDOR, intern=INTERN, interface=BLD_PG_INTERFACE):
 def test_postgres_parse_version():
     """A version is a version on its own or a version with the attributes that go with it."""
 
-    bld_pg = _parse("version:\n  - 9.6\n  - 10\n  - 19:\n      release: false\n")
+    bld_pg = _parse("version:\n  - 10\n  - 11\n  - 19:\n      release: false\n")
 
-    assert_equal([(pg.version, pg.release) for pg in bld_pg.pg_list], [("9.6", True), ("10", True), ("19", False)])
+    assert_equal([(pg.version, pg.release) for pg in bld_pg.pg_list], [("10", True), ("11", True), ("19", False)])
 
     # A version keeps the text it was written as, since it is rendered as both a name and a string
-    assert_equal(bld_pg.pg_list[0].version, "9.6")
+    assert_equal(bld_pg.pg_list[0].version, "10")
 
 
 ####################################################################################################################################
@@ -159,17 +159,17 @@ def test_postgres_parse_define():
 def test_postgres_parse_function_version():
     """A function only has to be rendered once for each set of branches it reaches, so work out which versions can share one."""
 
-    bld_pg = _parse("version:\n  - 9.6\n  - 10\n  - 11\n  - 12\n")
+    bld_pg = _parse("version:\n  - 10\n  - 11\n  - 12\n  - 13\n")
 
     # PG_VERSION is the version itself, so a function reading it is never the same code for two versions
-    assert_equal(bld_pg.function_version["PG_INTERFACE_CONTROL_IS"], {"9.6": "9.6", "10": "10", "11": "11", "12": "12"})
+    assert_equal(bld_pg.function_version["PG_INTERFACE_CONTROL_IS"], {"10": "10", "11": "11", "12": "12", "13": "13"})
 
     # ControlFileData never varies, and neither does anything it reaches, so every version shares the oldest rendering. The helper
     # the macro is written with is followed to find it, and the type it reaches twice is only resolved once.
-    assert_equal(bld_pg.function_version["PG_INTERFACE_CONTROL"], {"9.6": "9.6", "10": "9.6", "11": "9.6", "12": "9.6"})
+    assert_equal(bld_pg.function_version["PG_INTERFACE_CONTROL"], {"10": "10", "11": "10", "12": "10", "13": "10"})
 
     # FullTransactionId is missing before 11 and the same from 11 on, which is two answers rather than four
-    assert_equal(bld_pg.function_version["PG_INTERFACE_XID"], {"9.6": "9.6", "10": "9.6", "11": "11", "12": "11"})
+    assert_equal(bld_pg.function_version["PG_INTERFACE_XID"], {"10": "10", "11": "11", "12": "11", "13": "11"})
 
 
 ####################################################################################################################################

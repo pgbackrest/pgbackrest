@@ -353,13 +353,11 @@ def _script_pg(vm, arch):
                 if not vm.pg_repo:
                     result += " postgresql-server"
                 else:
-                    db_version_no_dot = db_version.replace(".", "")
-
-                    result += " postgresql%s-server" % db_version_no_dot
+                    result += " postgresql%s-server" % db_version
 
                     # Add development package for the latest version of postgres
                     if db_version == vm.db_list[-1]:
-                        result += " postgresql%s-devel" % db_version_no_dot
+                        result += " postgresql%s-devel" % db_version
             elif vm.os_base == VM_OS_BASE_DEBIAN:
                 result += " postgresql-%s" % db_version
             else:

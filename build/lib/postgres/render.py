@@ -54,13 +54,6 @@ _MATCH_MACRO_RANGE = "%s_MATCH_RANGE"
 
 
 ####################################################################################################################################
-def _version_no_dot(version):
-    """The version as it appears in a C name, e.g. "9.6" becomes "96"."""
-
-    return version.replace(".", "")
-
-
-####################################################################################################################################
 def _version_suffix(bld_pg, function, version):
     """The suffix the rendering of a function is named with, given the version that rendered it.
 
@@ -70,7 +63,7 @@ def _version_suffix(bld_pg, function, version):
     index_list = [idx for idx, pg in enumerate(bld_pg.pg_list) if bld_pg.function_version[function][pg.version] == version]
 
     if len(index_list) == 1:
-        return _version_no_dot(version)
+        return version
 
     # Versions sharing a rendering are consecutive, since a branch of the vendored header applies from where it begins until the
     # next one begins. A range over versions that are not would name versions that do not share it.
@@ -80,7 +73,7 @@ def _version_suffix(bld_pg, function, version):
             % (", ".join(bld_pg.pg_list[idx].version for idx in index_list), function)
         )
 
-    return "%s_%s" % (_version_no_dot(version), _version_no_dot(bld_pg.pg_list[index_list[-1]].version))
+    return "%s_%s" % (version, bld_pg.pg_list[index_list[-1]].version)
 
 
 ####################################################################################################################################
@@ -138,8 +131,6 @@ def _render_interface_auto_c(bld_pg):
 
     # Interfaces, newest first so the most likely match is found first at run time
     for pg in reversed(bld_pg.pg_list):
-        version_no_dot = _version_no_dot(pg.version)
-
         # Values and functions this version renders, which are the ones no other version already renders the same code for
         value_list = _render_macro_list(bld_pg, list(dict.fromkeys(value.macro for value in bld_pg.value_list)), pg)
         function_list = _render_macro_list(bld_pg, bld_pg.function_list, pg)
@@ -149,10 +140,10 @@ def _render_interface_auto_c(bld_pg):
         # Only the interface declaring the vendored types sets the version they are declared for. The other renames them to
         # what that one declared, which is why they are named the same way here.
         if interface.vendor:
-            result += bld_define("PG_VERSION", "PG_VERSION_%s" % version_no_dot) + "\n\n"
+            result += bld_define("PG_VERSION", "PG_VERSION_%s" % pg.version) + "\n\n"
 
         for type in bld_pg.type_list:
-            result += bld_define(type, "%s_%s" % (type, version_no_dot)) + "\n"
+            result += bld_define(type, "%s_%s" % (type, pg.version)) + "\n"
 
         # An unreleased version has no catalog version of its own yet, so it accepts any catalog version up to the maximum
         if interface.vendor and not pg.release:
@@ -197,9 +188,7 @@ def _render_interface_auto_c(bld_pg):
     result += "static const %s %s[] =\n{\n" % (interface.type, interface.prefix)
 
     for pg in reversed(bld_pg.pg_list):
-        version_no_dot = _version_no_dot(pg.version)
-
-        result += "    {\n        .version = PG_VERSION_%s,\n" % version_no_dot
+        result += "    {\n        .version = PG_VERSION_%s,\n" % pg.version
 
         # A version that has not been released accepts a range of catalog versions rather than only its own
         if interface.unreleased and not pg.release:
@@ -245,17 +234,15 @@ def _render_version_auto_h(bld_pg):
     result += "\n" + bld_comment_block("PostgreSQL version constants")
 
     for pg in bld_pg.pg_list:
-        version_no_dot = _version_no_dot(pg.version)
-
-        result += bld_define("PG_VERSION_%s" % version_no_dot, "%u" % bld_pg_version_num(pg.version)) + "\n"
+        result += bld_define("PG_VERSION_%s" % pg.version, "%u" % bld_pg_version_num(pg.version)) + "\n"
 
     # The newest version is the maximum, which the code uses to reject anything newer than it knows about
-    result += "\n" + bld_define("PG_VERSION_MAX", "PG_VERSION_%s" % _version_no_dot(bld_pg.pg_list[-1].version)) + "\n"
+    result += "\n" + bld_define("PG_VERSION_MAX", "PG_VERSION_%s" % bld_pg.pg_list[-1].version) + "\n"
 
     result += "\n" + bld_comment_block("PostgreSQL version string constants for use in error messages")
 
     for pg in bld_pg.pg_list:
-        result += bld_define("PG_VERSION_%s_Z" % _version_no_dot(pg.version), '"%s"' % pg.version) + "\n"
+        result += bld_define("PG_VERSION_%s_Z" % pg.version, '"%s"' % pg.version) + "\n"
 
     return result + "\n#endif\n"
 
@@ -270,18 +257,15 @@ def _render_system_id(bld_pg):
     result = ""
 
     for pg in bld_pg.pg_list:
-        version_no_dot = _version_no_dot(pg.version)
-
         result += (
-            bld_define(_SYSTEM_ID_DEFINE + version_no_dot, "(%uULL + (uint64_t)PG_VERSION_%s)" % (_SYSTEM_ID_BASE, version_no_dot))
-            + "\n"
+            bld_define(_SYSTEM_ID_DEFINE + pg.version, "(%uULL + (uint64_t)PG_VERSION_%s)" % (_SYSTEM_ID_BASE, pg.version)) + "\n"
         )
 
         # An offset is a system id a test asks for by adding to the one for the version, which is how a test uses more than one
         for offset in _SYSTEM_ID_OFFSET_LIST:
             result += (
                 bld_define(
-                    "%s%s%s_Z" % (_SYSTEM_ID_DEFINE, version_no_dot, "" if offset == 0 else "_%u" % offset),
+                    "%s%s%s_Z" % (_SYSTEM_ID_DEFINE, pg.version, "" if offset == 0 else "_%u" % offset),
                     '"%u"' % (_SYSTEM_ID_BASE + bld_pg_version_num(pg.version) + offset),
                 )
                 + "\n"
