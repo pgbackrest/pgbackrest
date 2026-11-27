@@ -1568,6 +1568,21 @@ testRun(void)
             "backup init");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup-standby=skip errors when the local standby does not match the stanza");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL));
+
+        TEST_ERROR(
+            backupInit(
+                infoBackupNew(
+                    PG_VERSION_18, HRN_PG_SYSTEMID_17, hrnPgCatalogVersion(PG_VERSION_18), REPOSITORY_FORMAT_DEFAULT, NULL)),
+            BackupMismatchError,
+            "PostgreSQL version 18, system-id " HRN_PG_SYSTEMID_18_Z " do not match stanza version 18, system-id"
+            " " HRN_PG_SYSTEMID_17_Z "\n"
+            "HINT: is this the correct stanza?");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when pg_control does not match stanza");
 
         // Create pg_control

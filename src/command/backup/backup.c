@@ -71,6 +71,27 @@ typedef struct BackupData
     unsigned int segmentPageTotal;                                  // PostgreSQL total pages in a relation segment
 } BackupData;
 
+// Error when pg_control does not match the stanza
+static void
+backupInitPgCheck(const PgControl pgControl, const InfoPgData infoPg)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PG_CONTROL, pgControl);
+        FUNCTION_TEST_PARAM(INFO_PG_DATA, infoPg);
+    FUNCTION_TEST_END();
+
+    if (pgControl.version != infoPg.version || pgControl.systemId != infoPg.systemId)
+    {
+        THROW_FMT(
+            BackupMismatchError,
+            PG_NAME " version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64 "\n"
+            "HINT: is this the correct stanza?", strZ(pgVersionToStr(pgControl.version)), pgControl.systemId,
+            strZ(pgVersionToStr(infoPg.version)), infoPg.systemId);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 static BackupData *
 backupInit(const InfoBackup *const infoBackup)
 {
@@ -108,6 +129,12 @@ backupInit(const InfoBackup *const infoBackup)
         // dbGet() in this case so the backup proceeds from the primary, or errors when the primary cannot be found.
         if (backupStandby == CFGOPTVAL_BACKUP_STANDBY_SKIP && dbInfo.standby != NULL)
         {
+            // Check that the standby is the cluster configured for this stanza so a misconfiguration is not hidden by the skip
+            const PgControl pgControlStandby = dbPgControl(dbInfo.standby);
+
+            checkDbConfig(pgControlStandby.version, dbInfo.standbyIdx, dbInfo.standby, true);
+            backupInitPgCheck(pgControlStandby, infoPg);
+
             if (dbInfo.primary == NULL)
             {
                 LOG_WARN(
@@ -160,14 +187,7 @@ backupInit(const InfoBackup *const infoBackup)
     result->segmentPageTotal = pgControl.segmentPageTotal;
 
     // Validate pg_control info against the stanza
-    if (result->version != infoPg.version || pgControl.systemId != infoPg.systemId)
-    {
-        THROW_FMT(
-            BackupMismatchError,
-            PG_NAME " version %s, system-id %" PRIu64 " do not match stanza version %s, system-id %" PRIu64 "\n"
-            "HINT: is this the correct stanza?", strZ(pgVersionToStr(pgControl.version)), pgControl.systemId,
-            strZ(pgVersionToStr(infoPg.version)), infoPg.systemId);
-    }
+    backupInitPgCheck(pgControl, infoPg);
 
     // If checksum page is not explicitly set then automatically enable it when checksums are available
     if (!cfgOptionTest(cfgOptChecksumPage))
