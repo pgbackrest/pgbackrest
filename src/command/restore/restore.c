@@ -3,6 +3,8 @@ Restore Command
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <fcntl.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "command/lock.h"
@@ -26,7 +28,46 @@ Restore Command
 #include "process.c.inc"
 #include "remap.c.inc"
 #include "select.c.inc"
+#include "sync.c.inc"
 #include "validate.c.inc"
+
+/***********************************************************************************************************************************
+Synchronize restored paths in the data directory. The global path is synchronized after pg_control is published.
+***********************************************************************************************************************************/
+static void
+restorePathSync(const Manifest *const manifest)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, manifest);
+    FUNCTION_LOG_END();
+
+    ASSERT(manifest != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+        {
+            const String *const manifestName = manifestPath(manifest, pathIdx)->name;
+
+            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not
+            // much can be done about it for now.
+            if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
+                continue;
+
+            // We'll sync global after pg_control is written
+            if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
+                continue;
+
+            const String *const pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
+
+            LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
+            storagePathSyncP(storagePgWrite(), pgPath);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
@@ -54,7 +95,11 @@ cmdRestore(void)
         const RestoreBackupData backupData = restoreBackupSet();
 
         // Load manifest
-        RestoreJobData jobData = {.repoIdx = backupData.repoIdx};
+        RestoreJobData jobData =
+        {
+            .repoIdx = backupData.repoIdx,
+            .syncFileSystem = cfgOptionStrId(cfgOptRestoreSyncMethod) == CFGOPTVAL_RESTORE_SYNC_METHOD_SYNCFS,
+        };
 
         jobData.manifest = manifestLoadFile(
             storageRepoIdx(backupData.repoIdx),
@@ -121,6 +166,11 @@ cmdRestore(void)
 
         // Clean the data directory and build path/link structure
         restoreCleanBuild(jobData.manifest, jobData.rootReplaceUser, jobData.rootReplaceGroup);
+
+#ifdef HAVE_SYNCFS
+        // Open filesystems containing restored paths before workers write
+        RestoreSync *const sync = jobData.syncFileSystem ? restoreSyncNew(jobData.manifest) : NULL;
+#endif
 
         // Generate processing queues
         const uint64_t sizeTotal = restoreProcessQueue(jobData.manifest, &jobData.queueList);
@@ -205,24 +255,12 @@ cmdRestore(void)
         }
 
         // Sync paths in the data directory
-        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(jobData.manifest); pathIdx++)
-        {
-            const String *const manifestName = manifestPath(jobData.manifest, pathIdx)->name;
-
-            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not much
-            // can be done about it for now.
-            if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
-                continue;
-
-            // We'll sync global after pg_control is written
-            if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
-                continue;
-
-            const String *const pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
-
-            LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
-            storagePathSyncP(storagePgWrite(), pgPath);
-        }
+#ifdef HAVE_SYNCFS
+        if (jobData.syncFileSystem)
+            restoreFileSystemSync(sync);
+        else
+#endif
+        restorePathSync(jobData.manifest);
 
         // Rename pg_control to remove the temp extension. This is done last to prevent a partially restored (or unsynced) cluster
         // from being started.

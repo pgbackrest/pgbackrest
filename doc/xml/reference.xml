@@ -1899,6 +1899,27 @@
                         <example>primary_conninfo=db.mydomain.com</example>
                     </config-key>
 
+                    <config-key id="restore-sync-method" name="Restore Synchronization Method">
+                        <summary>Method used to synchronize restored files.</summary>
+
+                        <text>
+                            <allow-list caption="synchronization methods">
+                                <allow-item id="fsync">synchronize each restored file individually.</allow-item>
+                                <allow-item id="syncfs">synchronize each destination filesystem after restoring files.</allow-item>
+                            </allow-list>
+
+                            <p>The <id>syncfs</id> method is available only on Linux and may reduce restore time for clusters containing many small files. It synchronizes the filesystems containing the data directory, tablespaces, and linked directories before completing the restore. Linked files are synchronized individually. Delta restores are supported.</p>
+
+                            <p>Files mounted from another filesystem within restored directories are not synchronized. Destination mounts and links must remain unchanged during the restore.</p>
+
+                            <p><id>syncfs</id> also synchronizes unrelated writes on the same filesystems. Errors writing that data to disk may therefore cause the restore to fail.</p>
+
+                            <admonition type="warning">On Linux kernels before 5.8, <id>syncfs</id> does not report writeback errors. Distribution kernels may backport this support, so the kernel version is not checked. Use a kernel that reports these errors before selecting <id>syncfs</id>.</admonition>
+                        </text>
+
+                        <example>syncfs</example>
+                    </config-key>
+
                     <config-key id="tablespace-map" name="Tablespace Map">
                         <summary>Restore a tablespace into the specified directory.</summary>
 

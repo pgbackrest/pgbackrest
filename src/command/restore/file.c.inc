@@ -9,6 +9,7 @@ typedef struct RestoreFile
     time_t timeModified;                                            // Original modification time
     mode_t mode;                                                    // Original mode
     bool zero;                                                      // Should the file be zeroed?
+    bool noSyncFile;                                                // Skip file sync
     const String *user;                                             // Original user
     const String *group;                                            // Original group
     uint64_t offset;                                                // Offset into repo file where pg file is located
@@ -105,7 +106,7 @@ restoreFile(
                                     IoWrite *const pgWriteTruncate = storageWriteIo(
                                         storageNewWriteP(
                                             storagePgWrite(), file->name, .noAtomic = true, .noCreatePath = true,
-                                            .noSyncPath = true, .noTruncate = true));
+                                            .noSyncPath = true, .noTruncate = true, .noSyncFile = file->noSyncFile));
                                     ioWriteOpen(pgWriteTruncate);
 
                                     // Truncate to original size
@@ -198,7 +199,8 @@ restoreFile(
                     // Create destination file
                     StorageWrite *const pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
-                        .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true);
+                        .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
+                        .noSyncFile = file->noSyncFile);
 
                     ioWriteOpen(storageWriteIo(pgFileWrite));
 
@@ -248,7 +250,7 @@ restoreFile(
                     StorageWrite *const pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                         .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
-                        .noTruncate = file->blockChecksum != NULL);
+                        .noTruncate = file->blockChecksum != NULL, .noSyncFile = file->noSyncFile);
 
                     // If block incremental file
                     const Buffer *checksum = NULL;
