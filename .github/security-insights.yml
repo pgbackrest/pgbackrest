@@ -1,7 +1,7 @@
 header:
   schema-version: 2.2.0
-  last-updated: '2026-10-25'
-  last-reviewed: '2026-10-25'
+  last-updated: '2026-11-28'
+  last-reviewed: '2026-11-28'
   url: https://raw.githubusercontent.com/pgbackrest/pgbackrest/refs/heads/main/.github/security-insights.yml
 project:
   name: pgBackRest
@@ -121,6 +121,17 @@ repository:
             name: compile CI job
             predicate-uri: https://github.com/pizlonator/fil-c
             location: https://github.com/pgbackrest/pgbackrest/actions/workflows/test.yml
+      - name: GitHub Secret Protection
+        type: secret
+        comment: >-
+          Secret scanning monitors the repository for exposed secrets and credentials.
+        rulesets:
+          - default
+        integration:
+          adhoc: true
+          ci: true
+          release: false
+        results: {}
     assessments:
       self:
         comment: Self assessment has not yet been completed.
