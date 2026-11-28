@@ -192,7 +192,13 @@ addrInfoNew(const String *const host, const unsigned int port)
             // Do the lookup
             int error;
 
-            if ((error = getaddrinfo(strZ(host), portZ, &hints, &this->info)) != 0)
+            const bool hostWild = strEqZ(host, "*");
+            // Only filter by configured address families for the wildcard, where we are choosing what to listen on. For a
+            // specific host the caller asked for that address, so do not drop it (e.g. ::1 with only loopback configured).
+            if (hostWild)
+                hints.ai_flags |= AI_ADDRCONFIG;
+
+            if ((error = getaddrinfo(hostWild ? NULL : strZ(host), portZ, &hints, &this->info)) != 0)
                 THROW_FMT(HostConnectError, "unable to get address for '%s': [%d] %s", strZ(host), error, gai_strerror(error));
 
             // Convert address linked list to list
