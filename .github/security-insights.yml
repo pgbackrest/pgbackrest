@@ -128,7 +128,7 @@ repository:
         rulesets:
           - default
         integration:
-          adhoc: true
+          adhoc: false
           ci: true
           release: true
         results: {}
