@@ -85,7 +85,7 @@ repository:
         integration:
           adhoc: false
           ci: true
-          release: false
+          release: true
         results:
           ci:
             name: fuzz CI job
@@ -100,7 +100,7 @@ repository:
         integration:
           adhoc: false
           ci: true
-          release: false
+          release: true
         results:
           ci:
             name: linux and arch CI jobs
@@ -115,7 +115,7 @@ repository:
         integration:
           adhoc: false
           ci: true
-          release: false
+          release: true
         results:
           ci:
             name: compile CI job
@@ -130,7 +130,7 @@ repository:
         integration:
           adhoc: true
           ci: true
-          release: false
+          release: true
         results: {}
     assessments:
       self:
