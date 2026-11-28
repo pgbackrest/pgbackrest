@@ -46,7 +46,7 @@ jobs:
 
     steps:
       - name: Assess
-        uses: revanite-io/osps-baseline-action@v1.5.2
+        uses: revanite-io/osps-baseline-action@v1.5.4
         with:
           owner: ${{github.repository_owner}}
           repo: ${{github.event.repository.name}}
