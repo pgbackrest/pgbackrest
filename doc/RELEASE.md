@@ -55,29 +55,7 @@ git push origin release-ci
 
 ## Run Coverity
 
-- Prepare Coverity build directory (update version/paths as required):
-```
-mkdir coverity
-tar -xvf ~/Downloads/cov-analysis-linux-arm64-2024.6.1.tar.gz --strip-components=1 -C ~/coverity
-export COVERITY_TOKEN=?
-export COVERITY_EMAIL=?
-export COVERITY_VERSION=?
-```
-
-- Clean directories and run Coverity:
-```
-rm -rf .cache/ccache && rm -rf build && rm -rf pgbackrest.tgz && rm -rf cov-int
-meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug build pgbackrest
-coverity/bin/cov-build --dir cov-int ninja -C build
-tar czvf pgbackrest.tgz cov-int
-```
-
-- Upload results:
-```
-curl --form token=${COVERITY_TOKEN?} --form email="${COVERITY_EMAIL?}" --form file=@pgbackrest.tgz \
-    --form version="${COVERITY_VERSION?}" --form description="pre-release build" \
-    "https://scan.coverity.com/builds?project=pgbackrest%2Fpgbackrest"
-```
+Run the `coverity` workflow from the Actions tab of the project repository with `ref` set to the release test branch, e.g. `release-ci`. The ref must be in the project repository.
 
 Check issues at https://scan.coverity.com/projects/pgbackrest-pgbackrest then fix and repeat Coverity runs as needed.
 

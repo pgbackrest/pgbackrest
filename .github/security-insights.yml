@@ -64,14 +64,19 @@ repository:
     tools:
       - name: Coverity Scan
         type: SAST
-        comment: Runs on the release candidate before each release. Issues found are fixed before the release.
+        comment: >-
+          Runs weekly on the integration branch and on the release candidate before each release. Issues found are fixed before the release.
         rulesets:
           - default
         integration:
-          adhoc: false
+          adhoc: true
           ci: false
           release: true
         results:
+          adhoc:
+            name: Coverity Scan project
+            predicate-uri: https://scan.coverity.com/
+            location: https://scan.coverity.com/projects/pgbackrest-pgbackrest
           release:
             name: Coverity Scan project
             predicate-uri: https://scan.coverity.com/

@@ -1,0 +1,91 @@
+# Build with the Coverity Scan build tool and submit the build to Coverity Scan for analysis. This runs weekly on integration and
+# on demand for the ref given when the workflow is run. Issues are reported at
+# https://scan.coverity.com/projects/pgbackrest-pgbackrest.
+name: coverity
+
+on:
+  schedule:
+    # Weekly, on a day and time that does not collide with ghcr-prune or lock-thread.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch, tag, or commit to build
+        type: string
+        default: integration
+
+# Limit permissions on the repository
+permissions:
+  contents: read
+
+# Never submit two builds at once
+concurrency:
+  group: coverity
+
+jobs:
+  coverity:
+    # Run only in the project repository
+    if: github.repository == 'pgbackrest/pgbackrest'
+    runs-on: ubuntu-24.04
+
+    env:
+      REF: ${{inputs.ref || 'integration'}}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          path: pgbackrest
+          ref: ${{env.REF}}
+
+      - name: Update Apt
+        uses: ./pgbackrest/.github/action/apt
+
+      - name: Install
+        run: |
+          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y gcc pkg-config meson ninja-build \
+            python3-yaml zlib1g-dev libssl-dev libxml2-dev libpq-dev libbz2-dev liblz4-dev libzstd-dev libssh2-1-dev libsystemd-dev
+
+      - name: Download Coverity
+        env:
+          COVERITY_TOKEN: ${{secrets.COVERITY_TOKEN}}
+        run: |
+          curl -fsS --form token="${COVERITY_TOKEN?}" --form project=pgbackrest/pgbackrest -o coverity.tgz \
+            https://scan.coverity.com/download/cxx/linux64
+          mkdir ${HOME?}/coverity
+          tar -xzf coverity.tgz --strip-components=1 -C ${HOME?}/coverity
+          rm coverity.tgz
+
+      # The optional libraries are required. Code for a missing library is not built or analyzed. ccache is disabled. cov-build does
+      # not record a compile that ccache serves from its cache.
+      - name: Build
+        env:
+          CCACHE_DISABLE: 1
+        run: |
+          meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug -Dlibssh2=enabled -Dlibsystemd=enabled build pgbackrest
+          ${HOME?}/coverity/bin/cov-build --dir cov-int ninja -C build
+          tar -czf pgbackrest.tgz cov-int
+
+      - name: Upload
+        env:
+          COVERITY_TOKEN: ${{secrets.COVERITY_TOKEN}}
+          COVERITY_EMAIL: ${{secrets.COVERITY_EMAIL}}
+        run: |
+          version="$(build/src/pgbackrest version | cut -d' ' -f2)"
+
+          # A version without the dev suffix is a release build
+          if test "${version%dev}" = "${version?}"; then
+              description="release build"
+          elif test "${GITHUB_EVENT_NAME?}" = schedule; then
+              description="scheduled dev build"
+          else
+              description="on-demand dev build"
+          fi
+
+          response="$(curl -fsS --form token="${COVERITY_TOKEN?}" --form email="${COVERITY_EMAIL?}" --form file=@pgbackrest.tgz \
+            --form version="${version?}-$(git -C pgbackrest rev-parse --short HEAD)" --form description="${description?}" \
+            "https://scan.coverity.com/builds?project=pgbackrest%2Fpgbackrest")"
+          echo "${response?}"
+
+          # Fail unless the response reports a successful submission
+          echo "${response?}" | grep -q 'Build successfully submitted'
