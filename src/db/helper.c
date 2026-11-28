@@ -103,8 +103,10 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
                 // Is this cluster a standby
                 if (standby)
                 {
-                    // If a standby has not already been found then assign it
-                    if (result.standby == NULL && !primaryOnly)
+                    // If a standby has not already been found then assign it. When backup-standby=skip the backup is only skipped
+                    // when run on a standby host, so a remote standby is ignored and the primary is required as usual.
+                    if (result.standby == NULL && !primaryOnly &&
+                        (standbyRequired != CFGOPTVAL_BACKUP_STANDBY_SKIP || pgIsLocal(pgIdx)))
                     {
                         result.standbyIdx = pgIdx;
                         result.standby = db;
@@ -126,8 +128,9 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standby
             }
         }
 
-        // Error if no primary was found
-        if (result.primary == NULL && primaryRequired)
+        // Error if no primary was found, unless a local standby was found and backup-standby=skip since the backup will be skipped
+        if (result.primary == NULL && primaryRequired &&
+            !(standbyRequired == CFGOPTVAL_BACKUP_STANDBY_SKIP && result.standby != NULL))
         {
             THROW(
                 DbConnectError,

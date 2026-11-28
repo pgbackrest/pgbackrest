@@ -1625,13 +1625,16 @@
                         <summary>Backup from the standby cluster.</summary>
 
                         <text>
-                            <p>Enable backup from standby to reduce load on the primary cluster. This option requires that both the <host>primary</host> and <host>standby</host> hosts be configured.</p>
+                            <p>Enable backup from standby to reduce load on the primary cluster. Backup from standby requires that both the <host>primary</host> and <host>standby</host> hosts be configured.</p>
 
                             <allow-list caption="modes">
                                 <allow-item id="y">Standby is required for backup.</allow-item>
                                 <allow-item id="prefer">Backup from standby if available otherwise backup from primary.</allow-item>
+                                <allow-item id="skip">Skip the backup and exit successfully if the local cluster is a standby, even when the primary cannot be found, otherwise backup from primary only. Standbys on other hosts are ignored.</allow-item>
                                 <allow-item id="n">Backup from primary only.</allow-item>
                             </allow-list>
+
+                            <admonition type="note">This option has no effect when the backup is offline (<br-option>--no-online</br-option>) since the cluster role cannot be determined without a database connection. An offline backup will proceed against whatever cluster is configured, regardless of whether it is a primary or a standby.</admonition>
                         </text>
 
                         <example>y</example>

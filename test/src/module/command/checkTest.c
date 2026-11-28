@@ -589,6 +589,79 @@ testRun(void)
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("primary database only - backup-standby=skip");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptBackupStandby, "skip");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "1/1"),
+            HRN_PQ_SCRIPT_WAL_SWITCH(1, "000000010000000100000001"),
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        // No warning that a standby was not found since the backup is made from the primary in this case
+        TEST_RESULT_VOID(cmdCheck(), "check");
+        TEST_RESULT_LOG(
+            "P00   INFO: check repo1 configuration (primary)\n"
+            "P00   INFO: check repo1 archive for WAL (primary)\n"
+            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo/archive/test1/15-1"
+            "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("standby database only, repo local - backup-standby=skip");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        // No error that the primary was not found, even though the repo is local, since backups run on this host will be skipped
+        TEST_RESULT_VOID(cmdCheck(), "check");
+        TEST_RESULT_LOG(
+            "P00   INFO: local standby cluster found and backup-standby=skip is set - online backups run on this host will be"
+            " skipped\n"
+            "P00   INFO: check repo1 (standby)\n"
+            "P00   INFO: switch wal not performed because this is a standby");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("standby and primary database - backup-standby=skip");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, TEST_PATH "/pg8");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(argList, cfgOptBackupStandby, "skip");
+        HRN_CFG_LOAD(cfgCmdCheck, argList);
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", true, NULL, NULL),
+
+            HRN_PQ_SCRIPT_CLOSE(8),
+
+            HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "1/1"),
+            HRN_PQ_SCRIPT_WAL_SWITCH(1, "000000010000000100000001"),
+
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        TEST_RESULT_VOID(cmdCheck(), "check");
+        TEST_RESULT_LOG(
+            "P00   INFO: local standby cluster found and backup-standby=skip is set - online backups run on this host will be"
+            " skipped\n"
+            "P00   INFO: check repo1 (standby)\n"
+            "P00   INFO: switch wal not performed because this is a standby\n"
+            "P00   INFO: check repo1 configuration (primary)\n"
+            "P00   INFO: check repo1 archive for WAL (primary)\n"
+            "P00   INFO: WAL segment 000000010000000100000001 successfully archived to '" TEST_PATH "/repo/archive/test1/15-1"
+            "/0000000100000001/000000010000000100000001-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' on repo1");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Primary == NULL (for test coverage)");
 
         DbGetResult dbGroup = {0};

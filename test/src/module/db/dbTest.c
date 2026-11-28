@@ -4,6 +4,7 @@ Test Database
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "common/type/json.h"
+#include "config/protocol.h"
 #include "storage/remote/protocol.h"
 
 #include "harness/config.h"
@@ -12,6 +13,7 @@ Test Database
 #include "harness/pack.h"
 #include "harness/postgres.h"
 #include "harness/pq.h"
+#include "harness/protocol.h"
 
 /***********************************************************************************************************************************
 Macro to check that replay is making progress -- this does not seem useful enough to be included in the pq harness header
@@ -41,6 +43,19 @@ Macro to check that replay is making progress -- this does not seem useful enoug
     {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,2]", .resultZ = cvtBoolToConstZ(replayProgressParam)},     \
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
+
+/***********************************************************************************************************************************
+Open a standby on the remote. The pq script is set here since the remote runs in a separate process.
+***********************************************************************************************************************************/
+static ProtocolServerResult *
+testDbOpenStandbyProtocol(PackRead *const param)
+{
+    HRN_PQ_SCRIPT_SET(
+        HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
+        HRN_PQ_SCRIPT_CLOSE(1));
+
+    return dbOpenProtocol(param);
+}
 
 /***********************************************************************************************************************************
 Test Run
@@ -614,6 +629,37 @@ testRun(void)
             "HINT: are all available clusters in recovery?");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup-standby=skip, only available cluster is a local standby");
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_18, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), "get standby");
+
+        TEST_RESULT_BOOL(result.primary == NULL, true, "check primary not found");
+        TEST_RESULT_BOOL(result.standby != NULL, true, "check standby found");
+
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup-standby=skip but nothing is reachable at all");
+
+        HRN_PQ_SCRIPT_SET(
+            {.function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5432 user='bob'\"]"},
+            {.function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+            {.function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
+            {.function = HRN_PQ_FINISH});
+
+        TEST_ERROR(
+            dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), DbConnectError,
+            "unable to find primary cluster - cannot proceed\n"
+            "HINT: are all available clusters in recovery?");
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to check pg1: [DbConnectError] unable to connect to 'dbname='postgres' port=5432 user='bob'':"
+            " error");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby cluster required but not found");
 
         HRN_PQ_SCRIPT_SET(
@@ -784,6 +830,42 @@ testRun(void)
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup-standby=skip, remote standby ignored and local standby found");
+
+        static const ProtocolServerHandler testRemoteHandlerList[] =
+        {
+            {.command = PROTOCOL_COMMAND_DB, .open = testDbOpenStandbyProtocol, .processSession = dbQueryProtocol},
+            PROTOCOL_SERVER_HANDLER_OPTION_LIST
+            PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
+        };
+
+        hrnProtocolRemoteShimInstall(LSTDEF(testRemoteHandlerList));
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "localhost");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, TEST_PATH "/pg2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        // Create control files. Writing to pg1 starts the remote, which must be running before the script below is set.
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_18);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_18);
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg2", true, NULL, NULL),
+            HRN_PQ_SCRIPT_CLOSE(2));
+
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_SKIP), "get local standby");
+
+        TEST_RESULT_INT(result.standbyIdx, 1, "check standby is the local one");
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
+        hrnProtocolRemoteShimUninstall();
     }
 
     protocolFree();
